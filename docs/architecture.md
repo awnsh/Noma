@@ -64,6 +64,44 @@ Schema (`src/main/database/db.ts`): `applications`, `profiles`, `controls`,
 keys or control id, and a timestamp. It has no column capable of holding
 free-text content.
 
+## The learning loop (brainstorm.md section 14)
+
+Built as an explicit pipeline, not folded into one function, so each stage
+is independently testable and swappable:
+
+```
+OBSERVE                  CaptureService (workflow_events, gated by the
+                          Enabled/Disabled toggle) + control-activation
+                          events from the hardware layer
+   ↓
+IDENTIFY PATTERN          patternDetection.ts — pure, deterministic,
+                          no LLM (repeated shortcuts / sequences / frequent
+                          controls)
+   ↓
+GENERATE SUGGESTION       AIProvider.generateSuggestions() — LocalRuleBasedProvider
+                          today; an LLM-backed provider could implement the
+                          same interface later without touching anything
+                          upstream or downstream of it
+   ↓
+USER ACCEPTS/REJECTS      suggestionsRepository.resolveSuggestion() — a
+                          decision, once made, is permanent: the pattern is
+                          never re-suggested (insertSuggestionIfNew no-ops
+                          on any existing status)
+   ↓
+UPDATE USER MODEL          suggestionsRepository.getConfidenceBiasForKind() —
+                          a small, deterministic, inspectable accept/reject
+                          ratio per pattern kind, bounded to ±0.15
+   ↓
+IMPROVE FUTURE SUGGESTIONS  fed back into LocalRuleBasedProvider via
+                          constructor injection, so the next suggestion of
+                          the same kind starts from a nudged base confidence
+```
+
+`SuggestionEngine.refresh()` (`src/main/ai/suggestionEngine.ts`) is the one
+place that walks OBSERVE → GENERATE SUGGESTION; it's called after every
+captured event, and is idempotent by construction (safe to call as often as
+useful).
+
 ## Hardware embedding considerations (forward-looking)
 
 The physical keyboard doesn't exist yet, but several Phase 1 decisions

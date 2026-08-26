@@ -54,6 +54,17 @@ export interface WorkflowEvent {
 
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'dismissed'
 
+/**
+ * What accepting a suggestion actually does — assign a shortcut directly
+ * to one of the (existing, user-chosen) 4 control slots, or create a
+ * macro from a repeated sequence and assign *that* to a chosen slot.
+ * Flow never picks the slot itself; see `docs/architecture.md`'s note on
+ * why that stays a human decision.
+ */
+export type SuggestionAction =
+  | { kind: 'assignShortcutToControl'; comboKeys: string[] }
+  | { kind: 'createMacroAndAssignToControl'; sequence: string[] }
+
 export interface Suggestion {
   id: string
   title: string
@@ -62,6 +73,10 @@ export interface Suggestion {
   status: SuggestionStatus
   createdAt: number
   resolvedAt?: number
+  /** Which application's profile this suggestion (and its slot picker) applies to. */
+  applicationId?: string | null
+  /** Absent for suggestions created before this field existed. */
+  action?: SuggestionAction
 }
 
 export interface Macro {
@@ -136,16 +151,24 @@ export interface DeviceStatus {
  * engine (brainstorm.md section 11) over already-captured, already-sanitized
  * WorkflowEvent metadata. Never derived from anything but comboKeys/
  * controlId/timestamp — see docs/privacy-and-legal.md.
+ *
+ * Discriminated on `kind` so the suggestion engine (Phase 5) can pull the
+ * specific structured data (comboKeys/sequence/controlId) it needs to write
+ * suggestion copy, instead of parsing the human-readable `description`.
  */
 export type PatternKind = 'repeatedShortcut' | 'repeatedSequence' | 'frequentControl'
 
-export interface DetectedPattern {
+interface DetectedPatternBase {
   id: string
-  kind: PatternKind
   applicationId: string | null
   description: string
   count: number
 }
+
+export type DetectedPattern =
+  | (DetectedPatternBase & { kind: 'repeatedShortcut'; comboKeys: string[] })
+  | (DetectedPatternBase & { kind: 'repeatedSequence'; sequence: string[] })
+  | (DetectedPatternBase & { kind: 'frequentControl'; controlId: string })
 
 /**
  * The contract exposed to the renderer via the preload bridge
@@ -171,4 +194,21 @@ export interface FlowApi {
   /** Enables/disables workflow monitoring, engaging or releasing the OS-level hook. Returns the new state. */
   setWorkflowMonitoringEnabled(enabled: boolean): Promise<boolean>
   getDetectedPatterns(): Promise<DetectedPattern[]>
+  /** Pending suggestions, freshly re-derived from today's patterns. */
+  getSuggestions(): Promise<Suggestion[]>
+  /**
+   * Resolves a suggestion directly: always for reject/dismiss, and for
+   * accept only as a fallback when there's no profile to assign a slot in
+   * (assignSuggestionToControl is the normal accept path).
+   */
+  resolveSuggestion(id: string, status: 'accepted' | 'rejected' | 'dismissed'): Promise<Suggestion | null>
+  /** Subscribes to live suggestion-list changes. Returns an unsubscribe function. */
+  onSuggestionsChanged(callback: (suggestions: Suggestion[]) => void): () => void
+  /** The profile for a specific application, regardless of which app is currently focused. */
+  getProfileForApplication(applicationId: string): Promise<ApplicationProfile | null>
+  /** Accepts a suggestion by assigning its action to the given control slot of its application's profile. */
+  assignSuggestionToControl(
+    suggestionId: string,
+    slot: number
+  ): Promise<{ suggestion: Suggestion; profile: ApplicationProfile } | null>
 }

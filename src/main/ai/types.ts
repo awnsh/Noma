@@ -1,12 +1,4 @@
-import type { Suggestion } from '@shared/types'
-
-/** A detected pattern handed from the workflow engine to an AIProvider. */
-export interface WorkflowSignal {
-  applicationId: string
-  kind: 'shortcut' | 'sequence' | 'controlUsage'
-  data: Record<string, unknown>
-  count: number
-}
+import type { DetectedPattern, Suggestion } from '@shared/types'
 
 /**
  * AIProvider abstraction (brainstorm.md section 13).
@@ -15,9 +7,10 @@ export interface WorkflowSignal {
  * keys. An LLM-backed provider can be added later entirely behind this
  * interface — nothing else in the app should know or care which
  * implementation is active, and no raw keystrokes/content ever cross this
- * boundary, only sanitized WorkflowSignal metadata.
+ * boundary, only already-sanitized DetectedPattern metadata (counts and
+ * combo/sequence/control identifiers — see docs/privacy-and-legal.md).
  */
 export interface AIProvider {
   readonly name: string
-  generateSuggestions(signals: WorkflowSignal[]): Promise<Suggestion[]>
+  generateSuggestions(patterns: DetectedPattern[]): Promise<Suggestion[]>
 }

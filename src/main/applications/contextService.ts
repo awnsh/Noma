@@ -32,6 +32,18 @@ export class ApplicationContextService {
     return this.current
   }
 
+  /**
+   * Re-resolves the current application's profile from the database and
+   * re-emits the context — for when a control mapping changed out from
+   * under the currently-focused application (e.g. a suggestion was just
+   * accepted) so listeners don't have to wait for the next app switch to
+   * see it. No-op if a different application is now focused.
+   */
+  refreshIfCurrentApplication(applicationId: string): void {
+    if (this.current.application?.id !== applicationId) return
+    this.updateContext(this.current.application)
+  }
+
   /** Returns an unsubscribe function. */
   onContextChanged(callback: (context: ApplicationContext) => void): () => void {
     this.listeners.add(callback)

@@ -3,6 +3,7 @@ import { useFlowStore } from '../stores/flowStore'
 import { StatusCard } from '../components/StatusCard'
 import { ControlTile } from '../components/ControlTile'
 import { WorkflowMonitoringPanel } from '../components/WorkflowMonitoringPanel'
+import { SuggestionsPanel } from '../components/SuggestionsPanel'
 
 export function Dashboard() {
   const { context, flowStatus, isLoading, refresh, subscribeToContext } = useFlowStore()
@@ -54,6 +55,8 @@ export function Dashboard() {
           <StatusCard label="Suggestions" value={flowStatus.suggestionsCount} />
         </div>
       </section>
+
+      <SuggestionsPanel />
 
       <WorkflowMonitoringPanel />
     </div>

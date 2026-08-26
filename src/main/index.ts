@@ -10,12 +10,26 @@ import { getDefaultHardwareDevice } from './hardware/virtualDevice'
 import { CaptureService } from './workflow/captureService'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
 import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
+import { getConfidenceBiasForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
+import { LocalRuleBasedProvider } from './ai/localProvider'
+import { SuggestionEngine } from './ai/suggestionEngine'
 
 let mainWindow: BrowserWindow | null = null
 
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
 const hardwareDevice = getDefaultHardwareDevice()
+const aiProvider = new LocalRuleBasedProvider(getConfidenceBiasForKind)
+const suggestionEngine = new SuggestionEngine(aiProvider)
+
+/** Re-runs pattern detection -> suggestion generation, then pushes the
+ *  (possibly updated) pending list to the renderer. Called after every
+ *  captured workflow event — see docs/architecture.md's learning loop. */
+async function refreshSuggestions(): Promise<void> {
+  await suggestionEngine.refresh()
+  mainWindow?.webContents.send(IPC_CHANNELS.SUGGESTIONS_CHANGED, getPendingSuggestions())
+}
+
 const captureService = new CaptureService((event) => {
   insertWorkflowEvent({
     applicationId: event.applicationId,
@@ -23,6 +37,7 @@ const captureService = new CaptureService((event) => {
     comboKeys: event.comboKeys,
     timestamp: event.timestamp
   })
+  void refreshSuggestions()
 })
 
 function createMainWindow(): void {
@@ -36,7 +51,12 @@ function createMainWindow(): void {
     backgroundColor: '#08080a',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // Explicit, not relied-on-as-default: no Node access in the
+      // renderer, isolated from the preload's JS context, and Chromium's
+      // OS-level sandbox enabled. See docs/security-review.md.
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
     }
   })
 
@@ -68,7 +88,14 @@ app.whenReady().then(() => {
   })
 
   initDatabase()
-  registerIpcHandlers(contextService, captureService)
+  registerIpcHandlers(contextService, captureService, suggestionEngine, (applicationId) => {
+    // A control was just reassigned (e.g. accepting a suggestion). If it
+    // belongs to whichever application is currently focused, the
+    // onContextChanged listener below (hardware controls + IPC push)
+    // fires the same way it would for a normal app switch — the user
+    // doesn't have to Alt-Tab away and back to see their own change.
+    contextService.refreshIfCurrentApplication(applicationId)
+  })
 
   // Application context -> hardware simulator + capture service: whenever
   // the foreground application (and its resolved profile) changes,
@@ -98,6 +125,7 @@ app.whenReady().then(() => {
         controlId: event.controlId,
         timestamp: Date.now()
       })
+      void refreshSuggestions()
     }
   })
   void hardwareDevice.connect()

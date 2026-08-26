@@ -96,16 +96,25 @@ Principle") is the constraint this document exists to satisfy.
 
 ## Implementation status
 
-- `shouldCaptureKeyCombo(keys: string[]): boolean` — implemented and unit
-  tested now (`src/main/workflow/captureFilter.ts`,
-  `captureFilter.test.ts`), even though Phase 1 has no OS-level hook wired
-  up yet. Deciding and testing the *policy* now means Phase 4 is "wire a
-  hook to an already-correct filter," not "design the filter under
-  deadline pressure."
-- The actual global low-level keyboard hook (Windows: `WH_KEYBOARD_LL`) is
-  Phase 4 work. When it's built, `shouldCaptureKeyCombo` is the first thing
-  the hook callback calls, and the filter's tests are the specification for
-  what the hook must and must not report.
+- `shouldCaptureKeyCombo(keys: string[]): boolean` — the policy, decided and
+  unit tested in Phase 1 (`src/main/workflow/captureFilter.ts`,
+  `captureFilter.test.ts`) before any hook existed to call it.
+- **Phase 4: the hook is real.** `CaptureService`
+  (`src/main/workflow/captureService.ts`) uses `uiohook-napi` for the actual
+  global low-level keyboard hook. Its `comboFromKeydownEvent()` function —
+  unit tested independently of the native hook itself
+  (`captureService.test.ts`) — is the enforcement point: it only ever fires
+  on the non-modifier "trigger" key of a chord (never a bare modifier
+  keydown), builds the combo from that event's own modifier flags, and
+  hands it to `shouldCaptureKeyCombo` before anything is stored. A rejected
+  combo never reaches the database.
+- The hook is started/stopped by the Enabled/Disabled toggle on the
+  Dashboard (`Workflow Monitoring` panel), backed by a `settings` row —
+  **off by default** on first run and after every fresh install.
+- Captured combos are stored as `{ applicationId, comboKeys, timestamp }` in
+  `workflow_events`, tagged with whichever application was active at the
+  moment of capture (from Phase 2's `ApplicationContextService`) — exactly
+  the shape described above, nothing more.
 
 ## Disclaimer
 

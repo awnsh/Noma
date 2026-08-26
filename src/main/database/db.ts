@@ -35,7 +35,17 @@ export function closeDatabase(): void {
   db = null
 }
 
-function runMigrations(database: Database.Database): void {
+/**
+ * Test-only: injects a database instance directly (e.g. an in-memory
+ * better-sqlite3 database) so repository functions — which call
+ * getDatabase() internally — are unit-testable without Electron's
+ * app.getPath('userData'). Never called outside tests.
+ */
+export function __setDatabaseForTesting(instance: Database.Database): void {
+  db = instance
+}
+
+export function runMigrations(database: Database.Database): void {
   database.exec(`
     CREATE TABLE IF NOT EXISTS applications (
       id TEXT PRIMARY KEY,
@@ -114,4 +124,27 @@ function runMigrations(database: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_workflow_events_app_time ON workflow_events(application_id, timestamp);
     CREATE INDEX IF NOT EXISTS idx_controls_profile ON controls(profile_id);
   `)
+
+  // Additive, backward-compatible schema evolution: existing databases from
+  // earlier phases keep working without deleting flow.db between phases.
+  ensureColumn(database, 'suggestions', 'application_id', 'application_id TEXT')
+  ensureColumn(database, 'suggestions', 'action_kind', 'action_kind TEXT')
+  ensureColumn(database, 'suggestions', 'action_payload', 'action_payload TEXT')
+}
+
+/**
+ * Adds `column` to `table` if it isn't already there. `table`/`column`/
+ * `definition` are always hardcoded call-site literals, never
+ * user-controlled, so building the DDL string is safe here.
+ */
+function ensureColumn(
+  database: Database.Database,
+  table: string,
+  column: string,
+  definition: string
+): void {
+  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>
+  if (!columns.some((existing) => existing.name === column)) {
+    database.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`)
+  }
 }

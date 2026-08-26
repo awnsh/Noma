@@ -2,13 +2,18 @@
 
 Adaptive computer interface — software brain and development platform for a
 future modular keyboard. See `brainstorm.md` for the full product vision and
-build order, `docs/architecture.md` for how this codebase is organized, and
-`docs/privacy-and-legal.md` for the workflow-capture privacy design.
+build order, `docs/architecture.md` for how this codebase is organized,
+`docs/privacy-and-legal.md` for the workflow-capture privacy design, and
+`docs/security-review.md` for a focused security self-review (Electron
+hardening, capture guarantees, dependency/SQL posture).
 
 **Phase 1** (scaffold, database, basic dashboard UI, module architecture),
 **Phase 2** (real Windows application detection, the profile system,
-contextual controls), and **Phase 3** (Virtual Keyboard page, stateful
-hardware simulator, modular slots) are done. See "Where things stand" below.
+contextual controls), **Phase 3** (Virtual Keyboard page, stateful hardware
+simulator, modular slots), **Phase 4** (real workflow capture, pattern
+detection), **Phase 5** (the suggestion engine and learning loop), and the
+first slice of **Phase 6** (assigning an accepted suggestion to one of the 4
+control slots) are done. See "Where things stand" below.
 
 ## Prerequisites
 
@@ -59,10 +64,52 @@ Milestone 1 in full:
   under the hood, the same shape a real module plugging into a physical slot
   will report later
 
+Back on the Dashboard, the **Workflow Monitoring** panel is where Phase 4
+lives:
+
+- It's **off by default**. Flip it on and Flow starts watching for
+  keyboard shortcuts that hold Control, Alt, or the Windows key — nothing
+  else. Flip it off and the OS-level hook is released immediately, not just
+  ignored (see `docs/privacy-and-legal.md`)
+- To see a pattern appear: with monitoring on, press the same shortcut
+  (e.g. `Ctrl+S`) 5+ times in whatever app is focused — a "Patterns
+  detected today" entry should show up in the panel and the Dashboard's
+  Flow Status stat within a keystroke or two. Pressing a virtual control on
+  the Virtual Keyboard page 5+ times does the same for "frequently used
+  control" patterns
+- Thresholds are intentionally not hair-trigger (5 uses for a shortcut/
+  control, 3 for a repeated two-step sequence within 15s) — see
+  `src/main/workflow/patternDetection.ts` if you want to tune them
+
+Once a pattern crosses its threshold, a **Suggestions** section appears above
+Workflow Monitoring — this is Phase 5's learning loop plus Phase 6's slot
+assignment, working together:
+
+- Each card shows the suggestion, a plain-language explanation with the real
+  count, and a confidence percentage
+- Click **Accept** and the card opens an inline picker showing your 4
+  current controls (with their current labels) for that application — pick
+  one and the shortcut (or a newly-created macro, for a repeated-sequence
+  suggestion) is assigned to it immediately, overwriting whatever was there.
+  If you're currently focused on that same application, the Dashboard and
+  Virtual Keyboard update live, no Alt-Tab needed
+- Flow never picks the slot for you — you always choose, every time. See
+  `assignSuggestionToControl` in `src/main/applications/suggestionResolution.ts`
+- **Reject**/**Dismiss** work as before: the decision is remembered
+  permanently (the suggestion is never re-shown), and accept/reject nudge
+  future confidence for that same suggestion kind — the deterministic
+  UPDATE USER MODEL step from brainstorm.md section 14, inspectable in
+  `getConfidenceBiasForKind`
+
 ## Test it
 
 ```powershell
-npm test        # unit tests (currently: the workflow capture-policy filter)
+npm test        # unit tests: capture-policy filter, keydown->combo logic
+                 # (including a couple of explicit "typing a password never
+                 # gets captured" cases), pattern detection, hardware device,
+                 # suggestion rules, repositories (in-memory SQLite), a full
+                 # events->patterns->suggestions integration test, and the
+                 # suggestion-accept->control-assignment orchestration
 npm run typecheck
 ```
 
@@ -84,6 +131,7 @@ src/
 docs/
   architecture.md         module layout + hardware-embedding design notes
   privacy-and-legal.md    the workflow-capture policy and why it isn't a keylogger
+  security-review.md      Electron hardening, capture guarantees, dependency/SQL posture
 ```
 
 ## Where things stand vs. the build order
@@ -108,17 +156,72 @@ future STM32 protocol (section 21), so a button click on the Virtual
 Keyboard page raises the exact event shape a real button press will later
 raise. Module add/remove works end-to-end from the shared `MODULE_CATALOG`.
 
-Not yet built (by design — see brainstorm.md's build order): workflow event
-capture wired to the already-written capture-policy filter, pattern
-detection, suggestions, and macros. Virtual control presses are visual/event
-simulation only — they deliberately do not send real keystrokes to Windows
-(see the comment in `src/main/hardware/virtualDevice.ts`); actually executing
-actions is a distinct, more sensitive feature for a later phase.
+Done (Phase 4): `CaptureService` (`src/main/workflow/captureService.ts`) wires
+the already-tested `shouldCaptureKeyCombo` policy to a real global keyboard
+hook (`uiohook-napi` — another N-API prebuilt-binary dependency, same
+reasoning as `better-sqlite3`; see the module's own doc comment for why not
+a hand-rolled hook or a node-gyp-based package). It's gated by a
+Dashboard-visible Enabled/Disabled toggle backed by a `settings` row, **off
+by default**. Control activations on the Virtual Keyboard page feed the same
+pipeline. `src/main/workflow/patternDetection.ts` is a small deterministic
+engine (no LLM) covering repeated shortcuts, repeated two-step sequences,
+and frequently used controls — "Patterns detected" on the Dashboard is real
+now, not hardcoded.
+
+Done (Phase 5): `LocalRuleBasedProvider` (`src/main/ai/localProvider.ts`)
+implements the `AIProvider` interface from Phase 1 — zero API keys, fully
+deterministic. `suggestionRules.ts` turns a `repeatedShortcut` or
+`repeatedSequence` pattern into a `Suggestion` with real copy and a
+count-scaled confidence; `frequentControl` patterns deliberately produce no
+suggestion (not independently actionable — see the file's doc comment).
+`SuggestionEngine` orchestrates OBSERVE → IDENTIFY PATTERN → GENERATE
+SUGGESTION and is safe to call on every captured event (`insertSuggestionIfNew`
+is a no-op once a pattern has already been suggested, in any status).
+Accept/Reject/Dismiss close the loop: resolving a suggestion is remembered
+permanently (never re-suggested) and, for accept/reject, nudges future
+confidence for that pattern kind via a small deterministic bias — the
+UPDATE USER MODEL step, inspectable in `suggestionsRepository.ts`, not a
+black box.
+
+Done (Phase 6 — slot assignment slice): accepting a suggestion now actually
+does something, on the user's explicit terms. `assignSuggestionToControl`
+(`src/main/applications/suggestionResolution.ts`) writes a
+`repeatedShortcut` suggestion's combo directly onto a chosen control, or, for
+a `repeatedSequence` suggestion, creates a `Macro` row
+(`macrosRepository.ts`) and assigns *that* to a chosen control — always a
+slot the user picked in the UI, never one Flow guesses. The `suggestions`
+table gained `application_id`/`action_kind`/`action_payload` via an additive,
+backward-compatible migration (`ensureColumn` in `db.ts`) — existing
+`flow.db` files pick this up automatically, no reset needed. If the
+suggestion's application happens to be the one currently focused, the
+Dashboard/Virtual Keyboard update immediately via
+`ApplicationContextService.refreshIfCurrentApplication`.
+
+Done (security hardening pass, prompted by an explicit ask): `BrowserWindow`
+now sets `contextIsolation`/`nodeIntegration`/`sandbox` explicitly rather
+than relying on Electron's current defaults; verified the app still launches
+correctly with the OS-level sandbox enabled. Added two tests that
+specifically demonstrate — not just assert — that typing a password (with or
+without Shift for capitals/symbols) never produces a captured combo, since
+it never involves Control/Alt/Meta. Full writeup in
+`docs/security-review.md`, including the IPC surface, SQL parameterization,
+and dependency posture (`npm audit`: 0 known vulnerabilities as of this
+pass).
+
+Not yet built (by design — see brainstorm.md's build order): the
+underused-controls / per-application-behavior pattern categories (deferred —
+see the comment atop `patternDetection.ts`), a standalone macro management
+UI (macros currently only get created via an accepted sequence suggestion,
+not authored freehand), and the fully general Keyboard Control Mapping
+editor (section 18 — picking *any* action type for *any* control at *any*
+time, not just accepting a suggestion). Virtual control presses remain
+visual/event simulation only — they deliberately do not send real keystrokes
+to Windows (see the comment in `src/main/hardware/virtualDevice.ts`).
 
 ## Next logical step
 
-Phase 4: workflow event collection — wire `src/main/workflow/captureFilter.ts`
-to a real global keyboard hook (Windows `WH_KEYBOARD_LL`), write accepted
-combos into `workflow_events`, and build the first pattern-detection pass
-(repeated shortcuts/sequences) that Flow Insights and the suggestion engine
-will consume later.
+Phase 7: Developer Mode and the documented STM32 protocol
+(`docs/hardware-protocol.md`) — surfacing hardware connection status, the
+virtual device's live control/module state, and an incoming/outgoing event
+log, which will matter enormously once real firmware exists to debug
+against.

@@ -1,0 +1,143 @@
+import type { PatternKind, Suggestion, SuggestionAction, SuggestionStatus } from '@shared/types'
+import { getDatabase } from '../db'
+
+interface SuggestionRow {
+  id: string
+  title: string
+  explanation: string
+  confidence: number
+  status: SuggestionStatus
+  created_at: number
+  resolved_at: number | null
+  application_id: string | null
+  action_kind: string | null
+  action_payload: string | null
+}
+
+function rowToSuggestion(row: SuggestionRow): Suggestion {
+  return {
+    id: row.id,
+    title: row.title,
+    explanation: row.explanation,
+    confidence: row.confidence,
+    status: row.status,
+    createdAt: row.created_at,
+    resolvedAt: row.resolved_at ?? undefined,
+    applicationId: row.application_id,
+    // action_kind/action_payload are only absent for rows from before this
+    // column existed — degrade gracefully rather than throw.
+    action:
+      row.action_kind && row.action_payload
+        ? (JSON.parse(row.action_payload) as SuggestionAction)
+        : undefined
+  }
+}
+
+export function getPendingSuggestions(): Suggestion[] {
+  const db = getDatabase()
+  const rows = db
+    .prepare(`SELECT * FROM suggestions WHERE status = 'pending' ORDER BY created_at DESC`)
+    .all() as SuggestionRow[]
+  return rows.map(rowToSuggestion)
+}
+
+export function getSuggestionById(id: string): Suggestion | null {
+  const db = getDatabase()
+  const row = db.prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as
+    | SuggestionRow
+    | undefined
+  return row ? rowToSuggestion(row) : null
+}
+
+/**
+ * Inserts a new pending suggestion, unless a suggestion with this id
+ * already exists in ANY status. This is what makes the pattern ->
+ * suggestion pipeline safe to re-run on every captured event: a pattern
+ * that's already pending isn't duplicated, and one the user already
+ * accepted/rejected/dismissed is never resurrected.
+ */
+export function insertSuggestionIfNew(suggestion: Suggestion): void {
+  const db = getDatabase()
+  db.prepare(
+    `INSERT INTO suggestions
+       (id, title, explanation, confidence, status, created_at, resolved_at,
+        application_id, action_kind, action_payload)
+     VALUES
+       (@id, @title, @explanation, @confidence, @status, @createdAt, @resolvedAt,
+        @applicationId, @actionKind, @actionPayload)
+     ON CONFLICT(id) DO NOTHING`
+  ).run({
+    id: suggestion.id,
+    title: suggestion.title,
+    explanation: suggestion.explanation,
+    confidence: suggestion.confidence,
+    status: suggestion.status,
+    createdAt: suggestion.createdAt,
+    resolvedAt: suggestion.resolvedAt ?? null,
+    applicationId: suggestion.applicationId ?? null,
+    actionKind: suggestion.action?.kind ?? null,
+    actionPayload: suggestion.action ? JSON.stringify(suggestion.action) : null
+  })
+}
+
+export function resolveSuggestion(
+  id: string,
+  status: 'accepted' | 'rejected' | 'dismissed'
+): Suggestion | null {
+  const db = getDatabase()
+  db.prepare(`UPDATE suggestions SET status = @status, resolved_at = @resolvedAt WHERE id = @id`).run(
+    { id, status, resolvedAt: Date.now() }
+  )
+  return getSuggestionById(id)
+}
+
+/** suggestion ids are always `suggestion:<pattern.id>`, and pattern.id is
+ *  always `<kindPrefix>:...` (see patternDetection.ts) — reused here to
+ *  scope the accept/reject history to one pattern kind without a schema
+ *  change. */
+function idPrefixForKind(kind: PatternKind): string {
+  switch (kind) {
+    case 'repeatedShortcut':
+      return 'suggestion:shortcut:'
+    case 'repeatedSequence':
+      return 'suggestion:sequence:'
+    case 'frequentControl':
+      return 'suggestion:control:'
+  }
+}
+
+/**
+ * The "UPDATE USER MODEL / IMPROVE FUTURE SUGGESTIONS" step of the
+ * learning loop (brainstorm.md section 14): a deterministic, explainable
+ * nudge based on this pattern kind's historical accept/reject ratio,
+ * bounded to +-0.15 so it can influence but never dominate a suggestion's
+ * base confidence.
+ */
+export function getConfidenceBiasForKind(kind: PatternKind): number {
+  const db = getDatabase()
+  const prefix = idPrefixForKind(kind)
+  const row = db
+    .prepare(
+      `SELECT
+         SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,
+         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
+       FROM suggestions
+       WHERE id LIKE @pattern ESCAPE '\\'`
+    )
+    .get({ pattern: `${escapeLike(prefix)}%` }) as {
+    accepted: number | null
+    rejected: number | null
+  }
+
+  const accepted = row.accepted ?? 0
+  const rejected = row.rejected ?? 0
+  const total = accepted + rejected
+  if (total === 0) return 0
+
+  const netRate = (accepted - rejected) / total
+  return netRate * 0.15
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (match) => `\\${match}`)
+}

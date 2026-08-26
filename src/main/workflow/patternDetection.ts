@@ -14,9 +14,12 @@ import type { DetectedPattern, WorkflowEvent } from '@shared/types'
  * suggestion engine (Phase 5) to act on it.
  */
 
-const REPEATED_SHORTCUT_THRESHOLD = 5
-const FREQUENT_CONTROL_THRESHOLD = 5
-const SEQUENCE_THRESHOLD = 3
+// Exported so the suggestion engine's confidence math (src/main/ai/
+// suggestionRules.ts) stays in sync with "how far past threshold" actually
+// means, instead of duplicating these numbers in a second file.
+export const REPEATED_SHORTCUT_THRESHOLD = 5
+export const FREQUENT_CONTROL_THRESHOLD = 5
+export const SEQUENCE_THRESHOLD = 3
 /** Two shortcuts count as "in sequence" only if they happen within this window. */
 const SEQUENCE_WINDOW_MS = 15_000
 
@@ -53,7 +56,8 @@ function detectRepeatedShortcuts(events: WorkflowEvent[]): DetectedPattern[] {
       kind: 'repeatedShortcut',
       applicationId: value.applicationId,
       description: `${value.comboKeys.join('+')} used ${value.count} times`,
-      count: value.count
+      count: value.count,
+      comboKeys: value.comboKeys
     })
   }
   return patterns
@@ -84,7 +88,8 @@ function detectFrequentControls(events: WorkflowEvent[]): DetectedPattern[] {
       kind: 'frequentControl',
       applicationId: value.applicationId,
       description: `Control "${value.controlId}" activated ${value.count} times`,
-      count: value.count
+      count: value.count,
+      controlId: value.controlId
     })
   }
   return patterns
@@ -125,7 +130,8 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
       kind: 'repeatedSequence',
       applicationId: value.applicationId,
       description: `${value.sequence.join(' → ')} repeated ${value.count} times`,
-      count: value.count
+      count: value.count,
+      sequence: value.sequence
     })
   }
   return patterns

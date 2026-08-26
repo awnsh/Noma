@@ -5,24 +5,30 @@ import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
 import type { CaptureService } from '../workflow/captureService'
+import type { SuggestionEngine } from '../ai/suggestionEngine'
 import {
   getWorkflowMonitoringEnabled,
   setWorkflowMonitoringEnabled
 } from '../database/repositories/settingsRepository'
 import { getWorkflowEventsSince } from '../database/repositories/workflowEventsRepository'
+import { getPendingSuggestions, resolveSuggestion } from '../database/repositories/suggestionsRepository'
+import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { assignSuggestionToControl } from '../applications/suggestionResolution'
 import { detectPatterns } from '../workflow/patternDetection'
-
-function startOfTodayMs(): number {
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-  return todayStart.getTime()
-}
+import { startOfTodayMs } from '../workflow/timeWindows'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
-  captureService: CaptureService
+  captureService: CaptureService,
+  suggestionEngine: SuggestionEngine,
+  /** Called with the affected application's id after a control is
+   *  reassigned, so the caller can push a live update if it's the one
+   *  currently focused. */
+  onProfileUpdated: (applicationId: string) => void
 ): void {
-  ipcMain.handle(IPC_CHANNELS.GET_FLOW_STATUS, (): FlowStatus => {
+  ipcMain.handle(IPC_CHANNELS.GET_FLOW_STATUS, async (): Promise<FlowStatus> => {
+    await suggestionEngine.refresh()
+
     const db = getDatabase()
     const todayStartMs = startOfTodayMs()
 
@@ -74,4 +80,27 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_DETECTED_PATTERNS, () =>
     detectPatterns(getWorkflowEventsSince(startOfTodayMs()))
   )
+
+  ipcMain.handle(IPC_CHANNELS.GET_SUGGESTIONS, async () => {
+    await suggestionEngine.refresh()
+    return getPendingSuggestions()
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.RESOLVE_SUGGESTION,
+    (_event, id: string, status: 'accepted' | 'rejected' | 'dismissed') =>
+      resolveSuggestion(id, status)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.GET_PROFILE_FOR_APPLICATION, (_event, applicationId: string) =>
+    getProfileForApplicationId(applicationId)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.ASSIGN_SUGGESTION_TO_CONTROL, (_event, suggestionId: string, slot: number) => {
+    const result = assignSuggestionToControl(suggestionId, slot)
+    if (result) {
+      onProfileUpdated(result.profile.applicationId)
+    }
+    return result
+  })
 }

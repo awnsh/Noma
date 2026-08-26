@@ -60,4 +60,33 @@ describe('comboFromKeydownEvent', () => {
     expect(comboFromKeydownEvent(keydown(UiohookKey.AltRight, { altKey: true }))).toBeNull()
     expect(comboFromKeydownEvent(keydown(UiohookKey.ShiftRight, { shiftKey: true }))).toBeNull()
   })
+
+  // These two cases exist specifically to demonstrate — not just assert —
+  // the guarantee documented in docs/security-review.md: typing a password
+  // never produces a captured combo, capitals and symbols included, because
+  // it never requires holding Control, Alt, or Meta.
+  it('captures nothing across an entire password typed with no modifiers', () => {
+    const password = [
+      UiohookKey.H,
+      UiohookKey.U,
+      UiohookKey.N,
+      UiohookKey.T,
+      UiohookKey.E,
+      UiohookKey.R,
+      UiohookKey[2] // the digit "2"
+    ]
+    const combos = password.map((keycode) => comboFromKeydownEvent(keydown(keycode)))
+    expect(combos.every((combo) => combo === null)).toBe(true)
+  })
+
+  it('captures nothing across a password typed with Shift for capitals and symbols', () => {
+    const password = [
+      keydown(UiohookKey.H, { shiftKey: true }), // "H"
+      keydown(UiohookKey.U), // "u"
+      keydown(UiohookKey[1], { shiftKey: true }), // "!"
+      keydown(UiohookKey[2], { shiftKey: true }) // "@"
+    ]
+    const combos = password.map(comboFromKeydownEvent)
+    expect(combos.every((combo) => combo === null)).toBe(true)
+  })
 })

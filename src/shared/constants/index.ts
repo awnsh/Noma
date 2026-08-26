@@ -10,7 +10,12 @@ export const IPC_CHANNELS = {
   REMOVE_MODULE: 'flow:remove-module',
   GET_WORKFLOW_MONITORING_ENABLED: 'flow:get-workflow-monitoring-enabled',
   SET_WORKFLOW_MONITORING_ENABLED: 'flow:set-workflow-monitoring-enabled',
-  GET_DETECTED_PATTERNS: 'flow:get-detected-patterns'
+  GET_DETECTED_PATTERNS: 'flow:get-detected-patterns',
+  GET_SUGGESTIONS: 'flow:get-suggestions',
+  RESOLVE_SUGGESTION: 'flow:resolve-suggestion',
+  SUGGESTIONS_CHANGED: 'flow:suggestions-changed',
+  GET_PROFILE_FOR_APPLICATION: 'flow:get-profile-for-application',
+  ASSIGN_SUGGESTION_TO_CONTROL: 'flow:assign-suggestion-to-control'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */
