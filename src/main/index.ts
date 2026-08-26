@@ -13,6 +13,7 @@ import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRe
 import { getConfidenceBiasForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
 import { LocalRuleBasedProvider } from './ai/localProvider'
 import { SuggestionEngine } from './ai/suggestionEngine'
+import { executeControlAction } from './actions/actionExecutor'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -115,17 +116,39 @@ app.whenReady().then(() => {
   hardwareDevice.onDeviceEvent((event) => {
     mainWindow?.webContents.send(IPC_CHANNELS.DEVICE_EVENT, event)
 
-    // A control activation is workflow metadata like any other — log it
-    // under the same enabled/disabled toggle as shortcut capture, tagged
-    // with whichever application was active when it happened.
-    if (event.type === 'buttonPress' && getWorkflowMonitoringEnabled()) {
-      insertWorkflowEvent({
-        applicationId: contextService.getContext().application?.id ?? null,
-        eventType: 'controlActivation',
-        controlId: event.controlId,
-        timestamp: Date.now()
-      })
-      void refreshSuggestions()
+    if (event.type === 'buttonPress') {
+      // A control activation is workflow metadata like any other — log it
+      // under the same enabled/disabled toggle as shortcut capture, tagged
+      // with whichever application was active when it happened.
+      if (getWorkflowMonitoringEnabled()) {
+        insertWorkflowEvent({
+          applicationId: contextService.getContext().application?.id ?? null,
+          eventType: 'controlActivation',
+          controlId: event.controlId,
+          timestamp: Date.now()
+        })
+        void refreshSuggestions()
+      }
+
+      // This is the "not just a pretty animation" step: actually run
+      // whatever this control is configured to do, against whichever real
+      // application was last focused (Flow's own window is excluded from
+      // detection specifically so this handle always points at that real
+      // target — see windowsAdapter.ts).
+      const control = contextService
+        .getContext()
+        .profile?.controls.find((item) => item.id === event.controlId)
+      if (control) {
+        void executeControlAction(control.action, osAdapter.getLastKnownWindowHandle()).then(
+          (result) => {
+            mainWindow?.webContents.send(IPC_CHANNELS.ACTION_EXECUTED, {
+              controlId: event.controlId,
+              ok: result.ok,
+              reason: result.reason
+            })
+          }
+        )
+      }
     }
   })
   void hardwareDevice.connect()

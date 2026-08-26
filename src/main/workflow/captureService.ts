@@ -1,23 +1,7 @@
-import { uIOhook, UiohookKey, type UiohookKeyboardEvent } from 'uiohook-napi'
+import { uIOhook, type UiohookKeyboardEvent } from 'uiohook-napi'
 import { shouldCaptureKeyCombo } from './captureFilter'
+import { MODIFIER_KEYCODES, keyNameForCode, type CommandModifierName } from './keyNames'
 import type { CapturedKeyEvent } from './types'
-
-type CommandModifierName = 'Control' | 'Alt' | 'Meta' | 'Shift'
-
-const MODIFIER_KEYCODES: Partial<Record<number, CommandModifierName>> = {
-  [UiohookKey.Ctrl]: 'Control',
-  [UiohookKey.CtrlRight]: 'Control',
-  [UiohookKey.Alt]: 'Alt',
-  [UiohookKey.AltRight]: 'Alt',
-  [UiohookKey.Meta]: 'Meta',
-  [UiohookKey.MetaRight]: 'Meta',
-  [UiohookKey.Shift]: 'Shift',
-  [UiohookKey.ShiftRight]: 'Shift'
-}
-
-const KEY_NAME_BY_CODE = new Map<number, string>(
-  Object.entries(UiohookKey).map(([name, code]) => [code as number, name])
-)
 
 /**
  * Builds the modifier-gated key combo for a single keydown event, or null
@@ -39,7 +23,7 @@ export function comboFromKeydownEvent(event: UiohookKeyboardEvent): string[] | n
     return null
   }
 
-  const pressedKeyName = KEY_NAME_BY_CODE.get(event.keycode)
+  const pressedKeyName = keyNameForCode(event.keycode)
   if (!pressedKeyName) {
     return null
   }

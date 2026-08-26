@@ -82,12 +82,14 @@ export class VirtualHardwareDevice implements HardwareDevice {
 
   /**
    * Simulates a physical button press for the given control — called when
-   * the user clicks a tile on the Virtual Keyboard page. Deliberately does
-   * NOT send a real keystroke to the OS: turning a simulated press into a
-   * real system-wide keystroke injection is a separate, more sensitive
-   * feature (see brainstorm.md section 16's caution about automating
-   * actions) that deserves its own explicit design pass, not a side effect
-   * of the hardware simulator.
+   * the user clicks a tile on the Virtual Keyboard page. This class itself
+   * never sends real input; it only reports "button N was pressed", the
+   * same DEVICE -> HOST fact a real STM32 device will eventually report
+   * over serial. What that press *means* — and actually executing it — is
+   * decided by a layer above (main/index.ts's device-event listener,
+   * dispatching to actionExecutor.ts), which is deliberate: the hardware
+   * layer shouldn't need to know what a "shortcut" or "macro" is, and a
+   * real firmware device couldn't either.
    */
   pressControl(controlId: string): void {
     const control = this.controls.find((item) => item.id === controlId)

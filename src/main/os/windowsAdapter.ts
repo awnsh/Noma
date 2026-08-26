@@ -8,6 +8,7 @@ interface RawForegroundWindowEvent {
   processName: string
   windowTitle: string
   path: string | null
+  hwnd: number
 }
 
 /**
@@ -31,6 +32,16 @@ interface RawForegroundWindowEvent {
  * push callback, so callers don't know or care. A future optimization can
  * replace the polling loop in POLL_SCRIPT with a SetWinEventHook + message
  * pump without changing this class's public shape at all.
+ *
+ * Flow's own window is deliberately excluded from detection (see
+ * `${flowProcessId}` below). Without this, clicking anything in the Flow
+ * app itself — including a Virtual Keyboard control — would make Flow the
+ * "active application", flipping Current Application/Controls to nothing
+ * every time the user touches the app. A real physical keyboard doesn't
+ * have this problem (pressing a button doesn't steal window focus), so
+ * the virtual one shouldn't either. This also means `lastKnownHwnd` always
+ * holds the real target window's handle, which is what makes refocus-then-
+ * execute (actionExecutor.ts) possible at all.
  */
 
 const POLL_INTERVAL_MS = 400
@@ -47,6 +58,7 @@ public class FlowWin32 {
 }
 "@
 
+$flowProcessId = ${process.pid}
 $lastProcessId = -1
 while ($true) {
   try {
@@ -54,7 +66,7 @@ while ($true) {
     if ($hwnd -ne [IntPtr]::Zero) {
       $procId = 0
       [FlowWin32]::GetWindowThreadProcessId($hwnd, [ref]$procId) | Out-Null
-      if ($procId -ne 0 -and $procId -ne $lastProcessId) {
+      if ($procId -ne 0 -and $procId -ne $flowProcessId -and $procId -ne $lastProcessId) {
         try {
           $proc = Get-Process -Id $procId -ErrorAction Stop
           $sb = New-Object System.Text.StringBuilder 256
@@ -64,6 +76,7 @@ while ($true) {
             processName = $proc.ProcessName
             windowTitle = $sb.ToString()
             path = $proc.Path
+            hwnd = [int64]$hwnd
           }
           Write-Output ($result | ConvertTo-Json -Compress)
           $lastProcessId = $procId
@@ -96,6 +109,7 @@ function toApplication(raw: RawForegroundWindowEvent): Application {
 export class WindowsOSAdapter implements OSAdapter {
   private child: ChildProcess | null = null
   private current: Application | null = null
+  private lastKnownHwnd: number | null = null
   private listeners = new Set<(app: Application | null) => void>()
 
   async getActiveApplication(): Promise<Application | null> {
@@ -109,6 +123,13 @@ export class WindowsOSAdapter implements OSAdapter {
     return () => {
       this.listeners.delete(callback)
     }
+  }
+
+  /** The window handle of the most recent real (non-Flow) foreground
+   *  application — used to refocus that window before synthesizing a
+   *  keystroke for it. Null until some real application has been seen. */
+  getLastKnownWindowHandle(): number | null {
+    return this.lastKnownHwnd
   }
 
   /** Stops the helper process. Call on app quit. */
@@ -135,6 +156,7 @@ export class WindowsOSAdapter implements OSAdapter {
           const raw = JSON.parse(trimmed) as RawForegroundWindowEvent
           const application = toApplication(raw)
           this.current = application
+          this.lastKnownHwnd = raw.hwnd
           for (const listener of this.listeners) listener(application)
         } catch {
           // Malformed/partial line — ignore, next line will resync.

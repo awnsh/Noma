@@ -170,6 +170,15 @@ export type DetectedPattern =
   | (DetectedPatternBase & { kind: 'repeatedSequence'; sequence: string[] })
   | (DetectedPatternBase & { kind: 'frequentControl'; controlId: string })
 
+/** Whether pressing a control actually did what it was configured to do —
+ *  pushed after every press so a failure (e.g. couldn't focus the target
+ *  window) is visible, not silent. See actionExecutor.ts. */
+export interface ActionExecutionEvent {
+  controlId: string
+  ok: boolean
+  reason?: string
+}
+
 /**
  * The contract exposed to the renderer via the preload bridge
  * (window.flow). Defined here so both main and renderer type-check
@@ -185,8 +194,15 @@ export interface FlowApi {
   onHardwareStatusChanged(callback: (status: DeviceStatus) => void): () => void
   /** Subscribes to DEVICE → HOST events (button presses, module changes). Returns an unsubscribe function. */
   onDeviceEvent(callback: (event: DeviceEvent) => void): () => void
-  /** Simulates a physical press of the given control on the virtual keyboard. */
+  /**
+   * Presses the given control on the virtual keyboard. This actually
+   * executes the control's configured action (sends the real shortcut,
+   * plays the macro, or runs the system command) — see
+   * docs/architecture.md's "Real execution" section. Not a simulation.
+   */
   pressControl(controlId: string): Promise<void>
+  /** Subscribes to the outcome of each pressControl call. Returns an unsubscribe function. */
+  onActionExecuted(callback: (event: ActionExecutionEvent) => void): () => void
   addModule(moduleType: string): Promise<void>
   removeModule(moduleId: string): Promise<void>
   /** Whether Flow is currently watching for command-modifier shortcuts. Off by default. */

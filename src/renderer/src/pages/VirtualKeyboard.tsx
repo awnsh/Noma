@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
+import { KeyboardLayout } from '../components/KeyboardLayout'
 import { VirtualControlButton } from '../components/VirtualControlButton'
 import { ModuleChip } from '../components/ModuleChip'
 import { AddModuleMenu } from '../components/AddModuleMenu'
+import { SuggestionsPanel } from '../components/SuggestionsPanel'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
   switch (event.type) {
@@ -20,8 +22,17 @@ function describeEvent(event: { type: string } & Record<string, unknown>): strin
 }
 
 export function VirtualKeyboard() {
-  const { status, lastEvent, isLoading, refresh, subscribe, pressControl, addModule, removeModule } =
-    useHardwareStore()
+  const {
+    status,
+    lastEvent,
+    lastExecution,
+    isLoading,
+    refresh,
+    subscribe,
+    pressControl,
+    addModule,
+    removeModule
+  } = useHardwareStore()
   const [flashEvent, setFlashEvent] = useState(false)
 
   useEffect(() => {
@@ -45,8 +56,10 @@ export function VirtualKeyboard() {
         <div>
           <h1 className="text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            A software simulation of the physical device. It will be replaced/connected to real
-            STM32 hardware later — see docs/architecture.md.
+            A digital twin of the eventual physical device. MUTE and CLOSE WINDOW controls really
+            execute; keyboard-shortcut controls (RUN, RELOAD, etc.) are logged and flashed only —
+            real keystroke sending is temporarily disabled after crashing Chrome twice during
+            testing. See "Real execution" in docs/architecture.md.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs">
@@ -59,13 +72,15 @@ export function VirtualKeyboard() {
 
       {/* The deck */}
       <div className="rounded-3xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/40">
+        <KeyboardLayout />
+
         {/* Display strip */}
         <div className="mb-6 rounded-xl border border-white/10 bg-black px-4 py-3 font-mono text-sm text-accent">
           {statusDisplay}
         </div>
 
         {/* Contextual controls */}
-        <div className="mb-6 grid grid-cols-4 gap-4">
+        <div className="mb-3 grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((slot) => (
             <VirtualControlButton
               key={slot}
@@ -76,13 +91,18 @@ export function VirtualKeyboard() {
           ))}
         </div>
 
-        {/* Last device event, for visibility into the DEVICE -> HOST path */}
+        {/* Last device event + whether the action actually executed */}
         <div
           className={`mb-6 rounded-lg border px-3 py-2 text-xs transition-colors ${
             flashEvent ? 'border-accent-muted text-accent' : 'border-white/5 text-neutral-600'
           }`}
         >
           {lastEvent ? describeEvent(lastEvent) : 'No device events yet — press a control above.'}
+          {lastExecution && (
+            <span className={lastExecution.ok ? 'ml-2 text-accent' : 'ml-2 text-red-400'}>
+              {lastExecution.ok ? '✓ executed' : `✗ ${lastExecution.reason ?? 'failed'}`}
+            </span>
+          )}
         </div>
 
         {/* Modular slots */}
@@ -97,6 +117,10 @@ export function VirtualKeyboard() {
             <AddModuleMenu onAdd={addModule} />
           </div>
         </div>
+      </div>
+
+      <div className="mt-8">
+        <SuggestionsPanel />
       </div>
     </div>
   )

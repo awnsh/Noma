@@ -15,7 +15,8 @@ export const IPC_CHANNELS = {
   RESOLVE_SUGGESTION: 'flow:resolve-suggestion',
   SUGGESTIONS_CHANGED: 'flow:suggestions-changed',
   GET_PROFILE_FOR_APPLICATION: 'flow:get-profile-for-application',
-  ASSIGN_SUGGESTION_TO_CONTROL: 'flow:assign-suggestion-to-control'
+  ASSIGN_SUGGESTION_TO_CONTROL: 'flow:assign-suggestion-to-control',
+  ACTION_EXECUTED: 'flow:action-executed'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */

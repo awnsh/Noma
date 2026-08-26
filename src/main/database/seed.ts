@@ -33,7 +33,7 @@ const SEED_APPLICATIONS: SeedApplication[] = [
     controls: [
       { slot: 1, label: 'RUN', action: { type: 'shortcut', keys: ['Control', 'F5'] } },
       { slot: 2, label: 'DEBUG', action: { type: 'shortcut', keys: ['F5'] } },
-      { slot: 3, label: 'TERMINAL', action: { type: 'shortcut', keys: ['Control', '`'] } },
+      { slot: 3, label: 'TERMINAL', action: { type: 'shortcut', keys: ['Control', 'Backquote'] } },
       { slot: 4, label: 'SEARCH', action: { type: 'shortcut', keys: ['Control', 'Shift', 'F'] } }
     ]
   },
@@ -44,7 +44,10 @@ const SEED_APPLICATIONS: SeedApplication[] = [
     profileName: 'Browsing',
     controls: [
       { slot: 1, label: 'NEW TAB', action: { type: 'shortcut', keys: ['Control', 'T'] } },
-      { slot: 2, label: 'CLOSE TAB', action: { type: 'shortcut', keys: ['Control', 'W'] } },
+      // Not Ctrl+W: that's a blocked keystroke combo (see actionExecutor.ts's
+      // BLOCKED_COMBOS — the real incident that prompted it). This closes
+      // the window gracefully via WM_CLOSE instead, same as clicking X.
+      { slot: 2, label: 'CLOSE WINDOW', action: { type: 'flowAction', action: 'closeWindow' } },
       { slot: 3, label: 'RELOAD', action: { type: 'shortcut', keys: ['Control', 'R'] } },
       { slot: 4, label: 'FIND', action: { type: 'shortcut', keys: ['Control', 'F'] } }
     ]
@@ -55,10 +58,13 @@ const SEED_APPLICATIONS: SeedApplication[] = [
     processName: 'Spotify.exe',
     profileName: 'Music',
     controls: [
-      { slot: 1, label: 'PREVIOUS', action: { type: 'shortcut', keys: ['Control', 'Left'] } },
+      { slot: 1, label: 'PREVIOUS', action: { type: 'shortcut', keys: ['Control', 'ArrowLeft'] } },
       { slot: 2, label: 'PLAY / PAUSE', action: { type: 'shortcut', keys: ['Space'] } },
-      { slot: 3, label: 'NEXT', action: { type: 'shortcut', keys: ['Control', 'Right'] } },
-      { slot: 4, label: 'VOLUME', action: { type: 'flowAction', action: 'volume' } }
+      { slot: 3, label: 'NEXT', action: { type: 'shortcut', keys: ['Control', 'ArrowRight'] } },
+      // A single button can't do continuous volume (that's what a future
+      // Rotary Encoder Module is for) — mute/unmute toggle is the honest,
+      // demonstrable action a discrete control can actually perform.
+      { slot: 4, label: 'MUTE', action: { type: 'systemCommand', command: 'volumeMute' } }
     ]
   }
 ]

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { DeviceEvent, DeviceStatus } from '@shared/types'
+import type { ActionExecutionEvent, DeviceEvent, DeviceStatus } from '@shared/types'
 
 const EMPTY_STATUS: DeviceStatus = {
   connected: false,
@@ -13,6 +13,9 @@ const EMPTY_STATUS: DeviceStatus = {
 interface HardwareStoreState {
   status: DeviceStatus
   lastEvent: DeviceEvent | null
+  /** The outcome of the most recent pressControl — whether it actually
+   *  executed, and why not if it didn't. See docs/architecture.md. */
+  lastExecution: ActionExecutionEvent | null
   isLoading: boolean
   refresh: () => Promise<void>
   /** Subscribes to live hardware status + device events. Returns an unsubscribe function. */
@@ -25,6 +28,7 @@ interface HardwareStoreState {
 export const useHardwareStore = create<HardwareStoreState>((set) => ({
   status: EMPTY_STATUS,
   lastEvent: null,
+  lastExecution: null,
   isLoading: true,
   refresh: async () => {
     set({ isLoading: true })
@@ -38,9 +42,13 @@ export const useHardwareStore = create<HardwareStoreState>((set) => ({
     const unsubscribeEvent = window.flow.onDeviceEvent((event) => {
       set({ lastEvent: event })
     })
+    const unsubscribeExecution = window.flow.onActionExecuted((event) => {
+      set({ lastExecution: event })
+    })
     return () => {
       unsubscribeStatus()
       unsubscribeEvent()
+      unsubscribeExecution()
     }
   },
   pressControl: (controlId) => window.flow.pressControl(controlId),

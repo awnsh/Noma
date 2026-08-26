@@ -1,6 +1,13 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
-import type { ApplicationContext, DeviceEvent, DeviceStatus, FlowApi, Suggestion } from '@shared/types'
+import type {
+  ActionExecutionEvent,
+  ApplicationContext,
+  DeviceEvent,
+  DeviceStatus,
+  FlowApi,
+  Suggestion
+} from '@shared/types'
 
 const flowApi: FlowApi = {
   getFlowStatus: () => ipcRenderer.invoke(IPC_CHANNELS.GET_FLOW_STATUS),
@@ -30,6 +37,14 @@ const flowApi: FlowApi = {
     }
   },
   pressControl: (controlId) => ipcRenderer.invoke(IPC_CHANNELS.PRESS_CONTROL, controlId),
+  onActionExecuted: (callback) => {
+    const listener = (_event: IpcRendererEvent, executionEvent: ActionExecutionEvent): void =>
+      callback(executionEvent)
+    ipcRenderer.on(IPC_CHANNELS.ACTION_EXECUTED, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.ACTION_EXECUTED, listener)
+    }
+  },
   addModule: (moduleType) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MODULE, moduleType),
   removeModule: (moduleId) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_MODULE, moduleId),
 

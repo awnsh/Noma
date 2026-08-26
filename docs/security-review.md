@@ -72,7 +72,77 @@ relying on Electron's current defaults happening to be safe:
   (`default-src 'self'; script-src 'self'`), so even a successful content
   injection can't pull in an external script.
 
-## 4. Database
+## 4. Real action execution — a new surface, reviewed on its own terms
+
+As of the "functional digital twin" work, pressing a virtual control can
+send real synthetic input. This is a materially different risk category
+from everything above — it's not passive observation, it's the app acting
+on the computer — so it gets its own explicit review rather than folding
+into "capture."
+
+**Update: keystroke execution is currently disabled.** Two real crashes in
+a row (Chrome left unable to reopen; Chrome crashing on a plain reload),
+both through the same `AttachThreadInput` + `uIOhook.keyTap` path,
+were enough to turn it off outright (`KEYSTROKE_EXECUTION_ENABLED = false`
+in `actionExecutor.ts`) rather than keep patching individual symptoms. The
+closed-vocabulary and blocklist properties below are still real and still
+tested — they're what a re-enabled version would rely on — but right now
+`shortcut` and `macro` controls send nothing at all. `systemCommand`
+(volume) and `flowAction: 'closeWindow'` are unaffected: neither uses
+`AttachThreadInput` or `uIOhook`, so neither shares the failure mode that
+caused this.
+
+- **Closed vocabulary, both directions.** Every key name Flow can *send* is
+  drawn from the exact same table it uses to *recognize* incoming keys
+  (`keyNames.ts`) — a name outside that vocabulary resolves to nothing and
+  execution is refused (`resolveShortcutParts` returns `null`; see
+  `actionExecutor.test.ts`). There is no code path that sends arbitrary
+  typed text, ever — only pre-configured combos that were themselves
+  validated (either captured under the modifier-gated policy, or entered as
+  a Control's configuration).
+- **`systemCommand` is an allowlist, not a shell.** The field is typed as a
+  free string on `ControlAction`, but `systemCommands.ts` only executes an
+  *exact match* against three hardcoded volume commands
+  (`isKnownSystemCommand`) — the string is never passed to a shell or
+  interpreted as a command name. Anything else is refused, tested directly
+  in `systemCommands.test.ts`.
+- **No arbitrary process execution.** Nothing in the execution path calls
+  `exec`/`execFile`/`shell.openItem` with any value derived from stored or
+  suggested data. The two PowerShell scripts involved
+  (`windowFocus.ts`, `systemCommands.ts`) are fixed script text with only
+  numeric values (a window handle, a virtual-key code) interpolated in —
+  never a string that could contain shell syntax.
+- **Fails closed on window targeting.** A shortcut/macro is refused outright
+  if Flow can't *confirm* the intended window actually became focused (see
+  `docs/architecture.md`'s "Real execution" section) — the alternative,
+  sending it to whatever's focused and hoping, was rejected specifically
+  because a misdirected keystroke is worse than a missed one.
+- **Window-closing shortcuts are blocked outright — learned the hard way.**
+  Early in this feature, sending `Ctrl+W` to Chrome's last tab closed its
+  only window and left Chrome running as an unresponsive background
+  process — every `chrome.exe` had to be killed by hand before it would
+  open again. `Alt+F4`/`Ctrl+W`/`Ctrl+Shift+W`/`Ctrl+Q`/`Ctrl+F4` are now
+  refused before anything is sent, for both direct shortcuts and macro
+  steps (`isBlockedShortcut` in `actionExecutor.ts`, tested directly). This
+  is a fixed blocklist, not a general "is this combo dangerous" classifier
+  — treat it as a specific fix for a specific class of failure, not a
+  guarantee that every risky combo is covered.
+- **Closing is still possible, but only via a graceful path.**
+  `flowAction: 'closeWindow'` (`windowClose.ts`) posts `WM_CLOSE` — the
+  same message a title bar's X sends — directly to the target window
+  handle. No keystroke, no focus-stealing (`WM_CLOSE` can target any
+  window regardless of what's focused), and never a forceful process
+  termination; the target app decides how to respond, same as a real
+  click. This exists specifically because the *keystroke* route to closing
+  a window was the risky part, not the concept of closing one.
+- **What this doesn't defend against:** a control's action is only ever as
+  trustworthy as how it was configured. Today that's exclusively via seed
+  data or accepting a suggestion generated from the user's own captured
+  behavior — there's no remote or multi-user path that could inject an
+  action into a profile. That constraint matters and should be re-checked
+  if a shared-profile or cloud-sync feature is ever added.
+
+## 5. Database
 
 - All queries go through `better-sqlite3`'s parameterized `.prepare(...).run(params)` /
   `.get(params)` / `.all(params)` — no raw string concatenation of
@@ -87,7 +157,7 @@ relying on Electron's current defaults happening to be safe:
   would matter far more if a future feature ever stored actual content
   (e.g. clipboard, screenshots). Revisit before any such feature ships.
 
-## 5. Dependencies
+## 6. Dependencies
 
 Two native dependencies (`better-sqlite3`, `uiohook-napi`) are used
 specifically because they ship N-API prebuilt binaries — no source
