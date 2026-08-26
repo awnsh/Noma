@@ -4,6 +4,7 @@ import type {
   ActionExecutionEvent,
   ApplicationContext,
   DeviceEvent,
+  DeviceLogEntry,
   DeviceStatus,
   FlowApi,
   Suggestion
@@ -67,7 +68,17 @@ const flowApi: FlowApi = {
   getProfileForApplication: (applicationId) =>
     ipcRenderer.invoke(IPC_CHANNELS.GET_PROFILE_FOR_APPLICATION, applicationId),
   assignSuggestionToControl: (suggestionId, slot) =>
-    ipcRenderer.invoke(IPC_CHANNELS.ASSIGN_SUGGESTION_TO_CONTROL, suggestionId, slot)
+    ipcRenderer.invoke(IPC_CHANNELS.ASSIGN_SUGGESTION_TO_CONTROL, suggestionId, slot),
+
+  getDeviceLog: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DEVICE_LOG),
+  onDeviceLogEntry: (callback) => {
+    const listener = (_event: IpcRendererEvent, entry: DeviceLogEntry): void => callback(entry)
+    ipcRenderer.on(IPC_CHANNELS.DEVICE_LOG_ENTRY, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.DEVICE_LOG_ENTRY, listener)
+    }
+  },
+  getExecutionStatus: () => ipcRenderer.invoke(IPC_CHANNELS.GET_EXECUTION_STATUS)
 }
 
 if (process.contextIsolated) {

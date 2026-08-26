@@ -16,6 +16,7 @@ import { getProfileForApplicationId } from '../database/repositories/profileRepo
 import { assignSuggestionToControl } from '../applications/suggestionResolution'
 import { detectPatterns } from '../workflow/patternDetection'
 import { startOfTodayMs } from '../workflow/timeWindows'
+import { isKeystrokeExecutionEnabled } from '../actions/actionExecutor'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -103,4 +104,10 @@ export function registerIpcHandlers(
     }
     return result
   })
+
+  ipcMain.handle(IPC_CHANNELS.GET_DEVICE_LOG, () => getDefaultHardwareDevice().getLog())
+
+  ipcMain.handle(IPC_CHANNELS.GET_EXECUTION_STATUS, () => ({
+    keystrokeExecutionEnabled: isKeystrokeExecutionEnabled()
+  }))
 }

@@ -1,90 +1,32 @@
-import { spawn } from 'child_process'
+import { GetForegroundWindow, IsWindow, SetForegroundWindow } from './win32'
 
 /**
- * Best-effort: brings the given window handle to the foreground, then
- * verifies it actually worked before returning.
+ * Focuses the target window and confirms the switch actually landed
+ * before returning true. Fails closed: if it can't confirm, the caller
+ * must not send a synthetic keystroke — a misdirected one is worse than a
+ * missed one (unchanged from the original design).
  *
- * Why not a plain SetForegroundWindow call: Windows restricts which
- * process can steal the foreground — generally only the process that most
- * recently received user input is allowed to. A short-lived PowerShell
- * process spawned *after* the user's click never received that input
- * itself, so a naive SetForegroundWindow from it is likely to silently
- * fail (Windows just flashes the target's taskbar icon instead). The
- * AttachThreadInput dance below is the standard, well-established
- * workaround: temporarily attach input state to the currently-foreground
- * window's thread (which the user DID just click into) before asking for
- * the switch.
+ * REDESIGNED after two real incidents (see docs/architecture.md's "Real
+ * execution" section for the full account) with the old
+ * AttachThreadInput-based approach, which ran inside a freshly-spawned
+ * PowerShell child process. That child process had never itself received
+ * any user input, which is exactly the condition Windows' foreground-lock
+ * is designed to block — AttachThreadInput was a workaround for fighting
+ * that restriction, and workarounds for OS security restrictions are
+ * exactly the kind of thing worth being suspicious of after two crashes.
  *
- * Fails closed: if the resulting foreground window doesn't match the
- * target, returns false rather than proceeding — callers must not send a
- * synthetic keystroke without this confirming true first (see
- * actionExecutor.ts). Sending a shortcut to the wrong window is worse than
- * not sending it at all.
+ * This version calls SetForegroundWindow directly from Flow's own main
+ * process — no spawned process, no AttachThreadInput, no workaround
+ * needed at all. That's because the call happens synchronously inside the
+ * same event-loop tick as the click that triggered it: Flow's process is
+ * *itself* the current foreground process at that moment (it just
+ * received the click), and Windows explicitly permits the foreground
+ * process to hand foreground status to another window — this is the
+ * ordinary, sanctioned case the API exists for, not an edge case being
+ * routed around.
  */
-export async function focusWindowAndVerify(targetHwnd: number): Promise<boolean> {
-  const script = `
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class FlowFocus {
-  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
-  [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
-  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
-  [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
-  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-  [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
-}
-"@
-
-$targetHwnd = [IntPtr]${targetHwnd}
-$currentFg = [FlowFocus]::GetForegroundWindow()
-$callingThreadId = [FlowFocus]::GetCurrentThreadId()
-$fgThreadId = 0
-[FlowFocus]::GetWindowThreadProcessId($currentFg, [ref]$fgThreadId) | Out-Null
-$targetThreadId = 0
-[FlowFocus]::GetWindowThreadProcessId($targetHwnd, [ref]$targetThreadId) | Out-Null
-
-[FlowFocus]::AttachThreadInput($fgThreadId, $targetThreadId, $true) | Out-Null
-[FlowFocus]::ShowWindow($targetHwnd, 5) | Out-Null
-[FlowFocus]::BringWindowToTop($targetHwnd) | Out-Null
-[FlowFocus]::SetForegroundWindow($targetHwnd) | Out-Null
-[FlowFocus]::AttachThreadInput($fgThreadId, $targetThreadId, $false) | Out-Null
-
-Start-Sleep -Milliseconds 60
-Write-Output ([int64][FlowFocus]::GetForegroundWindow())
-`
-
-  const resultingHwnd = await runPowerShell(script)
-  if (resultingHwnd === null) return false
-  return Number(resultingHwnd.trim()) === targetHwnd
-}
-
-function runPowerShell(script: string, timeoutMs = 3000): Promise<string | null> {
-  return new Promise((resolve) => {
-    const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'ignore']
-    })
-
-    let output = ''
-    let settled = false
-    const finish = (value: string | null): void => {
-      if (settled) return
-      settled = true
-      clearTimeout(timer)
-      resolve(value)
-    }
-
-    const timer = setTimeout(() => {
-      child.kill()
-      finish(null)
-    }, timeoutMs)
-
-    child.stdout?.on('data', (chunk: Buffer) => {
-      output += chunk.toString()
-    })
-    child.on('exit', (code) => finish(code === 0 ? output : null))
-    child.on('error', () => finish(null))
-  })
+export function focusWindowAndVerify(targetHwnd: number): boolean {
+  if (!IsWindow(targetHwnd)) return false
+  SetForegroundWindow(targetHwnd)
+  return GetForegroundWindow() === targetHwnd
 }

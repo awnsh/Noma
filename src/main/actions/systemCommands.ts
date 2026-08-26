@@ -1,4 +1,4 @@
-import { spawn } from 'child_process'
+import { KEYEVENTF_KEYUP, KeybdEvent } from './win32'
 
 /**
  * A closed allowlist — never an arbitrary shell command, even though
@@ -23,37 +23,11 @@ export function isKnownSystemCommand(command: string): boolean {
  * keybd_event. These are handled by the OS audio subsystem globally —
  * unlike a shortcut, no window needs to be focused first.
  */
-export async function executeSystemCommand(command: string): Promise<boolean> {
+export function executeSystemCommand(command: string): boolean {
   const virtualKey = VOLUME_VIRTUAL_KEYS[command]
   if (virtualKey === undefined) return false
 
-  const script = `
-Add-Type @"
-using System.Runtime.InteropServices;
-public class FlowVolume {
-  [DllImport("user32.dll")] public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-}
-"@
-[FlowVolume]::keybd_event(${virtualKey}, 0, 0, [UIntPtr]::Zero)
-[FlowVolume]::keybd_event(${virtualKey}, 0, 2, [UIntPtr]::Zero)
-`
-
-  return new Promise((resolve) => {
-    const child = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], {
-      windowsHide: true,
-      stdio: 'ignore'
-    })
-    const timer = setTimeout(() => {
-      child.kill()
-      resolve(false)
-    }, 3000)
-    child.on('exit', (code) => {
-      clearTimeout(timer)
-      resolve(code === 0)
-    })
-    child.on('error', () => {
-      clearTimeout(timer)
-      resolve(false)
-    })
-  })
+  KeybdEvent(virtualKey, 0, 0, 0)
+  KeybdEvent(virtualKey, 0, KEYEVENTF_KEYUP, 0)
+  return true
 }

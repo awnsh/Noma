@@ -27,46 +27,50 @@ export interface ExecutionResult {
 }
 
 /**
- * Real keystroke execution — both direct `shortcut` controls and `macro`
- * playback — is temporarily disabled, full stop.
+ * Keystroke execution (shortcut/macro controls) — re-enabled after a
+ * redesign, following two real incidents with the previous mechanism.
  *
- * Two separate real-world incidents happened back to back through this
- * exact path (windowFocus.ts's `AttachThreadInput` dance, then
- * uIOhook.keyTap): first Chrome left unable to reopen after a configured
- * Ctrl+W, then Chrome crashing outright on a plain Ctrl+R (reload) — an
- * ordinary shortcut with nothing to do with closing anything. Two
- * incidents from the same mechanism, on two different actions, is enough
- * signal to stop shipping it — and not enough signal to know which half
- * (the focus dance, the synthetic keypress, or their interaction) is
- * actually responsible, so both are disabled together rather than
- * guessing which one to keep.
+ * What happened: the old windowFocus.ts used an `AttachThreadInput`
+ * dance run inside a *freshly-spawned PowerShell child process* to work
+ * around Windows' foreground-lock restriction. Chrome was left unable to
+ * reopen after a configured Ctrl+W, then crashed outright on a plain
+ * Ctrl+R — two different actions, one shared mechanism.
  *
- * Pressing a shortcut/macro-mapped control still logs the press and
- * flashes in the UI (VirtualHardwareDevice's buttonPress event is
- * untouched) — it just never reaches uIOhook.keyTap until this is
- * redesigned and far more thoroughly verified. `systemCommand` (volume)
- * and `flowAction: 'closeWindow'` are unaffected: neither uses
- * AttachThreadInput or uIOhook at all, so neither shares this failure
- * mode. See docs/architecture.md's "Real execution" section.
+ * What changed: windowFocus.ts no longer spawns anything or uses
+ * AttachThreadInput at all. It calls `SetForegroundWindow` directly from
+ * Flow's own main process via `koffi` (an FFI library with prebuilt
+ * binaries), synchronously, in the same tick as the click that triggered
+ * it. That matters because Flow's process — not some unrelated freshly
+ * spawned child — is the one that just received the user's input, which
+ * is exactly the ordinary case `SetForegroundWindow` is designed to
+ * allow. `AttachThreadInput` existed specifically to work around *not*
+ * having that standing; removing the need for the workaround removes the
+ * failure mode it was implicated in.
+ *
+ * This constant exists so the whole mechanism can still be switched off
+ * in one place if something goes wrong again — see
+ * docs/architecture.md's "Real execution" section.
  */
-const KEYSTROKE_EXECUTION_ENABLED = false
+const KEYSTROKE_EXECUTION_ENABLED = true
 const KEYSTROKE_EXECUTION_DISABLED_REASON =
-  'Keystroke execution is temporarily disabled after real crashes during testing — see docs/architecture.md'
+  'Keystroke execution is temporarily disabled — see docs/architecture.md'
+
+/** Surfaced in Developer Mode so the current state is never a silent surprise. */
+export function isKeystrokeExecutionEnabled(): boolean {
+  return KEYSTROKE_EXECUTION_ENABLED
+}
 
 /**
  * Shortcuts that can close a window or quit an application entirely.
  *
- * Added after a real incident: sending Ctrl+W to Chrome's last tab closed
- * its only window right as Flow's window-focus dance
- * (windowFocus.ts's AttachThreadInput trick) was touching that same
- * window, leaving Chrome running in the background but unable to open a
- * new window — "Chrome won't open anymore" until every chrome.exe process
- * was killed by hand. Whether or not the focus dance was the exact
- * mechanism, closing a window is a fundamentally different risk than
- * pressing Ctrl+S or Ctrl+F5: it can end a whole application's session.
- * Per brainstorm.md section 16's caution about automating potentially
- * dangerous actions, these never execute — refused with a clear reason,
- * same as an unrecognized key name. Order-independent (checked as a set).
+ * Kept even after the windowFocus.ts redesign above: closing a window is
+ * a fundamentally different risk than pressing Ctrl+S or Ctrl+F5 — it can
+ * end a whole application's session — and it already has a dedicated,
+ * genuinely safer path (`flowAction: 'closeWindow'` / windowClose.ts, no
+ * keystroke at all). Per brainstorm.md section 16's caution about
+ * automating potentially dangerous actions, these never execute as a
+ * keystroke — refused with a clear reason, same as an unrecognized key
+ * name. Order-independent (checked as a set).
  */
 const BLOCKED_COMBOS: string[][] = [
   ['Alt', 'F4'],
@@ -148,9 +152,9 @@ function sleep(ms: number): Promise<void> {
  * `targetHwnd: null` means "send without refocusing" (used for the
  * currently-focused app, where no refocus is needed).
  */
-async function focusThenSend(comboKeys: string[], targetHwnd: number | null): Promise<ExecutionResult> {
+function focusThenSend(comboKeys: string[], targetHwnd: number | null): ExecutionResult {
   if (targetHwnd !== null) {
-    const focused = await focusWindowAndVerify(targetHwnd)
+    const focused = focusWindowAndVerify(targetHwnd)
     if (!focused) {
       return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
     }
@@ -196,11 +200,8 @@ export async function executeControlAction(
       if (!macro) return { ok: false, reason: 'Macro not found' }
       if (!macro.enabled) return { ok: false, reason: 'Macro is disabled' }
 
-      if (targetHwnd !== null) {
-        const focused = await focusWindowAndVerify(targetHwnd)
-        if (!focused) {
-          return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
-        }
+      if (targetHwnd !== null && !focusWindowAndVerify(targetHwnd)) {
+        return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
       }
 
       for (const step of macro.actions) {
@@ -215,14 +216,14 @@ export async function executeControlAction(
       if (!isKnownSystemCommand(action.command)) {
         return { ok: false, reason: `Unknown system command: ${action.command}` }
       }
-      return { ok: await executeSystemCommand(action.command) }
+      return { ok: executeSystemCommand(action.command) }
 
     case 'flowAction':
       if (isKnownFlowAction(action.action)) {
         if (targetHwnd === null) {
           return { ok: false, reason: 'No known target window to close' }
         }
-        const posted = await closeWindowGracefully(targetHwnd)
+        const posted = closeWindowGracefully(targetHwnd)
         return posted
           ? { ok: true }
           : { ok: false, reason: 'Could not deliver the close message to the target window' }

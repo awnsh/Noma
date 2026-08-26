@@ -180,6 +180,30 @@ export interface ActionExecutionEvent {
 }
 
 /**
+ * A single HOST<->DEVICE communication event, logged for Developer Mode
+ * (brainstorm.md section 20) using the same message names as the future
+ * STM32 wire protocol (docs/hardware-protocol.md) — SET_CONTROLS,
+ * SET_DISPLAY, BUTTON_PRESS, and so on. `toDevice` entries are host
+ * commands (today: calls into VirtualHardwareDevice); `fromDevice`
+ * entries are the DeviceEvents the device raises. This is exactly the log
+ * a real firmware bridge will need once real hardware exists.
+ */
+export interface DeviceLogEntry {
+  direction: 'toDevice' | 'fromDevice'
+  type: string
+  detail?: string
+  timestamp: number
+}
+
+/** Whether real keystroke sending (shortcut/macro controls) is currently
+ *  enabled — see the big comment at KEYSTROKE_EXECUTION_ENABLED in
+ *  actionExecutor.ts. Surfaced in Developer Mode so it's never a silent
+ *  surprise why a control isn't doing anything. */
+export interface ExecutionStatus {
+  keystrokeExecutionEnabled: boolean
+}
+
+/**
  * The contract exposed to the renderer via the preload bridge
  * (window.flow). Defined here so both main and renderer type-check
  * against the same shape without importing across process boundaries.
@@ -227,4 +251,9 @@ export interface FlowApi {
     suggestionId: string,
     slot: number
   ): Promise<{ suggestion: Suggestion; profile: ApplicationProfile } | null>
+  /** The HOST<->DEVICE log, most recent last, capped in size. See DeviceLogEntry. */
+  getDeviceLog(): Promise<DeviceLogEntry[]>
+  /** Subscribes to live device-log entries as they happen. Returns an unsubscribe function. */
+  onDeviceLogEntry(callback: (entry: DeviceLogEntry) => void): () => void
+  getExecutionStatus(): Promise<ExecutionStatus>
 }

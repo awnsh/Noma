@@ -109,18 +109,17 @@ control's configured action for real. This section is the design and
 safety reasoning for that, since "actually control the computer" is a
 meaningfully bigger trust step than anything earlier in the app.
 
-> **Current status: keystroke execution (shortcut/macro) is disabled.**
+> **Current status: keystroke execution is enabled, following a redesign.**
 > Two real-world incidents in a row — Chrome left unable to reopen after a
 > configured `Ctrl+W`, then Chrome crashing outright on a plain `Ctrl+R` —
-> both happened through the focus-dance + `uIOhook.keyTap` path described
-> below. `KEYSTROKE_EXECUTION_ENABLED = false` in `actionExecutor.ts` turns
-> it off entirely until that mechanism is redesigned and far more
-> thoroughly verified; a shortcut/macro control still logs its press and
-> flashes in the UI, it just never reaches `keyTap`. `systemCommand`
-> (volume) and `flowAction: 'closeWindow'` are unaffected and still
-> execute for real — neither uses the focus dance or `uIOhook` at all. The
-> rest of this section describes the design as built; treat the
-> shortcut/macro half as currently inert.
+> both happened through an `AttachThreadInput`-based focus dance run inside
+> a freshly-spawned PowerShell child process, immediately followed by
+> `uIOhook.keyTap`. `windowFocus.ts` no longer spawns anything or uses
+> `AttachThreadInput` — see "Refocus, but verify, or refuse" below for the
+> full redesign and the reasoning for why it addresses the actual cause,
+> not just the symptoms. `KEYSTROKE_EXECUTION_ENABLED = true` in
+> `actionExecutor.ts` is still a single kill switch if something goes wrong
+> again.
 
 **Layering.** `VirtualHardwareDevice.pressControl()` only ever emits a
 `buttonPress` DEVICE → HOST event (`{ controlId, slot }`) — it has no idea
@@ -144,21 +143,41 @@ string on `ControlAction`, but `systemCommands.ts` only executes an exact
 match against a fixed allowlist (currently `volumeMute`/`volumeUp`/
 `volumeDown`) — never runs the string itself as a command.
 
-**Refocus, but verify, or refuse.** A shortcut/macro action needs to reach
-the *target* application, not whichever window happens to be focused —
-which, at the moment of a click, is always Flow's own window (that's what
-just received the click). `windowsAdapter.ts` deliberately excludes Flow's
-own process from "active application" detection (see the comment there), so
-it always remembers the real target window's handle. `windowFocus.ts` then
-refocuses that handle using the `AttachThreadInput` pattern (a plain
-`SetForegroundWindow` call from a freshly-spawned process is unreliable on
-Windows — it isn't the process that received the user's last input, so the
-OS is within its rights to ignore the request), and — critically —
-re-reads the foreground window afterward to *confirm* the switch actually
-happened before anything gets sent. If it can't confirm, execution stops
-there. Sending a configured shortcut to the wrong window is worse than not
-sending it; this is the same "fail closed, never guess" posture as
-`suggestionResolution.ts`'s slot assignment.
+**Refocus, but verify, or refuse — and why the redesign is actually safer,
+not just different.** A shortcut/macro action needs to reach the *target*
+application, not whichever window happens to be focused — which, at the
+moment of a click, is always Flow's own window (that's what just received
+the click). `windowsAdapter.ts` deliberately excludes Flow's own process
+from "active application" detection (see the comment there), so it always
+remembers the real target window's handle.
+
+The original `windowFocus.ts` spawned a fresh PowerShell process per press
+and used `AttachThreadInput` to work around Windows' foreground-lock
+restriction — a plain `SetForegroundWindow` call from that child would
+otherwise be ignored, because the child process never itself received any
+user input, which is precisely the condition the restriction exists to
+block. `AttachThreadInput` is a well-documented-as-risky escape hatch for
+exactly that situation, and using it repeatedly, per press, from a
+short-lived process whose exact teardown timing Flow didn't control, is a
+plausible way to leave a target thread's input state disturbed — which
+lines up with two different crashes in two different Chrome interactions.
+
+The redesigned `windowFocus.ts` calls `SetForegroundWindow` (via `koffi`,
+an FFI library with prebuilt binaries — no C++ toolchain needed, same
+reasoning as `better-sqlite3`/`uiohook-napi`) **directly from Flow's own
+main process**, synchronously, in the same tick as the click. No process
+is spawned; no workaround is needed. Flow's process *is* the current
+foreground process at that moment — it just received the click — so
+handing foreground status to another window is the ordinary, sanctioned
+case `SetForegroundWindow` exists for, not an edge case being routed
+around. `windowFocus.ts` still re-reads the foreground window afterward to
+*confirm* the switch actually landed before anything gets sent, and
+still refuses if it can't confirm — sending a configured shortcut to the
+wrong window is worse than not sending it, the same "fail closed, never
+guess" posture as `suggestionResolution.ts`'s slot assignment. `win32.ts`
+is the one place `user32.dll` gets loaded and its functions declared, so
+`windowFocus.ts`, `windowClose.ts`, and `systemCommands.ts` all share one
+definition of each signature.
 
 **What isn't implemented.** `launchApplication` and every `flowAction`
 except `closeWindow` (below) are refused
@@ -167,13 +186,14 @@ executable-path registry yet to launch an app by id, and no other
 `flowAction` has been given concrete semantics. Both are explicit, visible
 failures, not silent no-ops.
 
-**Window-closing keystrokes are never executed — a real incident, and the
-proper fix.** Sending `Ctrl+W` to Chrome's last open tab closed its only
-window at almost the same moment the `AttachThreadInput` focus dance above
-was touching that window, and afterward Chrome kept running as a
-background process but stopped responding to "open a new window" — every
-chrome.exe process had to be killed by hand before Chrome would open
-again. `actionExecutor.ts`'s `BLOCKED_COMBOS` list (`Alt+F4`, `Ctrl+W`,
+**Window-closing keystrokes are never executed — this rule survives the
+redesign unchanged.** The `Ctrl+W` incident may well have been caused
+specifically by `AttachThreadInput`, which no longer exists in the
+codebase — but "closing a window can end a whole application's session"
+was always true independent of which focus mechanism sent the keystroke,
+and closing already has a strictly safer dedicated path
+(`flowAction: 'closeWindow'`, below) with no reason to also allow it as a
+keystroke. `actionExecutor.ts`'s `BLOCKED_COMBOS` list (`Alt+F4`, `Ctrl+W`,
 `Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`, checked order-independently) refuses
 all of these outright, for both direct shortcuts and macro steps, before
 the focus dance is even attempted. This is a blocklist, not a proof of

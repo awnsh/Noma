@@ -5,7 +5,7 @@ const NAV_ITEMS: Array<{ label: string; page: Page } | { label: string; page: nu
   { label: 'Dashboard', page: 'dashboard' },
   { label: 'Virtual Keyboard', page: 'virtual-keyboard' },
   { label: 'Insights', page: null },
-  { label: 'Developer', page: null }
+  { label: 'Developer', page: 'developer' }
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -15,8 +15,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-screen bg-base-950 text-neutral-200">
       <aside className="flex w-56 flex-col border-r border-white/10 px-4 py-6">
-        <div className="mb-8 px-2 text-sm font-semibold tracking-widest text-neutral-100">
-          FLOW
+        <div className="mb-8 px-2">
+          {/* Noma is the product/company; Flow is specifically the adaptive
+              suggestion/pattern-learning feature within it (see the panel
+              copy on the Dashboard) — not the whole app's name. */}
+          <div className="text-sm font-semibold tracking-widest text-neutral-100">NOMA</div>
         </div>
         <nav className="flex flex-col gap-1">
           {NAV_ITEMS.map((item) => {

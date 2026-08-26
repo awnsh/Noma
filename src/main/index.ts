@@ -82,7 +82,7 @@ function createMainWindow(): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.flow.app')
+  electronApp.setAppUserModelId('com.noma.app')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -112,6 +112,9 @@ app.whenReady().then(() => {
 
   hardwareDevice.onStatusChanged((status) => {
     mainWindow?.webContents.send(IPC_CHANNELS.HARDWARE_STATUS_CHANGED, status)
+  })
+  hardwareDevice.onLogEntry((entry) => {
+    mainWindow?.webContents.send(IPC_CHANNELS.DEVICE_LOG_ENTRY, entry)
   })
   hardwareDevice.onDeviceEvent((event) => {
     mainWindow?.webContents.send(IPC_CHANNELS.DEVICE_EVENT, event)

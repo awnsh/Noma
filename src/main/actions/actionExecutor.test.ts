@@ -1,11 +1,33 @@
-import { describe, expect, it } from 'vitest'
+import Database from 'better-sqlite3'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { UiohookKey } from 'uiohook-napi'
+import { __setDatabaseForTesting, runMigrations } from '../database/db'
 import {
   executeControlAction,
   isBlockedShortcut,
+  isKeystrokeExecutionEnabled,
   isKnownFlowAction,
   resolveShortcutParts
 } from './actionExecutor'
+
+// Everything here is deliberately chosen to never touch a real window:
+// invalid handles (IsWindow() safely returns false for a made-up number),
+// null handles, unrecognized key names, and blocked/unknown actions all
+// return before any real Win32 call that could affect this machine — no
+// synthetic keystroke, no WM_CLOSE, no volume change ever actually fires
+// during this test run.
+
+beforeEach(() => {
+  const db = new Database(':memory:')
+  runMigrations(db)
+  __setDatabaseForTesting(db)
+})
+
+describe('isKeystrokeExecutionEnabled', () => {
+  it('is enabled (see the comment at its definition for the redesign that made this safe again)', () => {
+    expect(isKeystrokeExecutionEnabled()).toBe(true)
+  })
+})
 
 describe('resolveShortcutParts', () => {
   it('resolves a single-key combo with no modifiers', () => {
@@ -63,32 +85,45 @@ describe('isBlockedShortcut', () => {
   })
 })
 
-describe('executeControlAction — keystroke execution is disabled (two real crashes)', () => {
-  it('refuses an ordinary shortcut without attempting to focus or send anything', async () => {
+describe('executeControlAction — shortcut', () => {
+  it('refuses a window-closing combo without attempting to focus anything', async () => {
     const result = await executeControlAction(
-      { type: 'shortcut', keys: ['Control', 'R'] },
-      // A bogus handle: if the focus dance were reached, it would spawn a
-      // real PowerShell process and hang/fail slowly. An immediate refusal
-      // proves the disabled-execution gate short-circuits before that.
+      { type: 'shortcut', keys: ['Control', 'W'] },
+      // Even a plausible-looking handle must never be touched for a
+      // blocked combo — the block is checked before any focus attempt.
       999999999
     )
     expect(result.ok).toBe(false)
-    expect(result.reason).toContain('disabled')
+    expect(result.reason).toContain('Control+W')
   })
 
-  it('refuses a blocked (window-closing) shortcut too, for the same reason', async () => {
-    const result = await executeControlAction({ type: 'shortcut', keys: ['Control', 'W'] }, null)
-    expect(result.ok).toBe(false)
-    expect(result.reason).toContain('disabled')
-  })
-
-  it('refuses a macro without looking it up or attempting to send it', async () => {
+  it('fails closed when the target window handle is invalid', async () => {
+    // A made-up handle is guaranteed not to be a real window. IsWindow()
+    // returns false for it — a safe, read-only query — and execution
+    // must refuse rather than send anywhere.
     const result = await executeControlAction(
-      { type: 'macro', macroId: 'does-not-matter-should-never-be-looked-up' },
-      null
+      { type: 'shortcut', keys: ['Control', 'S'] },
+      999999999
     )
     expect(result.ok).toBe(false)
-    expect(result.reason).toContain('disabled')
+    expect(result.reason).toContain('Could not confirm focus')
+  })
+
+  it('refuses an unrecognized key name', async () => {
+    const result = await executeControlAction(
+      { type: 'shortcut', keys: ['Control', 'not-a-real-key'] },
+      null // no target window, so this exercises sendShortcut directly
+    )
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('Unrecognized key')
+  })
+})
+
+describe('executeControlAction — macro', () => {
+  it('refuses when the macro does not exist', async () => {
+    const result = await executeControlAction({ type: 'macro', macroId: 'does-not-exist' }, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('Macro not found')
   })
 })
 

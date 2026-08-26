@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Page = 'dashboard' | 'virtual-keyboard'
+export type Page = 'dashboard' | 'virtual-keyboard' | 'developer'
 
 interface UiStoreState {
   activePage: Page

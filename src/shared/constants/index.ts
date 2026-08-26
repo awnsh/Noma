@@ -16,7 +16,10 @@ export const IPC_CHANNELS = {
   SUGGESTIONS_CHANGED: 'flow:suggestions-changed',
   GET_PROFILE_FOR_APPLICATION: 'flow:get-profile-for-application',
   ASSIGN_SUGGESTION_TO_CONTROL: 'flow:assign-suggestion-to-control',
-  ACTION_EXECUTED: 'flow:action-executed'
+  ACTION_EXECUTED: 'flow:action-executed',
+  GET_DEVICE_LOG: 'flow:get-device-log',
+  DEVICE_LOG_ENTRY: 'flow:device-log-entry',
+  GET_EXECUTION_STATUS: 'flow:get-execution-status'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */

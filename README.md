@@ -1,8 +1,12 @@
-# Flow
+# Noma
 
 Adaptive computer interface — software brain and development platform for a
-future modular keyboard. See `brainstorm.md` for the full product vision and
-build order, `docs/architecture.md` for how this codebase is organized,
+future modular keyboard. **Noma** is the product/company name; **Flow** is
+specifically the adaptive suggestion/pattern-learning feature within it (the
+Dashboard's Workflow Monitoring + Suggestions panels) — not the whole app,
+even though earlier phases of this README used "Flow" for both. See
+`brainstorm.md` for the full product vision and build order,
+`docs/architecture.md` for how this codebase is organized,
 `docs/privacy-and-legal.md` for the workflow-capture privacy design, and
 `docs/security-review.md` for a focused security self-review (Electron
 hardening, capture guarantees, dependency/SQL posture).
@@ -11,9 +15,10 @@ hardening, capture guarantees, dependency/SQL posture).
 **Phase 2** (real Windows application detection, the profile system,
 contextual controls), **Phase 3** (Virtual Keyboard page, stateful hardware
 simulator, modular slots), **Phase 4** (real workflow capture, pattern
-detection), **Phase 5** (the suggestion engine and learning loop), and the
+detection), **Phase 5** (the suggestion engine and learning loop), the
 first slice of **Phase 6** (assigning an accepted suggestion to one of the 4
-control slots) are done. See "Where things stand" below.
+control slots), and **Phase 7** (Developer Mode and the documented hardware
+protocol) are done. See "Where things stand" below.
 
 ## Prerequisites
 
@@ -49,9 +54,8 @@ Spotify — the controls should update within well under a second, no restart
 needed.
 
 Then click **Virtual Keyboard** in the sidebar — this is brainstorm.md's
-Milestone 1. It's meant to be a **functional digital twin**, not a mockup,
-but read the next bullet before expecting every control to actually do
-something right now:
+Milestone 1, a **functional digital twin**: pressing a control performs
+the configured action for real.
 
 - A decorative QWERTY layout sits at the top — purely visual, "this
   represents your physical keyboard"; it's never interactive and standard
@@ -59,17 +63,14 @@ something right now:
 - The display strip shows the current application's name, live
 - The four control tiles mirror whatever app is focused (switch apps with
   the Flow window still open, or Alt-Tab away and back — the deck updates)
-- **Click a control tile.** MUTE in Spotify actually mutes your system
-  volume, and CLOSE WINDOW in Chrome actually closes it gracefully (see "A
-  real incident" below for both). **RUN/DEBUG/TERMINAL/SEARCH/RELOAD/etc.
-  — anything that sends a keyboard shortcut — currently do not send real
-  input.** That path caused two real crashes during testing and is
-  deliberately disabled (`KEYSTROKE_EXECUTION_ENABLED = false` in
-  `actionExecutor.ts`) until it's redesigned and far more thoroughly
-  verified. The control still flashes and logs the press either way — the
-  event line shows `✓ executed` for the two paths that are real, and
-  `✗ Keystroke execution is temporarily disabled...` for everything else.
-  See "Real execution" in `docs/architecture.md` for the full picture
+- **Click a control tile and it executes.** RUN in VS Code sends `Ctrl+F5`
+  to VS Code, RELOAD in Chrome sends `Ctrl+R`, MUTE in Spotify mutes your
+  system volume, CLOSE WINDOW in Chrome closes it gracefully. This path
+  caused two real crashes during earlier testing and was rebuilt from
+  scratch afterward — see "Two incidents, then a redesign" below for the
+  full account, worth reading given the history. The event line shows
+  `✓ executed` on success and `✗ <reason>` on failure — a failure is always
+  visible, never silent
 - Use "Add Module" to add a Macro / Rotary Encoder / Slider / Display /
   Numpad / Creator module — it appears as a chip immediately; the × removes
   it. Both fire a real `MODULE_CONNECTED`/`MODULE_DISCONNECTED` device event
@@ -79,9 +80,32 @@ something right now:
   meant for demos: switch apps, trigger a pattern, accept the suggestion,
   watch the deck update, all on one screen
 
+Then click **Developer** in the sidebar — this is Phase 7, brainstorm.md
+section 20:
+
+- Three status pills: hardware connection (connected/deviceType/protocol
+  version), Workflow Monitoring, and Keystroke Execution — the last one
+  shows **Enabled**, but the pill (and the one-line reason if it's ever
+  flipped off again) means it's never a silent surprise either way
+- **Current Control Mappings** — the live 4 controls for whatever app is
+  focused, each with its actual configured action (`shortcut: Control+F5`,
+  `systemCommand: volumeMute`, ...), not just a label
+- **Modules** — whatever's currently attached, mirroring the Virtual
+  Keyboard page
+- **HOST ↔ DEVICE Log** — a live, scrolling record of every message
+  exchanged with the hardware layer, using the exact message names
+  `docs/hardware-protocol.md` documents (`SET_CONTROLS`, `SET_DISPLAY`,
+  `BUTTON_PRESS`, `MODULE_CONNECTED`, ...). Switch apps or press a control
+  and watch it fill in real time — this is the same log a real firmware
+  bridge will need for debugging hardware bring-up, not a separate
+  debug-only view
+
 Back on the Dashboard, the **Workflow Monitoring** panel is where Phase 4
 lives:
 
+- Its toggle switch's knob had no explicit `left` anchor, so its
+  un-transformed position was browser-determined rather than pinned to the
+  track's left edge — the fix was giving it one (`ToggleSwitch.tsx`)
 - It's **off by default**. Flip it on and Flow starts watching for
   keyboard shortcuts that hold Control, Alt, or the Windows key — nothing
   else. Flip it off and the OS-level hook is released immediately, not just
@@ -121,10 +145,12 @@ assignment, working together:
 ```powershell
 npm test        # unit tests: capture-policy filter, keydown->combo logic
                  # (including a couple of explicit "typing a password never
-                 # gets captured" cases), pattern detection, hardware device,
-                 # suggestion rules, repositories (in-memory SQLite), a full
-                 # events->patterns->suggestions integration test, and the
-                 # suggestion-accept->control-assignment orchestration
+                 # gets captured" cases), pattern detection, hardware device
+                 # (including its HOST<->DEVICE log), suggestion rules,
+                 # repositories (in-memory SQLite), a full events->patterns->
+                 # suggestions integration test, the suggestion-accept->
+                 # control-assignment orchestration, and the keystroke/
+                 # window-close/system-command execution logic
 npm run typecheck
 ```
 
@@ -147,6 +173,7 @@ docs/
   architecture.md         module layout + hardware-embedding design notes
   privacy-and-legal.md    the workflow-capture policy and why it isn't a keylogger
   security-review.md      Electron hardening, capture guarantees, dependency/SQL posture
+  hardware-protocol.md    the HOST<->DEVICE message protocol (implemented today, in-process)
 ```
 
 ## Where things stand vs. the build order
@@ -223,43 +250,58 @@ it never involves Control/Alt/Meta. Full writeup in
 and dependency posture (`npm audit`: 0 known vulnerabilities as of this
 pass).
 
-Built, then partially disabled after two real incidents (real execution):
-pressing a virtual control was made to actually perform the configured
-action instead of only simulating it. `actionExecutor.ts` resolves a
-`shortcut` action's key names through the same closed vocabulary capture
-uses (`keyNames.ts`, shared by both directions) and sends it via
-`uiohook-napi`'s synthetic input, refocusing the target window first via
-`windowFocus.ts`'s `AttachThreadInput`-based dance and confirming that
-focus actually landed before sending anything.
+Done — after two incidents, then a redesign (real execution): pressing a
+virtual control performs the configured action for real. `actionExecutor.ts`
+resolves a `shortcut` action's key names through the same closed vocabulary
+capture uses (`keyNames.ts`, shared by both directions) and sends it via
+`uiohook-napi`'s synthetic input, after `windowFocus.ts` refocuses the
+target window and confirms the switch actually landed.
 
-**Incident 1.** Using Chrome's CLOSE TAB control (`Ctrl+W`) on Chrome's last
-tab closed its only window and left Chrome running in the background but
-unable to open a new one — every `chrome.exe` process had to be killed by
-hand before Chrome would launch again (that hard kill, not the original
-`Ctrl+W`, is also almost certainly why Chrome's next launch showed a
-"restore pages" prompt — `TerminateProcess` never gives an app the chance
-to record a clean exit). Fix: `actionExecutor.ts` refuses to send any
-window-closing combo (`Alt+F4`, `Ctrl+W`, `Ctrl+Shift+W`, `Ctrl+Q`,
-`Ctrl+F4`) as a keystroke at all (`BLOCKED_COMBOS`), and closing got a
-genuinely safer replacement: `flowAction: 'closeWindow'`
-(`windowClose.ts`) posts `WM_CLOSE` directly to the target window handle —
-the exact message a title bar's X button sends. No keystroke, no
-focus-stealing (`WM_CLOSE` doesn't need the window focused), never a
-forceful kill. Chrome's control 2 (relabeled CLOSE WINDOW) uses this path.
+**Two incidents, then a redesign.** The original `windowFocus.ts` spawned a
+PowerShell child process per press and used `AttachThreadInput` to work
+around Windows' foreground-lock restriction. First, using Chrome's CLOSE
+TAB control (`Ctrl+W`) on Chrome's last tab closed its only window and left
+Chrome running in the background but unable to open a new one — every
+`chrome.exe` process had to be killed by hand before Chrome would launch
+again (that hard kill, not the original `Ctrl+W`, is also almost certainly
+why Chrome's next launch showed a "restore pages" prompt).
+Then, shortly after, pressing RELOAD — a completely ordinary `Ctrl+R`,
+nothing to do with closing anything — crashed Chrome outright. Same
+mechanism, a different action, a different failure: two crashes from one
+technique was enough to disable keystroke execution entirely
+(`KEYSTROKE_EXECUTION_ENABLED = false`) while it was rebuilt, not patched.
 
-**Incident 2.** Shortly after, pressing RELOAD (a completely ordinary
-`Ctrl+R`, nothing to do with closing anything) crashed Chrome. Same
-mechanism — the `AttachThreadInput` focus dance immediately followed by
-`uIOhook.keyTap` — a different action, a different failure. Two crashes
-from one mechanism is enough signal to stop, not enough to know which half
-is actually at fault. Fix: **keystroke execution (every `shortcut` and
-`macro` control) is now disabled outright** —
-`KEYSTROKE_EXECUTION_ENABLED = false` in `actionExecutor.ts`. A
-shortcut/macro control still flashes and logs its press; it just never
-reaches `keyTap`. `systemCommand` (volume) and `flowAction: 'closeWindow'`
-are unaffected and still execute for real, since neither touches
-`AttachThreadInput` or `uIOhook` at all. Full account in
+The rebuild: `windowFocus.ts` no longer spawns anything or uses
+`AttachThreadInput`. It calls `SetForegroundWindow` **directly from Flow's
+own main process**, synchronously, via `koffi` (an FFI library with
+prebuilt binaries — no C++ toolchain needed, same reasoning as
+`better-sqlite3`/`uiohook-napi`). This isn't a workaround for the
+foreground-lock restriction — it sidesteps the restriction entirely,
+because Flow's own process genuinely is the current foreground process at
+the moment of a click (it just received that click), which is exactly the
+ordinary case `SetForegroundWindow` is designed to allow. `windowClose.ts`
+and `systemCommands.ts` were migrated to the same direct-call approach for
+consistency — neither used `AttachThreadInput`, but both previously
+spawned a process per call; now neither does. `KEYSTROKE_EXECUTION_ENABLED
+= true` again, with the constant left in place as a single kill switch.
+The window-closing keystroke blocklist (`Alt+F4`, `Ctrl+W`,
+`Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`) stayed regardless — closing already
+has a strictly safer dedicated path (`flowAction: 'closeWindow'` /
+`windowClose.ts`, posting `WM_CLOSE` — the same message a title bar's X
+sends, no keystroke, no focus needed at all). Full account in
 `docs/architecture.md`'s "Real execution" section.
+
+Done (Phase 7): `docs/hardware-protocol.md` documents the full HOST↔DEVICE
+message protocol (`SET_CONTROLS`, `SET_DISPLAY`, `SET_LED`, `BUTTON_PRESS`,
+`MODULE_CONNECTED`, ...) — already implemented today via
+`VirtualHardwareDevice`, not a future design to interpret later. Every
+message it sends/receives is now recorded to an in-memory log
+(`getLog()`/`onLogEntry()` in `virtualDevice.ts`, capped at 100 entries)
+using those exact names, and the **Developer** page
+(`src/renderer/src/pages/Developer.tsx`) shows that log live, alongside
+hardware connection status, current control mappings, connected modules,
+and a visible Keystroke Execution status pill so its state is never a
+silent surprise while poking around the app.
 
 Not yet built (by design — see brainstorm.md's build order): the
 underused-controls / per-application-behavior pattern categories (deferred —
@@ -271,17 +313,12 @@ time, not just accepting a suggestion or authoring a macro from a pattern).
 
 ## Next logical step
 
-Before anything else: understand *why* the `AttachThreadInput` + `keyTap`
-path crashed Chrome twice, and either redesign keystroke execution around
-something safer (a real STM32 device sending real HID keystrokes has none
-of this focus-stealing problem in the first place, which is worth sitting
-with) or leave it disabled with clear documentation of what was tried.
-Re-enabling `KEYSTROKE_EXECUTION_ENABLED` without that understanding would
-just be hoping the third time is different.
-
-After that: Phase 7, Developer Mode and the documented STM32 protocol
-(`docs/hardware-protocol.md`) — surfacing hardware connection status, the
-virtual device's live control/module state, and an incoming/outgoing event
-log, which will matter enormously once real firmware exists to debug
-against, and not incidentally would have made both incidents above easier
-to diagnose in the moment.
+Test the redesigned execution path across more apps than VS Code/Chrome/
+Spotify's seeded shortcuts to build real confidence beyond the reasoning
+in `docs/architecture.md` — the theory for *why* the new mechanism avoids
+the old failure mode is sound (a real Windows API exception, not a
+workaround), but reasoning isn't the same as hours of real use. After
+that: a real STM32 device sending real USB HID keystrokes has none of this
+focus-stealing problem in the first place, which is worth keeping in mind
+for how much further this software-side mechanism is worth hardening
+versus simply waiting for real hardware.

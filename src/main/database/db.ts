@@ -11,7 +11,7 @@ export function initDatabase(): Database.Database {
 
   const userDataPath = app.getPath('userData')
   mkdirSync(userDataPath, { recursive: true })
-  const dbPath = join(userDataPath, 'flow.db')
+  const dbPath = join(userDataPath, 'noma.db')
 
   db = new Database(dbPath)
   db.pragma('journal_mode = WAL')

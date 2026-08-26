@@ -80,17 +80,28 @@ from everything above — it's not passive observation, it's the app acting
 on the computer — so it gets its own explicit review rather than folding
 into "capture."
 
-**Update: keystroke execution is currently disabled.** Two real crashes in
-a row (Chrome left unable to reopen; Chrome crashing on a plain reload),
-both through the same `AttachThreadInput` + `uIOhook.keyTap` path,
-were enough to turn it off outright (`KEYSTROKE_EXECUTION_ENABLED = false`
-in `actionExecutor.ts`) rather than keep patching individual symptoms. The
-closed-vocabulary and blocklist properties below are still real and still
-tested — they're what a re-enabled version would rely on — but right now
-`shortcut` and `macro` controls send nothing at all. `systemCommand`
-(volume) and `flowAction: 'closeWindow'` are unaffected: neither uses
-`AttachThreadInput` or `uIOhook`, so neither shares the failure mode that
-caused this.
+**Update: keystroke execution is enabled again, following a redesign.**
+Two real crashes in a row (Chrome left unable to reopen; Chrome crashing
+on a plain reload), both through an `AttachThreadInput`-based focus dance
+run inside a freshly-spawned PowerShell child process, were enough to turn
+keystroke execution off outright while the mechanism was rebuilt rather
+than patch individual symptoms. `windowFocus.ts` no longer spawns a
+process or uses `AttachThreadInput` at all — it calls `SetForegroundWindow`
+directly from Flow's own process via `koffi` (an FFI library with
+prebuilt binaries), synchronously, in the same tick as the click that
+triggered it. That matters for the same reason `AttachThreadInput` was
+needed in the first place: Windows restricts `SetForegroundWindow` to a
+process that itself recently received user input, which a freshly-spawned
+child never had and Flow's own main process always does at the moment of
+a click. Removing the need for the workaround removes the failure mode it
+was implicated in — see `docs/architecture.md`'s "Real execution" section
+for the full account. `KEYSTROKE_EXECUTION_ENABLED` in `actionExecutor.ts`
+remains a single kill switch.
+
+`windowClose.ts` (WM_CLOSE) and `systemCommands.ts` (volume) were migrated
+to the same `koffi`-based direct calls for consistency — neither ever used
+`AttachThreadInput`, but both previously spawned a PowerShell child per
+call; now neither spawns anything at all.
 
 - **Closed vocabulary, both directions.** Every key name Flow can *send* is
   drawn from the exact same table it uses to *recognize* incoming keys
@@ -106,12 +117,14 @@ caused this.
   (`isKnownSystemCommand`) — the string is never passed to a shell or
   interpreted as a command name. Anything else is refused, tested directly
   in `systemCommands.test.ts`.
-- **No arbitrary process execution.** Nothing in the execution path calls
-  `exec`/`execFile`/`shell.openItem` with any value derived from stored or
-  suggested data. The two PowerShell scripts involved
-  (`windowFocus.ts`, `systemCommands.ts`) are fixed script text with only
-  numeric values (a window handle, a virtual-key code) interpolated in —
-  never a string that could contain shell syntax.
+- **No process execution at all, arbitrary or otherwise.** The execution
+  path (`windowFocus.ts`, `windowClose.ts`, `systemCommands.ts`) no longer
+  spawns any child process — every Win32 call goes through `koffi`
+  (`win32.ts`) directly from Flow's own process. There's nothing here that
+  could be described as a command string, shell syntax, or injectable
+  argument: every FFI call takes typed numeric arguments (a window handle,
+  a message code, a virtual-key code), never a string built from stored or
+  suggested data.
 - **Fails closed on window targeting.** A shortcut/macro is refused outright
   if Flow can't *confirm* the intended window actually became focused (see
   `docs/architecture.md`'s "Real execution" section) — the alternative,
@@ -159,12 +172,17 @@ caused this.
 
 ## 6. Dependencies
 
-Two native dependencies (`better-sqlite3`, `uiohook-napi`) are used
-specifically because they ship N-API prebuilt binaries — no source
+Three native dependencies (`better-sqlite3`, `uiohook-napi`, `koffi`) are
+used specifically because they ship N-API prebuilt binaries — no source
 compilation happens on install, which also means no arbitrary build-script
 execution from a compromised package at install time beyond what npm's
-normal install already trusts. Both are widely used, actively maintained
-packages. No LLM/cloud AI dependency exists yet — `AIProvider` is local
+normal install already trusts. `koffi` is an FFI library — meaningfully
+more powerful than the other two in the abstract (it can call arbitrary
+native functions by declared signature) — but every call site in this
+codebase is a fixed, hardcoded function declaration in `win32.ts`; nothing
+in the app constructs a koffi signature or library path from stored,
+suggested, or otherwise dynamic data. All three are widely used, actively
+maintained packages. No LLM/cloud AI dependency exists yet — `AIProvider` is local
 rule-based only (`src/main/ai/localProvider.ts`); when an LLM provider is
 eventually added behind that interface, `docs/privacy-and-legal.md`'s rule
 (sanitized metadata only, opt-in, never raw keystrokes) governs what it may
