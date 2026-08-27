@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../db'
-import { assignControlAction, toDisplayLabel } from './controlsRepository'
+import { assignControlAction, getControlsReferencingMacro, toDisplayLabel } from './controlsRepository'
 
 beforeEach(() => {
   const db = new Database(':memory:')
@@ -62,5 +62,25 @@ describe('assignControlAction', () => {
       keys: ['Control', 'S']
     })
     expect(applied).toBe(false)
+  })
+})
+
+describe('getControlsReferencingMacro', () => {
+  it('finds the control assigned to the given macro id', () => {
+    assignControlAction('code-default', 1, 'My Macro', { type: 'macro', macroId: 'macro-1' })
+
+    const refs = getControlsReferencingMacro('macro-1')
+    expect(refs).toEqual([
+      { applicationId: 'code', applicationName: 'Visual Studio Code', slot: 1, label: 'My Macro' }
+    ])
+  })
+
+  it('returns an empty list when no control points at this macro', () => {
+    expect(getControlsReferencingMacro('macro-1')).toEqual([])
+  })
+
+  it('does not match a different macro id assigned elsewhere', () => {
+    assignControlAction('code-default', 1, 'Other', { type: 'macro', macroId: 'macro-2' })
+    expect(getControlsReferencingMacro('macro-1')).toEqual([])
   })
 })

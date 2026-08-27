@@ -69,6 +69,22 @@ const SEED_APPLICATIONS: SeedApplication[] = [
   }
 ]
 
+/**
+ * The original seed control for a given application/slot, if that
+ * application was seeded — used by the Control Mapping Editor's "Reset to
+ * default" action. Returns null for an application that was never seeded
+ * (there's no "default" to reset to), which the caller must treat as "no
+ * reset available", not an error.
+ */
+export function getSeedDefaultControl(
+  applicationId: string,
+  slot: number
+): { label: string; action: ControlAction } | null {
+  const application = SEED_APPLICATIONS.find((app) => app.id === applicationId)
+  const control = application?.controls.find((c) => c.slot === slot)
+  return control ? { label: control.label, action: control.action } : null
+}
+
 /** Seeds starter profiles once, on an empty database. Never overwrites user data. */
 export function seedDefaultProfiles(db: Database.Database): void {
   const existing = db.prepare('SELECT COUNT(*) as count FROM applications').get() as {

@@ -1,3 +1,4 @@
+import { SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import { KEYEVENTF_KEYUP, KeybdEvent } from './win32'
 
 /**
@@ -7,6 +8,10 @@ import { KEYEVENTF_KEYUP, KeybdEvent } from './win32'
  * the same "closed vocabulary, fail closed" posture as key-name execution
  * (see keyNames.ts) applied to system-level actions (brainstorm.md section
  * 16's caution about automating potentially dangerous actions).
+ *
+ * The set of valid *names* is shared with the renderer (SYSTEM_COMMAND_CATALOG)
+ * so the Control Mapping Editor's dropdown can't list something this
+ * refuses to run. The virtual-key mapping stays main-process-only.
  */
 const VOLUME_VIRTUAL_KEYS: Record<string, number> = {
   volumeMute: 0xad,
@@ -15,7 +20,7 @@ const VOLUME_VIRTUAL_KEYS: Record<string, number> = {
 }
 
 export function isKnownSystemCommand(command: string): boolean {
-  return command in VOLUME_VIRTUAL_KEYS
+  return SYSTEM_COMMAND_CATALOG.includes(command) && command in VOLUME_VIRTUAL_KEYS
 }
 
 /**

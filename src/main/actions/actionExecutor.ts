@@ -1,5 +1,6 @@
 import { uIOhook } from 'uiohook-napi'
-import type { ControlAction } from '@shared/types'
+import { FLOW_ACTION_CATALOG } from '@shared/constants'
+import type { ControlAction, MacroStep } from '@shared/types'
 import { keyCodeForName } from '../workflow/keyNames'
 import { getMacroById } from '../database/repositories/macrosRepository'
 import { focusWindowAndVerify } from './windowFocus'
@@ -14,11 +15,15 @@ import { executeSystemCommand, isKnownSystemCommand } from './systemCommands'
  * shortcut, so there's no keystroke, no focus-stealing, and no risk of a
  * forceful termination. The app being closed decides how to respond,
  * exactly as it would for a real click on X.
+ *
+ * The set of valid *names* is shared with the renderer (FLOW_ACTION_CATALOG)
+ * so the Control Mapping Editor's dropdown can't list something this
+ * refuses to run.
  */
 const CLOSE_WINDOW_ACTION = 'closeWindow'
 
 export function isKnownFlowAction(action: string): boolean {
-  return action === CLOSE_WINDOW_ACTION
+  return FLOW_ACTION_CATALOG.includes(action) && action === CLOSE_WINDOW_ACTION
 }
 
 export interface ExecutionResult {
@@ -162,6 +167,94 @@ function focusThenSend(comboKeys: string[], targetHwnd: number | null): Executio
   return sendShortcut(comboKeys)
 }
 
+/** How many macros deep a chain of nested `{type: 'macro'}` steps can go
+ *  before execution refuses to continue — a fixed backstop against a
+ *  runaway chain, on top of (not instead of) the cycle check below. */
+const MAX_MACRO_NESTING_DEPTH = 3
+
+/**
+ * Runs a macro's steps in order, stopping at the first failure. Shared by
+ * the `macro` control-action case above and by the Macro Studio's "Test"
+ * button (testMacroSteps, via IPC) — the latter runs on steps that may not
+ * be saved yet, so it calls this directly with a fresh visited-set rather
+ * than going through a macro id.
+ *
+ * `visitedMacroIds` is how a nested `{type: 'macro'}` step is guarded
+ * against referencing itself, directly or through a longer cycle (A → B →
+ * A) — refused with a clear reason rather than recursing forever.
+ */
+export async function executeMacroSteps(
+  steps: MacroStep[],
+  targetHwnd: number | null,
+  visitedMacroIds: Set<string> = new Set()
+): Promise<ExecutionResult> {
+  for (const step of steps) {
+    switch (step.type) {
+      case 'delay':
+        await sleep(Math.max(0, step.ms))
+        continue // the delay *is* the pacing for this step — no extra sleep after it
+
+      case 'shortcut': {
+        const result = sendShortcut(step.keys)
+        if (!result.ok) return result
+        break
+      }
+
+      case 'systemCommand':
+        if (!isKnownSystemCommand(step.command)) {
+          return { ok: false, reason: `Unknown system command: ${step.command}` }
+        }
+        if (!executeSystemCommand(step.command)) {
+          return { ok: false, reason: `System command failed: ${step.command}` }
+        }
+        break
+
+      case 'flowAction':
+        if (!isKnownFlowAction(step.action)) {
+          return { ok: false, reason: `flowAction "${step.action}" is not implemented yet` }
+        }
+        if (targetHwnd === null) {
+          return { ok: false, reason: 'No known target window to close' }
+        }
+        if (!closeWindowGracefully(targetHwnd)) {
+          return { ok: false, reason: 'Could not deliver the close message to the target window' }
+        }
+        break
+
+      case 'launchApplication':
+        return { ok: false, reason: 'launchApplication execution is not implemented yet' }
+
+      case 'macro': {
+        if (visitedMacroIds.has(step.macroId)) {
+          return { ok: false, reason: 'Refused: macro references itself, directly or indirectly' }
+        }
+        if (visitedMacroIds.size >= MAX_MACRO_NESTING_DEPTH) {
+          return { ok: false, reason: `Refused: macros can nest at most ${MAX_MACRO_NESTING_DEPTH} levels deep` }
+        }
+        const nested = getMacroById(step.macroId)
+        if (!nested) return { ok: false, reason: 'Macro not found' }
+        if (!nested.enabled) return { ok: false, reason: 'Macro is disabled' }
+
+        const result = await executeMacroSteps(
+          nested.actions,
+          targetHwnd,
+          new Set([...visitedMacroIds, step.macroId])
+        )
+        if (!result.ok) return result
+        break
+      }
+    }
+
+    // Real input pacing between steps — skipped for 'delay' (already
+    // waited above) and 'flowAction' (WM_CLOSE isn't synthetic input, so
+    // there's nothing to give the OS time to process).
+    if (step.type !== 'flowAction') {
+      await sleep(80)
+    }
+  }
+  return { ok: true }
+}
+
 /**
  * Executes whatever a control's configured action says to do, against a
  * specific target window (or null for "whatever's already focused").
@@ -204,12 +297,7 @@ export async function executeControlAction(
         return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
       }
 
-      for (const step of macro.actions) {
-        const result = sendShortcut(step.split('+'))
-        if (!result.ok) return result
-        await sleep(macro.delayMs > 0 ? macro.delayMs : 80)
-      }
-      return { ok: true }
+      return executeMacroSteps(macro.actions, targetHwnd, new Set([action.macroId]))
     }
 
     case 'systemCommand':

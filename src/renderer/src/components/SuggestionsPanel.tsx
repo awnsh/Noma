@@ -19,7 +19,8 @@ export function SuggestionsPanel() {
     <section className="mb-10">
       <div className="mb-1 text-xs uppercase tracking-widest text-neutral-500">Suggestions</div>
       <p className="mb-3 text-xs text-neutral-600">
-        Accept picks which of your 4 controls it replaces — Flow never assigns one on its own.
+        Accept picks which of your 4 controls it replaces — Flow never assigns one on its own. Each
+        confidence percentage is a real number, not a guess — tap "Why?" on any suggestion to see it.
       </p>
       <div className="space-y-3">
         {suggestions.map((suggestion) => (

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
+import { useFlowStore } from '../stores/flowStore'
 import { KeyboardLayout } from '../components/KeyboardLayout'
 import { VirtualControlButton } from '../components/VirtualControlButton'
 import { ModuleChip } from '../components/ModuleChip'
 import { AddModuleMenu } from '../components/AddModuleMenu'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
+import { ControlEditorModal } from '../components/ControlEditorModal'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
   switch (event.type) {
@@ -33,13 +35,21 @@ export function VirtualKeyboard() {
     addModule,
     removeModule
   } = useHardwareStore()
+  const { context, refresh: refreshContext, subscribeToContext } = useFlowStore()
   const [flashEvent, setFlashEvent] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editingSlot, setEditingSlot] = useState<number | null>(null)
 
   useEffect(() => {
     refresh()
-    const unsubscribe = subscribe()
-    return unsubscribe
-  }, [refresh, subscribe])
+    refreshContext()
+    const unsubscribeHardware = subscribe()
+    const unsubscribeContext = subscribeToContext()
+    return () => {
+      unsubscribeHardware()
+      unsubscribeContext()
+    }
+  }, [refresh, subscribe, refreshContext, subscribeToContext])
 
   useEffect(() => {
     if (!lastEvent) return
@@ -49,6 +59,7 @@ export function VirtualKeyboard() {
   }, [lastEvent])
 
   const statusDisplay = status.displays['status'] ?? (isLoading ? 'Loading…' : 'Idle')
+  const application = context.application
 
   return (
     <div className="mx-auto max-w-3xl px-10 py-10">
@@ -56,10 +67,10 @@ export function VirtualKeyboard() {
         <div>
           <h1 className="text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            A digital twin of the eventual physical device. MUTE and CLOSE WINDOW controls really
-            execute; keyboard-shortcut controls (RUN, RELOAD, etc.) are logged and flashed only —
-            real keystroke sending is temporarily disabled after crashing Chrome twice during
-            testing. See "Real execution" in docs/architecture.md.
+            A digital twin of the eventual physical device. Every control here really executes —
+            shortcuts are sent for real, MUTE really changes volume, CLOSE WINDOW posts the same
+            graceful close a title bar's X button sends. See "Real execution" in
+            docs/architecture.md.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs">
@@ -80,6 +91,22 @@ export function VirtualKeyboard() {
         </div>
 
         {/* Contextual controls */}
+        <div className="mb-2 flex items-center justify-between">
+          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+            {application ? application.name : 'No application detected'}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditMode((prev) => !prev)}
+            className={`rounded-full border px-3 py-1 text-[11px] ${
+              isEditMode
+                ? 'border-accent-muted bg-accent/10 text-accent'
+                : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'
+            }`}
+          >
+            {isEditMode ? 'Done editing' : 'Edit Controls'}
+          </button>
+        </div>
         <div className="mb-3 grid grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((slot) => (
             <VirtualControlButton
@@ -87,6 +114,8 @@ export function VirtualKeyboard() {
               slot={slot}
               control={status.controls.find((control) => control.slot === slot)}
               onPress={pressControl}
+              editMode={isEditMode}
+              onEdit={setEditingSlot}
             />
           ))}
         </div>
@@ -122,6 +151,20 @@ export function VirtualKeyboard() {
       <div className="mt-8">
         <SuggestionsPanel />
       </div>
+
+      {editingSlot !== null && application && (
+        <ControlEditorModal
+          applicationId={application.id}
+          applicationName={application.name}
+          slot={editingSlot}
+          control={status.controls.find((control) => control.slot === editingSlot)}
+          onClose={() => setEditingSlot(null)}
+          onSaved={() => {
+            refresh()
+            refreshContext()
+          }}
+        />
+      )}
     </div>
   )
 }

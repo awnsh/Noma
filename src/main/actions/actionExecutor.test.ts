@@ -1,9 +1,12 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { UiohookKey } from 'uiohook-napi'
-import { __setDatabaseForTesting, runMigrations } from '../database/db'
+import type { MacroStep } from '@shared/types'
+import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
+import { createMacro } from '../database/repositories/macrosRepository'
 import {
   executeControlAction,
+  executeMacroSteps,
   isBlockedShortcut,
   isKeystrokeExecutionEnabled,
   isKnownFlowAction,
@@ -124,6 +127,114 @@ describe('executeControlAction — macro', () => {
     const result = await executeControlAction({ type: 'macro', macroId: 'does-not-exist' }, null)
     expect(result.ok).toBe(false)
     expect(result.reason).toBe('Macro not found')
+  })
+})
+
+describe('executeMacroSteps', () => {
+  it('waits out a delay step without treating it as a failure', async () => {
+    const steps: MacroStep[] = [{ type: 'delay', ms: 1 }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(true)
+  })
+
+  it('refuses an unknown system command step', async () => {
+    const steps: MacroStep[] = [{ type: 'systemCommand', command: 'notARealCommand' }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('Unknown system command')
+  })
+
+  it('refuses a flowAction step with no known target window', async () => {
+    const steps: MacroStep[] = [{ type: 'flowAction', action: 'closeWindow' }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('No known target window')
+  })
+
+  it('refuses a launchApplication step as not implemented yet', async () => {
+    const steps: MacroStep[] = [{ type: 'launchApplication', applicationId: 'code' }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('not implemented yet')
+  })
+
+  it('refuses a blocked shortcut step the same way a direct shortcut control is refused', async () => {
+    const steps: MacroStep[] = [{ type: 'shortcut', keys: ['Control', 'W'] }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('Control+W')
+  })
+
+  it('runs a nested macro step by resolving and executing the referenced macro', async () => {
+    const inner = createMacro({
+      name: 'Inner',
+      trigger: 'manual',
+      actions: [{ type: 'delay', ms: 1 }],
+      delayMs: 0,
+      enabled: true
+    })
+    const steps: MacroStep[] = [{ type: 'macro', macroId: inner.id }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(true)
+  })
+
+  it('refuses a nested macro that is disabled', async () => {
+    const inner = createMacro({
+      name: 'Inner',
+      trigger: 'manual',
+      actions: [],
+      delayMs: 0,
+      enabled: false
+    })
+    const result = await executeMacroSteps([{ type: 'macro', macroId: inner.id }], null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('Macro is disabled')
+  })
+
+  it('refuses a macro step that references itself directly', async () => {
+    const db = getDatabase()
+    // Hand-construct a self-referencing macro directly in the DB — createMacro's
+    // generated id isn't known until after the row exists.
+    db.prepare(
+      `INSERT INTO macros (id, name, trigger, actions, delay_ms, enabled)
+       VALUES ('self', 'Self', 'manual', '[]', 0, 1)`
+    ).run()
+    db.prepare('UPDATE macros SET actions = ? WHERE id = ?').run(
+      JSON.stringify([{ type: 'macro', macroId: 'self' }]),
+      'self'
+    )
+
+    const result = await executeMacroSteps([{ type: 'macro', macroId: 'self' }], null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('references itself')
+  })
+
+  it('refuses nesting deeper than the max depth', async () => {
+    // Build a chain of 5 macros, each referencing the next — deeper than
+    // MAX_MACRO_NESTING_DEPTH (3), so this must be refused rather than
+    // silently truncated or left to recurse indefinitely.
+    const last = createMacro({
+      name: 'Level 5',
+      trigger: 'manual',
+      actions: [{ type: 'delay', ms: 1 }],
+      delayMs: 0,
+      enabled: true
+    })
+    let previousId = last.id
+    for (let level = 4; level >= 1; level--) {
+      const macro = createMacro({
+        name: `Level ${level}`,
+        trigger: 'manual',
+        actions: [{ type: 'macro', macroId: previousId }],
+        delayMs: 0,
+        enabled: true
+      })
+      previousId = macro.id
+    }
+
+    const result = await executeMacroSteps([{ type: 'macro', macroId: previousId }], null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toContain('nest at most')
   })
 })
 

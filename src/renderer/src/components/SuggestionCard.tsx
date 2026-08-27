@@ -8,8 +8,34 @@ interface SuggestionCardProps {
   onDismiss: (id: string) => void
 }
 
+/** Turns the real numbers behind a suggestion's confidence into a plain-
+ *  language sentence — never a fabricated "AI reasoning" narrative, since
+ *  there isn't one: this is exactly what suggestionRules.ts computed. */
+function explainConfidence(breakdown: NonNullable<Suggestion['confidenceBreakdown']>): string {
+  const basePercent = Math.round(breakdown.baseConfidence * 100)
+  const overThreshold = breakdown.occurrenceCount - breakdown.threshold
+  const occurrenceSentence =
+    overThreshold > 0
+      ? `That's ${overThreshold} more than the ${breakdown.threshold} needed to trigger a suggestion at all, giving a base confidence of ${basePercent}%.`
+      : `That's exactly the ${breakdown.threshold} needed to trigger a suggestion, giving a base confidence of ${basePercent}%.`
+
+  const priorTotal = breakdown.priorAccepted + breakdown.priorRejected
+  const biasPercent = Math.round(breakdown.historyBias * 100)
+  const historySentence =
+    priorTotal === 0
+      ? "Flow hasn't learned a preference for suggestions like this yet — no bias applied."
+      : biasPercent === 0
+        ? `Flow remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted — roughly balanced, so no meaningful nudge either way.`
+        : `Flow also remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted, ${
+            biasPercent > 0 ? 'adding' : 'subtracting'
+          } ${Math.abs(biasPercent)}%.`
+
+  return `Occurred ${breakdown.occurrenceCount} time${breakdown.occurrenceCount === 1 ? '' : 's'} today. ${occurrenceSentence} ${historySentence}`
+}
+
 export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCardProps) {
   const [isPicking, setIsPicking] = useState(false)
+  const [showWhy, setShowWhy] = useState(false)
   const [profile, setProfile] = useState<ApplicationProfile | null | undefined>(undefined)
   const assignToControl = useSuggestionsStore((state) => state.assignToControl)
   const resolve = useSuggestionsStore((state) => state.resolve)
@@ -33,13 +59,30 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
           <div className="text-sm font-medium text-neutral-100">{suggestion.title}</div>
           <p className="mt-1 text-sm text-neutral-400">{suggestion.explanation}</p>
         </div>
-        <div
-          className="shrink-0 rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-neutral-500"
-          title="Confidence"
-        >
-          {confidencePercent}%
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <div
+            className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-neutral-500"
+            title="Confidence"
+          >
+            {confidencePercent}%
+          </div>
+          {suggestion.confidenceBreakdown && (
+            <button
+              type="button"
+              onClick={() => setShowWhy((prev) => !prev)}
+              className="text-[10px] text-neutral-600 hover:text-accent"
+            >
+              {showWhy ? 'Hide why' : 'Why?'}
+            </button>
+          )}
         </div>
       </div>
+
+      {showWhy && suggestion.confidenceBreakdown && (
+        <p className="mt-2 rounded-lg border border-white/5 bg-base-950 px-3 py-2 text-xs leading-relaxed text-neutral-500">
+          {explainConfidence(suggestion.confidenceBreakdown)}
+        </p>
+      )}
 
       {!isPicking ? (
         <div className="mt-3 flex gap-2">

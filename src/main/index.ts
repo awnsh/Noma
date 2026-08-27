@@ -10,7 +10,7 @@ import { getDefaultHardwareDevice } from './hardware/virtualDevice'
 import { CaptureService } from './workflow/captureService'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
 import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
-import { getConfidenceBiasForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
+import { getSuggestionHistoryForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
 import { LocalRuleBasedProvider } from './ai/localProvider'
 import { SuggestionEngine } from './ai/suggestionEngine'
 import { executeControlAction } from './actions/actionExecutor'
@@ -20,7 +20,7 @@ let mainWindow: BrowserWindow | null = null
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
 const hardwareDevice = getDefaultHardwareDevice()
-const aiProvider = new LocalRuleBasedProvider(getConfidenceBiasForKind)
+const aiProvider = new LocalRuleBasedProvider(getSuggestionHistoryForKind)
 const suggestionEngine = new SuggestionEngine(aiProvider)
 
 /** Re-runs pattern detection -> suggestion generation, then pushes the
@@ -89,14 +89,21 @@ app.whenReady().then(() => {
   })
 
   initDatabase()
-  registerIpcHandlers(contextService, captureService, suggestionEngine, (applicationId) => {
-    // A control was just reassigned (e.g. accepting a suggestion). If it
-    // belongs to whichever application is currently focused, the
-    // onContextChanged listener below (hardware controls + IPC push)
-    // fires the same way it would for a normal app switch — the user
-    // doesn't have to Alt-Tab away and back to see their own change.
-    contextService.refreshIfCurrentApplication(applicationId)
-  })
+  registerIpcHandlers(
+    contextService,
+    captureService,
+    suggestionEngine,
+    (applicationId) => {
+      // A control was just reassigned (e.g. accepting a suggestion, or
+      // saving an edit in the Control Mapping Editor). If it belongs to
+      // whichever application is currently focused, the onContextChanged
+      // listener below (hardware controls + IPC push) fires the same way
+      // it would for a normal app switch — the user doesn't have to
+      // Alt-Tab away and back to see their own change.
+      contextService.refreshIfCurrentApplication(applicationId)
+    },
+    () => osAdapter.getLastKnownWindowHandle()
+  )
 
   // Application context -> hardware simulator + capture service: whenever
   // the foreground application (and its resolved profile) changes,

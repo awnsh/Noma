@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations } from '../db'
 import {
-  getConfidenceBiasForKind,
+  getSuggestionHistoryForKind,
   getPendingSuggestions,
   getSuggestionById,
   insertSuggestionIfNew,
@@ -51,6 +51,36 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
     expect(pending.action).toBeUndefined()
   })
 
+  it('round-trips confidenceBreakdown through insert -> read, and degrades gracefully when absent', () => {
+    insertSuggestionIfNew(
+      makeSuggestion({
+        confidenceBreakdown: {
+          occurrenceCount: 8,
+          threshold: 5,
+          baseConfidence: 0.65,
+          historyBias: 0.1,
+          priorAccepted: 2,
+          priorRejected: 0
+        }
+      })
+    )
+    const [pending] = getPendingSuggestions()
+    expect(pending.confidenceBreakdown).toEqual({
+      occurrenceCount: 8,
+      threshold: 5,
+      baseConfidence: 0.65,
+      historyBias: 0.1,
+      priorAccepted: 2,
+      priorRejected: 0
+    })
+  })
+
+  it('leaves confidenceBreakdown undefined when the suggestion has none', () => {
+    insertSuggestionIfNew(makeSuggestion({ confidenceBreakdown: undefined }))
+    const [pending] = getPendingSuggestions()
+    expect(pending.confidenceBreakdown).toBeUndefined()
+  })
+
   it('does not duplicate an insert for the same id', () => {
     insertSuggestionIfNew(makeSuggestion())
     insertSuggestionIfNew(makeSuggestion({ title: 'A different title' }))
@@ -79,31 +109,44 @@ describe('resolveSuggestion', () => {
   })
 })
 
-describe('getConfidenceBiasForKind', () => {
-  it('returns 0 when there is no history for that kind', () => {
-    expect(getConfidenceBiasForKind('repeatedShortcut')).toBe(0)
+describe('getSuggestionHistoryForKind', () => {
+  it('returns 0 accepted/rejected/bias when there is no history for that kind', () => {
+    expect(getSuggestionHistoryForKind('repeatedShortcut')).toEqual({
+      accepted: 0,
+      rejected: 0,
+      bias: 0
+    })
   })
 
-  it('returns a positive bias when a kind has more accepts than rejects', () => {
+  it('returns a positive bias, with the raw counts, when a kind has more accepts than rejects', () => {
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+S' }))
     resolveSuggestion('suggestion:shortcut:code::Control+S', 'accepted')
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+D' }))
     resolveSuggestion('suggestion:shortcut:code::Control+D', 'accepted')
 
-    expect(getConfidenceBiasForKind('repeatedShortcut')).toBeGreaterThan(0)
+    const history = getSuggestionHistoryForKind('repeatedShortcut')
+    expect(history.accepted).toBe(2)
+    expect(history.rejected).toBe(0)
+    expect(history.bias).toBeGreaterThan(0)
   })
 
   it('returns a negative bias when a kind has more rejects than accepts', () => {
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+S' }))
     resolveSuggestion('suggestion:shortcut:code::Control+S', 'rejected')
 
-    expect(getConfidenceBiasForKind('repeatedShortcut')).toBeLessThan(0)
+    const history = getSuggestionHistoryForKind('repeatedShortcut')
+    expect(history.rejected).toBe(1)
+    expect(history.bias).toBeLessThan(0)
   })
 
   it('keeps history for different pattern kinds separate', () => {
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+S' }))
     resolveSuggestion('suggestion:shortcut:code::Control+S', 'rejected')
 
-    expect(getConfidenceBiasForKind('repeatedSequence')).toBe(0)
+    expect(getSuggestionHistoryForKind('repeatedSequence')).toEqual({
+      accepted: 0,
+      rejected: 0,
+      bias: 0
+    })
   })
 })

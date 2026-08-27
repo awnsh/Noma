@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
-import type { FlowStatus } from '@shared/types'
+import type { ControlAction, FlowStatus, MacroStep } from '@shared/types'
 import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
@@ -13,10 +13,24 @@ import {
 import { getWorkflowEventsSince } from '../database/repositories/workflowEventsRepository'
 import { getPendingSuggestions, resolveSuggestion } from '../database/repositories/suggestionsRepository'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { getAllApplications } from '../database/repositories/applicationsRepository'
+import {
+  createMacro,
+  deleteMacro,
+  duplicateMacro,
+  getAllMacros,
+  updateMacro
+} from '../database/repositories/macrosRepository'
+import { getControlsReferencingMacro } from '../database/repositories/controlsRepository'
 import { assignSuggestionToControl } from '../applications/suggestionResolution'
+import { updateControl, resetControlToDefault } from '../applications/controlEditing'
 import { detectPatterns } from '../workflow/patternDetection'
 import { startOfTodayMs } from '../workflow/timeWindows'
-import { isKeystrokeExecutionEnabled } from '../actions/actionExecutor'
+import {
+  executeControlAction,
+  executeMacroSteps,
+  isKeystrokeExecutionEnabled
+} from '../actions/actionExecutor'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -25,7 +39,11 @@ export function registerIpcHandlers(
   /** Called with the affected application's id after a control is
    *  reassigned, so the caller can push a live update if it's the one
    *  currently focused. */
-  onProfileUpdated: (applicationId: string) => void
+  onProfileUpdated: (applicationId: string) => void,
+  /** The last known real (non-Flow) foreground window handle, for
+   *  "Test" in the Control Mapping Editor — same targeting as a real
+   *  press. */
+  getTargetWindowHandle: () => number | null
 ): void {
   ipcMain.handle(IPC_CHANNELS.GET_FLOW_STATUS, async (): Promise<FlowStatus> => {
     await suggestionEngine.refresh()
@@ -110,4 +128,60 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_EXECUTION_STATUS, () => ({
     keystrokeExecutionEnabled: isKeystrokeExecutionEnabled()
   }))
+
+  ipcMain.handle(
+    IPC_CHANNELS.UPDATE_CONTROL,
+    (_event, applicationId: string, slot: number, label: string, action: ControlAction) => {
+      const profile = updateControl(applicationId, slot, label, action)
+      if (profile) onProfileUpdated(applicationId)
+      return profile
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.RESET_CONTROL_TO_DEFAULT, (_event, applicationId: string, slot: number) => {
+    const profile = resetControlToDefault(applicationId, slot)
+    if (profile) onProfileUpdated(applicationId)
+    return profile
+  })
+
+  ipcMain.handle(IPC_CHANNELS.TEST_CONTROL_ACTION, async (_event, action: ControlAction) => {
+    const result = await executeControlAction(action, getTargetWindowHandle())
+    return { ok: result.ok, reason: result.reason }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GET_MACROS, () => getAllMacros())
+
+  ipcMain.handle(IPC_CHANNELS.GET_ALL_APPLICATIONS, () => getAllApplications())
+
+  ipcMain.handle(
+    IPC_CHANNELS.CREATE_MACRO,
+    (_event, name: string, actions: MacroStep[], applicationId?: string) =>
+      createMacro({
+        name,
+        applicationId,
+        trigger: 'manual',
+        actions,
+        delayMs: 0,
+        enabled: true
+      })
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.UPDATE_MACRO,
+    (_event, id: string, updates: { name?: string; actions?: MacroStep[]; enabled?: boolean }) =>
+      updateMacro(id, updates)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_MACRO, (_event, id: string) => deleteMacro(id))
+
+  ipcMain.handle(IPC_CHANNELS.DUPLICATE_MACRO, (_event, id: string) => duplicateMacro(id))
+
+  ipcMain.handle(IPC_CHANNELS.GET_CONTROLS_REFERENCING_MACRO, (_event, macroId: string) =>
+    getControlsReferencingMacro(macroId)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.TEST_MACRO_STEPS, async (_event, actions: MacroStep[]) => {
+    const result = await executeMacroSteps(actions, getTargetWindowHandle())
+    return { ok: result.ok, reason: result.reason }
+  })
 }

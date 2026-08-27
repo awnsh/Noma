@@ -19,7 +19,18 @@ export const IPC_CHANNELS = {
   ACTION_EXECUTED: 'flow:action-executed',
   GET_DEVICE_LOG: 'flow:get-device-log',
   DEVICE_LOG_ENTRY: 'flow:device-log-entry',
-  GET_EXECUTION_STATUS: 'flow:get-execution-status'
+  GET_EXECUTION_STATUS: 'flow:get-execution-status',
+  UPDATE_CONTROL: 'flow:update-control',
+  RESET_CONTROL_TO_DEFAULT: 'flow:reset-control-to-default',
+  TEST_CONTROL_ACTION: 'flow:test-control-action',
+  GET_MACROS: 'flow:get-macros',
+  GET_ALL_APPLICATIONS: 'flow:get-all-applications',
+  CREATE_MACRO: 'flow:create-macro',
+  UPDATE_MACRO: 'flow:update-macro',
+  DELETE_MACRO: 'flow:delete-macro',
+  DUPLICATE_MACRO: 'flow:duplicate-macro',
+  GET_CONTROLS_REFERENCING_MACRO: 'flow:get-controls-referencing-macro',
+  TEST_MACRO_STEPS: 'flow:test-macro-steps'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */
@@ -44,3 +55,14 @@ export const MODULE_CATALOG: ModuleCatalogEntry[] = [
   { type: 'numpad', name: 'Numpad Module', capabilities: ['buttons'] },
   { type: 'creator', name: 'Creator Module', capabilities: ['buttons', 'display'] }
 ]
+
+/**
+ * The exact allowlist `systemCommands.ts` executes against — shared so the
+ * Control Mapping Editor's dropdown can't drift out of sync with what's
+ * actually runnable. The main process still owns the virtual-key mapping;
+ * this is only the list of valid *names*.
+ */
+export const SYSTEM_COMMAND_CATALOG: string[] = ['volumeMute', 'volumeUp', 'volumeDown']
+
+/** The exact allowlist `actionExecutor.ts`'s `isKnownFlowAction` accepts. */
+export const FLOW_ACTION_CATALOG: string[] = ['closeWindow']

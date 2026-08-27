@@ -7,6 +7,7 @@ import type {
   DeviceLogEntry,
   DeviceStatus,
   FlowApi,
+  MacroStep,
   Suggestion
 } from '@shared/types'
 
@@ -78,7 +79,24 @@ const flowApi: FlowApi = {
       ipcRenderer.removeListener(IPC_CHANNELS.DEVICE_LOG_ENTRY, listener)
     }
   },
-  getExecutionStatus: () => ipcRenderer.invoke(IPC_CHANNELS.GET_EXECUTION_STATUS)
+  getExecutionStatus: () => ipcRenderer.invoke(IPC_CHANNELS.GET_EXECUTION_STATUS),
+
+  updateControl: (applicationId, slot, label, action) =>
+    ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CONTROL, applicationId, slot, label, action),
+  resetControlToDefault: (applicationId, slot) =>
+    ipcRenderer.invoke(IPC_CHANNELS.RESET_CONTROL_TO_DEFAULT, applicationId, slot),
+  testControlAction: (action) => ipcRenderer.invoke(IPC_CHANNELS.TEST_CONTROL_ACTION, action),
+  getMacros: () => ipcRenderer.invoke(IPC_CHANNELS.GET_MACROS),
+  getAllApplications: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_APPLICATIONS),
+
+  createMacro: (name, actions, applicationId) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CREATE_MACRO, name, actions, applicationId),
+  updateMacro: (id, updates) => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_MACRO, id, updates),
+  deleteMacro: (id) => ipcRenderer.invoke(IPC_CHANNELS.DELETE_MACRO, id),
+  duplicateMacro: (id) => ipcRenderer.invoke(IPC_CHANNELS.DUPLICATE_MACRO, id),
+  getControlsReferencingMacro: (macroId) =>
+    ipcRenderer.invoke(IPC_CHANNELS.GET_CONTROLS_REFERENCING_MACRO, macroId),
+  testMacroSteps: (actions: MacroStep[]) => ipcRenderer.invoke(IPC_CHANNELS.TEST_MACRO_STEPS, actions)
 }
 
 if (process.contextIsolated) {

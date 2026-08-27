@@ -1,4 +1,4 @@
-import type { PatternKind, Suggestion, SuggestionAction, SuggestionStatus } from '@shared/types'
+import type { ConfidenceBreakdown, PatternKind, Suggestion, SuggestionAction, SuggestionStatus } from '@shared/types'
 import { getDatabase } from '../db'
 
 interface SuggestionRow {
@@ -12,6 +12,7 @@ interface SuggestionRow {
   application_id: string | null
   action_kind: string | null
   action_payload: string | null
+  confidence_breakdown: string | null
 }
 
 function rowToSuggestion(row: SuggestionRow): Suggestion {
@@ -24,12 +25,16 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
     createdAt: row.created_at,
     resolvedAt: row.resolved_at ?? undefined,
     applicationId: row.application_id,
-    // action_kind/action_payload are only absent for rows from before this
-    // column existed — degrade gracefully rather than throw.
+    // action_kind/action_payload/confidence_breakdown are only absent for
+    // rows from before those columns existed — degrade gracefully rather
+    // than throw.
     action:
       row.action_kind && row.action_payload
         ? (JSON.parse(row.action_payload) as SuggestionAction)
-        : undefined
+        : undefined,
+    confidenceBreakdown: row.confidence_breakdown
+      ? (JSON.parse(row.confidence_breakdown) as ConfidenceBreakdown)
+      : undefined
   }
 }
 
@@ -61,10 +66,10 @@ export function insertSuggestionIfNew(suggestion: Suggestion): void {
   db.prepare(
     `INSERT INTO suggestions
        (id, title, explanation, confidence, status, created_at, resolved_at,
-        application_id, action_kind, action_payload)
+        application_id, action_kind, action_payload, confidence_breakdown)
      VALUES
        (@id, @title, @explanation, @confidence, @status, @createdAt, @resolvedAt,
-        @applicationId, @actionKind, @actionPayload)
+        @applicationId, @actionKind, @actionPayload, @confidenceBreakdown)
      ON CONFLICT(id) DO NOTHING`
   ).run({
     id: suggestion.id,
@@ -76,7 +81,10 @@ export function insertSuggestionIfNew(suggestion: Suggestion): void {
     resolvedAt: suggestion.resolvedAt ?? null,
     applicationId: suggestion.applicationId ?? null,
     actionKind: suggestion.action?.kind ?? null,
-    actionPayload: suggestion.action ? JSON.stringify(suggestion.action) : null
+    actionPayload: suggestion.action ? JSON.stringify(suggestion.action) : null,
+    confidenceBreakdown: suggestion.confidenceBreakdown
+      ? JSON.stringify(suggestion.confidenceBreakdown)
+      : null
   })
 }
 
@@ -106,14 +114,25 @@ function idPrefixForKind(kind: PatternKind): string {
   }
 }
 
+/** A pattern kind's historical accept/reject record, and the deterministic
+ *  confidence nudge derived from it — see getSuggestionHistoryForKind. */
+export interface SuggestionHistory {
+  accepted: number
+  rejected: number
+  bias: number
+}
+
 /**
  * The "UPDATE USER MODEL / IMPROVE FUTURE SUGGESTIONS" step of the
  * learning loop (brainstorm.md section 14): a deterministic, explainable
  * nudge based on this pattern kind's historical accept/reject ratio,
  * bounded to +-0.15 so it can influence but never dominate a suggestion's
- * base confidence.
+ * base confidence. Returns the raw accepted/rejected counts alongside the
+ * bias itself so a suggestion's confidenceBreakdown (Product Development
+ * Phase 2 — "Explainable Flow Suggestions") can show real numbers instead
+ * of just the resulting nudge.
  */
-export function getConfidenceBiasForKind(kind: PatternKind): number {
+export function getSuggestionHistoryForKind(kind: PatternKind): SuggestionHistory {
   const db = getDatabase()
   const prefix = idPrefixForKind(kind)
   const row = db
@@ -132,10 +151,9 @@ export function getConfidenceBiasForKind(kind: PatternKind): number {
   const accepted = row.accepted ?? 0
   const rejected = row.rejected ?? 0
   const total = accepted + rejected
-  if (total === 0) return 0
+  const bias = total === 0 ? 0 : ((accepted - rejected) / total) * 0.15
 
-  const netRate = (accepted - rejected) / total
-  return netRate * 0.15
+  return { accepted, rejected, bias }
 }
 
 function escapeLike(value: string): string {

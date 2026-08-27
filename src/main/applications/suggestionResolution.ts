@@ -57,7 +57,10 @@ function buildControlUpdate(
         name: action.sequence.join(' → '),
         applicationId: suggestion.applicationId ?? undefined,
         trigger: 'flow-control',
-        actions: action.sequence,
+        // A detected sequence is combo strings like 'Control+C' — convert
+        // each into a proper shortcut step (Macro.actions is MacroStep[],
+        // not the raw string[] a repeated-sequence pattern produces).
+        actions: action.sequence.map((combo) => ({ type: 'shortcut' as const, keys: combo.split('+') })),
         delayMs: 0,
         enabled: true
       })

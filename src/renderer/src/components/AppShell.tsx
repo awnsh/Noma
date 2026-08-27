@@ -4,6 +4,7 @@ import { useUiStore, type Page } from '../stores/uiStore'
 const NAV_ITEMS: Array<{ label: string; page: Page } | { label: string; page: null }> = [
   { label: 'Dashboard', page: 'dashboard' },
   { label: 'Virtual Keyboard', page: 'virtual-keyboard' },
+  { label: 'Macro Studio', page: 'macros' },
   { label: 'Insights', page: null },
   { label: 'Developer', page: 'developer' }
 ]

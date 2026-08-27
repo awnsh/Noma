@@ -100,6 +100,40 @@ describe('suggestionForPattern', () => {
     expect(biased).toBeGreaterThan(unbiased)
   })
 
+  it('attaches a confidenceBreakdown with the real numbers behind the confidence shown', () => {
+    const pattern: DetectedPattern = {
+      id: 'shortcut:code::Control+S',
+      kind: 'repeatedShortcut',
+      applicationId: 'code',
+      description: '',
+      count: 8,
+      comboKeys: ['Control', 'S']
+    }
+    const suggestion = suggestionForPattern(pattern, 0.1, { accepted: 2, rejected: 0 })
+    expect(suggestion?.confidenceBreakdown).toEqual({
+      occurrenceCount: 8,
+      threshold: 5,
+      baseConfidence: 0.5 + (8 - 5) * 0.05,
+      historyBias: 0.1,
+      priorAccepted: 2,
+      priorRejected: 0
+    })
+  })
+
+  it('uses the sequence threshold (not the shortcut one) for a repeatedSequence breakdown', () => {
+    const pattern: DetectedPattern = {
+      id: 'sequence:code::Control+C->Control+V',
+      kind: 'repeatedSequence',
+      applicationId: 'code',
+      description: '',
+      count: 4,
+      sequence: ['Control+C', 'Control+V']
+    }
+    const suggestion = suggestionForPattern(pattern)
+    expect(suggestion?.confidenceBreakdown?.threshold).toBe(3)
+    expect(suggestion?.confidenceBreakdown?.occurrenceCount).toBe(4)
+  })
+
   it('produces a stable, deterministic id derived from the pattern id (for dedup)', () => {
     const pattern: DetectedPattern = {
       id: 'shortcut:code::Control+S',

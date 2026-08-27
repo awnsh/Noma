@@ -305,11 +305,10 @@ silent surprise while poking around the app.
 
 Not yet built (by design — see brainstorm.md's build order): the
 underused-controls / per-application-behavior pattern categories (deferred —
-see the comment atop `patternDetection.ts`), a standalone macro management
-UI (macros currently only get created via an accepted sequence suggestion,
-not authored freehand), and the fully general Keyboard Control Mapping
-editor (section 18 — picking *any* action type for *any* control at *any*
-time, not just accepting a suggestion or authoring a macro from a pattern).
+see the comment atop `patternDetection.ts`). The general Control Mapping
+Editor and a standalone Macro Studio, both listed here as future work when
+this section was first written, are now built — see "Product Development
+Phase 2" below.
 
 ## Next logical step
 
@@ -322,3 +321,84 @@ that: a real STM32 device sending real USB HID keystrokes has none of this
 focus-stealing problem in the first place, which is worth keeping in mind
 for how much further this software-side mechanism is worth hardening
 versus simply waiting for real hardware.
+
+## Product Development Phase 2 (a second, distinct roadmap)
+
+A separate, later roadmap — 20 phases turning the technical prototype above
+into a convincing *product* prototype (manual control configuration, a
+Macro Studio, a Learning Center, onboarding, demo mode, and more). To avoid
+colliding with the "Phase 1–7" numbering above (a different roadmap, from
+`brainstorm.md`'s original build order), this work is tracked separately
+here rather than renumbered into it.
+
+**Done — Phase 1: Control Mapping Editor.** Every control can now be
+configured by hand, not just via seed data or an accepted suggestion.
+Click **Edit Controls** on the Virtual Keyboard page, then any control
+tile, to open the editor: rename it (12-char limit — same physical-display
+constraint as everywhere else), pick an action type (shortcut / macro /
+launch application / system action / Flow action), and for a shortcut,
+*press the keys you want* rather than typing them out —
+`ShortcutRecorder.tsx` uses a plain DOM `keydown` listener (no native hook
+needed just to record a chord) translated through a shared DOM-code → Flow
+vocabulary table (`domKeyCodes.ts`) that's tested to guarantee every
+recordable shortcut is actually executable — the exact class of bug that
+shipped once already (Spotify's `'Left'`/`'Right'` mistake) can't recur
+here. **Test** runs the action for real via the same `executeControlAction`
+path a live press uses; **Save** persists through the existing
+`controlsRepository.assignControlAction`; **Reset to default** restores a
+seeded control via a new `getSeedDefaultControl` lookup. Deliberately
+scoped to applications that already have a profile — configuring a
+brand-new, never-seen application has no bootstrap path yet, left as a
+clean next increment rather than folded into this one.
+
+**Done — Phase 2: Macro Studio.** A dedicated page (nav: **Macro Studio**)
+for authoring macros by hand, independent of Flow's suggestion engine.
+Macros are no longer just `Control+C → Control+V`-style shortcut chains —
+`Macro.actions` is now `MacroStep[]`, reusing `ControlAction`'s own
+variants (shortcut / macro / launch application / system action / Flow
+action) plus a macro-only `delay` step, so a macro step and a control's
+action are drawn from exactly the same executable vocabulary instead of a
+second parallel format. The editor is a vertical step timeline (numbered,
+connected by a plain CSS rail — no diagramming library): add a step of any
+type, reorder with ↑/↓, delete with ✕, record a shortcut step the same way
+the Control Mapping Editor does. **Test** runs the in-progress steps for
+real (via a new `executeMacroSteps` the `macro` control-action case now
+delegates to) even before saving; **Save** creates or updates the row;
+**Duplicate** copies it under a new id so editing a copy can never affect
+the original or any control already assigned to it; **Delete** warns first
+if any control still points at this macro
+(`getControlsReferencingMacro`). A macro step can reference *another*
+macro — guarded at execution time against both self-reference and
+excessive nesting (capped at 3 levels), so a cyclic or runaway chain fails
+closed with a clear reason instead of hanging. Assigning a macro to a
+control is done right from its editor (pick an application + slot) rather
+than only from the Control Mapping Editor, satisfying the spec's "assign
+macro to a contextual control" requirement from either direction.
+
+**Done — Phase 3: Explainable Flow Suggestions.** Every suggestion's
+confidence percentage now has a real "why?" behind it instead of just a
+number. `suggestionRules.ts` was already computing genuine deterministic
+math (occurrence count vs. a threshold, plus a bounded nudge from this
+pattern kind's historical accept/reject ratio) — that math just wasn't
+visible anywhere. It's now captured at generation time as a
+`confidenceBreakdown` on the `Suggestion` itself (persisted, so "why am I
+seeing this?" always reflects the numbers that were true when the
+suggestion was made, not numbers recomputed later against a history that's
+since moved on) and rendered as a plain-language sentence behind a "Why?"
+toggle on each suggestion card — e.g. *"Occurred 8 times today. That's 3
+more than the 5 needed to trigger a suggestion at all, giving a base
+confidence of 65%. Flow also remembers 2 of 2 similar suggestions you've
+resolved before were accepted, adding 15%."* Deliberately not a fabricated
+"AI reasoning" narrative — this is a local rule-based engine, not an LLM
+(see `docs/architecture.md`'s "not an AI keyboard" principle), so the
+explanation is exactly the arithmetic that ran, stated in plain English.
+`suggestionsRepository`'s bias function was renamed
+`getSuggestionHistoryForKind` and now returns the raw accepted/rejected
+counts alongside the bias value it already computed, since the breakdown
+needed both.
+
+Not yet built: the Learning Center page, Demo Mode, onboarding, and
+everything else further down the 20-phase list.
+
+Verified: typecheck clean, **143/143 tests pass** (22 new), app launches
+cleanly.

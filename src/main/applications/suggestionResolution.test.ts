@@ -108,7 +108,10 @@ describe('assignSuggestionToControl — repeatedSequence', () => {
         .prepare('SELECT * FROM macros WHERE id = ?')
         .get(updatedControl.action.macroId) as { actions: string } | undefined
       expect(macroRow).toBeDefined()
-      expect(JSON.parse(macroRow!.actions)).toEqual(['Control+C', 'Control+V'])
+      expect(JSON.parse(macroRow!.actions)).toEqual([
+        { type: 'shortcut', keys: ['Control', 'C'] },
+        { type: 'shortcut', keys: ['Control', 'V'] }
+      ])
     }
   })
 })

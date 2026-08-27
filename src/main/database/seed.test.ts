@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from './db'
-import { seedDefaultProfiles } from './seed'
+import { getSeedDefaultControl, seedDefaultProfiles } from './seed'
 import { isBlockedShortcut, isKnownFlowAction, resolveShortcutParts } from '../actions/actionExecutor'
 import { isKnownSystemCommand } from '../actions/systemCommands'
 import type { ControlAction } from '@shared/types'
@@ -55,5 +55,22 @@ describe('seedDefaultProfiles', () => {
         expect(isKnownFlowAction(action.action), `unimplemented flowAction: ${action.action}`).toBe(true)
       }
     }
+  })
+})
+
+describe('getSeedDefaultControl', () => {
+  it('returns the original seed control for a seeded application/slot', () => {
+    expect(getSeedDefaultControl('code', 1)).toEqual({
+      label: 'RUN',
+      action: { type: 'shortcut', keys: ['Control', 'F5'] }
+    })
+  })
+
+  it('returns null for an application that was never seeded', () => {
+    expect(getSeedDefaultControl('never-seeded-app', 1)).toBeNull()
+  })
+
+  it('returns null for a slot that does not exist', () => {
+    expect(getSeedDefaultControl('code', 99)).toBeNull()
   })
 })
