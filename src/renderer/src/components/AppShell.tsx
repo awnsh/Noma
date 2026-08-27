@@ -5,6 +5,8 @@ const NAV_ITEMS: Array<{ label: string; page: Page } | { label: string; page: nu
   { label: 'Dashboard', page: 'dashboard' },
   { label: 'Virtual Keyboard', page: 'virtual-keyboard' },
   { label: 'Macro Studio', page: 'macros' },
+  { label: 'Learning Center', page: 'learning' },
+  { label: 'Profiles', page: 'profiles' },
   { label: 'Insights', page: null },
   { label: 'Developer', page: 'developer' }
 ]

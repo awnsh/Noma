@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
 import type {
   ActionExecutionEvent,
+  Application,
   ApplicationContext,
   DeviceEvent,
   DeviceLogEntry,
@@ -96,7 +97,27 @@ const flowApi: FlowApi = {
   duplicateMacro: (id) => ipcRenderer.invoke(IPC_CHANNELS.DUPLICATE_MACRO, id),
   getControlsReferencingMacro: (macroId) =>
     ipcRenderer.invoke(IPC_CHANNELS.GET_CONTROLS_REFERENCING_MACRO, macroId),
-  testMacroSteps: (actions: MacroStep[]) => ipcRenderer.invoke(IPC_CHANNELS.TEST_MACRO_STEPS, actions)
+  testMacroSteps: (actions: MacroStep[]) => ipcRenderer.invoke(IPC_CHANNELS.TEST_MACRO_STEPS, actions),
+
+  getAllSuggestions: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_SUGGESTIONS),
+  getLearningStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LEARNING_STATS),
+
+  listApplicationProfileSummaries: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.LIST_APPLICATION_PROFILE_SUMMARIES),
+  createProfileForApplication: (application: Application, profileName: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CREATE_PROFILE_FOR_APPLICATION, application, profileName),
+  renameApplicationProfile: (applicationId, name) =>
+    ipcRenderer.invoke(IPC_CHANNELS.RENAME_APPLICATION_PROFILE, applicationId, name),
+  deleteApplicationProfile: (applicationId) =>
+    ipcRenderer.invoke(IPC_CHANNELS.DELETE_APPLICATION_PROFILE, applicationId),
+
+  onWorkflowComboCaptured: (callback) => {
+    const listener = (_event: IpcRendererEvent, comboKeys: string[]): void => callback(comboKeys)
+    ipcRenderer.on(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, listener)
+    }
+  }
 }
 
 if (process.contextIsolated) {

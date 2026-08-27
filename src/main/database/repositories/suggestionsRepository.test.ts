@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations } from '../db'
 import {
+  getAllSuggestions,
   getSuggestionHistoryForKind,
   getPendingSuggestions,
   getSuggestionById,
@@ -96,6 +97,22 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
     insertSuggestionIfNew(makeSuggestion())
     expect(getPendingSuggestions()).toHaveLength(0)
     expect(getSuggestionById('suggestion:shortcut:code::Control+S')?.status).toBe('rejected')
+  })
+})
+
+describe('getAllSuggestions', () => {
+  it('returns suggestions of every status, not just pending', () => {
+    insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+S' }))
+    insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+D' }))
+    resolveSuggestion('suggestion:shortcut:code::Control+D', 'rejected')
+
+    const all = getAllSuggestions()
+    expect(all).toHaveLength(2)
+    expect(all.map((s) => s.status).sort()).toEqual(['pending', 'rejected'])
+  })
+
+  it('returns an empty list when none exist', () => {
+    expect(getAllSuggestions()).toEqual([])
   })
 })
 

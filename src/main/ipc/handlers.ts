@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
-import type { ControlAction, FlowStatus, MacroStep } from '@shared/types'
+import type { Application, ControlAction, FlowStatus, MacroStep } from '@shared/types'
 import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
@@ -11,7 +11,13 @@ import {
   setWorkflowMonitoringEnabled
 } from '../database/repositories/settingsRepository'
 import { getWorkflowEventsSince } from '../database/repositories/workflowEventsRepository'
-import { getPendingSuggestions, resolveSuggestion } from '../database/repositories/suggestionsRepository'
+import {
+  getAllSuggestions,
+  getPendingSuggestions,
+  getSuggestionHistoryForKind,
+  resolveSuggestion
+} from '../database/repositories/suggestionsRepository'
+import { getLearningStats } from '../ai/learningStats'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
 import { getAllApplications } from '../database/repositories/applicationsRepository'
 import {
@@ -24,6 +30,12 @@ import {
 import { getControlsReferencingMacro } from '../database/repositories/controlsRepository'
 import { assignSuggestionToControl } from '../applications/suggestionResolution'
 import { updateControl, resetControlToDefault } from '../applications/controlEditing'
+import {
+  createProfileForApplication,
+  deleteApplicationProfile,
+  listApplicationProfileSummaries,
+  renameApplicationProfile
+} from '../applications/profileCreation'
 import { detectPatterns } from '../workflow/patternDetection'
 import { startOfTodayMs } from '../workflow/timeWindows'
 import {
@@ -183,5 +195,34 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.TEST_MACRO_STEPS, async (_event, actions: MacroStep[]) => {
     const result = await executeMacroSteps(actions, getTargetWindowHandle())
     return { ok: result.ok, reason: result.reason }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GET_ALL_SUGGESTIONS, () => getAllSuggestions())
+
+  ipcMain.handle(IPC_CHANNELS.GET_LEARNING_STATS, () => getLearningStats(getSuggestionHistoryForKind))
+
+  ipcMain.handle(IPC_CHANNELS.LIST_APPLICATION_PROFILE_SUMMARIES, () =>
+    listApplicationProfileSummaries()
+  )
+
+  ipcMain.handle(
+    IPC_CHANNELS.CREATE_PROFILE_FOR_APPLICATION,
+    (_event, application: Application, profileName: string) => {
+      const profile = createProfileForApplication(application, profileName)
+      if (profile) onProfileUpdated(application.id)
+      return profile
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.RENAME_APPLICATION_PROFILE, (_event, applicationId: string, name: string) => {
+    const profile = renameApplicationProfile(applicationId, name)
+    if (profile) onProfileUpdated(applicationId)
+    return profile
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_APPLICATION_PROFILE, (_event, applicationId: string) => {
+    const deleted = deleteApplicationProfile(applicationId)
+    if (deleted) onProfileUpdated(applicationId)
+    return deleted
   })
 }

@@ -40,6 +40,18 @@ export interface ApplicationProfile {
   moduleRecommendationIds: string[]
 }
 
+/** One row in the Profiles page's list — every application Flow knows
+ *  about (seeded, or previously bootstrapped), and whether it has a
+ *  profile yet. Deliberately doesn't include applications Flow has never
+ *  seen and no one has bootstrapped a profile for — there's nothing to
+ *  list for those until they're detected (see the Dashboard's contextual
+ *  "create a profile" prompt) or created by hand from this page. */
+export interface ApplicationProfileSummary {
+  application: Application
+  hasProfile: boolean
+  profileName?: string
+}
+
 export type WorkflowEventType = 'shortcut' | 'sequence' | 'controlActivation'
 
 export interface WorkflowEvent {
@@ -106,6 +118,27 @@ export interface Suggestion {
    *  pattern kinds that don't carry one (there are none today, but a future
    *  AIProvider isn't required to supply it). */
   confidenceBreakdown?: ConfidenceBreakdown
+}
+
+/**
+ * One pattern kind's learning state — the Flow Learning Center's per-kind
+ * card. `label`/`description`/`threshold` are the static "how it works"
+ * half; `accepted`/`rejected`/`bias` are the live history half (same
+ * numbers `getSuggestionHistoryForKind` feeds into a fresh suggestion's
+ * confidenceBreakdown).
+ */
+export interface PatternKindStats {
+  kind: PatternKind
+  label: string
+  description: string
+  threshold: number
+  accepted: number
+  rejected: number
+  bias: number
+}
+
+export interface LearningStats {
+  kinds: PatternKindStats[]
 }
 
 /**
@@ -284,6 +317,13 @@ export interface FlowApi {
   getDetectedPatterns(): Promise<DetectedPattern[]>
   /** Pending suggestions, freshly re-derived from today's patterns. */
   getSuggestions(): Promise<Suggestion[]>
+  /** Every suggestion ever generated, regardless of status — the Flow
+   *  Learning Center's history list, most recent first. */
+  getAllSuggestions(): Promise<Suggestion[]>
+  /** Per-pattern-kind learning state (thresholds + accept/reject history +
+   *  the resulting bias) — the Flow Learning Center's "how Flow decides"
+   *  cards. */
+  getLearningStats(): Promise<LearningStats>
   /**
    * Resolves a suggestion directly: always for reject/dismiss, and for
    * accept only as a fallback when there's no profile to assign a slot in
@@ -329,6 +369,34 @@ export interface FlowApi {
   getMacros(): Promise<Macro[]>
   /** All known applications, for the Macro Studio's "assign to control" and launch-application pickers. */
   getAllApplications(): Promise<Application[]>
+
+  /** Personalized Application Profiles (Product Development Phase 2).
+   *  Every known application, and whether it has a profile yet — the
+   *  Profiles page's list. */
+  listApplicationProfileSummaries(): Promise<ApplicationProfileSummary[]>
+  /** Bootstraps a brand-new profile (with 4 empty controls) for an
+   *  application that doesn't have one yet. Returns null if it already
+   *  does — use updateControl to change an existing profile instead. */
+  createProfileForApplication(
+    application: Application,
+    profileName: string
+  ): Promise<ApplicationProfile | null>
+  /** Renames an existing profile. Returns null if this application has no profile. */
+  renameApplicationProfile(applicationId: string, name: string): Promise<ApplicationProfile | null>
+  /** Deletes a profile and every control under it. Returns whether a profile actually existed to delete. */
+  deleteApplicationProfile(applicationId: string): Promise<boolean>
+
+  /**
+   * Improved Virtual Keyboard (Product Development Phase 2). Fires with
+   * exactly the combo just captured by workflow monitoring — the same
+   * already-sanitized Ctrl/Alt/Win-gated combo that's persisted as a
+   * WorkflowEvent, never a bare keystroke (see docs/privacy-and-legal.md).
+   * Only ever fires while workflow monitoring is enabled, since that's the
+   * only time the underlying hook is even installed. Lets the decorative
+   * keyboard layout flash the real keys of a real captured shortcut —
+   * "digital twin" reacting to genuine input, not a canned animation.
+   */
+  onWorkflowComboCaptured(callback: (comboKeys: string[]) => void): () => void
 
   /** Macro Studio (Product Development Phase 2). Manual macro authoring,
    *  independent of Flow's suggestion engine. */

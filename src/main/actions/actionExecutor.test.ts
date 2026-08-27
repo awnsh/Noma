@@ -120,6 +120,12 @@ describe('executeControlAction — shortcut', () => {
     expect(result.ok).toBe(false)
     expect(result.reason).toContain('Unrecognized key')
   })
+
+  it('refuses a not-yet-configured control (empty combo) with a clear reason, not a blank one', async () => {
+    const result = await executeControlAction({ type: 'shortcut', keys: [] }, null)
+    expect(result.ok).toBe(false)
+    expect(result.reason).toBe('This control has no shortcut set yet')
+  })
 })
 
 describe('executeControlAction — macro', () => {

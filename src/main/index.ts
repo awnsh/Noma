@@ -39,6 +39,11 @@ const captureService = new CaptureService((event) => {
     timestamp: event.timestamp
   })
   void refreshSuggestions()
+  // Improved Virtual Keyboard: let the decorative layout flash the real
+  // keys of this real captured combo. Nothing new is exposed here — this
+  // is exactly the already-sanitized combo insertWorkflowEvent just
+  // persisted, not a raw keystroke.
+  mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, event.comboKeys)
 })
 
 function createMainWindow(): void {

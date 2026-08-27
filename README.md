@@ -397,8 +397,69 @@ explanation is exactly the arithmetic that ran, stated in plain English.
 counts alongside the bias value it already computed, since the breakdown
 needed both.
 
-Not yet built: the Learning Center page, Demo Mode, onboarding, and
-everything else further down the 20-phase list.
+**Done — Phase 4: Flow Learning Center.** A new page (nav: **Learning
+Center**) that shows Flow's aggregate learning state, not just one
+suggestion's. Two parts: a card per actionable pattern kind (repeated
+shortcuts, repeated sequences — `frequentControl` is excluded, same
+reasoning as suggestionRules.ts: it never produces a suggestion, so it has
+no accept/reject history to show) with its real threshold and its live
+accepted/rejected counts and resulting confidence bias
+(`getLearningStats`, injected with a history lookup the same way
+`LocalRuleBasedProvider` is, so it's testable without a database); and a
+full suggestion history — every suggestion ever generated, any status, not
+just the pending ones the Dashboard shows — each with the same "Why?"
+breakdown from Phase 3. That breakdown explainer was pulled out of
+`SuggestionCard.tsx` into `lib/explainConfidence.ts` so both places explain
+the same numbers the same way instead of maintaining two copies. The page
+re-fetches on the existing `SUGGESTIONS_CHANGED` push (accept/reject/
+dismiss anywhere in the app invalidates both the history list and the bias
+numbers) rather than adding a second push channel.
 
-Verified: typecheck clean, **143/143 tests pass** (22 new), app launches
+**Done — Phase 5: Personalized Application Profiles.** Closes the gap
+flagged since Phase 1: there was no way to create a profile for an
+application at all, only to edit one that already existed (seeded, or
+created by accepting a suggestion). Two entry points now exist. First, a
+contextual one: the Dashboard already distinguished "no application
+detected" from "no profile configured for X yet" — that second case now
+gets a **Create profile** button right next to the message, opening a
+small form (just a profile name; the application itself is already known
+from live detection). Second, a dedicated **Profiles** page for systematic
+management: every known application, whether it's been personalized yet,
+and — for one without a profile Flow hasn't even detected — a manual
+"+ New Application Profile" form (id/display name/process filename typed
+by hand, normalized to match how `WindowsOSAdapter` derives an id from a
+real detection, so a hand-created profile actually matches later). A new
+profile starts with 4 unconfigured controls (an empty shortcut combo — a
+deliberate safe no-op, not a placeholder that might do something
+unintended) that the user fills in with the same Control Mapping Editor
+from Phase 1, reused here unmodified since it was already decoupled from
+"is this application currently focused." The Profiles page also handles
+the rest of a profile's lifecycle: rename, and delete (with the controls
+under it cascading via the existing FK). Small bonus fix found while
+building this: `executeControlAction` on an empty/unconfigured shortcut
+used to report a blank "Unrecognized key in combo: " — now a clear "This
+control has no shortcut set yet."
+
+**Done — Phase 6: Improved Virtual Keyboard.** The decorative "Standard
+Keys" section was a purely static picture — 3 letter rows and a blank
+spacebar, no modifiers, no function/number/arrow keys, never reacting to
+anything. It's now a full, physically laid-out keyboard (function row,
+number row, the three letter rows with their real neighbors — brackets,
+punctuation, Enter, the modifier row, a separate arrow cluster) that
+**flashes the real keys of a real captured shortcut** the instant workflow
+monitoring captures one. This reuses the existing capture pipeline as-is —
+`captureService`'s already-sanitized, already-privacy-filtered combo (the
+same one `insertWorkflowEvent` persists) is now also pushed live to the
+renderer over a new `WORKFLOW_COMBO_CAPTURED` channel — so a bare letter
+can never light up on its own, only ever as part of a combo that already
+passed the Ctrl/Alt/Win gate. That's the actual "digital twin" bar for
+this page: not "looks like a keyboard" but "visibly reacts to genuine
+input, and only the class of input it's honestly allowed to react to."
+
+Not yet built: Demo Mode, onboarding, and everything else further down the
+20-phase list.
+
+Verified: typecheck clean, **163/163 tests pass** (no new — this phase is
+UI + thin IPC glue, same category as the rest of `main/index.ts`'s wiring,
+which the codebase has never unit-tested separately), app launches
 cleanly.

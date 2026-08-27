@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useFlowStore } from '../stores/flowStore'
 import { KeyboardLayout } from '../components/KeyboardLayout'
@@ -39,6 +39,8 @@ export function VirtualKeyboard() {
   const [flashEvent, setFlashEvent] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingSlot, setEditingSlot] = useState<number | null>(null)
+  const [flashingKeys, setFlashingKeys] = useState<Set<string>>(new Set())
+  const flashTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     refresh()
@@ -50,6 +52,21 @@ export function VirtualKeyboard() {
       unsubscribeContext()
     }
   }, [refresh, subscribe, refreshContext, subscribeToContext])
+
+  useEffect(() => {
+    const unsubscribe = window.flow.onWorkflowComboCaptured((comboKeys) => {
+      // A new combo replaces whatever was flashing, and resets the clock —
+      // without this, an in-flight timeout from a *previous* combo could
+      // fire mid-way through this one and clear it early.
+      if (flashTimeoutRef.current !== null) window.clearTimeout(flashTimeoutRef.current)
+      setFlashingKeys(new Set(comboKeys))
+      flashTimeoutRef.current = window.setTimeout(() => setFlashingKeys(new Set()), 500)
+    })
+    return () => {
+      unsubscribe()
+      if (flashTimeoutRef.current !== null) window.clearTimeout(flashTimeoutRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (!lastEvent) return
@@ -83,7 +100,7 @@ export function VirtualKeyboard() {
 
       {/* The deck */}
       <div className="rounded-3xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/40">
-        <KeyboardLayout />
+        <KeyboardLayout flashingKeys={flashingKeys} />
 
         {/* Display strip */}
         <div className="mb-6 rounded-xl border border-white/10 bg-black px-4 py-3 font-mono text-sm text-accent">

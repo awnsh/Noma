@@ -128,6 +128,14 @@ export function resolveShortcutParts(
 }
 
 function sendShortcut(comboKeys: string[]): ExecutionResult {
+  // A brand-new, not-yet-configured control (see profileCreation.ts)
+  // starts with an empty combo — a deliberate safe no-op, not a malformed
+  // one, so it deserves its own clear reason rather than falling through
+  // to resolveShortcutParts' generic "unrecognized key" message.
+  if (comboKeys.length === 0) {
+    return { ok: false, reason: 'This control has no shortcut set yet' }
+  }
+
   // Enforced here too (not just in executeControlAction) so a macro step
   // that happens to be a window-closing combo is refused the same way a
   // direct shortcut control would be — one true enforcement point.

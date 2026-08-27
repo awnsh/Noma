@@ -30,7 +30,14 @@ export const IPC_CHANNELS = {
   DELETE_MACRO: 'flow:delete-macro',
   DUPLICATE_MACRO: 'flow:duplicate-macro',
   GET_CONTROLS_REFERENCING_MACRO: 'flow:get-controls-referencing-macro',
-  TEST_MACRO_STEPS: 'flow:test-macro-steps'
+  TEST_MACRO_STEPS: 'flow:test-macro-steps',
+  GET_ALL_SUGGESTIONS: 'flow:get-all-suggestions',
+  GET_LEARNING_STATS: 'flow:get-learning-stats',
+  LIST_APPLICATION_PROFILE_SUMMARIES: 'flow:list-application-profile-summaries',
+  CREATE_PROFILE_FOR_APPLICATION: 'flow:create-profile-for-application',
+  RENAME_APPLICATION_PROFILE: 'flow:rename-application-profile',
+  DELETE_APPLICATION_PROFILE: 'flow:delete-application-profile',
+  WORKFLOW_COMBO_CAPTURED: 'flow:workflow-combo-captured'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */

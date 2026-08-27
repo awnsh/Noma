@@ -46,6 +46,14 @@ export function getPendingSuggestions(): Suggestion[] {
   return rows.map(rowToSuggestion)
 }
 
+/** Every suggestion ever generated, regardless of status — the Flow
+ *  Learning Center's history list, most recent first. */
+export function getAllSuggestions(): Suggestion[] {
+  const db = getDatabase()
+  const rows = db.prepare('SELECT * FROM suggestions ORDER BY created_at DESC').all() as SuggestionRow[]
+  return rows.map(rowToSuggestion)
+}
+
 export function getSuggestionById(id: string): Suggestion | null {
   const db = getDatabase()
   const row = db.prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as
