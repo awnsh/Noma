@@ -13,12 +13,21 @@ export class ApplicationContextService {
   private current: ApplicationContext = { application: null, profile: null }
   private listeners = new Set<(context: ApplicationContext) => void>()
   private unsubscribeOsAdapter: (() => void) | null = null
+  /** True while Demo Mode has overridden the live application — see
+   *  setDemoApplication below. */
+  private demoOverrideActive = false
 
   constructor(private readonly osAdapter: OSAdapter) {}
 
   start(): void {
     if (this.unsubscribeOsAdapter) return
     this.unsubscribeOsAdapter = this.osAdapter.onActiveApplicationChanged((application) => {
+      // While Demo Mode is driving the context, ignore whatever the real OS
+      // adapter reports (e.g. the presenter's cursor grazing another
+      // window) — the demo's own script is the only thing allowed to move
+      // the context until it explicitly hands control back (see
+      // setDemoApplication(null) below).
+      if (this.demoOverrideActive) return
       this.updateContext(application)
     })
   }
@@ -42,6 +51,27 @@ export class ApplicationContextService {
   refreshIfCurrentApplication(applicationId: string): void {
     if (this.current.application?.id !== applicationId) return
     this.updateContext(this.current.application)
+  }
+
+  /**
+   * Demo Mode (Product Development Phase 2, "the Noma Moment"): drives the
+   * live context from a scripted step instead of a real Alt-Tab, through
+   * the exact same updateContext path a real foreground-window change
+   * uses — so every downstream listener (hardware simulator, capture
+   * service, renderer push) reacts exactly as it would to a genuine
+   * switch. Passing null hands control back to the real OS adapter,
+   * re-synced immediately from its current reading rather than left stale
+   * until the next real switch happens to fire.
+   */
+  async setDemoApplication(application: Application | null): Promise<void> {
+    if (application) {
+      this.demoOverrideActive = true
+      this.updateContext(application)
+    } else {
+      this.demoOverrideActive = false
+      const real = await this.osAdapter.getActiveApplication()
+      this.updateContext(real)
+    }
   }
 
   /** Returns an unsubscribe function. */

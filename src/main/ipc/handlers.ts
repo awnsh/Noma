@@ -43,6 +43,8 @@ import {
   executeMacroSteps,
   isKeystrokeExecutionEnabled
 } from '../actions/actionExecutor'
+import { DEMO_APPLICATIONS, resetDemoData, simulateDemoWorkflow } from '../demo/demoService'
+import type { DemoApplicationId } from '../demo/demoService'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -55,7 +57,13 @@ export function registerIpcHandlers(
   /** The last known real (non-Flow) foreground window handle, for
    *  "Test" in the Control Mapping Editor — same targeting as a real
    *  press. */
-  getTargetWindowHandle: () => number | null
+  getTargetWindowHandle: () => number | null,
+  /** Re-runs pattern detection -> suggestion generation and pushes the
+   *  pending list to the renderer — the same function called after every
+   *  real captured event (main/index.ts's `refreshSuggestions`), reused
+   *  here so Demo Mode's simulated events flow through the identical
+   *  pipeline. */
+  triggerSuggestionRefresh: () => Promise<void>
 ): void {
   ipcMain.handle(IPC_CHANNELS.GET_FLOW_STATUS, async (): Promise<FlowStatus> => {
     await suggestionEngine.refresh()
@@ -224,5 +232,29 @@ export function registerIpcHandlers(
     const deleted = deleteApplicationProfile(applicationId)
     if (deleted) onProfileUpdated(applicationId)
     return deleted
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.DEMO_SET_APPLICATION,
+    async (_event, applicationId: DemoApplicationId | null) => {
+      await contextService.setDemoApplication(
+        applicationId ? DEMO_APPLICATIONS[applicationId] : null
+      )
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.DEMO_SIMULATE_WORKFLOW, async () => {
+    simulateDemoWorkflow()
+    await triggerSuggestionRefresh()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DEMO_RESET, async () => {
+    resetDemoData()
+    // Refresh both demo profiles immediately in case one is currently the
+    // overridden/focused application, and clear the (now-deleted) pending
+    // suggestion list rather than leaving it stale until the next event.
+    onProfileUpdated(DEMO_APPLICATIONS.code.id)
+    onProfileUpdated(DEMO_APPLICATIONS.chrome.id)
+    await triggerSuggestionRefresh()
   })
 }

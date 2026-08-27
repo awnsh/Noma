@@ -415,4 +415,25 @@ export interface FlowApi {
   /** Runs a step sequence once, for the Macro Studio's "Test" button —
    *  works on unsaved edits, same execution path a real macro press uses. */
   testMacroSteps(actions: MacroStep[]): Promise<TestActionResult>
+
+  /**
+   * Demo Mode — "the Noma Moment" (Product Development Phase 2). A
+   * deterministic, repeatable walkthrough of the adaptive-interface story
+   * for presentations and user testing. All three calls drive the exact
+   * same context/workflow/suggestion pipeline real usage does — see
+   * src/main/demo/demoService.ts.
+   */
+  /** Overrides the live application context (ignoring real OS detection
+   *  until cleared) to one of the two seeded demo applications, or null to
+   *  hand control back to real detection. */
+  setDemoApplication(applicationId: 'code' | 'chrome' | null): Promise<void>
+  /** Inserts a deterministic, backdated Copy -> Paste workflow, tuned to
+   *  produce exactly one `repeatedSequence` suggestion once pattern
+   *  detection re-runs. Not real captured keystrokes — see the doc comment
+   *  in demoService.ts for the exact numbers and why. */
+  simulateDemoWorkflow(): Promise<void>
+  /** Restores Demo Mode to a clean, replayable state — clears workflow
+   *  events/suggestions and resets the two demo profiles to their seeded
+   *  defaults. Development/demo-only; never offered as a normal action. */
+  resetDemoData(): Promise<void>
 }

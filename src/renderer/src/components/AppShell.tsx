@@ -3,6 +3,7 @@ import { useUiStore, type Page } from '../stores/uiStore'
 
 const NAV_ITEMS: Array<{ label: string; page: Page } | { label: string; page: null }> = [
   { label: 'Dashboard', page: 'dashboard' },
+  { label: 'Demo', page: 'demo' },
   { label: 'Virtual Keyboard', page: 'virtual-keyboard' },
   { label: 'Macro Studio', page: 'macros' },
   { label: 'Learning Center', page: 'learning' },

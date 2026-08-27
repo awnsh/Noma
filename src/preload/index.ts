@@ -117,7 +117,12 @@ const flowApi: FlowApi = {
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, listener)
     }
-  }
+  },
+
+  setDemoApplication: (applicationId) =>
+    ipcRenderer.invoke(IPC_CHANNELS.DEMO_SET_APPLICATION, applicationId),
+  simulateDemoWorkflow: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_SIMULATE_WORKFLOW),
+  resetDemoData: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_RESET)
 }
 
 if (process.contextIsolated) {

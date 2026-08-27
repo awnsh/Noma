@@ -107,7 +107,8 @@ app.whenReady().then(() => {
       // Alt-Tab away and back to see their own change.
       contextService.refreshIfCurrentApplication(applicationId)
     },
-    () => osAdapter.getLastKnownWindowHandle()
+    () => osAdapter.getLastKnownWindowHandle(),
+    refreshSuggestions
   )
 
   // Application context -> hardware simulator + capture service: whenever

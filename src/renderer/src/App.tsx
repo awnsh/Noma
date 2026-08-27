@@ -1,5 +1,6 @@
 import { AppShell } from './components/AppShell'
 import { Dashboard } from './pages/Dashboard'
+import { Demo } from './pages/Demo'
 import { VirtualKeyboard } from './pages/VirtualKeyboard'
 import { MacroStudio } from './pages/MacroStudio'
 import { LearningCenter } from './pages/LearningCenter'
@@ -12,6 +13,7 @@ function App() {
 
   return (
     <AppShell>
+      {activePage === 'demo' && <Demo />}
       {activePage === 'virtual-keyboard' && <VirtualKeyboard />}
       {activePage === 'macros' && <MacroStudio />}
       {activePage === 'learning' && <LearningCenter />}

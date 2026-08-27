@@ -456,10 +456,38 @@ passed the Ctrl/Alt/Win gate. That's the actual "digital twin" bar for
 this page: not "looks like a keyboard" but "visibly reacts to genuine
 input, and only the class of input it's honestly allowed to react to."
 
-Not yet built: Demo Mode, onboarding, and everything else further down the
-20-phase list.
+**Done — Phase 7: Demo Mode ("the Noma Moment").** A dedicated **Demo** page
+(nav, right after Dashboard) for presenting the core product story —
+Purdue Innovates, investors, user testing — as a deterministic, repeatable
+script rather than hoping a live Alt-Tab demo goes well. Walks through
+exactly the sequence from the product brief: VS Code's contextual controls
+→ switch to Chrome, controls change → simulate a repeated Copy→Paste
+workflow → Flow notices it and explains why (the real confidence
+breakdown, same "Why?" math as the Suggestions panel) → **Add to
+Keyboard** → Control 4 updates for real. Every step drives the exact same
+pipeline real usage does, never a separate fake path:
+`ApplicationContextService` gained `setDemoApplication()`
+(`src/main/applications/contextService.ts`), which overrides the live
+context through the identical `updateContext` path a real foreground-window
+change uses (ignoring real OS detection until explicitly cleared, then
+re-syncing from it immediately — see its tests), and
+`src/main/demo/demoService.ts`'s `simulateDemoWorkflow()` inserts backdated
+workflow events via the same `insertWorkflowEvent` real capture calls,
+tuned (4 repetitions, spaced to land inside/outside the sequence window on
+purpose — see its doc comment) to produce exactly one clean suggestion,
+never three. Because the override runs through the real context service,
+the Dashboard/Virtual Keyboard/Developer pages honestly reflect whatever
+step the demo is on if you switch to them mid-demo. **Reset Demo** restores
+VS Code/Chrome to their seeded controls and clears the simulated workflow
+data (`resetDemoData()`), so the whole thing is safe to re-run for a second
+audience without restarting the app or touching the database by hand —
+Phase 21's "demo reset" mechanism, scoped precisely to the demo's own two
+profiles rather than a blanket wipe.
 
-Verified: typecheck clean, **163/163 tests pass** (no new — this phase is
-UI + thin IPC glue, same category as the rest of `main/index.ts`'s wiring,
-which the codebase has never unit-tested separately), app launches
-cleanly.
+Not yet built: onboarding, and everything else further down the roadmap —
+see `docs/product-audit.md` for the full audit and recommended order.
+
+Verified: typecheck clean, **173/173 tests pass** (10 new: `demoService`'s
+simulate/reset behavior and repeatability, and `ApplicationContextService`'s
+demo-override semantics), app launches cleanly (verified via `npm run dev`
+— main/preload/renderer all build, window opens titled "Noma").

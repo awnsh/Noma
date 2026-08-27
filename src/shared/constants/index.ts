@@ -37,7 +37,10 @@ export const IPC_CHANNELS = {
   CREATE_PROFILE_FOR_APPLICATION: 'flow:create-profile-for-application',
   RENAME_APPLICATION_PROFILE: 'flow:rename-application-profile',
   DELETE_APPLICATION_PROFILE: 'flow:delete-application-profile',
-  WORKFLOW_COMBO_CAPTURED: 'flow:workflow-combo-captured'
+  WORKFLOW_COMBO_CAPTURED: 'flow:workflow-combo-captured',
+  DEMO_SET_APPLICATION: 'flow:demo-set-application',
+  DEMO_SIMULATE_WORKFLOW: 'flow:demo-simulate-workflow',
+  DEMO_RESET: 'flow:demo-reset'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */
