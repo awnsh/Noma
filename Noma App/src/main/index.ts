@@ -1,6 +1,7 @@
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import icon from '../../resources/icon.png?asset'
 import { IPC_CHANNELS } from '@shared/constants'
 import { initDatabase } from './database/db'
 import { registerIpcHandlers } from './ipc/handlers'
@@ -55,6 +56,11 @@ function createMainWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#08080a',
+    // Windows/Linux taskbar + window icon. macOS instead uses the app
+    // bundle's icon (set at packaging time), which doesn't exist yet — see
+    // "Prepare for STM32"/packaging notes; this only affects the
+    // dev/unpackaged window on this machine.
+    icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Explicit, not relied-on-as-default: no Node access in the
