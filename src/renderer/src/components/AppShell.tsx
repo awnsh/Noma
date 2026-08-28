@@ -1,15 +1,27 @@
 import type { ReactNode } from 'react'
 import { useUiStore, type Page } from '../stores/uiStore'
+import logo from '../assets/logo.png'
+import {
+  DashboardIcon,
+  DemoIcon,
+  KeyboardIcon,
+  MacroIcon,
+  LearningIcon,
+  ProfilesIcon,
+  SettingsIcon,
+  DeveloperIcon,
+  type IconComponent
+} from './icons'
 
-const NAV_ITEMS: Array<{ label: string; page: Page } | { label: string; page: null }> = [
-  { label: 'Dashboard', page: 'dashboard' },
-  { label: 'Demo', page: 'demo' },
-  { label: 'Virtual Keyboard', page: 'virtual-keyboard' },
-  { label: 'Macro Studio', page: 'macros' },
-  { label: 'Learning Center', page: 'learning' },
-  { label: 'Profiles', page: 'profiles' },
-  { label: 'Insights', page: null },
-  { label: 'Developer', page: 'developer' }
+const NAV_ITEMS: Array<{ label: string; page: Page; Icon: IconComponent }> = [
+  { label: 'Dashboard', page: 'dashboard', Icon: DashboardIcon },
+  { label: 'Demo', page: 'demo', Icon: DemoIcon },
+  { label: 'Virtual Keyboard', page: 'virtual-keyboard', Icon: KeyboardIcon },
+  { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
+  { label: 'Learning Center', page: 'learning', Icon: LearningIcon },
+  { label: 'Profiles', page: 'profiles', Icon: ProfilesIcon },
+  { label: 'Settings', page: 'settings', Icon: SettingsIcon },
+  { label: 'Developer', page: 'developer', Icon: DeveloperIcon }
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -18,39 +30,37 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-screen w-screen bg-base-950 text-neutral-200">
-      <aside className="flex w-56 flex-col border-r border-white/10 px-4 py-6">
-        <div className="mb-8 px-2">
-          {/* Noma is the product/company; Flow is specifically the adaptive
-              suggestion/pattern-learning feature within it (see the panel
-              copy on the Dashboard) — not the whole app's name. */}
-          <div className="text-sm font-semibold tracking-widest text-neutral-100">NOMA</div>
-        </div>
+      <aside className="flex w-20 flex-col items-center border-r border-white/10 py-5">
+        <img
+          src={logo}
+          alt="Noma"
+          title="Noma"
+          className="mb-6 h-14 w-14 rounded-md"
+          style={{ mixBlendMode: 'screen' }}
+        />
         <nav className="flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => {
-            const isActive = item.page !== null && item.page === activePage
-            const isEnabled = item.page !== null
+          {NAV_ITEMS.map(({ label, page, Icon }) => {
+            const isActive = page === activePage
 
             return (
-              <button
-                key={item.label}
-                type="button"
-                disabled={!isEnabled}
-                onClick={() => item.page && setActivePage(item.page)}
-                className={`rounded-lg px-3 py-2 text-left text-sm ${
-                  isActive
-                    ? 'bg-white/5 text-neutral-100'
-                    : isEnabled
-                      ? 'text-neutral-400 hover:bg-white/5 hover:text-neutral-100'
-                      : 'text-neutral-600'
-                }`}
-              >
-                {item.label}
-                {!isEnabled && (
-                  <span className="ml-2 text-[10px] uppercase tracking-widest text-neutral-700">
-                    Soon
-                  </span>
-                )}
-              </button>
+              <div key={label} className="group relative">
+                <button
+                  type="button"
+                  aria-label={label}
+                  title={label}
+                  onClick={() => setActivePage(page)}
+                  className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                    isActive
+                      ? 'bg-white/10 text-accent'
+                      : 'text-neutral-500 hover:bg-white/5 hover:text-neutral-200'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                </button>
+                <span className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-base-800 px-2 py-1 text-xs text-neutral-200 group-hover:block">
+                  {label}
+                </span>
+              </div>
             )
           })}
         </nav>

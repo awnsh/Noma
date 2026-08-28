@@ -7,6 +7,7 @@ export type Page =
   | 'macros'
   | 'learning'
   | 'profiles'
+  | 'settings'
   | 'developer'
 
 interface UiStoreState {

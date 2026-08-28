@@ -111,6 +111,12 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
     if (!first.comboKeys || !second.comboKeys) continue
     if (second.timestamp - first.timestamp > SEQUENCE_WINDOW_MS) continue
     if (first.applicationId !== second.applicationId) continue
+    // A "sequence" means two *different* steps done together repeatedly
+    // (Copy -> Paste). The same shortcut pressed back-to-back several times
+    // (e.g. Ctrl+T x5, typed fast) is not a sequence — it's just
+    // detectRepeatedShortcuts' job, and double-counting it here used to
+    // produce a nonsensical "Ctrl+T -> Ctrl+T" two-step macro suggestion.
+    if (first.comboKeys.join('+') === second.comboKeys.join('+')) continue
 
     const sequence = [first.comboKeys.join('+'), second.comboKeys.join('+')]
     const key = `${first.applicationId ?? 'unknown'}::${sequence.join('->')}`

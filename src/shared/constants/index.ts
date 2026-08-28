@@ -40,7 +40,14 @@ export const IPC_CHANNELS = {
   WORKFLOW_COMBO_CAPTURED: 'flow:workflow-combo-captured',
   DEMO_SET_APPLICATION: 'flow:demo-set-application',
   DEMO_SIMULATE_WORKFLOW: 'flow:demo-simulate-workflow',
-  DEMO_RESET: 'flow:demo-reset'
+  DEMO_RESET: 'flow:demo-reset',
+  CLEAR_LEARNING_DATA: 'flow:clear-learning-data',
+  DELETE_ALL_DATA: 'flow:delete-all-data',
+  CONFIGURE_MODULE: 'flow:configure-module',
+  PING_HARDWARE: 'flow:ping-hardware',
+  RESET_HARDWARE: 'flow:reset-hardware',
+  SIMULATE_ENCODER_ROTATION: 'flow:simulate-encoder-rotation',
+  CLEAR_DEVICE_LOG: 'flow:clear-device-log'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
-import type { Application, ControlAction, FlowStatus, MacroStep } from '@shared/types'
+import type { Application, ControlAction, FlowStatus, MacroStep, ModuleFunctionConfig } from '@shared/types'
 import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
@@ -45,6 +45,7 @@ import {
 } from '../actions/actionExecutor'
 import { DEMO_APPLICATIONS, resetDemoData, simulateDemoWorkflow } from '../demo/demoService'
 import type { DemoApplicationId } from '../demo/demoService'
+import { clearLearningData, deleteAllData } from '../privacy/dataManagement'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -256,5 +257,42 @@ export function registerIpcHandlers(
     onProfileUpdated(DEMO_APPLICATIONS.code.id)
     onProfileUpdated(DEMO_APPLICATIONS.chrome.id)
     await triggerSuggestionRefresh()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.CLEAR_LEARNING_DATA, async () => {
+    clearLearningData()
+    await triggerSuggestionRefresh()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DELETE_ALL_DATA, async () => {
+    // A factory reset invalidates the live capture hook's premise (its
+    // "enabled" setting row no longer exists) — stop it explicitly rather
+    // than leaving it running against a settings table that now says off.
+    captureService.stop()
+    deleteAllData()
+    const currentApplicationId = contextService.getContext().application?.id
+    if (currentApplicationId) contextService.refreshIfCurrentApplication(currentApplicationId)
+    await triggerSuggestionRefresh()
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.CONFIGURE_MODULE,
+    (_event, moduleId: string, configuration: Record<string, ModuleFunctionConfig>) =>
+      getDefaultHardwareDevice().configureModule(moduleId, configuration)
+  )
+
+  ipcMain.handle(IPC_CHANNELS.PING_HARDWARE, () => getDefaultHardwareDevice().ping())
+
+  ipcMain.handle(IPC_CHANNELS.RESET_HARDWARE, () => getDefaultHardwareDevice().reset())
+
+  ipcMain.handle(
+    IPC_CHANNELS.SIMULATE_ENCODER_ROTATION,
+    (_event, moduleId: string, delta: number) => {
+      getDefaultHardwareDevice().rotateEncoder(moduleId, delta)
+    }
+  )
+
+  ipcMain.handle(IPC_CHANNELS.CLEAR_DEVICE_LOG, () => {
+    getDefaultHardwareDevice().clearLog()
   })
 }

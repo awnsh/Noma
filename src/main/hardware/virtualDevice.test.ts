@@ -162,5 +162,94 @@ describe('VirtualHardwareDevice', () => {
       }
       expect(device.getLog().length).toBeLessThanOrEqual(100)
     })
+
+    it('clearLog empties the log', async () => {
+      await device.connect()
+      expect(device.getLog().length).toBeGreaterThan(0)
+      device.clearLog()
+      expect(device.getLog()).toEqual([])
+    })
+  })
+
+  describe('configureModule (Module configuration, brainstorm.md section 10)', () => {
+    it('stores configuration on the module and notifies status listeners', async () => {
+      // Subscribed before both calls, so both emitStatus notifications
+      // (module add, then configure) are reliably captured despite
+      // emitStatus resolving via a microtask.
+      const statuses: DeviceStatus[] = []
+      device.onStatusChanged((status) => statuses.push(status))
+
+      const module = device.addModuleByType('encoder')
+      const configuration = {
+        rotateCW: { type: 'shortcut', keys: ['Control', 'Equal'] },
+        press: { type: 'shortcut', keys: ['Space'] }
+      }
+      const updated = device.configureModule(module.id, configuration)
+
+      expect(updated?.configuration).toEqual(configuration)
+      expect((await device.getStatus()).modules[0].configuration).toEqual(configuration)
+      expect(statuses).toHaveLength(2)
+      expect(statuses[1].modules[0].configuration).toEqual(configuration)
+    })
+
+    it('returns null for an unknown module id', () => {
+      expect(device.configureModule('does-not-exist', {})).toBeNull()
+    })
+  })
+
+  describe('rotateEncoder', () => {
+    it('emits an encoderRotate event for a rotate-capable module', () => {
+      const module = device.addModuleByType('encoder')
+      const events: DeviceEvent[] = []
+      device.onDeviceEvent((event) => events.push(event))
+
+      device.rotateEncoder(module.id, 1)
+
+      expect(events).toEqual([{ type: 'encoderRotate', moduleId: module.id, delta: 1 }])
+    })
+
+    it('is a no-op for a module without rotate capability', () => {
+      const module = device.addModuleByType('display')
+      const events: DeviceEvent[] = []
+      device.onDeviceEvent((event) => events.push(event))
+
+      device.rotateEncoder(module.id, 1)
+
+      expect(events).toHaveLength(0)
+    })
+
+    it('is a no-op for an unknown module id', () => {
+      const events: DeviceEvent[] = []
+      device.onDeviceEvent((event) => events.push(event))
+      device.rotateEncoder('does-not-exist', 1)
+      expect(events).toHaveLength(0)
+    })
+  })
+
+  describe('ping', () => {
+    it('returns ok:false while disconnected and logs PING/PONG', async () => {
+      const result = await device.ping()
+      expect(result.ok).toBe(false)
+      expect(result.latencyMs).toBeGreaterThanOrEqual(0)
+      expect(device.getLog().map((entry) => entry.type)).toEqual(['PING', 'PONG'])
+    })
+
+    it('returns ok:true once connected', async () => {
+      await device.connect()
+      const result = await device.ping()
+      expect(result.ok).toBe(true)
+    })
+  })
+
+  describe('reset', () => {
+    it('cycles through disconnect then connect, ending connected', async () => {
+      await device.connect()
+      device.clearLog()
+
+      await device.reset()
+
+      expect((await device.getStatus()).connected).toBe(true)
+      expect(device.getLog().map((entry) => entry.type)).toEqual(['DISCONNECT', 'CONNECT'])
+    })
   })
 })

@@ -9,6 +9,7 @@ import type {
   DeviceStatus,
   FlowApi,
   MacroStep,
+  ModuleFunctionConfig,
   Suggestion
 } from '@shared/types'
 
@@ -122,7 +123,19 @@ const flowApi: FlowApi = {
   setDemoApplication: (applicationId) =>
     ipcRenderer.invoke(IPC_CHANNELS.DEMO_SET_APPLICATION, applicationId),
   simulateDemoWorkflow: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_SIMULATE_WORKFLOW),
-  resetDemoData: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_RESET)
+  resetDemoData: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_RESET),
+
+  clearLearningData: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_LEARNING_DATA),
+  deleteAllData: () => ipcRenderer.invoke(IPC_CHANNELS.DELETE_ALL_DATA),
+
+  configureModule: (moduleId: string, configuration: Record<string, ModuleFunctionConfig>) =>
+    ipcRenderer.invoke(IPC_CHANNELS.CONFIGURE_MODULE, moduleId, configuration),
+
+  pingHardware: () => ipcRenderer.invoke(IPC_CHANNELS.PING_HARDWARE),
+  resetHardware: () => ipcRenderer.invoke(IPC_CHANNELS.RESET_HARDWARE),
+  simulateEncoderRotation: (moduleId: string, delta: number) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SIMULATE_ENCODER_ROTATION, moduleId, delta),
+  clearDeviceLog: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_DEVICE_LOG)
 }
 
 if (process.contextIsolated) {

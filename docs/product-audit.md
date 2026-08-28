@@ -268,3 +268,35 @@ launching via `npm run dev`.
   `docs/security-review.md` cites as preventing a compromised renderer
   from invoking arbitrary main-process handlers. New capabilities should
   add named methods, never a generic passthrough.
+
+## Update — Software Polish & Product Validation Phase
+
+This pass closed 3 of the 4 items this file's "Critical" section listed —
+see README.md's "Software Polish & Product Validation Phase" for the full
+writeup. Updating this file's status in place rather than leaving it
+stale:
+
+- ~~`STM32HardwareDevice` stub + Connected/Not Connected/Device Type
+  readout~~ — **done.** `src/main/hardware/stm32Device.ts` + Developer's
+  Hardware Connection card.
+- ~~Developer Mode action buttons (Ping/Reset/Simulate Event/Clear Log)~~
+  — **done.** Developer's "Hardware Bring-Up Tools" section.
+- ~~A privacy/settings home for the existing toggle + data controls~~ —
+  **done.** The new Settings page.
+- Onboarding — **still not built.** Sequencing reasoning in this file's
+  original "Recommended implementation order" still holds.
+
+Also done, pulled up from "Optional / sequence later" since it was cheap
+once the above existed: module configuration (Rotary Encoder/Slider only —
+button-per-key modules are still unconfigured, see README's "what remains
+incomplete"), and a first pass at the "three separate, slightly
+different-looking components for one idea" UX problem this file flagged
+(`ControlTile`/`VirtualControlButton` now share one caption/glyph
+convention; Developer's raw table row is intentionally still different —
+it's the engineer view, not the consumer one).
+
+Still open, unchanged from this file's original list: underused-control/
+per-application-behavior suggestions, adaptive layout recommendations,
+local analytics page, user-testing feedback mechanism, profile
+duplication, and full per-key configuration for Macro/Numpad/Creator
+modules.

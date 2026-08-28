@@ -147,7 +147,7 @@ export function Demo() {
         <div className="mt-4 grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((slot) => {
             const control = controls.find((c) => c.slot === slot)
-            return <ControlTile key={slot} slot={slot} label={control?.label ?? null} />
+            return <ControlTile key={slot} slot={slot} control={control} />
           })}
         </div>
       </div>

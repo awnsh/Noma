@@ -51,11 +51,15 @@ describe('detectPatterns — repeated shortcuts', () => {
     expect(patterns[0].applicationId).toBe('code')
   })
 
-  it('also reports the same-shortcut-repeated case as a sequence when back-to-back', () => {
-    // 4 events 1s apart -> 3 consecutive A->A pairs, crossing SEQUENCE_THRESHOLD.
-    const events = [1, 2, 3, 4].map((i) => shortcutEvent(['Control', 'S'], i * 1000))
+  it('does NOT also report the same-shortcut-repeated case as a sequence, even back-to-back', () => {
+    // Regression: pressing one shortcut rapidly several times (e.g. Ctrl+T
+    // x5, fast) used to also register 3+ consecutive A->A pairs as a
+    // repeatedSequence, producing a nonsensical "Ctrl+T -> Ctrl+T" two-step
+    // macro suggestion for what is honestly just one repeated action.
+    const events = [1, 2, 3, 4, 5].map((i) => shortcutEvent(['Control', 'T'], i * 1000))
     const patterns = detectPatterns(events)
-    expect(patterns.some((p) => p.kind === 'repeatedSequence')).toBe(true)
+    expect(patterns.some((p) => p.kind === 'repeatedSequence')).toBe(false)
+    expect(patterns.some((p) => p.kind === 'repeatedShortcut')).toBe(true)
   })
 })
 
@@ -93,6 +97,22 @@ describe('detectPatterns — repeated sequences', () => {
       shortcutEvent(['Control', 'V'], 60_000) // 60s later, outside the window
     ]
     expect(detectPatterns(events).some((p) => p.kind === 'repeatedSequence')).toBe(false)
+  })
+
+  it('ignores identical-combo pairs even when interleaved with a real two-step sequence', () => {
+    // A pressed twice fast, then B, repeated 3 times: the A->A pairs must
+    // never count, but the real A->B transition still should.
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 3; i++) {
+      const base = i * 100_000
+      events.push(shortcutEvent(['Control', 'C'], base))
+      events.push(shortcutEvent(['Control', 'C'], base + 500))
+      events.push(shortcutEvent(['Control', 'V'], base + 1_000))
+    }
+    const patterns = detectPatterns(events).filter((p) => p.kind === 'repeatedSequence')
+    expect(patterns).toHaveLength(1)
+    expect(patterns[0]).toMatchObject({ count: 3 })
+    expect(patterns[0].description).toContain('Control+C → Control+V')
   })
 
   it('does not link two shortcuts from different applications', () => {

@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { MODULE_CATALOG } from '@shared/constants'
 import type { ControlAction } from '@shared/types'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useFlowStore } from '../stores/flowStore'
@@ -21,6 +22,30 @@ function describeAction(action: ControlAction): string {
   }
 }
 
+function DevToolButton({
+  children,
+  onClick,
+  disabled,
+  title
+}: {
+  children: string
+  onClick: () => void
+  disabled?: boolean
+  title?: string
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      title={title}
+      className="rounded-md border border-white/10 px-2.5 py-1 text-[11px] text-neutral-300 hover:border-accent-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
+    >
+      {children}
+    </button>
+  )
+}
+
 function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; offLabel: string }) {
   return (
     <span
@@ -39,6 +64,8 @@ export function Developer() {
   const flow = useFlowStore()
   const workflow = useWorkflowStore()
   const developer = useDeveloperStore()
+  const [selectedControlId, setSelectedControlId] = useState<string>('')
+  const [selectedModuleType, setSelectedModuleType] = useState(MODULE_CATALOG[0].type)
 
   useEffect(() => {
     hardware.refresh()
@@ -61,6 +88,7 @@ export function Developer() {
   const { context } = flow
   const controls = context.profile?.controls ?? []
   const reversedLog = [...developer.log].reverse()
+  const encoderModule = status.modules.find((module) => module.capabilities.includes('rotate'))
 
   return (
     <div className="mx-auto max-w-4xl px-10 py-10">
@@ -80,8 +108,12 @@ export function Developer() {
           <div className="mt-2 flex flex-wrap gap-2">
             <StatusPill ok={status.connected} onLabel="Connected" offLabel="Disconnected" />
             <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
-              {status.deviceType} · v{status.protocolVersion}
+              Virtual Device · v{status.protocolVersion}
             </span>
+          </div>
+          <div className="mt-2 text-[10px] text-neutral-700">
+            Future: Noma Prototype (STM32) — not yet connected, no physical hardware exists yet. See{' '}
+            src/main/hardware/stm32Device.ts.
           </div>
         </div>
 
@@ -110,6 +142,80 @@ export function Developer() {
               Off after real crashes during testing — see docs/architecture.md.
             </p>
           )}
+        </div>
+      </div>
+
+      <div className="mb-8 rounded-xl border border-white/10 bg-base-900 px-4 py-4">
+        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+          Hardware Bring-Up Tools
+        </div>
+        <p className="mb-3 text-[11px] text-neutral-600">
+          Every button below calls the real VirtualHardwareDevice — the same object real usage
+          drives — never a separate fake path. Useful today for exercising the event pipeline;
+          this is exactly the toolset a real STM32 bring-up will need.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <DevToolButton onClick={() => void developer.ping()}>Ping</DevToolButton>
+          {developer.lastPing && (
+            <span className="text-[11px] text-neutral-500">
+              {developer.lastPing.ok ? '✓' : '✗'} {developer.lastPing.latencyMs}ms
+            </span>
+          )}
+
+          <DevToolButton onClick={() => void developer.reset()}>Reset</DevToolButton>
+
+          <DevToolButton onClick={() => void developer.clearLog()}>Clear Log</DevToolButton>
+
+          <span className="mx-1 h-4 w-px bg-white/10" />
+
+          <select
+            value={selectedControlId}
+            onChange={(event) => setSelectedControlId(event.target.value)}
+            disabled={controls.length === 0}
+            className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300 disabled:opacity-40"
+          >
+            <option value="" disabled>
+              {controls.length === 0 ? 'No controls' : 'Choose a control…'}
+            </option>
+            {controls.map((control) => (
+              <option key={control.id} value={control.id}>
+                Slot {control.slot} · {control.label}
+              </option>
+            ))}
+          </select>
+          <DevToolButton
+            disabled={!selectedControlId}
+            onClick={() => selectedControlId && void hardware.pressControl(selectedControlId)}
+          >
+            Simulate Button Press
+          </DevToolButton>
+
+          <span className="mx-1 h-4 w-px bg-white/10" />
+
+          <DevToolButton
+            disabled={!encoderModule}
+            onClick={() => encoderModule && void hardware.simulateEncoderRotation(encoderModule.id, 1)}
+            title={encoderModule ? undefined : 'Add a Rotary Encoder Module from the Virtual Keyboard page first'}
+          >
+            Simulate Encoder Rotation
+          </DevToolButton>
+
+          <span className="mx-1 h-4 w-px bg-white/10" />
+
+          <select
+            value={selectedModuleType}
+            onChange={(event) => setSelectedModuleType(event.target.value)}
+            className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300"
+          >
+            {MODULE_CATALOG.map((entry) => (
+              <option key={entry.type} value={entry.type}>
+                {entry.name}
+              </option>
+            ))}
+          </select>
+          <DevToolButton onClick={() => void hardware.addModule(selectedModuleType)}>
+            Simulate Module Connect
+          </DevToolButton>
         </div>
       </div>
 

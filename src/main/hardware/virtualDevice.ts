@@ -155,6 +155,66 @@ export class VirtualHardwareDevice implements HardwareDevice {
     this.emitStatus()
   }
 
+  /**
+   * Assigns real, executable actions to a module's capability functions
+   * (brainstorm.md section 10 — e.g. a Rotary Encoder's turn/press). This
+   * only stores configuration; it never executes anything itself — the
+   * renderer runs a configured action via the existing testControlAction
+   * path, the same "Test" mechanism the Control Mapping Editor already
+   * uses, so there is exactly one execution path in the app, not two.
+   * Returns the updated module, or null if it doesn't exist.
+   */
+  configureModule(moduleId: string, configuration: Record<string, unknown>): Module | null {
+    const index = this.modules.findIndex((module) => module.id === moduleId)
+    if (index === -1) return null
+
+    const updated: Module = { ...this.modules[index], configuration }
+    this.modules = [...this.modules.slice(0, index), updated, ...this.modules.slice(index + 1)]
+    this.pushLog('toDevice', 'SET_MODULE_CONFIG', `${updated.name}: ${Object.keys(configuration).join(', ') || 'cleared'}`)
+    this.emitStatus()
+
+    return updated
+  }
+
+  /**
+   * Simulates a physical encoder turn — the exact ENCODER_ROTATE
+   * DeviceEvent a real Rotary Encoder Module will one day raise. No-op if
+   * the module doesn't exist or isn't a rotate-capable module, mirroring
+   * pressControl's fail-safe behavior for an unknown control.
+   */
+  rotateEncoder(moduleId: string, delta: number): void {
+    const module = this.modules.find((item) => item.id === moduleId)
+    if (!module || !module.capabilities.includes('rotate')) return
+    this.emitDeviceEvent({ type: 'encoderRotate', moduleId, delta })
+  }
+
+  /**
+   * Round-trips a PING/PONG through the hardware layer — Developer Mode's
+   * "Ping" tool. Real, measured latency (near-zero in-process today; a
+   * meaningful number once a real serial/USB transport exists), not a
+   * hardcoded value.
+   */
+  async ping(): Promise<{ ok: boolean; latencyMs: number }> {
+    const start = Date.now()
+    this.pushLog('toDevice', 'PING')
+    const latencyMs = Date.now() - start
+    this.pushLog('fromDevice', 'PONG', `${latencyMs}ms`)
+    return { ok: this.connected, latencyMs }
+  }
+
+  /** Cycles the device through disconnect -> connect — a real state
+   *  transition, visible in the HOST<->DEVICE log, that a firmware bring-up
+   *  engineer can trigger on demand from Developer Mode. */
+  async reset(): Promise<void> {
+    await this.disconnect()
+    await this.connect()
+  }
+
+  /** Clears the in-memory HOST<->DEVICE log. Developer Mode-only. */
+  clearLog(): void {
+    this.log = []
+  }
+
   private emitStatus(): void {
     void this.getStatus().then((status) => {
       for (const listener of this.statusListeners) listener(status)

@@ -172,6 +172,14 @@ export interface Module {
   configuration?: Record<string, unknown>
 }
 
+/** What a module's capability function (e.g. a Rotary Encoder's "Turn") is
+ *  assigned to do — a short display name plus a real, executable action.
+ *  See `FlowApi.configureModule`. */
+export interface ModuleFunctionConfig {
+  label: string
+  action: ControlAction
+}
+
 export interface FlowStatus {
   actionsObservedToday: number
   patternsDetected: number
@@ -209,7 +217,9 @@ export type DeviceEvent =
 
 export interface DeviceStatus {
   connected: boolean
-  deviceType: 'virtual' | 'usb' | 'serial'
+  /** 'stm32' identifies the future physical prototype specifically (not
+   *  just a generic transport) — see src/main/hardware/stm32Device.ts. */
+  deviceType: 'virtual' | 'usb' | 'serial' | 'stm32'
   /** Host<->device protocol version. See docs/architecture.md. */
   protocolVersion: string
   /** Present once real firmware exists. */
@@ -436,4 +446,46 @@ export interface FlowApi {
    *  events/suggestions and resets the two demo profiles to their seeded
    *  defaults. Development/demo-only; never offered as a normal action. */
   resetDemoData(): Promise<void>
+
+  /**
+   * Privacy & data management (Settings page). See docs/privacy-and-legal.md.
+   */
+  /** Deletes everything Flow has observed and suggested (workflow_events,
+   *  suggestions) — never touches profiles, controls, or macros, since
+   *  those are the user's own configuration, not learning data. */
+  clearLearningData(): Promise<void>
+  /** Full factory reset: deletes every application/profile/control/macro/
+   *  suggestion/workflow_event/setting and restores the seeded defaults —
+   *  the same state a fresh install starts in. Irreversible. */
+  deleteAllData(): Promise<void>
+
+  /**
+   * Module configuration (brainstorm.md section 10) — assigns a real,
+   * executable action (plus a short display name, e.g. "Timeline Zoom") to
+   * one of a module's capability functions (e.g. a Rotary Encoder's 'turn'/
+   * 'press'). Keyed by function name so this generalizes to future module
+   * types without a schema change. Returns the updated module, or null if
+   * it doesn't exist.
+   */
+  configureModule(
+    moduleId: string,
+    configuration: Record<string, ModuleFunctionConfig>
+  ): Promise<Module | null>
+
+  /**
+   * Developer Mode hardware bring-up tools (brainstorm.md section 20/
+   * this phase's section 15). Every one of these calls into the real
+   * VirtualHardwareDevice / event pipeline — never a separate fake path.
+   */
+  /** Round-trips a PING/PONG through the hardware layer. Real latency
+   *  (near-zero in-process today; meaningful once a real transport exists). */
+  pingHardware(): Promise<{ ok: boolean; latencyMs: number }>
+  /** Cycles the virtual device through disconnect -> connect, a real state
+   *  transition visible in the HOST<->DEVICE log. */
+  resetHardware(): Promise<void>
+  /** Simulates a physical encoder turn on the given module — the exact
+   *  ENCODER_ROTATE DeviceEvent a real module will one day raise. */
+  simulateEncoderRotation(moduleId: string, delta: number): Promise<void>
+  /** Clears the in-memory HOST<->DEVICE log (main process and renderer). */
+  clearDeviceLog(): Promise<void>
 }

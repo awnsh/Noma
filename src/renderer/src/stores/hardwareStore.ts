@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ActionExecutionEvent, DeviceEvent, DeviceStatus } from '@shared/types'
+import type { ActionExecutionEvent, DeviceEvent, DeviceStatus, ModuleFunctionConfig } from '@shared/types'
 
 const EMPTY_STATUS: DeviceStatus = {
   connected: false,
@@ -23,6 +23,8 @@ interface HardwareStoreState {
   pressControl: (controlId: string) => Promise<void>
   addModule: (moduleType: string) => Promise<void>
   removeModule: (moduleId: string) => Promise<void>
+  configureModule: (moduleId: string, configuration: Record<string, ModuleFunctionConfig>) => Promise<void>
+  simulateEncoderRotation: (moduleId: string, delta: number) => Promise<void>
 }
 
 export const useHardwareStore = create<HardwareStoreState>((set) => ({
@@ -53,5 +55,9 @@ export const useHardwareStore = create<HardwareStoreState>((set) => ({
   },
   pressControl: (controlId) => window.flow.pressControl(controlId),
   addModule: (moduleType) => window.flow.addModule(moduleType),
-  removeModule: (moduleId) => window.flow.removeModule(moduleId)
+  removeModule: (moduleId) => window.flow.removeModule(moduleId),
+  configureModule: async (moduleId, configuration) => {
+    await window.flow.configureModule(moduleId, configuration)
+  },
+  simulateEncoderRotation: (moduleId, delta) => window.flow.simulateEncoderRotation(moduleId, delta)
 }))

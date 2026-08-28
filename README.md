@@ -491,3 +491,72 @@ Verified: typecheck clean, **173/173 tests pass** (10 new: `demoService`'s
 simulate/reset behavior and repeatability, and `ApplicationContextService`'s
 demo-override semantics), app launches cleanly (verified via `npm run dev`
 — main/preload/renderer all build, window opens titled "Noma").
+
+## Software Polish & Product Validation Phase
+
+A later pass, done against `docs/product-audit.md`'s ground-truth gap list
+rather than re-implementing the full 21-section brief it was scoped from —
+most of that brief (contextual controls, the Virtual Keyboard, Flow's
+suggestion loop, Demo Mode, per-application profiles) was already real, not
+a placeholder, so this pass targeted product-audit.md's three highest-value
+remaining gaps instead of touching working code.
+
+**Settings & Privacy.** A new **Settings** page (nav, replacing the
+long-dead "Insights" slot that never had a page behind it) gives Workflow
+Monitoring an actual home instead of living buried at the bottom of the
+Dashboard, states plainly what Flow does and doesn't see (`Settings.tsx`),
+and adds the "clear all workflow data" action `docs/privacy-and-legal.md`
+called for since Phase 4 but that never got built: **Pause Learning**,
+**Clear Learning Data** (`clearLearningData` — wipes `workflow_events`/
+`suggestions` only, never your controls or macros), and **Delete All Data**
+(`deleteAllData` — a full factory reset back to the seeded defaults,
+`src/main/privacy/dataManagement.ts`). Each destructive action requires an
+explicit inline confirm, not a single click. The Dashboard itself lost its
+three raw counters (`actionsObservedToday`/`patternsDetected`/
+`suggestionsCount` as bare numbers) in favor of one plain-language line —
+*"Flow is learning your workflow."* / *"Flow noticed something — see
+below."* — matching this phase's "answer what Noma is doing right now,
+don't fill the home screen with analytics" brief; the real numbers still
+live on the Learning Center for anyone who wants them.
+
+**Hardware readiness.** `STM32HardwareDevice`
+(`src/main/hardware/stm32Device.ts`) is a typed stub implementing the exact
+same `HardwareDevice` interface `VirtualHardwareDevice` does — proof, by
+actually compiling against a second implementation, that Phase 1's
+interface is sufficient before real hardware exists to find out otherwise.
+It is never wired into the running app and never fakes a connection:
+`connect()` rejects clearly, `getStatus()` honestly reports
+`connected: false`. Developer Mode gained real **hardware bring-up tools**
+— Ping (a real measured PING/PONG round-trip), Reset (a real
+disconnect→connect cycle), Simulate Button Press, Simulate Encoder
+Rotation, Simulate Module Connect, and Clear Log — every one calling
+straight into `VirtualHardwareDevice`/the real event pipeline, never a
+second fake path (`product-audit.md`'s explicit constraint). The Hardware
+Connection card now also names what's virtual today versus what's coming.
+
+**Modules as hardware, not chips.** Rotary Encoder and Slider modules are
+now configurable: each capability function (a Rotary Encoder's Turn/Press)
+can be given a short name and a real, executable action
+(`configureModule`, `ModuleConfigModal.tsx`), testable in place with the
+same `testControlAction` path the Control Mapping Editor already uses — one
+execution path in the app, not two. `ModuleChip.tsx` renders each module as
+a labeled piece of hardware (a glyph, its capabilities, its assigned
+functions) rather than a generic pill. Macro/Numpad/Creator modules
+("buttons" capability) don't have a per-key model yet, so they're left as a
+simpler identity card rather than a fabricated one — see "what remains
+incomplete" below.
+
+**Physical identity for controls.** `ControlTile` and `VirtualControlButton`
+now show a small glyph and the actual shortcut/action caption under every
+label (`lib/describeAction.ts`) — e.g. RUN's tile now reads `⌨ Ctrl+F5`,
+not just "RUN" — instead of looking like a generic button. Both components
+share the same caption logic, one of two remaining "same idea, different
+look" spots product-audit.md flagged.
+
+Verified: typecheck clean on both `tsconfig.node.json` and
+`tsconfig.web.json`, **193/193 tests pass** (20 new: `STM32HardwareDevice`'s
+interface conformance and honest-not-connected behavior, the new
+`VirtualHardwareDevice` methods — `configureModule`/`rotateEncoder`/`ping`/
+`reset`/`clearLog` — and `clearLearningData`/`deleteAllData`'s exact table
+scope), app launches cleanly (`npm run dev`: main/preload/renderer all
+build, window opens titled "Noma", no runtime errors).
