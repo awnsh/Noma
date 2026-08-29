@@ -1,0 +1,6 @@
+# Playwright MCP session artifacts (screenshots, console logs) — never intentional commits
+.playwright-mcp/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

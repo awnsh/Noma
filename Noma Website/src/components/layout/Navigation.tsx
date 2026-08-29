@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import nomaLogo from '../../assets/noma-logo.png'
+import nomaMark from '../../assets/noma-mark.png'
+import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
   { label: 'Product', href: '#noma' },
@@ -27,9 +28,9 @@ export default function Navigation() {
       }`}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 sm:px-8">
-        <a href="#top" className="flex items-center gap-2.5">
-          <img src={nomaLogo} alt="" className="h-6 w-6" />
-          <span className="font-display text-lg font-semibold tracking-tight text-base-50">NOMA</span>
+        <a href="#top" className="flex items-center gap-3">
+          <img src={nomaMark} alt="" className="h-9 w-auto" />
+          <img src={nomaWordmark} alt="Noma" className="h-5 w-auto" />
         </a>
 
         <ul className="hidden items-center gap-9 md:flex">

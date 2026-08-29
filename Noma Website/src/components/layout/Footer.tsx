@@ -1,4 +1,5 @@
-import nomaLogo from '../../assets/noma-logo.png'
+import nomaMark from '../../assets/noma-mark.png'
+import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
   { label: 'Product', href: '#noma' },
@@ -12,9 +13,9 @@ export default function Footer() {
     <footer className="border-t border-base-800">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-12 sm:flex-row sm:justify-between sm:px-8">
         <div className="flex flex-col items-center gap-2 sm:items-start">
-          <div className="flex items-center gap-2">
-            <img src={nomaLogo} alt="" className="h-4 w-4" />
-            <span className="font-display text-base font-semibold tracking-tight text-base-100">NOMA</span>
+          <div className="flex items-center gap-2.5">
+            <img src={nomaMark} alt="" className="h-6 w-auto" />
+            <img src={nomaWordmark} alt="Noma" className="h-3.5 w-auto" />
           </div>
           <span className="text-xs text-base-500">An adaptive computer interface. In development.</span>
         </div>

@@ -3,17 +3,15 @@ import Reveal from '../ui/Reveal'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 
 const hotspots = [
-  { x: 31.5, y: 49 },
-  { x: 79, y: 24 },
-  { x: 79, y: 48.5 },
-  { x: 96, y: 49 },
+  { x: 45.5, y: 50 },
+  { x: 90, y: 43.5 },
+  { x: 96, y: 43.5 },
 ]
 
 const legend = [
-  { label: 'Core Input', body: 'A compact 65% key field for everyday typing.' },
-  { label: 'OLED Control Strip', body: 'A built-in widescreen display that acts as a dynamic, touch-style control panel — not a status screen.' },
-  { label: 'Rotary Encoders', body: 'Two permanent physical knobs for continuous control — zoom, volume, timeline.' },
-  { label: 'Module Docking', body: 'Magnetic rails along the edges where separate physical modules snap into place.' },
+  { label: 'Core Input', body: 'A regular compact 65% key field for everyday typing — nothing unusual to relearn.' },
+  { label: 'Vertical OLED Strip', body: 'Built into the key field beside the arrow keys — a dynamic, touch-style control panel, not a status screen.' },
+  { label: 'Pin-Connector Docking', body: 'Visible magnetic contacts on the sides and top edge where separate physical modules snap into place.' },
 ]
 
 export default function Hardware() {
@@ -52,7 +50,7 @@ export default function Hardware() {
         </div>
       </Reveal>
 
-      <div className="mt-16 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-16 grid gap-x-8 gap-y-6 sm:grid-cols-3">
         {legend.map((item, i) => (
           <Reveal key={item.label} delay={i * 0.05}>
             <div className="flex gap-3">
