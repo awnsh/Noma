@@ -28,7 +28,7 @@ export default function Modules() {
   return (
     <Section id="modules">
       <Reveal>
-        <Kicker index="06" label="Modular System" />
+        <Kicker index="07" label="Modular System" />
         <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           Your work. Your interface.
         </h2>

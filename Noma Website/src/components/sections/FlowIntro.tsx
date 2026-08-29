@@ -46,7 +46,7 @@ export default function FlowIntro() {
   return (
     <Section id="flow">
       <Reveal>
-        <Kicker index="03" label="Flow" />
+        <Kicker index="04" label="Flow" />
         <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           Noma adapts. <span className="text-base-400">Flow learns.</span>
         </h2>

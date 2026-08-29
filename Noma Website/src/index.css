@@ -103,6 +103,10 @@
     text-wrap: balance;
   }
 
+  .noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  }
+
   /* Grid confined to a panel, fading out at its own edges rather than
      tiling flatly across an entire section — sits behind the hardware
      illustration specifically, reading as a schematic backdrop for the
@@ -118,9 +122,5 @@
   /* Faint directional wash used behind the hero — a vignette, not a colorful blob. */
   .hero-glow {
     background-image: radial-gradient(ellipse 50% 42% at 50% 0%, color-mix(in oklab, var(--color-accent) 9%, transparent), transparent 70%);
-  }
-
-  .noise {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
   }
 }

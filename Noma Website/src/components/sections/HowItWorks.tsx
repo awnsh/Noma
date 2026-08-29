@@ -14,7 +14,7 @@ export default function HowItWorks() {
   return (
     <Section id="how">
       <Reveal>
-        <Kicker index="07" label="How It Works" />
+        <Kicker index="08" label="How It Works" />
         <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           Four steps. One interface.
         </h2>

@@ -24,7 +24,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-balance font-display text-[clamp(2.75rem,6vw,4.5rem)] font-medium leading-[1.08] tracking-tight text-base-50"
+          className="text-balance font-display text-[clamp(2.5rem,5.5vw,4rem)] font-medium leading-[1.08] tracking-tight text-base-50"
         >
           Your interface should adapt to <span className="text-accent">you.</span>
         </motion.h1>

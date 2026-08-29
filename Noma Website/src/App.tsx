@@ -5,6 +5,7 @@ import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
 import Problem from './components/sections/Problem'
 import IntroduceNoma from './components/sections/IntroduceNoma'
+import AppPreview from './components/sections/AppPreview'
 import FlowIntro from './components/sections/FlowIntro'
 import InteractiveDemo from './components/sections/InteractiveDemo'
 import Hardware from './components/sections/Hardware'
@@ -27,6 +28,7 @@ export default function App() {
         <Hero />
         <Problem />
         <IntroduceNoma />
+        <AppPreview />
         <FlowIntro />
         <InteractiveDemo />
         <Hardware />
