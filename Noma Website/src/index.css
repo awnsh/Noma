@@ -23,10 +23,10 @@
   --color-base-100: #eaeaec;
   --color-base-50: #f7f7f8;
 
-  --color-accent: #7dd3c0;
-  --color-accent-bright: #9ee6d6;
-  --color-accent-dim: #4d7a70;
-  --color-accent-950: #0a1512;
+  --color-accent: #5b86e0;
+  --color-accent-bright: #8aaaec;
+  --color-accent-dim: #3b5590;
+  --color-accent-950: #0a0f1e;
 
   --font-display: "Space Grotesk", "Inter", sans-serif;
   --font-sans: "Inter", -apple-system, sans-serif;
@@ -88,6 +88,21 @@
       linear-gradient(to right, color-mix(in oklab, var(--color-base-100) 4%, transparent) 1px, transparent 1px),
       linear-gradient(to bottom, color-mix(in oklab, var(--color-base-100) 4%, transparent) 1px, transparent 1px);
     background-size: 48px 48px;
+  }
+
+  /* Grid confined to a panel, fading out at its own edges rather than
+     tiling flatly across an entire section. */
+  .bg-grid-fade {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-base-100) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-base-100) 5%, transparent) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 65% at 50% 40%, black 40%, transparent 90%);
+  }
+
+  /* Faint directional wash used behind the hero — a vignette, not a colorful blob. */
+  .hero-glow {
+    background-image: radial-gradient(ellipse 50% 42% at 50% 0%, color-mix(in oklab, var(--color-accent) 9%, transparent), transparent 70%);
   }
 
   .noise {

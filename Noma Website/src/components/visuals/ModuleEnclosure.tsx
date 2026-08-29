@@ -15,7 +15,7 @@ interface ModuleEnclosureProps {
  */
 export default function ModuleEnclosure({ type, active = false, className = '' }: ModuleEnclosureProps) {
   const uid = useId()
-  const accent = active ? '#7dd3c0' : '#3a3a41'
+  const accent = active ? '#5b86e0' : '#3a3a41'
 
   return (
     <svg viewBox="0 0 160 120" className={className} fill="none">
@@ -32,7 +32,7 @@ export default function ModuleEnclosure({ type, active = false, className = '' }
       </defs>
 
       {/* enclosure */}
-      <rect x="8" y="8" width="144" height="104" rx="16" fill={`url(#${uid}-body)`} stroke={active ? '#7dd3c0' : '#232328'} strokeOpacity={active ? '0.5' : '1'} strokeWidth="1.5" />
+      <rect x="8" y="8" width="144" height="104" rx="16" fill={`url(#${uid}-body)`} stroke={active ? '#5b86e0' : '#232328'} strokeOpacity={active ? '0.5' : '1'} strokeWidth="1.5" />
       <rect x="9" y="9" width="142" height="1.5" rx="0.75" fill="#4a4a52" opacity="0.4" />
 
       {/* magnetic contact edge (bottom — the side that docks to the keyboard) */}

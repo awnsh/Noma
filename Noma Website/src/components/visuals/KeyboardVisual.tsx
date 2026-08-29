@@ -113,8 +113,8 @@ function PinStrip({ x, y, w, h, pins, lit }: { x: number; y: number; w: number; 
           cx={p.x}
           cy={p.y}
           r="2.6"
-          fill={lit ? '#7dd3c0' : '#1c1c21'}
-          stroke={lit ? '#7dd3c0' : '#45454c'}
+          fill={lit ? '#5b86e0' : '#1c1c21'}
+          stroke={lit ? '#5b86e0' : '#45454c'}
           strokeWidth="1"
         />
       ))}
@@ -184,6 +184,7 @@ export default function KeyboardVisual({
             <rect key={`k${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="6" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
           ))}
 
+
           {/* arrow cluster */}
           <rect x={arrowUpKey.x} y={arrowUpKey.y} width={arrowUpKey.w} height={arrowUpKey.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
           {arrowBottomKeys.map((k, i) => (
@@ -191,8 +192,8 @@ export default function KeyboardVisual({
           ))}
 
           {/* vertical OLED strip */}
-          <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" fill="#050506" stroke="#7dd3c0" strokeOpacity="0.3" strokeWidth="1.25" />
-          <circle cx={SCR_X + SCR_W - 10} cy={SCR_Y + 10} r="2.3" fill="#7dd3c0" />
+          <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" fill="#050506" stroke="#5b86e0" strokeOpacity="0.3" strokeWidth="1.25" />
+          <circle cx={SCR_X + SCR_W - 10} cy={SCR_Y + 10} r="2.3" fill="#5b86e0" />
 
           {readout ? (
             <g>
@@ -203,7 +204,7 @@ export default function KeyboardVisual({
                 fontFamily="'Space Grotesk', sans-serif"
                 fontSize="11.5"
                 fontWeight="600"
-                fill="#9ee6d6"
+                fill="#8aaaec"
               >
                 {readout.label}
               </text>
@@ -214,7 +215,7 @@ export default function KeyboardVisual({
                 fontFamily="'JetBrains Mono', monospace"
                 fontSize="7"
                 letterSpacing="1"
-                fill="#4d7a70"
+                fill="#3b5590"
               >
                 {readout.sub}
               </text>
@@ -228,7 +229,7 @@ export default function KeyboardVisual({
                   <g key={label + i}>
                     {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
                     <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#9ee6d6' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8aaaec' }}>
                         <OledIcon label={label} className="h-3 w-3" />
                         <span
                           style={{
