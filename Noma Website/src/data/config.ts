@@ -6,4 +6,4 @@
 //
 // Until this is set, the waitlist form renders normally but shows a small
 // "not connected yet" notice instead of submitting.
-export const WAITLIST_ENDPOINT = ''
+export const WAITLIST_ENDPOINT = 'https://formspree.io/f/xljedono'
