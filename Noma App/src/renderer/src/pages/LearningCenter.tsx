@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import type { LearningStats, Suggestion, SuggestionStatus } from '@shared/types'
 import { explainConfidence } from '../lib/explainConfidence'
 
+// Flow violet, not accent blue — every status here is Flow's own learning
+// record, not the resulting interface state (see the website's identical
+// split: Flow's own cognition is violet, the interface it produces is blue).
 const STATUS_STYLES: Record<SuggestionStatus, string> = {
   pending: 'border-white/10 text-neutral-400',
-  accepted: 'border-accent-muted text-accent',
+  accepted: 'border-flow-muted text-flow',
   rejected: 'border-red-900 text-red-400',
   dismissed: 'border-white/10 text-neutral-600'
 }
@@ -42,7 +45,7 @@ function SuggestionHistoryRow({ suggestion }: { suggestion: Suggestion }) {
           <button
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
-            className="mt-2 text-[11px] text-neutral-600 hover:text-accent"
+            className="mt-2 text-[11px] text-neutral-600 hover:text-flow"
           >
             {expanded ? 'Hide why' : 'Why?'}
           </button>
@@ -115,7 +118,7 @@ export function LearningCenter() {
                     <span
                       className={
                         kind.bias > 0
-                          ? 'text-accent'
+                          ? 'text-flow'
                           : kind.bias < 0
                             ? 'text-red-400'
                             : 'text-neutral-600'

@@ -46,14 +46,34 @@ function DevToolButton({
   )
 }
 
-function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; offLabel: string }) {
+function StatusPill({
+  ok,
+  onLabel,
+  offLabel,
+  tone = 'accent'
+}: {
+  ok: boolean
+  onLabel: string
+  offLabel: string
+  /** 'gold' for a real hardware-connection state (matches the website's
+   *  "gold = real hardware contact" rule) — leave the default 'accent' for
+   *  a software/interface toggle like workflow monitoring. */
+  tone?: 'accent' | 'gold'
+}) {
+  // Full literal class strings (not a templated `${tone}`) — Tailwind's
+  // content scanner needs the complete class name to appear as-is in
+  // source, it can't resolve one assembled from a runtime variable.
+  const okClasses =
+    tone === 'gold' ? 'border-gold-muted text-gold' : 'border-accent-muted text-accent'
+  const dotClasses = tone === 'gold' ? 'bg-gold' : 'bg-accent'
+
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${
-        ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-500'
+        ok ? okClasses : 'border-white/10 text-neutral-500'
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-accent' : 'bg-neutral-700'}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${ok ? dotClasses : 'bg-neutral-700'}`} />
       {ok ? onLabel : offLabel}
     </span>
   )
@@ -106,7 +126,7 @@ export function Developer() {
             Hardware Connection
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <StatusPill ok={status.connected} onLabel="Connected" offLabel="Disconnected" />
+            <StatusPill ok={status.connected} onLabel="Connected" offLabel="Disconnected" tone="gold" />
             <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
               Virtual Device · v{status.protocolVersion}
             </span>

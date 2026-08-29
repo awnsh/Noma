@@ -64,8 +64,8 @@ export default function Modules() {
 
       {/* Adaptive hardware: Flow can suggest new physical modules, not just software controls. */}
       <Reveal delay={0.1}>
-        <div className="mx-auto mt-20 max-w-2xl overflow-hidden rounded-2xl border border-accent/30 bg-accent/[0.04] p-8">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">Flow noticed something</p>
+        <div className="mx-auto mt-20 max-w-2xl overflow-hidden rounded-2xl border border-flow/30 bg-flow/[0.05] p-8">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-flow">Flow noticed something</p>
           <p className="mt-3 text-base text-base-100">&ldquo;You frequently adjust numeric values.&rdquo;</p>
           <p className="mt-1 text-sm text-base-400">Consider adding a rotary encoder.</p>
 

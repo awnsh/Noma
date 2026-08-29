@@ -2,21 +2,60 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
+import AppKeyboardGrid from '../visuals/AppKeyboardGrid'
+import VirtualControlTile from '../visuals/VirtualControlTile'
+import DashboardDemo from '../visuals/DashboardDemo'
+import MacroStudioDemo from '../visuals/MacroStudioDemo'
+import { appProfiles } from '../../data/appProfiles'
+import { controlKeys, formatShortcutCaption } from '../../data/controlActions'
 
 interface AppScreen {
   id: string
   label: string
-  /** A real screenshot of the desktop app, dropped in as it's captured — see
-   *  the placeholder note below for the ones not wired up yet. Swap the file
-   *  and nothing else needs to change here. */
-  image?: string
 }
 
+// Every screen here is a faithful, interactive recreation of the real app's
+// page — built from the real app's own pure components re-themed onto this
+// site's tokens, driven by local state instead of the real IPC bridge (see
+// each demo component's own doc comment for exactly what was ported and why).
 const screens: AppScreen[] = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'virtual-keyboard', label: 'Virtual Keyboard' },
   { id: 'macros', label: 'Macro Studio' },
 ]
+
+const vscode = appProfiles.vscode
+
+/** The one part of this preview you can actually press — press a control,
+ *  watch its real shortcut light up on the keyboard below it, exactly like
+ *  the app itself does when workflow monitoring captures a combo. */
+function VirtualKeyboardDemo() {
+  const [flashingKeys, setFlashingKeys] = useState<Set<string>>(new Set())
+
+  const press = (label: string) => {
+    const keys = controlKeys[label]
+    if (!keys) return
+    setFlashingKeys(new Set(keys))
+    window.setTimeout(() => setFlashingKeys(new Set()), 500)
+  }
+
+  return (
+    <div className="p-6 sm:p-8">
+      <AppKeyboardGrid flashingKeys={flashingKeys} />
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {vscode.controls.map((label, i) => (
+          <VirtualControlTile
+            key={label}
+            slot={i + 1}
+            label={label}
+            caption={controlKeys[label] && formatShortcutCaption(controlKeys[label])}
+            onPress={() => press(label)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function AppPreview() {
   const [activeId, setActiveId] = useState(screens[0].id)
@@ -30,8 +69,8 @@ export default function AppPreview() {
           The companion software, today.
         </h2>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          Noma runs as a desktop app right now, ahead of the physical keyboard &mdash; this is the real interface,
-          not a mockup of one.
+          Noma runs as a desktop app right now, ahead of the physical keyboard &mdash; switch applications, press a
+          control, build a macro below. It&rsquo;s the real interface responding, not a mockup of one.
         </p>
       </Reveal>
 
@@ -63,36 +102,19 @@ export default function AppPreview() {
               </span>
             </div>
 
-            <div className="relative aspect-[16/10] w-full bg-base-950">
+            <div className="relative min-h-[26rem] w-full bg-base-950">
               <AnimatePresence mode="wait">
-                {active.image ? (
-                  <motion.img
-                    key={active.id}
-                    src={active.image}
-                    alt={`Noma app — ${active.label} screen`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 h-full w-full object-cover object-top"
-                  />
-                ) : (
-                  <motion.div
-                    key={active.id + '-placeholder'}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center"
-                  >
-                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-base-500">
-                      Screenshot coming soon
-                    </span>
-                    <p className="max-w-xs text-sm text-base-400">
-                      The {active.label} screen is live in the app &mdash; captured here as soon as it's ready.
-                    </p>
-                  </motion.div>
-                )}
+                <motion.div
+                  key={active.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {active.id === 'dashboard' && <DashboardDemo />}
+                  {active.id === 'virtual-keyboard' && <VirtualKeyboardDemo />}
+                  {active.id === 'macros' && <MacroStudioDemo />}
+                </motion.div>
               </AnimatePresence>
             </div>
           </div>

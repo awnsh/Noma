@@ -21,10 +21,19 @@
   --color-base-100: #eaeaec;
   --color-base-50: #f7f7f8;
 
-  --color-accent: #5b86e0;
-  --color-accent-bright: #8aaaec;
-  --color-accent-dim: #3b5590;
-  --color-accent-950: #0a0f1e;
+  /* Signature brand blue ("Noma Blue") — deliberately not the generic muted
+     periwinkle every SaaS dark-mode site reaches for, and deliberately
+     nowhere near a blue this product already sits beside: VS Code's own
+     brand blue shows up on this very page (appProfiles.vscode's identity
+     dot, hue ~206°) and Discord/Stripe's blurple-indigo sits at hue
+     ~235-248° — this is pushed to hue ~228° at a brighter, more vivid
+     saturation/lightness than either, so it reads as its own thing rather
+     than "generic SaaS blue" or "someone else's blue." Every button and
+     every other blue on the site should point at this token, not a raw hex. */
+  --color-accent: #4c7eff;
+  --color-accent-bright: #8babff;
+  --color-accent-dim: #3150a4;
+  --color-accent-950: #0a0f1f;
 
   /* Semantic error — same 4-step structure as accent (base / bright / dim for
      borders / near-black wash), a warm coral rather than an alarmist pure red
@@ -42,6 +51,17 @@
   --color-gold-bright: #e8c383;
   --color-gold-dim: #6b5730;
   --color-gold-950: #1a1409;
+
+  /* Flow violet — Flow noticing a pattern and proposing something, wherever
+     that moment shows up (Flow's own section, a module suggestion, a
+     Dashboard suggestion card). Deliberately its own hue, not gold or blue:
+     gold stays reserved for real hardware contact and blue for the
+     interface's current state, so "Flow thinks you should..." never reads as
+     either of those. */
+  --color-flow: #a78bd1;
+  --color-flow-bright: #c4aee0;
+  --color-flow-dim: #5c4a78;
+  --color-flow-950: #150f1e;
 
   /* Geometric rounded sans, matching the "noma" wordmark's own letterforms
      rather than contrasting against them the way a serif would. */

@@ -17,7 +17,7 @@ interface ModuleEnclosureProps {
 export default function ModuleEnclosure({ type, active = false, className = '' }: ModuleEnclosureProps) {
   const uid = useId()
   const reduceMotion = useReducedMotion()
-  const accent = active ? '#5b86e0' : '#3a3a41'
+  const accent = active ? '#4c7eff' : '#3a3a41'
   // The literal magnetic contacts get their own color — gold, not the blue used for
   // "this module is selected" — so a pin reads as hardware making contact, distinct
   // from any software/UI active-state.
@@ -49,7 +49,7 @@ export default function ModuleEnclosure({ type, active = false, className = '' }
         fill={`url(#${uid}-body)`}
         strokeWidth="1.5"
         initial={false}
-        animate={{ stroke: active ? '#5b86e0' : '#232328', strokeOpacity: active ? 0.5 : 1 }}
+        animate={{ stroke: active ? '#4c7eff' : '#232328', strokeOpacity: active ? 0.5 : 1 }}
         transition={colorTransition}
       />
       <rect x="9" y="9" width="142" height="1.5" rx="0.75" fill="#4a4a52" opacity="0.4" />

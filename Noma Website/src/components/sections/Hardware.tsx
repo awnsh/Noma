@@ -2,10 +2,12 @@ import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 
+// Pin-Connector Docking gets gold, matching the real lit-pin color elsewhere
+// in this same illustration — the other two stay accent blue (interface).
 const hotspots = [
-  { x: 45.5, y: 50 },
-  { x: 90, y: 43.5 },
-  { x: 96, y: 43.5 },
+  { x: 45.5, y: 50, gold: false },
+  { x: 90, y: 43.5, gold: false },
+  { x: 96, y: 43.5, gold: true },
 ]
 
 const legend = [
@@ -43,8 +45,8 @@ export default function Hardware() {
               style={{ left: `${h.x}%`, top: `${h.y}%` }}
               aria-hidden
             >
-              <span className="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-accent/60" />
-              <span className="relative block h-2.5 w-2.5 rounded-full bg-accent" />
+              <span className={`absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full ${h.gold ? 'bg-gold/60' : 'bg-accent/60'}`} />
+              <span className={`relative block h-2.5 w-2.5 rounded-full ${h.gold ? 'bg-gold' : 'bg-accent'}`} />
             </span>
           ))}
         </div>
@@ -54,7 +56,7 @@ export default function Hardware() {
         {legend.map((item, i) => (
           <Reveal key={item.label} delay={i * 0.05}>
             <div className="flex gap-3">
-              <span className="font-mono text-xs text-accent">{String(i + 1).padStart(2, '0')}</span>
+              <span className={`font-mono text-xs ${i === 2 ? 'text-gold' : 'text-accent'}`}>{String(i + 1).padStart(2, '0')}</span>
               <div>
                 <p className="text-sm font-medium text-base-100">{item.label}</p>
                 <p className="mt-1 text-sm text-base-400">{item.body}</p>

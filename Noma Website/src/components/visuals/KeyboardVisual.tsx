@@ -251,8 +251,8 @@ export default function KeyboardVisual({
           )}
 
           {/* vertical OLED strip */}
-          <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" fill="#050506" stroke="#5b86e0" strokeOpacity="0.3" strokeWidth="1.25" />
-          <circle cx={SCR_X + SCR_W - 10} cy={SCR_Y + 10} r="2.3" fill="#5b86e0" />
+          <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" fill="#050506" stroke="#4c7eff" strokeOpacity="0.3" strokeWidth="1.25" />
+          <circle cx={SCR_X + SCR_W - 10} cy={SCR_Y + 10} r="2.3" fill="#4c7eff" />
 
           {/* Screen content swaps with a brief scan-in rather than a jump cut —
               this is the one moment on the page that has to read as the interface
@@ -275,7 +275,7 @@ export default function KeyboardVisual({
                       fontFamily="'Inter', sans-serif"
                       fontSize="11.5"
                       fontWeight="600"
-                      fill="#8aaaec"
+                      fill="#8babff"
                     >
                       {readout.label}
                     </text>
@@ -286,7 +286,7 @@ export default function KeyboardVisual({
                       fontFamily="'JetBrains Mono', monospace"
                       fontSize="7"
                       letterSpacing="1"
-                      fill="#3b5590"
+                      fill="#3150a4"
                     >
                       {readout.sub}
                     </text>
@@ -300,7 +300,7 @@ export default function KeyboardVisual({
                         <g key={label + i}>
                           {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
                           <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8aaaec' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8babff' }}>
                               <OledIcon label={label} className="h-3 w-3" />
                               <span
                                 style={{
@@ -331,7 +331,7 @@ export default function KeyboardVisual({
                 x={SCR_X}
                 width={SCR_W}
                 height="3"
-                fill="#8aaaec"
+                fill="#8babff"
                 initial={{ y: SCR_Y - 3, opacity: 0 }}
                 animate={{ y: [SCR_Y - 3, SCR_Y + SCR_H], opacity: [0, 0.55, 0] }}
                 transition={{ duration: 0.34, ease: 'easeInOut' }}

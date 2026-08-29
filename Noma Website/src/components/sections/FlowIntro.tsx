@@ -2,9 +2,12 @@ import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import ControlChip from '../ui/ControlChip'
 
+// Observe/Recognize/Suggest are Flow's own cognitive process — tinted flow
+// violet. Adapt is the resulting interface change, so it stays accent blue.
 const steps = [
   {
     label: 'Observe',
+    labelClass: 'text-flow',
     body: (
       <div className="flex flex-wrap justify-center gap-2">
         {['Ctrl+C', 'Alt+Tab', 'Ctrl+V'].map((k) => (
@@ -17,21 +20,24 @@ const steps = [
   },
   {
     label: 'Recognize',
+    labelClass: 'text-flow',
     body: (
       <div className="text-center">
-        <p className="font-display text-3xl font-semibold text-accent">27&times;</p>
+        <p className="font-display text-3xl font-semibold text-flow">27&times;</p>
         <p className="mt-1 text-xs text-base-400">repetitions detected</p>
       </div>
     ),
   },
   {
     label: 'Suggest',
+    labelClass: 'text-flow',
     body: (
       <p className="text-center text-sm text-base-200">&ldquo;Turn this workflow into one control?&rdquo;</p>
     ),
   },
   {
     label: 'Adapt',
+    labelClass: 'text-accent',
     body: (
       <div className="flex justify-center">
         <span className="rounded-lg bg-accent px-4 py-2 font-mono text-[11px] font-medium uppercase tracking-wide text-base-950">
@@ -60,7 +66,7 @@ export default function FlowIntro() {
         {steps.map((step, i) => (
           <Reveal key={step.label} delay={i * 0.1} className="relative">
             <div className="flex h-full flex-col items-center gap-4 rounded-2xl border border-base-700 bg-base-850/60 p-6">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">{step.label}</span>
+              <span className={`font-mono text-[10px] uppercase tracking-[0.2em] ${step.labelClass}`}>{step.label}</span>
               <div className="flex flex-1 items-center">{step.body}</div>
             </div>
             {i < steps.length - 1 && (

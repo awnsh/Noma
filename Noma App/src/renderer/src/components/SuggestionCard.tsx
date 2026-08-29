@@ -29,7 +29,10 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
   }
 
   return (
-    <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
+    // Flow violet, not accent blue — this whole card is Flow's own
+    // cognition presenting itself, same split the website uses (Flow's
+    // suggestion is violet; the interface it actually changes stays blue).
+    <div className="rounded-xl border border-flow/30 bg-flow/[0.04] px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-medium text-neutral-100">{suggestion.title}</div>
@@ -46,7 +49,7 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
             <button
               type="button"
               onClick={() => setShowWhy((prev) => !prev)}
-              className="text-[10px] text-neutral-600 hover:text-accent"
+              className="text-[10px] text-neutral-600 hover:text-flow"
             >
               {showWhy ? 'Hide why' : 'Why?'}
             </button>
@@ -65,7 +68,7 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
           <button
             type="button"
             onClick={() => void startPicking()}
-            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
+            className="rounded-md border border-flow-muted bg-flow/10 px-3 py-1 text-xs font-medium text-flow hover:bg-flow/20"
           >
             Accept
           </button>
@@ -99,7 +102,7 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
               <button
                 type="button"
                 onClick={() => void resolve(suggestion.id, 'accepted')}
-                className="shrink-0 rounded-md border border-accent-muted bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
+                className="shrink-0 rounded-md border border-flow-muted bg-flow/10 px-3 py-1 text-xs font-medium text-flow hover:bg-flow/20"
               >
                 Accept
               </button>
@@ -119,7 +122,7 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
                       key={slot}
                       type="button"
                       onClick={() => void assignToControl(suggestion.id, slot)}
-                      className="rounded-md border border-white/10 bg-base-900 px-2 py-2 text-center text-xs text-neutral-300 hover:border-accent-muted hover:text-neutral-100"
+                      className="rounded-md border border-white/10 bg-base-900 px-2 py-2 text-center text-xs text-neutral-300 hover:border-flow-muted hover:text-neutral-100"
                     >
                       <div className="text-[9px] uppercase tracking-widest text-neutral-600">
                         {slot}
