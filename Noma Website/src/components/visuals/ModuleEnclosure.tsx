@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
 
 export type ModuleType = 'rotary' | 'button' | 'slider'
 
@@ -15,7 +16,13 @@ interface ModuleEnclosureProps {
  */
 export default function ModuleEnclosure({ type, active = false, className = '' }: ModuleEnclosureProps) {
   const uid = useId()
+  const reduceMotion = useReducedMotion()
   const accent = active ? '#5b86e0' : '#3a3a41'
+  // The literal magnetic contacts get their own color — gold, not the blue used for
+  // "this module is selected" — so a pin reads as hardware making contact, distinct
+  // from any software/UI active-state.
+  const pinColor = active ? '#cda15a' : '#3a3a41'
+  const colorTransition = { duration: reduceMotion ? 0.01 : 0.4, ease: [0.16, 1, 0.3, 1] as const }
 
   return (
     <svg viewBox="0 0 160 120" className={className} fill="none">
@@ -31,14 +38,27 @@ export default function ModuleEnclosure({ type, active = false, className = '' }
         </radialGradient>
       </defs>
 
-      {/* enclosure */}
-      <rect x="8" y="8" width="144" height="104" rx="16" fill={`url(#${uid}-body)`} stroke={active ? '#5b86e0' : '#232328'} strokeOpacity={active ? '0.5' : '1'} strokeWidth="1.5" />
+      {/* enclosure — stroke transitions in as the module goes live, rather than
+          cutting straight to the active look */}
+      <motion.rect
+        x="8"
+        y="8"
+        width="144"
+        height="104"
+        rx="16"
+        fill={`url(#${uid}-body)`}
+        strokeWidth="1.5"
+        initial={false}
+        animate={{ stroke: active ? '#5b86e0' : '#232328', strokeOpacity: active ? 0.5 : 1 }}
+        transition={colorTransition}
+      />
       <rect x="9" y="9" width="142" height="1.5" rx="0.75" fill="#4a4a52" opacity="0.4" />
 
-      {/* magnetic contact edge (bottom — the side that docks to the keyboard) */}
+      {/* magnetic contact edge (bottom — the side that docks to the keyboard) —
+          gold carries through to the matching pins on the keyboard's edge */}
       <rect x="60" y="106" width="40" height="4" rx="2" fill="#000" opacity="0.35" />
-      <circle cx="70" cy="108" r="1.6" fill={accent} />
-      <circle cx="90" cy="108" r="1.6" fill={accent} />
+      <motion.circle cx="70" cy="108" r="1.6" initial={false} animate={{ fill: pinColor }} transition={colorTransition} />
+      <motion.circle cx="90" cy="108" r="1.6" initial={false} animate={{ fill: pinColor }} transition={colorTransition} />
 
       {type === 'rotary' && (
         <g>
@@ -59,7 +79,17 @@ export default function ModuleEnclosure({ type, active = false, className = '' }
               />
             )
           })}
-          <line x1="80" y1="58" x2="80" y2="34" stroke={accent} strokeWidth="2.5" strokeLinecap="round" />
+          <motion.line
+            x1="80"
+            y1="58"
+            x2="80"
+            y2="34"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            initial={false}
+            animate={{ stroke: accent }}
+            transition={colorTransition}
+          />
           <circle cx="80" cy="58" r="4" fill="#0a0a0c" stroke="#3a3a41" strokeWidth="1" />
         </g>
       )}

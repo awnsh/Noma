@@ -92,13 +92,16 @@ export default function WaitlistForm() {
             setEmail(e.target.value)
             if (status === 'error') setStatus('idle')
           }}
-          className="w-full rounded-lg border border-base-600 bg-base-900 px-4 py-3 text-sm text-base-50 placeholder:text-base-500 outline-none transition-colors focus:border-accent"
+          className={`w-full rounded-lg border bg-base-900 px-4 py-3 text-sm text-base-50 placeholder:text-base-500 outline-none transition-colors focus:border-accent ${
+            status === 'error' ? 'border-error/60' : 'border-base-600'
+          }`}
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-accent px-6 py-3 text-sm font-medium text-base-950 transition-colors hover:bg-accent-bright disabled:opacity-60"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-medium text-base-950 transition-colors hover:bg-accent-bright disabled:opacity-60"
         >
+          {status === 'loading' && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-base-950" />}
           {status === 'loading' ? 'Joining…' : 'Join the Waitlist'}
         </button>
       </form>
@@ -110,8 +113,9 @@ export default function WaitlistForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="mt-2.5 text-left text-xs text-base-400"
+            className="mt-2.5 flex items-center gap-2 text-left text-xs text-error"
           >
+            <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-error" />
             {message}
           </motion.p>
         )}

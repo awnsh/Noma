@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "Noma Website/src/index.css"
+        ],
+        "createdAt": "2026-08-29T18:24:01.722Z",
+        "reason": "pre-existing masked/vignetted grid (bg-grid-fade) confined to a panel behind the KeyboardVisual hardware illustration, reading as a schematic/blueprint backdrop for the hardware concept, not decorative texture on ordinary content; the unused flat bg-grid utility was removed as dead code"
+      }
+    ]
+  }
+}

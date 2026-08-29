@@ -1,3 +1,5 @@
+import { ReactLenis } from 'lenis/react'
+import { useReducedMotion } from 'framer-motion'
 import Navigation from './components/layout/Navigation'
 import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
@@ -13,7 +15,12 @@ import Founder from './components/sections/Founder'
 import CTA from './components/sections/CTA'
 
 export default function App() {
-  return (
+  // Reduced-motion users get plain native scroll rather than Lenis's eased
+  // momentum — smooth scrolling is a nicety, not something to force on people
+  // who've asked their system to minimize motion.
+  const reduceMotion = useReducedMotion()
+
+  const page = (
     <div className="min-h-screen bg-base-950">
       <Navigation />
       <main>
@@ -31,5 +38,13 @@ export default function App() {
       </main>
       <Footer />
     </div>
+  )
+
+  if (reduceMotion) return page
+
+  return (
+    <ReactLenis root options={{ lerp: 0.11, duration: 1.1, wheelMultiplier: 1 }}>
+      {page}
+    </ReactLenis>
   )
 }

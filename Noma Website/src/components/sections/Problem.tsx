@@ -21,7 +21,10 @@ export default function Problem() {
         {environments.map((env, i) => (
           <Reveal key={env.id} delay={i * 0.08}>
             <div className="h-full rounded-2xl border border-base-700 bg-base-850/60 p-6">
-              <p className="font-display text-base font-medium text-base-100">{env.name}</p>
+              <div className="flex items-center gap-2">
+                {env.color && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: env.color }} />}
+                <p className="font-display text-base font-medium text-base-100">{env.name}</p>
+              </div>
               <div className="mt-5 grid grid-cols-2 gap-2">
                 {env.controls.map((c) => (
                   <ControlChip key={c} size="sm" muted>

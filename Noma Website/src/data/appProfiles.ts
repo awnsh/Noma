@@ -3,6 +3,11 @@ export interface AppProfile {
   name: string
   shortName: string
   controls: string[]
+  /** The app's own identifying color, shown as a small dot wherever it's named —
+   *  makes "every application is different" legible at a glance instead of every
+   *  environment reading as the same gray card. Omitted where an app has no single
+   *  identifying hue (e.g. Chrome's mark is inherently multicolor). */
+  color?: string
 }
 
 // Shared control-set definitions, reused across the Problem, Noma-intro,
@@ -13,18 +18,21 @@ export const appProfiles: Record<string, AppProfile> = {
     name: 'Visual Studio Code',
     shortName: 'VS Code',
     controls: ['Run', 'Debug', 'Terminal', 'Search'],
+    color: '#3b8eea',
   },
   premiere: {
     id: 'premiere',
     name: 'Adobe Premiere',
     shortName: 'Premiere',
     controls: ['Cut', 'Ripple', 'Zoom', 'Export'],
+    color: '#9999ff',
   },
   solidworks: {
     id: 'solidworks',
     name: 'SolidWorks',
     shortName: 'SolidWorks',
     controls: ['Rotate', 'Measure', 'Extrude', 'Save'],
+    color: '#e2231a',
   },
   chrome: {
     id: 'chrome',

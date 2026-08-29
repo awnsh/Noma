@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-@import "@fontsource/space-grotesk/500.css";
-@import "@fontsource/space-grotesk/600.css";
-@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource-variable/sora/wght.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
@@ -28,7 +26,26 @@
   --color-accent-dim: #3b5590;
   --color-accent-950: #0a0f1e;
 
-  --font-display: "Space Grotesk", "Inter", sans-serif;
+  /* Semantic error — same 4-step structure as accent (base / bright / dim for
+     borders / near-black wash), a warm coral rather than an alarmist pure red
+     so it sits in this cool, near-black world instead of fighting it. */
+  --color-error: #e2685f;
+  --color-error-bright: #f0968f;
+  --color-error-dim: #7a3a36;
+  --color-error-950: #1e0e0d;
+
+  /* Gold — reserved specifically for the physical dock: pins that carry a real
+     magnetic/electrical connection between the keyboard and a module. Blue
+     stays the color of the adaptive software/UI; gold marks "this is hardware,
+     and it just made contact," so the two are never confused for each other. */
+  --color-gold: #cda15a;
+  --color-gold-bright: #e8c383;
+  --color-gold-dim: #6b5730;
+  --color-gold-950: #1a1409;
+
+  /* Geometric rounded sans, matching the "noma" wordmark's own letterforms
+     rather than contrasting against them the way a serif would. */
+  --font-display: "Sora Variable", "Inter", sans-serif;
   --font-sans: "Inter", -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
 
@@ -46,7 +63,10 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    /* No CSS scroll-behavior here — Lenis (see App.tsx) owns smooth scrolling
+       when motion is allowed, and fighting it with the browser's own smooth
+       scroll produces a stutter. Reduced-motion users get instant native
+       jumps, which is the correct behavior for them anyway. */
     background: var(--color-base-950);
     overflow-x: hidden;
   }
@@ -83,15 +103,10 @@
     text-wrap: balance;
   }
 
-  .bg-grid {
-    background-image:
-      linear-gradient(to right, color-mix(in oklab, var(--color-base-100) 4%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--color-base-100) 4%, transparent) 1px, transparent 1px);
-    background-size: 48px 48px;
-  }
-
   /* Grid confined to a panel, fading out at its own edges rather than
-     tiling flatly across an entire section. */
+     tiling flatly across an entire section — sits behind the hardware
+     illustration specifically, reading as a schematic backdrop for the
+     keyboard concept, not decorative texture on ordinary content. */
   .bg-grid-fade {
     background-image:
       linear-gradient(to right, color-mix(in oklab, var(--color-base-100) 5%, transparent) 1px, transparent 1px),

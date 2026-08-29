@@ -28,7 +28,7 @@ export default function ControlChip({ children, size = 'md', active = false, mut
         sizes[size],
         onClick ? 'cursor-pointer' : '',
         active
-          ? 'border-accent/60 bg-accent/10 text-accent shadow-[0_0_0_1px_rgba(125,211,192,0.15),0_0_24px_rgba(125,211,192,0.12)]'
+          ? 'border-accent/60 bg-accent/10 text-accent shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-accent)_15%,transparent),0_0_24px_color-mix(in_oklab,var(--color-accent)_12%,transparent)]'
           : muted
             ? 'border-base-700 bg-base-900/60 text-base-500'
             : 'border-base-600 bg-base-850 text-base-100 hover:border-base-400',

@@ -1,5 +1,5 @@
-import { useId } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { useId, useRef } from 'react'
+import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
 import OledIcon from './OledIcon'
 import { oledLabel } from '../../data/appProfiles'
 
@@ -13,6 +13,10 @@ interface KeyboardVisualProps {
   glow?: boolean
   float?: boolean
   className?: string
+  /** Crops the illustration to just the OLED screen, enlarged — the chassis, keys, and
+   *  pin connectors are omitted rather than shrunk offscreen. Used where the screen's
+   *  content changing is the point, e.g. the interactive demo. */
+  oledOnly?: boolean
 }
 
 const VB_W = 1000
@@ -45,6 +49,13 @@ const SCR_H = ROW_H * 4 + ROW_GAP * 3
 const KEY_X = IN_X
 const KEY_Y = IN_Y
 const KEY_W = SCR_X - 16 - KEY_X
+
+// Tight crop around just the screen, used by `oledOnly` — enough headroom above
+// for the app-name label, breathing room to the sides and below.
+const OLED_CROP_X = SCR_X - 26
+const OLED_CROP_Y = SCR_Y - 32
+const OLED_CROP_W = SCR_W + 52
+const OLED_CROP_H = SCR_H + 32 + 22
 
 interface KeyRect {
   x: number
@@ -103,19 +114,43 @@ const topPinOffsets = [-36, -18, 0, 18, 36]
 
 export const KEYBOARD_RIGHT_DOCK = { xPct: (rightPinX / VB_W) * 100, yPct: (dockCenterY / VB_H) * 100 }
 
-function PinStrip({ x, y, w, h, pins, lit }: { x: number; y: number; w: number; h: number; pins: { x: number; y: number }[]; lit: boolean }) {
+function PinStrip({
+  x,
+  y,
+  w,
+  h,
+  pins,
+  lit,
+  reduceMotion,
+}: {
+  x: number
+  y: number
+  w: number
+  h: number
+  pins: { x: number; y: number }[]
+  lit: boolean
+  reduceMotion: boolean
+}) {
   return (
     <g>
       <rect x={x} y={y} width={w} height={h} rx={Math.min(w, h) / 2.4} fill="#050506" stroke="#232328" strokeWidth="1" />
       {pins.map((p, i) => (
-        <circle
+        // Gold, not the software's blue — this is a real physical/magnetic contact,
+        // and the pulse is current arriving through it: the cue that a module has
+        // actually connected, not just moved into place.
+        <motion.circle
           key={i}
           cx={p.x}
           cy={p.y}
           r="2.6"
-          fill={lit ? '#5b86e0' : '#1c1c21'}
-          stroke={lit ? '#5b86e0' : '#45454c'}
           strokeWidth="1"
+          initial={false}
+          animate={{
+            fill: lit ? '#cda15a' : '#1c1c21',
+            stroke: lit ? '#e8c383' : '#45454c',
+            scale: lit && !reduceMotion ? 1.15 : 1,
+          }}
+          transition={{ duration: reduceMotion ? 0.01 : 0.4, ease: [0.16, 1, 0.3, 1] }}
         />
       ))}
     </g>
@@ -139,20 +174,38 @@ export default function KeyboardVisual({
   glow = true,
   float = true,
   className = '',
+  oledOnly = false,
 }: KeyboardVisualProps) {
   const reduceMotion = useReducedMotion()
-  const shouldFloat = float && !reduceMotion
   const uid = useId()
+  const floatRef = useRef<HTMLDivElement>(null)
+  // Idle float only runs while the board is actually on screen — it costs nothing
+  // to look right at scroll-in and nothing to burn while scrolled away.
+  const inView = useInView(floatRef, { margin: '-10% 0px -10% 0px' })
+  const shouldFloat = float && !reduceMotion && !oledOnly && inView
+
+  const viewBox = oledOnly
+    ? `${OLED_CROP_X} ${OLED_CROP_Y} ${OLED_CROP_W} ${OLED_CROP_H}`
+    : `0 0 ${VB_W} ${VB_H}`
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={floatRef} className={`relative ${className}`}>
       {glow && <div aria-hidden className="absolute inset-0 -z-10 rounded-[40%] bg-accent/20 blur-[100px]" />}
       <motion.div
         style={{ transformPerspective: 1400, rotateX: 8 }}
         animate={shouldFloat ? { y: [0, -8, 0] } : undefined}
         transition={shouldFloat ? { duration: 7, repeat: Infinity, ease: 'easeInOut' } : undefined}
       >
-        <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="h-auto w-full" role="img" aria-label="Conceptual illustration of the Noma keyboard: a regular compact key field with a narrow vertical OLED strip beside the arrow keys and magnetic pin connectors on its edges">
+        <svg
+          viewBox={viewBox}
+          className="h-auto w-full"
+          role="img"
+          aria-label={
+            oledOnly
+              ? `Noma's OLED screen, showing the controls it currently displays for ${appName}`
+              : 'Conceptual illustration of the Noma keyboard: a regular compact key field with a narrow vertical OLED strip beside the arrow keys and magnetic pin connectors on its edges'
+          }
+        >
           <defs>
             <linearGradient id={`${uid}-chassis`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#1c1c21" />
@@ -167,121 +220,162 @@ export default function KeyboardVisual({
               <stop offset="50%" stopColor="#6b6b74" stopOpacity="0.6" />
               <stop offset="100%" stopColor="#3c3c44" stopOpacity="0" />
             </linearGradient>
+            <clipPath id={`${uid}-screen-clip`}>
+              <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" />
+            </clipPath>
           </defs>
 
-          {/* ambient contact shadow */}
-          <ellipse cx={VB_W / 2} cy={CH_Y + CH_H + 14} rx={CH_W / 2.1} ry="16" fill="#000" opacity="0.35" />
+          {!oledOnly && (
+            <>
+              {/* ambient contact shadow */}
+              <ellipse cx={VB_W / 2} cy={CH_Y + CH_H + 14} rx={CH_W / 2.1} ry="16" fill="#000" opacity="0.35" />
 
-          {/* unibody chassis */}
-          <rect x={CH_X} y={CH_Y} width={CH_W} height={CH_H} rx={CH_RX} fill={`url(#${uid}-chassis)`} stroke="#232328" strokeWidth="1.5" />
-          <rect x={CH_X + 1} y={CH_Y + 1} width={CH_W - 2} height="2" rx="1" fill={`url(#${uid}-edge)`} />
+              {/* unibody chassis */}
+              <rect x={CH_X} y={CH_Y} width={CH_W} height={CH_H} rx={CH_RX} fill={`url(#${uid}-chassis)`} stroke="#232328" strokeWidth="1.5" />
+              <rect x={CH_X + 1} y={CH_Y + 1} width={CH_W - 2} height="2" rx="1" fill={`url(#${uid}-edge)`} />
 
-          {/* recessed control deck */}
-          <rect x={IN_X - 14} y={IN_Y - 14} width={IN_RIGHT - IN_X + 28} height={IN_BOTTOM - IN_Y + 28} rx="16" fill="#000" opacity="0.16" />
+              {/* recessed control deck */}
+              <rect x={IN_X - 14} y={IN_Y - 14} width={IN_RIGHT - IN_X + 28} height={IN_BOTTOM - IN_Y + 28} rx="16" fill="#000" opacity="0.16" />
 
-          {/* key field */}
-          {keyRows.flat().map((k, i) => (
-            <rect key={`k${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="6" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
-          ))}
+              {/* key field */}
+              {keyRows.flat().map((k, i) => (
+                <rect key={`k${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="6" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
+              ))}
 
-
-          {/* arrow cluster */}
-          <rect x={arrowUpKey.x} y={arrowUpKey.y} width={arrowUpKey.w} height={arrowUpKey.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
-          {arrowBottomKeys.map((k, i) => (
-            <rect key={`a${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
-          ))}
+              {/* arrow cluster */}
+              <rect x={arrowUpKey.x} y={arrowUpKey.y} width={arrowUpKey.w} height={arrowUpKey.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
+              {arrowBottomKeys.map((k, i) => (
+                <rect key={`a${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
+              ))}
+            </>
+          )}
 
           {/* vertical OLED strip */}
           <rect x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H} rx="9" fill="#050506" stroke="#5b86e0" strokeOpacity="0.3" strokeWidth="1.25" />
           <circle cx={SCR_X + SCR_W - 10} cy={SCR_Y + 10} r="2.3" fill="#5b86e0" />
 
-          {readout ? (
-            <g>
-              <text
-                x={SCR_X + SCR_W / 2}
-                y={SCR_Y + SCR_H / 2 - 4}
-                textAnchor="middle"
-                fontFamily="'Space Grotesk', sans-serif"
-                fontSize="11.5"
-                fontWeight="600"
-                fill="#8aaaec"
+          {/* Screen content swaps with a brief scan-in rather than a jump cut —
+              this is the one moment on the page that has to read as the interface
+              actually responding, since it's the literal product claim. */}
+          <g clipPath={`url(#${uid}-screen-clip)`}>
+            <AnimatePresence mode="wait">
+              <motion.g
+                key={readout ? `readout:${readout.label}:${readout.sub}` : `controls:${controls.join('|')}`}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reduceMotion ? 0 : -5 }}
+                transition={{ duration: reduceMotion ? 0.01 : 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
-                {readout.label}
-              </text>
-              <text
-                x={SCR_X + SCR_W / 2}
-                y={SCR_Y + SCR_H / 2 + 12}
-                textAnchor="middle"
-                fontFamily="'JetBrains Mono', monospace"
-                fontSize="7"
-                letterSpacing="1"
-                fill="#3b5590"
-              >
-                {readout.sub}
-              </text>
-            </g>
-          ) : (
-            <g>
-              {screenCells.map((cell, i) => {
-                const label = controls[i]
-                if (!label) return null
-                return (
-                  <g key={label + i}>
-                    {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
-                    <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8aaaec' }}>
-                        <OledIcon label={label} className="h-3 w-3" />
-                        <span
-                          style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: 6.5,
-                            letterSpacing: 0.4,
-                            color: '#c2c2c8',
-                            textAlign: 'center',
-                            lineHeight: 1.1,
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {oledLabel(label)}
-                        </span>
-                      </div>
-                    </foreignObject>
+                {readout ? (
+                  <g>
+                    <text
+                      x={SCR_X + SCR_W / 2}
+                      y={SCR_Y + SCR_H / 2 - 4}
+                      textAnchor="middle"
+                      fontFamily="'Inter', sans-serif"
+                      fontSize="11.5"
+                      fontWeight="600"
+                      fill="#8aaaec"
+                    >
+                      {readout.label}
+                    </text>
+                    <text
+                      x={SCR_X + SCR_W / 2}
+                      y={SCR_Y + SCR_H / 2 + 12}
+                      textAnchor="middle"
+                      fontFamily="'JetBrains Mono', monospace"
+                      fontSize="7"
+                      letterSpacing="1"
+                      fill="#3b5590"
+                    >
+                      {readout.sub}
+                    </text>
                   </g>
-                )
-              })}
-            </g>
-          )}
+                ) : (
+                  <g>
+                    {screenCells.map((cell, i) => {
+                      const label = controls[i]
+                      if (!label) return null
+                      return (
+                        <g key={label + i}>
+                          {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
+                          <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8aaaec' }}>
+                              <OledIcon label={label} className="h-3 w-3" />
+                              <span
+                                style={{
+                                  fontFamily: "'JetBrains Mono', monospace",
+                                  fontSize: 6.5,
+                                  letterSpacing: 0.4,
+                                  color: '#c2c2c8',
+                                  textAlign: 'center',
+                                  lineHeight: 1.1,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {oledLabel(label)}
+                              </span>
+                            </div>
+                          </foreignObject>
+                        </g>
+                      )
+                    })}
+                  </g>
+                )}
+              </motion.g>
+            </AnimatePresence>
+
+            {!reduceMotion && (
+              <motion.rect
+                key={readout ? `scan-r:${readout.label}:${readout.sub}` : `scan-c:${controls.join('|')}`}
+                x={SCR_X}
+                width={SCR_W}
+                height="3"
+                fill="#8aaaec"
+                initial={{ y: SCR_Y - 3, opacity: 0 }}
+                animate={{ y: [SCR_Y - 3, SCR_Y + SCR_H], opacity: [0, 0.55, 0] }}
+                transition={{ duration: 0.34, ease: 'easeInOut' }}
+              />
+            )}
+          </g>
 
           {/* app context label, etched just above the screen */}
           <text x={SCR_X + SCR_W / 2} y={SCR_Y - 8} textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="7.5" letterSpacing="1" fill="#3a3a41">
             {appName.toUpperCase()}
           </text>
 
-          {/* pin-connector docking strips */}
-          <PinStrip
-            x={leftPinX - 5}
-            y={dockCenterY - 45}
-            w={10}
-            h={90}
-            pins={pinOffsets.map((o) => ({ x: leftPinX, y: dockCenterY + o }))}
-            lit={false}
-          />
-          <PinStrip
-            x={rightPinX - 5}
-            y={dockCenterY - 45}
-            w={10}
-            h={90}
-            pins={pinOffsets.map((o) => ({ x: rightPinX, y: dockCenterY + o }))}
-            lit={dockedRight}
-          />
-          <PinStrip
-            x={topPinCenterX - 55}
-            y={topPinY - 5}
-            w={110}
-            h={10}
-            pins={topPinOffsets.map((o) => ({ x: topPinCenterX + o, y: topPinY }))}
-            lit={false}
-          />
+          {!oledOnly && (
+            <>
+              {/* pin-connector docking strips */}
+              <PinStrip
+                x={leftPinX - 5}
+                y={dockCenterY - 45}
+                w={10}
+                h={90}
+                pins={pinOffsets.map((o) => ({ x: leftPinX, y: dockCenterY + o }))}
+                lit={false}
+                reduceMotion={!!reduceMotion}
+              />
+              <PinStrip
+                x={rightPinX - 5}
+                y={dockCenterY - 45}
+                w={10}
+                h={90}
+                pins={pinOffsets.map((o) => ({ x: rightPinX, y: dockCenterY + o }))}
+                lit={dockedRight}
+                reduceMotion={!!reduceMotion}
+              />
+              <PinStrip
+                x={topPinCenterX - 55}
+                y={topPinY - 5}
+                w={110}
+                h={10}
+                pins={topPinOffsets.map((o) => ({ x: topPinCenterX + o, y: topPinY }))}
+                lit={false}
+                reduceMotion={!!reduceMotion}
+              />
+            </>
+          )}
         </svg>
       </motion.div>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import ModuleEnclosure, { type ModuleType } from '../visuals/ModuleEnclosure'
@@ -14,6 +14,7 @@ const modules: { type: ModuleType; name: string; lines: string[] }[] = [
 export default function Modules() {
   const [attached, setAttached] = useState(false)
   const [recognized, setRecognized] = useState(false)
+  const reduceMotion = useReducedMotion()
 
   const toggle = () => {
     if (attached) {
@@ -80,11 +81,22 @@ export default function Modules() {
               style={{ left: `${KEYBOARD_RIGHT_DOCK.xPct}%`, top: `${KEYBOARD_RIGHT_DOCK.yPct}%` }}
             >
               <motion.div
-                animate={attached ? { x: '0%', rotate: 0, scale: [1, 1.1, 1] } : { x: '85%', rotate: -8, scale: 1 }}
+                // Full slide-in-and-settle normally; under reduced motion the module
+                // still visibly relocates (that's the state, not decoration) but
+                // does so as a near-instant cut rather than a spatial slide/rotate/bounce.
+                animate={
+                  reduceMotion
+                    ? { x: attached ? '0%' : '85%', rotate: 0, scale: 1 }
+                    : attached
+                      ? { x: '0%', rotate: 0, scale: [1, 1.1, 1] }
+                      : { x: '85%', rotate: -8, scale: 1 }
+                }
                 transition={
-                  attached
-                    ? { duration: 0.75, times: [0, 0.65, 1], ease: [0.16, 1, 0.3, 1] }
-                    : { duration: 0.4, ease: 'easeOut' }
+                  reduceMotion
+                    ? { duration: 0.01 }
+                    : attached
+                      ? { duration: 0.75, times: [0, 0.65, 1], ease: [0.16, 1, 0.3, 1] }
+                      : { duration: 0.4, ease: 'easeOut' }
                 }
                 onAnimationComplete={() => {
                   if (attached) setRecognized(true)

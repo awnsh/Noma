@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import KeyboardVisual from '../visuals/KeyboardVisual'
@@ -10,6 +10,7 @@ const apps = [appProfiles.vscode, appProfiles.chrome, appProfiles.premiere]
 export default function InteractiveDemo() {
   const [activeId, setActiveId] = useState('vscode')
   const [learned, setLearned] = useState(false)
+  const reduceMotion = useReducedMotion()
 
   const active = apps.find((a) => a.id === activeId)!
   const controls = active.id === 'vscode' && learned ? vscodeLearnedControls : active.controls
@@ -34,17 +35,20 @@ export default function InteractiveDemo() {
               <button
                 key={app.id}
                 onClick={() => setActiveId(app.id)}
-                className={`flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   app.id === activeId ? 'bg-accent/10 text-accent' : 'text-base-400 hover:text-base-100'
                 }`}
               >
+                {app.color && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: app.color }} />}
                 {app.shortName}
               </button>
             ))}
           </div>
 
-          <div className="p-8 sm:p-10">
-            <KeyboardVisual appName={active.name} controls={controls} glow={false} float={false} />
+          <div className="flex justify-center p-10 sm:p-14">
+            <div className="w-full max-w-[200px]">
+              <KeyboardVisual appName={active.name} controls={controls} oledOnly />
+            </div>
           </div>
         </div>
       </Reveal>
@@ -54,9 +58,9 @@ export default function InteractiveDemo() {
           {showFlowPrompt ? (
             <motion.div
               key="prompt"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="rounded-2xl border border-accent/30 bg-accent/[0.04] p-6 text-center"
             >
@@ -76,9 +80,9 @@ export default function InteractiveDemo() {
           ) : active.id === 'vscode' ? (
             <motion.div
               key="adapted"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
+              exit={{ opacity: 0, y: reduceMotion ? 0 : -12 }}
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="flex items-center justify-center gap-2 rounded-2xl border border-base-700 bg-base-850/40 p-5 text-center"
             >

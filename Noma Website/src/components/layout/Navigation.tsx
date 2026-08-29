@@ -60,8 +60,8 @@ export default function Navigation() {
           onClick={() => setMenuOpen((v) => !v)}
           className="flex flex-col gap-1.5 md:hidden"
         >
-          <span className={`h-px w-6 bg-base-100 transition-transform ${menuOpen ? 'translate-y-[3.5px] rotate-45' : ''}`} />
-          <span className={`h-px w-6 bg-base-100 transition-transform ${menuOpen ? '-translate-y-[3.5px] -rotate-45' : ''}`} />
+          <span className={`h-px w-6 bg-base-100 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${menuOpen ? 'translate-y-[3.5px] rotate-45' : ''}`} />
+          <span className={`h-px w-6 bg-base-100 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${menuOpen ? '-translate-y-[3.5px] -rotate-45' : ''}`} />
         </button>
       </nav>
 

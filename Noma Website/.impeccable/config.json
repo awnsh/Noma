@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "Noma Website/src/index.css"
+        ],
+        "createdAt": "2026-08-29T18:34:35.706Z",
+        "reason": "bg-grid-fade is masked/faded and used only as a schematic backdrop behind the keyboard hardware illustration (a literal blueprint-style visual), not decorative texture on ordinary content — matches the rule's own blueprint/measurement-surface exception"
+      }
+    ]
+  }
+}
