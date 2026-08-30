@@ -40,7 +40,7 @@ function VirtualKeyboardDemo() {
   }
 
   return (
-    <div className="p-6 sm:p-8">
+    <div className="p-3 sm:p-8">
       <AppKeyboardGrid flashingKeys={flashingKeys} />
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {vscode.controls.map((label, i) => (

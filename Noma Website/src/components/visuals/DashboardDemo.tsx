@@ -61,7 +61,7 @@ export default function DashboardDemo() {
       : flowStatusByApp[activeId]
 
   return (
-    <div className="p-6 sm:p-8">
+    <div className="p-3 sm:p-8">
       {/* app switcher — standing in for Windows reporting a new foreground app */}
       <div className="mb-6 flex flex-wrap gap-2">
         {apps.map((app) => (
