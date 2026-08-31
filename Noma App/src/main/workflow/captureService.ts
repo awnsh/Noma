@@ -2,6 +2,7 @@ import { uIOhook, type UiohookKeyboardEvent } from 'uiohook-napi'
 import { shouldCaptureKeyCombo } from './captureFilter'
 import { MODIFIER_KEYCODES, keyNameForCode, type CommandModifierName } from './keyNames'
 import type { CapturedKeyEvent } from './types'
+import { isSelfInjected } from './selfInjectedKeys'
 
 /**
  * Builds the modifier-gated key combo for a single keydown event, or null
@@ -81,6 +82,10 @@ export class CaptureService {
   private readonly handleKeydown = (event: UiohookKeyboardEvent): void => {
     const combo = comboFromKeydownEvent(event)
     if (!combo) return
+    // Flow's own controls/macros/Test buttons send real shortcuts via this
+    // exact same global hook (see selfInjectedKeys.ts) — never mistake that
+    // echo for the user having typed it themselves.
+    if (isSelfInjected(combo)) return
     this.onCombo({
       applicationId: this.currentApplicationId,
       comboKeys: combo,

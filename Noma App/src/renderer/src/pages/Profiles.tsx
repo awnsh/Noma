@@ -61,7 +61,7 @@ export function Profiles() {
   return (
     <div className="flex h-full">
       <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 p-6">
-        <div className="mb-1 text-xl font-semibold text-neutral-100">Profiles</div>
+        <div className="mb-1 font-display text-xl font-semibold text-neutral-100">Profiles</div>
         <p className="mb-5 text-xs text-neutral-500">
           Every application Flow knows about, and whether it's been personalized yet.
         </p>

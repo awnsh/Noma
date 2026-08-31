@@ -87,7 +87,7 @@ export function LearningCenter() {
   return (
     <div className="mx-auto max-w-3xl px-10 py-10">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-neutral-100">Flow Learning Center</h1>
+        <h1 className="font-display text-xl font-semibold text-neutral-100">Flow Learning Center</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Flow is a local rule-based engine, not an AI model — every suggestion comes from counting
           real events against a fixed threshold, and every confidence percentage is real arithmetic.

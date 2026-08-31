@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventType, UiohookKey, type UiohookKeyboardEvent } from 'uiohook-napi'
-import { comboFromKeydownEvent } from './captureService'
+import { CaptureService, comboFromKeydownEvent } from './captureService'
+import { __resetSelfInjectedGuardForTesting, markSelfInjected } from './selfInjectedKeys'
 
 function keydown(
   keycode: number,
@@ -88,5 +89,53 @@ describe('comboFromKeydownEvent', () => {
     ]
     const combos = password.map(comboFromKeydownEvent)
     expect(combos.every((combo) => combo === null)).toBe(true)
+  })
+})
+
+describe('CaptureService — ignores its own synthetic keystrokes', () => {
+  beforeEach(() => {
+    __resetSelfInjectedGuardForTesting()
+  })
+
+  // handleKeydown is private — accessed directly here (TS's `private` is
+  // compile-time only) rather than through the real uIOhook.start(), the
+  // same way comboFromKeydownEvent above is tested without a real hook.
+  function fireKeydown(service: CaptureService, event: UiohookKeyboardEvent): void {
+    ;(service as unknown as { handleKeydown: (event: UiohookKeyboardEvent) => void }).handleKeydown(
+      event
+    )
+  }
+
+  it('does not report a combo that was just marked as self-injected (e.g. a control press)', () => {
+    const onCombo = vi.fn()
+    const service = new CaptureService(onCombo)
+
+    markSelfInjected(['Control', 'F5'])
+    fireKeydown(service, keydown(UiohookKey.F5, { ctrlKey: true }))
+
+    expect(onCombo).not.toHaveBeenCalled()
+  })
+
+  it('still reports a real, never-marked combo normally', () => {
+    const onCombo = vi.fn()
+    const service = new CaptureService(onCombo)
+
+    fireKeydown(service, keydown(UiohookKey.S, { ctrlKey: true }))
+
+    expect(onCombo).toHaveBeenCalledTimes(1)
+    expect(onCombo).toHaveBeenCalledWith(
+      expect.objectContaining({ comboKeys: ['Control', 'S'] })
+    )
+  })
+
+  it('only swallows one occurrence per mark — a genuine repeat right after is captured', () => {
+    const onCombo = vi.fn()
+    const service = new CaptureService(onCombo)
+
+    markSelfInjected(['Control', 'F5'])
+    fireKeydown(service, keydown(UiohookKey.F5, { ctrlKey: true })) // suppressed (the echo)
+    fireKeydown(service, keydown(UiohookKey.F5, { ctrlKey: true })) // the user's own, real press
+
+    expect(onCombo).toHaveBeenCalledTimes(1)
   })
 })

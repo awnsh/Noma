@@ -58,7 +58,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/60">
-        <h2 className="mb-1 text-lg font-semibold text-neutral-100">
+        <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">
           {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
         </h2>
         <p className="mb-5 text-xs text-neutral-500">

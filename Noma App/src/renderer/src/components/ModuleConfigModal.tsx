@@ -16,24 +16,26 @@ interface ModuleConfigModalProps {
   onSaved: (configuration: Record<string, ModuleFunctionConfig>) => void
 }
 
-type ActionType = ControlAction['type']
+// 'launchApplication' has no working execution path anywhere yet
+// (actionExecutor.ts refuses it with "not implemented yet") — left out of
+// this picker so configuring a module function never leads to one that
+// silently does nothing when triggered. See ControlEditorModal.tsx, which
+// applies the same rule to control actions.
+type SelectableActionType = Exclude<ControlAction['type'], 'launchApplication'>
 
-const ACTION_TYPE_LABELS: Record<ActionType, string> = {
+const ACTION_TYPE_LABELS: Record<SelectableActionType, string> = {
   shortcut: 'Keyboard shortcut',
   macro: 'Macro',
-  launchApplication: 'Launch application',
   systemCommand: 'System action',
   flowAction: 'Flow action'
 }
 
-function defaultActionForType(type: ActionType): ControlAction {
+function defaultActionForType(type: SelectableActionType): ControlAction {
   switch (type) {
     case 'shortcut':
       return { type: 'shortcut', keys: [] }
     case 'macro':
       return { type: 'macro', macroId: '' }
-    case 'launchApplication':
-      return { type: 'launchApplication', applicationId: '' }
     case 'systemCommand':
       return { type: 'systemCommand', command: SYSTEM_COMMAND_CATALOG[0] }
     case 'flowAction':
@@ -96,7 +98,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/60">
         <div className="mb-5">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">{module.name}</div>
-          <h2 className="mt-1 text-lg font-semibold text-neutral-100">Configure module</h2>
+          <h2 className="mt-1 font-display text-lg font-semibold text-neutral-100">Configure module</h2>
         </div>
 
         <div className="space-y-5">
@@ -121,11 +123,13 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                 <select
                   value={entry.action.type}
                   onChange={(event) =>
-                    updateEntry(fn.key, { action: defaultActionForType(event.target.value as ActionType) })
+                    updateEntry(fn.key, {
+                      action: defaultActionForType(event.target.value as SelectableActionType)
+                    })
                   }
                   className="mb-2 w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
                 >
-                  {(Object.keys(ACTION_TYPE_LABELS) as ActionType[]).map((type) => (
+                  {(Object.keys(ACTION_TYPE_LABELS) as SelectableActionType[]).map((type) => (
                     <option key={type} value={type}>
                       {ACTION_TYPE_LABELS[type]}
                     </option>

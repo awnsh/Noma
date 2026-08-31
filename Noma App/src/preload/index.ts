@@ -135,7 +135,10 @@ const flowApi: FlowApi = {
   resetHardware: () => ipcRenderer.invoke(IPC_CHANNELS.RESET_HARDWARE),
   simulateEncoderRotation: (moduleId: string, delta: number) =>
     ipcRenderer.invoke(IPC_CHANNELS.SIMULATE_ENCODER_ROTATION, moduleId, delta),
-  clearDeviceLog: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_DEVICE_LOG)
+  clearDeviceLog: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_DEVICE_LOG),
+
+  getOnboardingState: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ONBOARDING_STATE),
+  saveOnboardingState: (update) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_ONBOARDING_STATE, update)
 }
 
 if (process.contextIsolated) {

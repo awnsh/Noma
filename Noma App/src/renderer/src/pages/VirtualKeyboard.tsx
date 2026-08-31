@@ -7,6 +7,7 @@ import { ModuleChip } from '../components/ModuleChip'
 import { AddModuleMenu } from '../components/AddModuleMenu'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { ControlEditorModal } from '../components/ControlEditorModal'
+import { HardwareStatusPill } from '../components/HardwareStatusPill'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
   switch (event.type) {
@@ -82,7 +83,7 @@ export function VirtualKeyboard() {
     <div className="mx-auto max-w-3xl px-10 py-10">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
+          <h1 className="font-display text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
           <p className="mt-1 text-sm text-neutral-500">
             A digital twin of the eventual physical device. Every control here really executes —
             shortcuts are sent for real, MUTE really changes volume, CLOSE WINDOW posts the same
@@ -90,12 +91,7 @@ export function VirtualKeyboard() {
             docs/architecture.md.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 text-xs">
-          <span
-            className={`h-2 w-2 rounded-full ${status.connected ? 'bg-accent' : 'bg-neutral-700'}`}
-          />
-          <span className="text-neutral-400">{status.connected ? 'Connected' : 'Disconnected'}</span>
-        </div>
+        <HardwareStatusPill />
       </div>
 
       {/* The deck */}

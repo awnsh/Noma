@@ -278,6 +278,31 @@ export interface DeviceLogEntry {
   timestamp: number
 }
 
+/**
+ * First-launch onboarding (docs/architecture.md's "first 60-90 seconds").
+ * One small persisted record — see onboardingRepository.ts — not a
+ * dedicated table; this is a single user-preference blob, not relational
+ * data, so it lives in the same generic `settings` key/value table
+ * workflowMonitoringEnabled already uses.
+ */
+export type OnboardingStepId =
+  | 'welcome'
+  | 'useCases'
+  | 'flowPrivacy'
+  | 'hardware'
+  | 'demo'
+  | 'completion'
+
+export interface OnboardingState {
+  completed: boolean
+  /** The last screen reached — lets a relaunch mid-onboarding resume there
+   *  instead of restarting from Welcome. */
+  step: OnboardingStepId
+  selectedUseCases: string[]
+  flowEnabled: boolean
+  hardwareSkipped: boolean
+}
+
 /** Whether real keystroke sending (shortcut/macro controls) is currently
  *  enabled — see the big comment at KEYSTROKE_EXECUTION_ENABLED in
  *  actionExecutor.ts. Surfaced in Developer Mode so it's never a silent
@@ -488,4 +513,11 @@ export interface FlowApi {
   simulateEncoderRotation(moduleId: string, delta: number): Promise<void>
   /** Clears the in-memory HOST<->DEVICE log (main process and renderer). */
   clearDeviceLog(): Promise<void>
+
+  /** First-launch onboarding. See onboardingRepository.ts. */
+  getOnboardingState(): Promise<OnboardingState>
+  /** Merges `update` into the persisted onboarding state and returns the
+   *  result — every screen saves incrementally as the user moves through
+   *  the flow, not just once at the end. */
+  saveOnboardingState(update: Partial<OnboardingState>): Promise<OnboardingState>
 }

@@ -6,6 +6,7 @@ import { useFlowStore } from '../stores/flowStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { useDeveloperStore } from '../stores/developerStore'
 import { DeviceLogRow } from '../components/DeviceLogRow'
+import { HardwareStatusPill } from '../components/HardwareStatusPill'
 
 function describeAction(action: ControlAction): string {
   switch (action.type) {
@@ -46,34 +47,20 @@ function DevToolButton({
   )
 }
 
-function StatusPill({
-  ok,
-  onLabel,
-  offLabel,
-  tone = 'accent'
-}: {
-  ok: boolean
-  onLabel: string
-  offLabel: string
-  /** 'gold' for a real hardware-connection state (matches the website's
-   *  "gold = real hardware contact" rule) — leave the default 'accent' for
-   *  a software/interface toggle like workflow monitoring. */
-  tone?: 'accent' | 'gold'
-}) {
-  // Full literal class strings (not a templated `${tone}`) — Tailwind's
-  // content scanner needs the complete class name to appear as-is in
-  // source, it can't resolve one assembled from a runtime variable.
-  const okClasses =
-    tone === 'gold' ? 'border-gold-muted text-gold' : 'border-accent-muted text-accent'
-  const dotClasses = tone === 'gold' ? 'bg-gold' : 'bg-accent'
-
+/** A generic on/off pill for a software toggle (Workflow Monitoring,
+ *  Keystroke Execution). Hardware connection has its own dedicated
+ *  HardwareStatusPill — a real device-connection state (gold, matching the
+ *  app-wide "gold = real hardware contact" rule) isn't the same kind of
+ *  fact as an interface toggle, and unlike this pill it needs its own live
+ *  hardwareStore subscription rather than a caller-supplied `ok` boolean. */
+function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; offLabel: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${
-        ok ? okClasses : 'border-white/10 text-neutral-500'
+        ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-500'
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${ok ? dotClasses : 'bg-neutral-700'}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-accent' : 'bg-neutral-700'}`} />
       {ok ? onLabel : offLabel}
     </span>
   )
@@ -113,7 +100,7 @@ export function Developer() {
   return (
     <div className="mx-auto max-w-4xl px-10 py-10">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-neutral-100">Developer</h1>
+        <h1 className="font-display text-xl font-semibold text-neutral-100">Developer</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Hardware connection status, current mappings, and a live HOST↔DEVICE log using the exact
           message names the future STM32 protocol uses — see docs/hardware-protocol.md.
@@ -126,9 +113,9 @@ export function Developer() {
             Hardware Connection
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
-            <StatusPill ok={status.connected} onLabel="Connected" offLabel="Disconnected" tone="gold" />
+            <HardwareStatusPill />
             <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
-              Virtual Device · v{status.protocolVersion}
+              {status.deviceType} · v{status.protocolVersion}
             </span>
           </div>
           <div className="mt-2 text-[10px] text-neutral-700">

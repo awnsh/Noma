@@ -13,24 +13,27 @@ interface ControlEditorModalProps {
   onSaved: () => void
 }
 
-type ActionType = ControlAction['type']
+// 'launchApplication' is a real ControlAction variant but has no working
+// execution path anywhere yet (actionExecutor.ts refuses it with "not
+// implemented yet") — deliberately left out of this picker so choosing an
+// action type here never leads to a control that silently (or not-so-
+// silently) does nothing when pressed. Re-add once it actually launches
+// something.
+type SelectableActionType = Exclude<ControlAction['type'], 'launchApplication'>
 
-const ACTION_TYPE_LABELS: Record<ActionType, string> = {
+const ACTION_TYPE_LABELS: Record<SelectableActionType, string> = {
   shortcut: 'Keyboard shortcut',
   macro: 'Macro',
-  launchApplication: 'Launch application',
   systemCommand: 'System action',
   flowAction: 'Flow action'
 }
 
-function defaultActionForType(type: ActionType): ControlAction {
+function defaultActionForType(type: SelectableActionType): ControlAction {
   switch (type) {
     case 'shortcut':
       return { type: 'shortcut', keys: [] }
     case 'macro':
       return { type: 'macro', macroId: '' }
-    case 'launchApplication':
-      return { type: 'launchApplication', applicationId: '' }
     case 'systemCommand':
       return { type: 'systemCommand', command: SYSTEM_COMMAND_CATALOG[0] }
     case 'flowAction':
@@ -63,7 +66,7 @@ export function ControlEditorModal({
     (action.type !== 'shortcut' || action.keys.length > 0) &&
     (action.type !== 'macro' || action.macroId.length > 0)
 
-  const handleActionTypeChange = (nextType: ActionType): void => {
+  const handleActionTypeChange = (nextType: SelectableActionType): void => {
     setAction(defaultActionForType(nextType))
     setTestResult(null)
   }
@@ -109,7 +112,7 @@ export function ControlEditorModal({
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">
             {applicationName} · Control {slot}
           </div>
-          <h2 className="mt-1 text-lg font-semibold text-neutral-100">Configure control</h2>
+          <h2 className="mt-1 font-display text-lg font-semibold text-neutral-100">Configure control</h2>
         </div>
 
         <div className="mb-4">
@@ -135,10 +138,10 @@ export function ControlEditorModal({
           </label>
           <select
             value={action.type}
-            onChange={(event) => handleActionTypeChange(event.target.value as ActionType)}
+            onChange={(event) => handleActionTypeChange(event.target.value as SelectableActionType)}
             className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
           >
-            {(Object.keys(ACTION_TYPE_LABELS) as ActionType[]).map((type) => (
+            {(Object.keys(ACTION_TYPE_LABELS) as SelectableActionType[]).map((type) => (
               <option key={type} value={type}>
                 {ACTION_TYPE_LABELS[type]}
               </option>
@@ -176,24 +179,6 @@ export function ControlEditorModal({
                 ))}
               </select>
             ))}
-
-          {action.type === 'launchApplication' && (
-            <>
-              <input
-                type="text"
-                value={action.applicationId}
-                onChange={(event) =>
-                  setAction({ type: 'launchApplication', applicationId: event.target.value })
-                }
-                placeholder="application id"
-                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
-              />
-              <p className="mt-1.5 text-[11px] text-neutral-600">
-                Not implemented yet — this will save, but pressing it (or testing it) will report a
-                clear "not implemented" result rather than doing nothing silently.
-              </p>
-            </>
-          )}
 
           {action.type === 'systemCommand' && (
             <select

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePrivacyStore } from '../stores/privacyStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { useFlowStore } from '../stores/flowStore'
+import { useOnboardingStore } from '../stores/onboardingStore'
 
 type PendingAction = 'clear' | 'delete' | null
 
@@ -17,6 +18,7 @@ export function DataManagementPanel() {
   const { isBusy, lastAction, clearLearningData, deleteAllData, dismiss } = usePrivacyStore()
   const refreshWorkflow = useWorkflowStore((state) => state.refresh)
   const refreshFlow = useFlowStore((state) => state.refresh)
+  const loadOnboarding = useOnboardingStore((state) => state.load)
   const [pending, setPending] = useState<PendingAction>(null)
 
   const handleConfirm = async (action: PendingAction): Promise<void> => {
@@ -26,7 +28,14 @@ export function DataManagementPanel() {
       await deleteAllData()
     }
     setPending(null)
-    await Promise.all([refreshWorkflow(), refreshFlow()])
+    const refreshes = [refreshWorkflow(), refreshFlow()]
+    // deleteAllData() wipes the whole `settings` table, which is also
+    // where onboarding's progress lives (see onboardingRepository.ts) — a
+    // factory reset really is "the state a fresh install starts in," so
+    // re-load it here too, rather than only picking that up on next
+    // relaunch (App.tsx only loads it once, on mount).
+    if (action === 'delete') refreshes.push(loadOnboarding())
+    await Promise.all(refreshes)
   }
 
   return (

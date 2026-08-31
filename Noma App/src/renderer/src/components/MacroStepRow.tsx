@@ -1,15 +1,21 @@
 import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
-import type { Application, Macro, MacroStep } from '@shared/types'
+import type { Macro, MacroStep } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
 
 type StepType = MacroStep['type']
+// 'launchApplication' has no working execution path anywhere yet
+// (actionExecutor.ts's executeMacroSteps refuses it with "not implemented
+// yet") — left out of the type-change dropdown below so a step can never
+// be switched to one that silently does nothing when the macro runs.
+// defaultStepForType() below still builds one on request (kept general),
+// it just isn't offered as a choice in this file's UI.
+type SelectableStepType = Exclude<StepType, 'launchApplication'>
 
-const STEP_TYPE_LABELS: Record<StepType, string> = {
+const STEP_TYPE_LABELS: Record<SelectableStepType, string> = {
   shortcut: 'Keyboard shortcut',
   delay: 'Wait',
   systemCommand: 'System action',
   flowAction: 'Flow action',
-  launchApplication: 'Launch application',
   macro: 'Run another macro'
 }
 
@@ -38,7 +44,6 @@ interface MacroStepRowProps {
   /** Other macros this step could reference — the macro being edited is
    *  already excluded by the caller so a step can't reference itself. */
   otherMacros: Macro[]
-  applications: Application[]
   onChange: (step: MacroStep) => void
   onDelete: () => void
   onMoveUp: () => void
@@ -54,7 +59,6 @@ export function MacroStepRow({
   isFirst,
   isLast,
   otherMacros,
-  applications,
   onChange,
   onDelete,
   onMoveUp,
@@ -74,10 +78,10 @@ export function MacroStepRow({
         <div className="mb-2 flex items-center justify-between gap-2">
           <select
             value={step.type}
-            onChange={(event) => onChange(defaultStepForType(event.target.value as StepType))}
+            onChange={(event) => onChange(defaultStepForType(event.target.value as SelectableStepType))}
             className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-xs text-neutral-200"
           >
-            {(Object.keys(STEP_TYPE_LABELS) as StepType[]).map((type) => (
+            {(Object.keys(STEP_TYPE_LABELS) as SelectableStepType[]).map((type) => (
               <option key={type} value={type}>
                 {STEP_TYPE_LABELS[type]}
               </option>
@@ -159,31 +163,6 @@ export function MacroStepRow({
               </option>
             ))}
           </select>
-        )}
-
-        {step.type === 'launchApplication' && (
-          <>
-            <select
-              value={step.applicationId}
-              onChange={(event) =>
-                onChange({ type: 'launchApplication', applicationId: event.target.value })
-              }
-              className={selectClass}
-            >
-              <option value="" disabled>
-                Choose an application…
-              </option>
-              {applications.map((application) => (
-                <option key={application.id} value={application.id}>
-                  {application.name}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1.5 text-[11px] text-neutral-600">
-              Not implemented yet — this will save, but running it reports a clear "not implemented"
-              result rather than doing nothing silently.
-            </p>
-          </>
         )}
 
         {step.type === 'macro' && (

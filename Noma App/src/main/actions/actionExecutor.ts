@@ -2,6 +2,7 @@ import { uIOhook } from 'uiohook-napi'
 import { FLOW_ACTION_CATALOG } from '@shared/constants'
 import type { ControlAction, MacroStep } from '@shared/types'
 import { keyCodeForName } from '../workflow/keyNames'
+import { markSelfInjected } from '../workflow/selfInjectedKeys'
 import { getMacroById } from '../database/repositories/macrosRepository'
 import { focusWindowAndVerify } from './windowFocus'
 import { closeWindowGracefully } from './windowClose'
@@ -150,6 +151,11 @@ function sendShortcut(comboKeys: string[]): ExecutionResult {
   if (!parts) {
     return { ok: false, reason: `Unrecognized key in combo: ${comboKeys.join('+')}` }
   }
+  // Mark this combo as our own synthetic input *before* sending it — see
+  // selfInjectedKeys.ts. Otherwise captureService.ts's global hook (if
+  // workflow monitoring is on) would pick up this exact keydown and log it
+  // as a real user-typed shortcut.
+  markSelfInjected(comboKeys)
   uIOhook.keyTap(parts.triggerCode, parts.modifierCodes)
   return { ok: true }
 }

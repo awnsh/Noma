@@ -143,6 +143,23 @@ string on `ControlAction`, but `systemCommands.ts` only executes an exact
 match against a fixed allowlist (currently `volumeMute`/`volumeUp`/
 `volumeDown`) — never runs the string itself as a command.
 
+**Flow doesn't mistake its own hand for the user's.** `actionExecutor.ts`
+synthesizes a shortcut via the same `uIOhook` instance `captureService.ts`
+installs its global keyboard hook on — so a control press that sends
+`Ctrl+F5` would otherwise also be *captured*, a moment later, as if the
+user had typed `Ctrl+F5` themselves (Windows' low-level keyboard hook, and
+uiohook-napi on top of it, don't distinguish injected input from real
+hardware input). `workflow/selfInjectedKeys.ts` closes that loop:
+`sendShortcut()` marks the exact combo immediately before calling
+`keyTap()`, and `CaptureService`'s keydown handler checks and consumes
+that mark before ever treating a keydown as real user input. This is
+distinct from — and doesn't replace — the `controlActivation` workflow
+event `main/index.ts` already inserts for a button press; without this
+guard a single control press would incorrectly produce *two* workflow
+events (`controlActivation` and a fake `shortcut`), double-counting
+activity and able to manufacture a "you keep pressing this" pattern out of
+Flow using its own controls, not the user's behavior.
+
 **Refocus, but verify, or refuse — and why the redesign is actually safer,
 not just different.** A shortcut/macro action needs to reach the *target*
 application, not whichever window happens to be focused — which, at the

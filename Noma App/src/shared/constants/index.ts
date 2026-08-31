@@ -47,7 +47,9 @@ export const IPC_CHANNELS = {
   PING_HARDWARE: 'flow:ping-hardware',
   RESET_HARDWARE: 'flow:reset-hardware',
   SIMULATE_ENCODER_ROTATION: 'flow:simulate-encoder-rotation',
-  CLEAR_DEVICE_LOG: 'flow:clear-device-log'
+  CLEAR_DEVICE_LOG: 'flow:clear-device-log',
+  GET_ONBOARDING_STATE: 'flow:get-onboarding-state',
+  SAVE_ONBOARDING_STATE: 'flow:save-onboarding-state'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */

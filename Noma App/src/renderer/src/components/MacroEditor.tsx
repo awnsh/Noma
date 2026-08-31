@@ -13,21 +13,20 @@ interface MacroEditorProps {
   onDiscardNew: () => void
 }
 
-const STEP_TYPES_FOR_NEW_STEP: MacroStep['type'][] = [
-  'shortcut',
-  'delay',
-  'systemCommand',
-  'flowAction',
-  'launchApplication',
-  'macro'
-]
+// 'launchApplication' is a real MacroStep variant but has no working
+// execution path anywhere yet (actionExecutor.ts's executeMacroSteps
+// refuses it with "not implemented yet") — left out of both lists below
+// so adding a step never leads to one that silently does nothing when the
+// macro runs. See ControlEditorModal.tsx, which applies the same rule.
+type NewStepType = Exclude<MacroStep['type'], 'launchApplication'>
 
-const NEW_STEP_LABELS: Record<MacroStep['type'], string> = {
+const STEP_TYPES_FOR_NEW_STEP: NewStepType[] = ['shortcut', 'delay', 'systemCommand', 'flowAction', 'macro']
+
+const NEW_STEP_LABELS: Record<NewStepType, string> = {
   shortcut: '+ Shortcut',
   delay: '+ Wait',
   systemCommand: '+ System action',
   flowAction: '+ Flow action',
-  launchApplication: '+ Launch app',
   macro: '+ Run macro'
 }
 
@@ -184,7 +183,6 @@ export function MacroEditor({
                 isFirst={index === 0}
                 isLast={index === actions.length - 1}
                 otherMacros={otherMacros}
-                applications={applications}
                 onChange={(next) => updateStep(index, next)}
                 onDelete={() => deleteStep(index)}
                 onMoveUp={() => moveStep(index, -1)}

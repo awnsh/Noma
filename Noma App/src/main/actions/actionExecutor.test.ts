@@ -1,9 +1,10 @@
 import Database from 'better-sqlite3'
-import { beforeEach, describe, expect, it } from 'vitest'
-import { UiohookKey } from 'uiohook-napi'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { UiohookKey, uIOhook } from 'uiohook-napi'
 import type { MacroStep } from '@shared/types'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
 import { createMacro } from '../database/repositories/macrosRepository'
+import { __resetSelfInjectedGuardForTesting, isSelfInjected } from '../workflow/selfInjectedKeys'
 import {
   executeControlAction,
   executeMacroSteps,
@@ -13,17 +14,24 @@ import {
   resolveShortcutParts
 } from './actionExecutor'
 
-// Everything here is deliberately chosen to never touch a real window:
-// invalid handles (IsWindow() safely returns false for a made-up number),
-// null handles, unrecognized key names, and blocked/unknown actions all
-// return before any real Win32 call that could affect this machine — no
-// synthetic keystroke, no WM_CLOSE, no volume change ever actually fires
-// during this test run.
+// uIOhook.keyTap is the one real Win32-affecting call a *successful*
+// shortcut send makes (see the "marks the combo as self-injected" tests
+// below, which deliberately do reach it) — mocked so this suite never
+// actually sends a synthetic keystroke to whatever window happens to have
+// focus while it runs. Every other test here is chosen to return before
+// reaching it at all (invalid handles, unrecognized keys, blocked/unknown
+// actions), so this mock changes nothing about their behavior.
+vi.mock('uiohook-napi', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('uiohook-napi')>()
+  return { ...actual, uIOhook: { ...actual.uIOhook, keyTap: vi.fn() } }
+})
 
 beforeEach(() => {
   const db = new Database(':memory:')
   runMigrations(db)
   __setDatabaseForTesting(db)
+  __resetSelfInjectedGuardForTesting()
+  vi.mocked(uIOhook.keyTap).mockClear()
 })
 
 describe('isKeystrokeExecutionEnabled', () => {
@@ -126,6 +134,25 @@ describe('executeControlAction — shortcut', () => {
     expect(result.ok).toBe(false)
     expect(result.reason).toBe('This control has no shortcut set yet')
   })
+
+  it('marks the combo as self-injected right before actually sending it', async () => {
+    // No target window (null) — the same path a control press without a
+    // real focused application takes — so this reaches the real send.
+    const result = await executeControlAction({ type: 'shortcut', keys: ['Control', 'S'] }, null)
+
+    expect(result.ok).toBe(true)
+    expect(uIOhook.keyTap).toHaveBeenCalledTimes(1)
+    // captureService.ts's hook would see this exact combo next — confirm
+    // it's already marked so that echo gets ignored, not logged as real
+    // user input. See selfInjectedKeys.ts.
+    expect(isSelfInjected(['Control', 'S'])).toBe(true)
+  })
+
+  it('never marks a combo that was refused before reaching the real send', async () => {
+    await executeControlAction({ type: 'shortcut', keys: ['Control', 'W'] }, 999999999)
+    expect(uIOhook.keyTap).not.toHaveBeenCalled()
+    expect(isSelfInjected(['Control', 'W'])).toBe(false)
+  })
 })
 
 describe('executeControlAction — macro', () => {
@@ -169,6 +196,13 @@ describe('executeMacroSteps', () => {
     const result = await executeMacroSteps(steps, null)
     expect(result.ok).toBe(false)
     expect(result.reason).toContain('Control+W')
+  })
+
+  it('marks each shortcut step as self-injected too, not just a direct control press', async () => {
+    const steps: MacroStep[] = [{ type: 'shortcut', keys: ['Control', 'T'] }]
+    const result = await executeMacroSteps(steps, null)
+    expect(result.ok).toBe(true)
+    expect(isSelfInjected(['Control', 'T'])).toBe(true)
   })
 
   it('runs a nested macro step by resolving and executing the referenced macro', async () => {

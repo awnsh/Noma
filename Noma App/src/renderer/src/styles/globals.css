@@ -1,3 +1,10 @@
+@import '@fontsource-variable/sora/wght.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,4 +24,25 @@ body {
   font-feature-settings:
     'cv11',
     'ss01';
+}
+
+@layer base {
+  /*
+   * One visible-focus rule for every interactive element in the app,
+   * rather than each button/input/select/modal re-styling its own focus
+   * ring (or, more often, not doing so at all) — a single accessibility
+   * fix at the root instead of a hundred individual ones. Keyed off
+   * :focus-visible specifically, so a mouse click never shows a ring —
+   * only real keyboard/switch-device navigation does.
+   */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role='button']:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid theme('colors.accent.DEFAULT');
+    outline-offset: 2px;
+  }
 }

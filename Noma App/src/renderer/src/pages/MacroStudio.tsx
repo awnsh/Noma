@@ -40,7 +40,7 @@ export function MacroStudio() {
   return (
     <div className="flex h-full">
       <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 p-6">
-        <div className="mb-1 text-xl font-semibold text-neutral-100">Macro Studio</div>
+        <div className="mb-1 font-display text-xl font-semibold text-neutral-100">Macro Studio</div>
         <p className="mb-5 text-xs text-neutral-500">
           Build a sequence of actions once, then assign it to any control.
         </p>

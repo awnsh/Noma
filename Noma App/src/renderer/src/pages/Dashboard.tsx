@@ -4,6 +4,7 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { ControlTile } from '../components/ControlTile'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { CreateProfileModal } from '../components/CreateProfileModal'
+import { HardwareStatusPill } from '../components/HardwareStatusPill'
 import { useUiStore } from '../stores/uiStore'
 
 /** A single plain-language read of what Flow is doing right now — this
@@ -40,10 +41,13 @@ export function Dashboard() {
   return (
     <div className="mx-auto max-w-5xl px-10 py-10">
       <section className="mb-10">
-        <div className="text-xs uppercase tracking-widest text-neutral-500">
-          Current Application
+        <div className="flex items-center justify-between">
+          <div className="text-xs uppercase tracking-widest text-neutral-500">
+            Current Application
+          </div>
+          <HardwareStatusPill />
         </div>
-        <div className="mt-2 text-2xl font-semibold text-neutral-100">
+        <div className="mt-2 font-display text-2xl font-semibold text-neutral-100">
           {isLoading ? 'Detecting…' : (application?.name ?? 'No application detected yet')}
         </div>
         <div className="mt-1 flex items-center gap-3 text-sm text-neutral-500">
@@ -52,7 +56,13 @@ export function Dashboard() {
               ? `Active profile: ${profile.name}`
               : application
                 ? `No profile configured for ${application.name} yet.`
-                : 'Waiting for Windows to report the foreground application.'}
+                : // A first-time user's very first real screen — "waiting for
+                  // Windows" told them nothing was wrong, but not what to do.
+                  // Naming the apps that already have a starter profile
+                  // (database/seed.ts) turns this into a next step, not a
+                  // dead end. Update this list if seed.ts's shipped
+                  // profiles ever change.
+                  'Open Visual Studio Code, Chrome, or Spotify to see Noma adapt — those already have starter profiles built in.'}
           </span>
           {application && !profile && (
             <button

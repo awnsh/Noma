@@ -1,6 +1,13 @@
 import { ipcMain } from 'electron'
 import { IPC_CHANNELS } from '@shared/constants'
-import type { Application, ControlAction, FlowStatus, MacroStep, ModuleFunctionConfig } from '@shared/types'
+import type {
+  Application,
+  ControlAction,
+  FlowStatus,
+  MacroStep,
+  ModuleFunctionConfig,
+  OnboardingState
+} from '@shared/types'
 import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
@@ -46,6 +53,7 @@ import {
 import { DEMO_APPLICATIONS, resetDemoData, simulateDemoWorkflow } from '../demo/demoService'
 import type { DemoApplicationId } from '../demo/demoService'
 import { clearLearningData, deleteAllData } from '../privacy/dataManagement'
+import { getOnboardingState, saveOnboardingState } from '../database/repositories/onboardingRepository'
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -295,4 +303,10 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.CLEAR_DEVICE_LOG, () => {
     getDefaultHardwareDevice().clearLog()
   })
+
+  ipcMain.handle(IPC_CHANNELS.GET_ONBOARDING_STATE, () => getOnboardingState())
+
+  ipcMain.handle(IPC_CHANNELS.SAVE_ONBOARDING_STATE, (_event, update: Partial<OnboardingState>) =>
+    saveOnboardingState(update)
+  )
 }
