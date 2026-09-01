@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type PointerEvent } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { AppProfile } from '../../data/appProfiles'
 
@@ -33,10 +33,17 @@ const POP_SPRING = { type: 'spring', stiffness: 380, damping: 24, mass: 0.7 } as
  *
  * Mobile: there's no real `:hover` on touch, so every card also toggles on
  * `onClick`/tap (tapping the already-open card, or another one, closes/
- * switches it — no separate close button needed). Both the ring's own size
- * and each card's collapsed/expanded width are `clamp()`ed in `cqw` units
- * rather than fixed breakpoint values, so a card can never grow wider than
- * the ring has room for, on a 320px phone or a wide desktop alike.
+ * switches it — no separate close button needed). That used to fight the
+ * hover handlers on touch specifically: a tap also fires a synthetic
+ * `mouseenter`, which opened the card, immediately followed by the `click`
+ * toggling it back shut again (the "pops and immediately un-pops" glitch on
+ * mobile). Fixed by moving the hover handlers to `onPointerEnter`/
+ * `onPointerLeave` gated to `e.pointerType === 'mouse'`, so touch only ever
+ * drives `hoveredId` through the one `onClick` toggle — no more double-up.
+ * Both the ring's own size and each card's collapsed/expanded width are
+ * `clamp()`ed in `cqw` units rather than fixed breakpoint values, so a card
+ * can never grow wider than the ring has room for, on a 320px phone or a
+ * wide desktop alike.
  */
 export default function AppOrbit({ apps }: AppOrbitProps) {
   const reduceMotion = useReducedMotion()
@@ -45,6 +52,17 @@ export default function AppOrbit({ apps }: AppOrbitProps) {
   const isPaused = hoveredId !== null
 
   const toggle = (id: string): void => setHoveredId((current) => (current === id ? null : id))
+
+  // Mouse-only hover — touch drives `hoveredId` solely through onClick below
+  // (see the doc comment above for why mixing the two glitches on tap).
+  const makePointerHandlers = (id: string) => ({
+    onPointerEnter: (e: PointerEvent<HTMLDivElement>) => {
+      if (e.pointerType === 'mouse') setHoveredId(id)
+    },
+    onPointerLeave: (e: PointerEvent<HTMLDivElement>) => {
+      if (e.pointerType === 'mouse') setHoveredId((current) => (current === id ? null : current))
+    },
+  })
 
   return (
     <div
@@ -68,6 +86,7 @@ export default function AppOrbit({ apps }: AppOrbitProps) {
         {apps.map((app, i) => {
           const angle = step * i
           const isHovered = hoveredId === app.id
+          const pointerHandlers = makePointerHandlers(app.id)
 
           return (
             <div
@@ -87,8 +106,7 @@ export default function AppOrbit({ apps }: AppOrbitProps) {
                 <motion.div
                   layout
                   transition={reduceMotion ? { duration: 0.01 } : POP_SPRING}
-                  onMouseEnter={() => setHoveredId(app.id)}
-                  onMouseLeave={() => setHoveredId((current) => (current === app.id ? null : current))}
+                  {...pointerHandlers}
                   onClick={() => toggle(app.id)}
                   className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-3xl border p-3 text-center backdrop-blur-sm"
                   style={{
