@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { Control, ControlAction, Macro } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
+import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
 
 interface ControlEditorModalProps {
   applicationId: string
@@ -106,8 +107,8 @@ export function ControlEditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/60">
+    <div className={MODAL_SCRIM}>
+      <div className={`w-full max-w-md p-6 ${GLASS_PANEL}`}>
         <div className="mb-5">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">
             {applicationName} · Control {slot}
@@ -254,7 +255,7 @@ export function ControlEditorModal({
               type="button"
               onClick={handleSave}
               disabled={!canSave || isSaving}
-              className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
             >
               {isSaving ? 'Saving…' : 'Save'}
             </button>

@@ -4,9 +4,9 @@ import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
-  { label: 'Product', href: '#noma' },
-  { label: 'Flow', href: '#flow' },
+  { label: 'How It Works', href: '#how' },
   { label: 'Hardware', href: '#hardware' },
+  { label: 'Modules', href: '#modules' },
   { label: 'About', href: '#founder' },
 ]
 

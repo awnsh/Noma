@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { OnboardingButton } from './OnboardingButton'
+import { GLASS_CARD } from '../lib/surfaces'
 
 interface OnboardingHardwareScreenProps {
   /** `hardwareSkipped` is true unless a real (non-virtual) device is
@@ -63,7 +64,7 @@ export function OnboardingHardwareScreen({ onContinue }: OnboardingHardwareScree
       </p>
 
       <div
-        className="my-10 flex w-full max-w-xs items-center justify-center gap-2 rounded-2xl border border-white/10 bg-base-900 px-6 py-8"
+        className={`my-10 flex w-full max-w-xs items-center justify-center gap-2 px-6 py-8 ${GLASS_CARD}`}
         role="status"
         aria-live="polite"
       >

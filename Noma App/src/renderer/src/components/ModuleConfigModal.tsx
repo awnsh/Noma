@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { ControlAction, Module, ModuleFunctionConfig } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
+import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
 
 interface ModuleFunctionSpec {
   key: string
@@ -94,8 +95,8 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/60">
+    <div className={MODAL_SCRIM}>
+      <div className={`w-full max-w-md p-6 ${GLASS_PANEL}`}>
         <div className="mb-5">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">{module.name}</div>
           <h2 className="mt-1 font-display text-lg font-semibold text-neutral-100">Configure module</h2>
@@ -205,7 +206,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
             type="button"
             disabled={isSaving}
             onClick={() => void handleSave()}
-            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20"
+            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
           >
             {isSaving ? 'Saving…' : 'Save'}
           </button>

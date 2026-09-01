@@ -21,7 +21,7 @@ export default function Hardware() {
     <Section id="hardware">
       <Reveal>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Kicker index="06" label="Hardware" />
+          <Kicker index="05" label="Hardware" />
           <span className="rounded-md border border-base-600 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-base-400">
             In Development
           </span>

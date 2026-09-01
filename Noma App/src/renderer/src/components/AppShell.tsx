@@ -35,6 +35,17 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
   { label: 'Developer', page: 'developer', Icon: DeveloperIcon }
 ]
 
+// The rail's own material — a soft gradient sheen over the base fill, a
+// crisp inset top highlight (the "beveled glass edge"), and an ambient
+// drop shadow for real elevation off the content plane. backdrop-blur is
+// kept even though nothing currently scrolls behind this floating rail —
+// harmless today, and correct the day a future layout lets content pass
+// under it — but the *visible* glass read here comes from the gradient +
+// highlight + shadow, exactly like Apple/Logitech chrome: material is
+// mostly about light, not literally what's blurred behind it.
+const RAIL_GLASS =
+  'bg-gradient-to-b from-white/[0.07] via-base-900/70 to-base-900/70 backdrop-blur-xl backdrop-saturate-150 border border-white/[0.08] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+
 function NavButton({ label, page, Icon, isActive, onClick }: NavItem & { isActive: boolean; onClick: () => void }) {
   return (
     <div className="group relative">
@@ -43,13 +54,18 @@ function NavButton({ label, page, Icon, isActive, onClick }: NavItem & { isActiv
         aria-label={label}
         title={label}
         onClick={onClick}
-        className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-          isActive ? 'bg-white/10 text-accent' : 'text-neutral-500 hover:bg-white/5 hover:text-neutral-200'
+        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ${
+          isActive
+            ? 'bg-accent/15 text-accent shadow-[0_4px_20px_-4px_rgba(76,126,255,0.45)] ring-1 ring-inset ring-accent/30'
+            : 'text-neutral-400 hover:bg-white/[0.06] hover:text-neutral-100'
         }`}
       >
         <Icon className="h-5 w-5" />
       </button>
-      <span className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-base-800 px-2 py-1 text-xs text-neutral-200 group-hover:block">
+      {/* A real floating glass tooltip — genuine page content sits behind
+          it (it's positioned over `main`), so the blur actually does
+          something here, unlike the rail above. */}
+      <span className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-base-800/70 px-2.5 py-1.5 text-xs text-neutral-100 shadow-lg shadow-black/40 backdrop-blur-md group-hover:block">
         {label}
       </span>
     </div>
@@ -61,16 +77,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   const setActivePage = useUiStore((state) => state.setActivePage)
 
   return (
-    <div className="flex h-screen w-screen bg-base-950 text-neutral-200">
-      <aside className="flex w-20 flex-col items-center border-r border-white/10 py-5">
-        <img
-          src={logo}
-          alt="Noma"
-          title="Noma"
-          className="mb-6 h-14 w-14 rounded-md"
-          style={{ mixBlendMode: 'screen' }}
-        />
-        <nav className="flex flex-col gap-1">
+    <div className="flex h-screen w-screen gap-3 bg-base-950 p-3 text-neutral-200">
+      <aside className={`flex w-20 shrink-0 flex-col items-center rounded-[28px] py-5 ${RAIL_GLASS}`}>
+        <div className="mb-6 flex h-14 w-14 items-center justify-center">
+          {/* Genuinely transparent PNG (src/renderer/src/assets/logo.png) —
+              no mix-blend-mode trick needed to hide a baked-in background
+              anymore, see [[noma-app-glass-redesign]]. The mark's native
+              aspect ratio is ~1.56:1 (wider than tall), so it's sized by
+              width/height directly rather than `object-contain`-ing it
+              into a square box. */}
+          <img src={logo} alt="Noma" title="Noma" className="h-8 w-12" />
+        </div>
+        <nav className="flex flex-col gap-1.5">
           {PRIMARY_NAV_ITEMS.map((item) => (
             <NavButton
               key={item.label}
@@ -81,10 +99,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        {/* Pushed to the bottom of the rail and separated by a divider —
-            presentation/engineering tools, not the product itself. */}
-        <div className="mt-auto flex flex-col items-center gap-1 pt-3">
-          <div className="mb-2 h-px w-8 bg-white/10" />
+        {/* Pushed to the bottom of the rail and separated by a soft-fade
+            divider — presentation/engineering tools, not the product
+            itself. */}
+        <div className="mt-auto flex flex-col items-center gap-1.5 pt-3">
+          <div className="mb-2 h-px w-8 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
           {SECONDARY_NAV_ITEMS.map((item) => (
             <NavButton
               key={item.label}

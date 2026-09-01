@@ -10,12 +10,10 @@ interface OnboardingWelcomeScreenProps {
 export function OnboardingWelcomeScreen({ onContinue }: OnboardingWelcomeScreenProps) {
   return (
     <div className="flex flex-col items-center text-center">
-      <img
-        src={logo}
-        alt=""
-        className="mb-6 h-14 w-14 rounded-2xl"
-        style={{ mixBlendMode: 'screen' }}
-      />
+      {/* Genuinely transparent PNG — no mix-blend-mode trick needed, see
+          AppShell.tsx / [[noma-app-glass-redesign]]. Sized by its real
+          ~1.56:1 aspect ratio rather than forced into a square box. */}
+      <img src={logo} alt="" className="mb-6 h-9 w-14" />
       <div className="mb-5 font-display text-xs font-medium uppercase tracking-[0.4em] text-neutral-500">
         Noma
       </div>

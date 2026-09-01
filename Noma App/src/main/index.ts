@@ -168,6 +168,23 @@ app.whenReady().then(() => {
               ok: result.ok,
               reason: result.reason
             })
+
+            // Flash the decorative keyboard layout's keys — the same
+            // "digital twin reacts to real input" feedback a genuinely
+            // captured shortcut gets, driven directly from the control's
+            // own configured keys. This used to happen "for free" because
+            // captureService's global hook picked up the control's own
+            // synthetic keystroke and echoed it back as a captured combo —
+            // exactly the double-counting selfInjectedKeys.ts was written
+            // to stop (see docs/architecture.md's "Real execution"
+            // section), which correctly silenced that echo and, as a side
+            // effect, silently took this cosmetic flash down with it. Only
+            // fires on a real successful send (`result.ok`), matching what
+            // the old accidental path actually did — a failed send never
+            // reaches uIOhook.keyTap, so it never flashed either.
+            if (result.ok && control.action.type === 'shortcut' && control.action.keys.length > 0) {
+              mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, control.action.keys)
+            }
           }
         )
       }

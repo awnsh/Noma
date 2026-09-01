@@ -10,8 +10,12 @@ export interface AppProfile {
   color?: string
 }
 
-// Shared control-set definitions, reused across the Problem, Noma-intro,
+// Shared control-set definitions, reused across the Problem, How-Noma-Works,
 // and Interactive Demo sections so the product story stays consistent.
+// The Problem section's orbit deliberately spans as many different domains
+// (code, video, CAD, browsing, design, photo, 3D, chat, music) as colors —
+// the point is that these have nothing in common except that they all live
+// on the same four physical keys.
 export const appProfiles: Record<string, AppProfile> = {
   vscode: {
     id: 'vscode',
@@ -40,6 +44,41 @@ export const appProfiles: Record<string, AppProfile> = {
     shortName: 'Chrome',
     controls: ['Back', 'Forward', 'New Tab', 'Close'],
   },
+  figma: {
+    id: 'figma',
+    name: 'Figma',
+    shortName: 'Figma',
+    controls: ['Frame', 'Component', 'Zoom', 'Comment'],
+    color: '#ff7262',
+  },
+  photoshop: {
+    id: 'photoshop',
+    name: 'Photoshop',
+    shortName: 'Photoshop',
+    controls: ['Brush', 'Layer', 'Crop', 'Export'],
+    color: '#31a8ff',
+  },
+  blender: {
+    id: 'blender',
+    name: 'Blender',
+    shortName: 'Blender',
+    controls: ['Extrude', 'Rotate', 'Render', 'Save'],
+    color: '#e87d0d',
+  },
+  discord: {
+    id: 'discord',
+    name: 'Discord',
+    shortName: 'Discord',
+    controls: ['Mute', 'Deafen', 'Push to Talk', 'Screen Share'],
+    color: '#5865f2',
+  },
+  spotify: {
+    id: 'spotify',
+    name: 'Spotify',
+    shortName: 'Spotify',
+    controls: ['Play', 'Skip', 'Volume', 'Like'],
+    color: '#1db954',
+  },
 }
 
 // Short forms for the OLED strip, which only has ~60px per cell.
@@ -55,8 +94,7 @@ export function oledLabel(label: string): string {
   return oledShortLabels[label] ?? label.toUpperCase()
 }
 
-// The deterministic "Flow moment": VS Code's default control set, and the
-// personalized set Flow proposes after noticing a repeated pattern. Reused by
-// the interactive demo and the personalization illustration.
-export const vscodeDefaultControls = ['Run', 'Debug', 'Terminal', 'Search']
+// The deterministic "Flow moment": the personalized control set Flow
+// proposes for VS Code after noticing a repeated pattern. Reused by the
+// interactive demo.
 export const vscodeLearnedControls = ['Command Palette', 'Git Commit', 'Terminal', 'Run']

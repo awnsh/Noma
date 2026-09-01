@@ -47,7 +47,7 @@ export function MacroStudio() {
         <button
           type="button"
           onClick={handleNew}
-          className="mb-4 rounded-md border border-accent-muted bg-accent/10 px-3 py-2 text-xs font-medium text-accent hover:bg-accent/20"
+          className="mb-4 rounded-md border border-accent-muted bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
         >
           + New Macro
         </button>

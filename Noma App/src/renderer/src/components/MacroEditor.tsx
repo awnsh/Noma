@@ -229,7 +229,7 @@ export function MacroEditor({
           type="button"
           onClick={handleSave}
           disabled={!canSave || isSaving}
-          className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
         >
           {isSaving ? 'Saving…' : 'Save'}
         </button>

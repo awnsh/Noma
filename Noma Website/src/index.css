@@ -75,6 +75,22 @@
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
+
+  /* The Problem section's AppOrbit — plain CSS (not framer-motion) on
+     purpose: `animation-play-state: paused` freezes and resumes a CSS
+     animation from its exact current frame with zero jump, which is what
+     lets hovering the orbit pause it cleanly. Two directions so the ring
+     spins one way while each card counter-spins the other, canceling out
+     to stay upright — see AppOrbit.tsx. */
+  --animate-orbit-spin: orbit-spin 42s linear infinite;
+  --animate-orbit-counter-spin: orbit-counter-spin 42s linear infinite;
+
+  @keyframes orbit-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes orbit-counter-spin {
+    to { transform: rotate(-360deg); }
+  }
 }
 
 @layer base {

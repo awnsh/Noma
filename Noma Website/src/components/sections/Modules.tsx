@@ -1,9 +1,7 @@
-import { useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Section, { Kicker } from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import ModuleEnclosure, { type ModuleType } from '../visuals/ModuleEnclosure'
-import KeyboardVisual, { KEYBOARD_RIGHT_DOCK } from '../visuals/KeyboardVisual'
 
 const modules: { type: ModuleType; name: string; lines: string[] }[] = [
   { type: 'rotary', name: 'Rotary Encoder Module', lines: ['Turn — Timeline Zoom', 'Press — Play / Pause'] },
@@ -12,23 +10,10 @@ const modules: { type: ModuleType; name: string; lines: string[] }[] = [
 ]
 
 export default function Modules() {
-  const [attached, setAttached] = useState(false)
-  const [recognized, setRecognized] = useState(false)
-  const reduceMotion = useReducedMotion()
-
-  const toggle = () => {
-    if (attached) {
-      setAttached(false)
-      setRecognized(false)
-    } else {
-      setAttached(true)
-    }
-  }
-
   return (
     <Section id="modules">
       <Reveal>
-        <Kicker index="07" label="Modular System" />
+        <Kicker index="06" label="Modular System" />
         <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           Your work. Your interface.
         </h2>
@@ -62,59 +47,20 @@ export default function Modules() {
         ))}
       </div>
 
-      {/* Adaptive hardware: Flow can suggest new physical modules, not just software controls. */}
+      {/* One line, not a second full "Flow noticed something" demo — that
+          moment is already told in full in the How Noma Works section
+          above. The new information here is narrow: Flow's suggestions
+          aren't limited to software controls, they can reach for a
+          physical module too. */}
       <Reveal delay={0.1}>
-        <div className="mx-auto mt-20 max-w-2xl overflow-hidden rounded-2xl border border-flow/30 bg-flow/[0.05] p-8">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-flow">Flow noticed something</p>
-          <p className="mt-3 text-base text-base-100">&ldquo;You frequently adjust numeric values.&rdquo;</p>
-          <p className="mt-1 text-sm text-base-400">Consider adding a rotary encoder.</p>
-
-          <div className="relative mx-auto mt-10 max-w-md pr-10 sm:pr-14">
-            <KeyboardVisual
-              glow={false}
-              float={false}
-              readout={recognized ? { label: 'ROTARY 1', sub: 'TIMELINE' } : null}
-              dockedRight={recognized}
-            />
-            <div
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${KEYBOARD_RIGHT_DOCK.xPct}%`, top: `${KEYBOARD_RIGHT_DOCK.yPct}%` }}
-            >
-              <motion.div
-                // Full slide-in-and-settle normally; under reduced motion the module
-                // still visibly relocates (that's the state, not decoration) but
-                // does so as a near-instant cut rather than a spatial slide/rotate/bounce.
-                animate={
-                  reduceMotion
-                    ? { x: attached ? '0%' : '85%', rotate: 0, scale: 1 }
-                    : attached
-                      ? { x: '0%', rotate: 0, scale: [1, 1.1, 1] }
-                      : { x: '85%', rotate: -8, scale: 1 }
-                }
-                transition={
-                  reduceMotion
-                    ? { duration: 0.01 }
-                    : attached
-                      ? { duration: 0.75, times: [0, 0.65, 1], ease: [0.16, 1, 0.3, 1] }
-                      : { duration: 0.4, ease: 'easeOut' }
-                }
-                onAnimationComplete={() => {
-                  if (attached) setRecognized(true)
-                }}
-              >
-                <ModuleEnclosure type="rotary" active={recognized} className="w-24 drop-shadow-[0_8px_20px_rgba(0,0,0,0.5)] sm:w-28" />
-              </motion.div>
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={toggle}
-              className="inline-flex items-center gap-2 rounded-lg border border-base-500 px-5 py-2.5 text-sm font-medium text-base-100 transition-colors hover:border-accent hover:text-accent"
-            >
-              {recognized ? 'Added to Noma' : 'Add Rotary Encoder'}
-            </button>
-          </div>
+        <div className="mx-auto mt-14 flex max-w-2xl items-start gap-3 rounded-2xl border border-flow/30 bg-flow/[0.05] px-6 py-4">
+          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-flow" aria-hidden />
+          <p className="text-sm text-base-200">
+            Flow&rsquo;s suggestions aren&rsquo;t limited to software controls.{' '}
+            <span className="text-base-400">
+              &ldquo;You keep adjusting numeric values &mdash; consider a rotary encoder.&rdquo;
+            </span>
+          </p>
         </div>
       </Reveal>
     </Section>

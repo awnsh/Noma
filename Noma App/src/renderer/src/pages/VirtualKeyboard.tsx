@@ -8,6 +8,7 @@ import { AddModuleMenu } from '../components/AddModuleMenu'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { ControlEditorModal } from '../components/ControlEditorModal'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
+import { GLASS_PANEL } from '../lib/surfaces'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
   switch (event.type) {
@@ -94,8 +95,9 @@ export function VirtualKeyboard() {
         <HardwareStatusPill />
       </div>
 
-      {/* The deck */}
-      <div className="rounded-3xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/40">
+      {/* The deck — the single most literal "real hardware" surface in the
+          app, so it gets the full glass-panel material treatment. */}
+      <div className={`p-6 ${GLASS_PANEL}`}>
         <KeyboardLayout flashingKeys={flashingKeys} />
 
         {/* Display strip */}

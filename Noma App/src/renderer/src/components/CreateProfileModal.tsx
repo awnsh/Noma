@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Application, ApplicationProfile } from '@shared/types'
+import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
 
 interface CreateProfileModalProps {
   /** When given (the Dashboard's "create a profile for what's focused
@@ -56,8 +57,8 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/60">
+    <div className={MODAL_SCRIM}>
+      <div className={`w-full max-w-md p-6 ${GLASS_PANEL}`}>
         <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">
           {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
         </h2>
@@ -141,7 +142,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
             type="button"
             onClick={handleCreate}
             disabled={!canSave || isSaving}
-            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
           >
             {isSaving ? 'Creating…' : 'Create profile'}
           </button>

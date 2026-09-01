@@ -5,6 +5,7 @@ import { ControlTile } from '../components/ControlTile'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { CreateProfileModal } from '../components/CreateProfileModal'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
+import { GLASS_CARD } from '../lib/surfaces'
 import { useUiStore } from '../stores/uiStore'
 
 /** A single plain-language read of what Flow is doing right now — this
@@ -68,7 +69,7 @@ export function Dashboard() {
             <button
               type="button"
               onClick={() => setIsCreatingProfile(true)}
-              className="shrink-0 rounded-full border border-accent-muted bg-accent/10 px-3 py-1 text-[11px] font-medium text-accent hover:bg-accent/20"
+              className="shrink-0 rounded-full border border-accent-muted bg-accent/10 px-3 py-1 text-[11px] font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
             >
               Create profile
             </button>
@@ -99,7 +100,7 @@ export function Dashboard() {
         </div>
       </section>
 
-      <section className="mb-10 flex items-center justify-between rounded-xl border border-white/10 bg-base-900 px-5 py-4">
+      <section className={`mb-10 flex items-center justify-between px-5 py-4 ${GLASS_CARD}`}>
         <div>
           <div className="text-xs uppercase tracking-widest text-neutral-500">Flow Status</div>
           <div className="mt-1.5 text-sm text-neutral-300">

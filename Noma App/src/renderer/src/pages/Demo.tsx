@@ -3,6 +3,7 @@ import { useFlowStore } from '../stores/flowStore'
 import { useSuggestionsStore } from '../stores/suggestionsStore'
 import { ControlTile } from '../components/ControlTile'
 import { explainConfidence } from '../lib/explainConfidence'
+import { GLASS_CARD } from '../lib/surfaces'
 
 /**
  * Demo Mode — "the Noma Moment". A polished, deterministic, repeatable
@@ -137,7 +138,7 @@ export function Demo() {
       </div>
 
       {/* Live device state — the same signal Dashboard/Virtual Keyboard show */}
-      <div className="mb-8 rounded-2xl border border-white/10 bg-base-900 p-6">
+      <div className={`mb-8 p-6 ${GLASS_CARD}`}>
         <div className="text-[10px] uppercase tracking-widest text-neutral-600">
           Current Application
         </div>
@@ -153,7 +154,7 @@ export function Demo() {
       </div>
 
       {/* Narration + primary action for the current phase */}
-      <div className="rounded-2xl border border-white/10 bg-base-900 p-6">
+      <div className={`p-6 ${GLASS_CARD}`}>
         {phase === 'intro' && (
           <>
             <p className="mb-4 text-sm text-neutral-400">
@@ -164,7 +165,7 @@ export function Demo() {
             <button
               type="button"
               onClick={() => setPhase('vscode')}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20"
+              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
             >
               Start Demo
             </button>
@@ -181,7 +182,7 @@ export function Demo() {
             <button
               type="button"
               onClick={() => setPhase('chrome')}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20"
+              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
             >
               Switch to Chrome
             </button>
@@ -201,7 +202,7 @@ export function Demo() {
               type="button"
               disabled={isWorking}
               onClick={() => void handleSimulateWorkflow()}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20 disabled:opacity-40"
+              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
             >
               {isWorking ? 'Simulating…' : 'Simulate repeated workflow (Copy → Paste)'}
             </button>
@@ -232,7 +233,7 @@ export function Demo() {
                   type="button"
                   disabled={isWorking}
                   onClick={() => void handleAddToKeyboard()}
-                  className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20 disabled:opacity-40"
+                  className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
                 >
                   {isWorking ? 'Adding…' : 'Add to Keyboard'}
                 </button>

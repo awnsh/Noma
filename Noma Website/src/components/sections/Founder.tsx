@@ -22,7 +22,7 @@ export default function Founder() {
   return (
     <Section id="founder">
       <Reveal>
-        <Kicker index="10" label="Founder" />
+        <Kicker index="08" label="Founder" />
         <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           Built from scratch.
         </h2>

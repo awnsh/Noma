@@ -4,13 +4,11 @@ import Navigation from './components/layout/Navigation'
 import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
 import Problem from './components/sections/Problem'
-import IntroduceNoma from './components/sections/IntroduceNoma'
+import HowNomaWorks from './components/sections/HowNomaWorks'
 import AppPreview from './components/sections/AppPreview'
-import FlowIntro from './components/sections/FlowIntro'
 import InteractiveDemo from './components/sections/InteractiveDemo'
 import Hardware from './components/sections/Hardware'
 import Modules from './components/sections/Modules'
-import HowItWorks from './components/sections/HowItWorks'
 import Vision from './components/sections/Vision'
 import Founder from './components/sections/Founder'
 import CTA from './components/sections/CTA'
@@ -27,13 +25,11 @@ export default function App() {
       <main>
         <Hero />
         <Problem />
-        <IntroduceNoma />
+        <HowNomaWorks />
         <AppPreview />
-        <FlowIntro />
         <InteractiveDemo />
         <Hardware />
         <Modules />
-        <HowItWorks />
         <Vision />
         <Founder />
         <CTA />
@@ -45,7 +41,13 @@ export default function App() {
   if (reduceMotion) return page
 
   return (
-    <ReactLenis root options={{ lerp: 0.11, duration: 1.1, wheelMultiplier: 1 }}>
+    // `anchors` defaults to false — without it, every in-page `<a href="#...">`
+    // (nav links, Hero's "See How It Works", Footer's links) falls straight
+    // through to the browser's native instant jump, completely bypassing
+    // Lenis, which only smooths wheel/touch/programmatic scrolling on its
+    // own. The offset keeps a scrolled-to heading clear of the floating
+    // glass nav pill instead of tucking under it.
+    <ReactLenis root options={{ lerp: 0.11, duration: 1.1, wheelMultiplier: 1, anchors: { offset: -96 } }}>
       {page}
     </ReactLenis>
   )

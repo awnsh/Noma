@@ -4,6 +4,7 @@ import { KeyboardLayout } from './KeyboardLayout'
 import { ControlTile } from './ControlTile'
 import { OnboardingButton } from './OnboardingButton'
 import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
+import { GLASS_PANEL } from '../lib/surfaces'
 
 /**
  * Self-contained demo data, not fetched from real application detection —
@@ -96,7 +97,7 @@ export function OnboardingDemoScreen({ onContinue }: OnboardingDemoScreenProps) 
       <h1 className="font-display text-3xl font-semibold text-neutral-50">See Noma adapt.</h1>
       <p className="mt-3 text-sm text-neutral-500">Your controls change with your workflow.</p>
 
-      <div className="mt-8 w-full rounded-3xl border border-white/10 bg-base-900 p-6 shadow-2xl shadow-black/40">
+      <div className={`mt-8 w-full p-6 ${GLASS_PANEL}`}>
         <KeyboardLayout />
         <div className={`transition-opacity duration-200 ${isFaded ? 'opacity-0' : 'opacity-100'}`}>
           <div className="mb-3 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-500">

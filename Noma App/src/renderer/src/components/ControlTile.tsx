@@ -1,5 +1,6 @@
 import type { Control } from '@shared/types'
 import { actionCaption, actionGlyph } from '../lib/describeAction'
+import { KEYCAP_SHADOW } from '../lib/surfaces'
 
 interface ControlTileProps {
   slot: number
@@ -14,7 +15,9 @@ export function ControlTile({ slot, control }: ControlTileProps) {
   const caption = actionCaption(control?.action)
 
   return (
-    <div className="flex aspect-[4/3] flex-col justify-between rounded-2xl border border-white/10 bg-gradient-to-b from-base-800 to-base-900 p-4 shadow-inner shadow-black/40">
+    <div
+      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-b from-base-800 to-base-900 p-4 ${KEYCAP_SHADOW}`}
+    >
       <div className="flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-neutral-600">
           Control {slot}

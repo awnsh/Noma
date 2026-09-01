@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Control } from '@shared/types'
 import { actionCaption, actionGlyph } from '../lib/describeAction'
+import { KEYCAP_SHADOW } from '../lib/surfaces'
 
 interface VirtualControlButtonProps {
   slot: number
@@ -44,9 +45,14 @@ export function VirtualControlButton({
         editMode
           ? 'border-dashed border-accent-muted/60 bg-base-900 hover:border-accent'
           : control
-            ? 'border-white/10 bg-gradient-to-b from-base-800 to-base-900 shadow-inner shadow-black/40 hover:border-accent-muted active:scale-95'
+            ? `border-white/[0.08] bg-gradient-to-b from-base-800 to-base-900 ${KEYCAP_SHADOW} hover:border-accent-muted active:scale-95`
             : 'cursor-default border-white/5 bg-base-900/50'
-      } ${isPressed ? 'border-accent/60 shadow-[0_0_0_1px_rgba(125,211,192,0.4)]' : ''}`}
+      } ${
+        // A real press flashes the signature brand blue — this used to be
+        // the app's original pre-rebrand teal (rgb(125,211,192), see
+        // [[noma-app-colors]]), left behind when the palette migrated.
+        isPressed ? 'border-accent/60 shadow-[0_4px_20px_-4px_rgba(76,126,255,0.5)]' : ''
+      }`}
     >
       <div className="flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-neutral-600">
