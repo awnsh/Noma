@@ -75,7 +75,12 @@ export default function Hero() {
             the same node fights itself. */}
         <motion.div style={{ y: boardY, opacity: boardOpacity }} className="relative">
           <div aria-hidden className="absolute -inset-x-10 -inset-y-16 -z-10 bg-grid-fade" />
-          <KeyboardVisual />
+          {/* A random key flashes "pressed" as you scroll past — the same
+              scrollYProgress already driving the parallax above, reused
+              rather than a second scroll listener. See KeyboardVisual's
+              typingProgress doc comment for why this is scroll-driven
+              instead of a background timer. */}
+          <KeyboardVisual typingProgress={scrollYProgress} />
 
           {/* Scroll-revealed callouts — the moment you scroll past the board, it
               gets annotated like a spec sheet, one label at a time. */}

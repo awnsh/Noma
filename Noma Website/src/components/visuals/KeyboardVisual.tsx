@@ -1,5 +1,13 @@
-import { useId, useRef } from 'react'
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
+import { useEffect, useId, useRef, useState } from 'react'
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  type MotionValue
+} from 'framer-motion'
 import OledIcon from './OledIcon'
 import { oledLabel } from '../../data/appProfiles'
 
@@ -17,7 +25,28 @@ interface KeyboardVisualProps {
    *  pin connectors are omitted rather than shrunk offscreen. Used where the screen's
    *  content changing is the point, e.g. the interactive demo. */
   oledOnly?: boolean
+  /**
+   * A 0-1 scroll-progress `MotionValue` (e.g. Hero.tsx's own `scrollYProgress`)
+   * that makes a random key flash "pressed" as the visitor scrolls down past
+   * this board — the keyboard visibly typing on its own, tied to the actual
+   * scroll gesture rather than a background timer that runs regardless of
+   * whether anyone's looking. Scrolling back up never triggers a press; see
+   * the doc comment above the subscription below for the accumulator this
+   * relies on. Omit (the default) for every non-scroll-driven usage — the
+   * Hardware section's static board, the interactive demo's oledOnly crop,
+   * etc. — where a key spontaneously lighting up would be a non-sequitur.
+   */
+  typingProgress?: MotionValue<number>
 }
+
+/** How much forward scroll progress (of the 0-1 range typingProgress
+ *  reports) it takes to trigger the next key-press — small enough that
+ *  keys visibly type at a natural cadence across a normal scroll past the
+ *  board, large enough that it doesn't fire on every animation frame. */
+const SCROLL_TYPE_STEP = 0.035
+/** How long a "pressed" key stays visually down before releasing — quick
+ *  enough to read as a real keystroke, not a slow fade. */
+const KEY_PRESS_MS = 200
 
 const VB_W = 1000
 const VB_H = 460
@@ -175,6 +204,7 @@ export default function KeyboardVisual({
   float = true,
   className = '',
   oledOnly = false,
+  typingProgress,
 }: KeyboardVisualProps) {
   const reduceMotion = useReducedMotion()
   const uid = useId()
@@ -182,6 +212,48 @@ export default function KeyboardVisual({
   // Idle float only runs while the board is actually on screen — it costs nothing
   // to look right at scroll-in and nothing to burn while scrolled away.
   const inView = useInView(floatRef, { margin: '-10% 0px -10% 0px' })
+
+  // Scroll-driven random key presses. `typingProgress` is optional, but
+  // hooks can't be called conditionally — a local MotionValue that never
+  // updates stands in when the caller didn't pass one, so the subscription
+  // below is always wired up but simply never fires in that case.
+  const noScrollProgress = useMotionValue(0)
+  const scrollSource = typingProgress ?? noScrollProgress
+  const [pressed, setPressed] = useState<{ index: number; token: number } | null>(null)
+  const totalMainKeys = keyRows.flat().length
+  const lastScrollProgress = useRef(0)
+  const accumulatedScroll = useRef(0)
+  const pressTokenRef = useRef(0)
+
+  useMotionValueEvent(scrollSource, 'change', (latest) => {
+    if (!typingProgress || reduceMotion || oledOnly) return
+    const delta = latest - lastScrollProgress.current
+    lastScrollProgress.current = latest
+    // Only forward scroll accumulates toward the next press — scrolling
+    // back up resets it, so scrolling down through the same stretch again
+    // later types a fresh key rather than staying silent because this
+    // range already "used up" its trigger once.
+    if (delta <= 0) {
+      accumulatedScroll.current = 0
+      return
+    }
+    accumulatedScroll.current += delta
+    if (accumulatedScroll.current < SCROLL_TYPE_STEP) return
+    accumulatedScroll.current = 0
+    pressTokenRef.current += 1
+    setPressed({ index: Math.floor(Math.random() * totalMainKeys), token: pressTokenRef.current })
+  })
+
+  // Releases a press automatically — checked against the token that
+  // requested it, so a new press triggered before the old one finished
+  // releasing can't have its own timeout clear the newer press instead.
+  useEffect(() => {
+    if (!pressed) return
+    const timer = setTimeout(() => {
+      setPressed((current) => (current?.token === pressed.token ? null : current))
+    }, KEY_PRESS_MS)
+    return () => clearTimeout(timer)
+  }, [pressed])
   const shouldFloat = float && !reduceMotion && !oledOnly && inView
 
   const viewBox = oledOnly
@@ -237,10 +309,45 @@ export default function KeyboardVisual({
               {/* recessed control deck */}
               <rect x={IN_X - 14} y={IN_Y - 14} width={IN_RIGHT - IN_X + 28} height={IN_BOTTOM - IN_Y + 28} rx="16" fill="#000" opacity="0.16" />
 
-              {/* key field */}
-              {keyRows.flat().map((k, i) => (
-                <rect key={`k${i}`} x={k.x} y={k.y} width={k.w} height={k.h} rx="6" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />
-              ))}
+              {/* key field — the base rect's fill stays the static gradient
+                  (framer-motion can't smoothly interpolate to/from a
+                  gradient url(), only between plain colors), so a "press"
+                  is expressed as a tiny y-nudge on the key itself plus a
+                  separate solid-color highlight layered on top that fades
+                  in and out; see typingProgress's doc comment above. */}
+              {keyRows.flat().map((k, i) => {
+                const isPressed = pressed?.index === i
+                return (
+                  <g key={`k${i}`}>
+                    <motion.rect
+                      x={k.x}
+                      width={k.w}
+                      height={k.h}
+                      rx="6"
+                      fill={`url(#${uid}-key)`}
+                      stroke="#242429"
+                      strokeWidth="1"
+                      initial={false}
+                      animate={{ y: isPressed && !reduceMotion ? k.y + 1.5 : k.y }}
+                      transition={{ duration: 0.09, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                    {!reduceMotion && (
+                      <motion.rect
+                        x={k.x}
+                        y={k.y}
+                        width={k.w}
+                        height={k.h}
+                        rx="6"
+                        fill="#4c7eff"
+                        initial={false}
+                        animate={{ opacity: isPressed ? 0.5 : 0 }}
+                        transition={{ duration: isPressed ? 0.06 : 0.3, ease: 'easeOut' }}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                  </g>
+                )
+              })}
 
               {/* arrow cluster */}
               <rect x={arrowUpKey.x} y={arrowUpKey.y} width={arrowUpKey.w} height={arrowUpKey.h} rx="4" fill={`url(#${uid}-key)`} stroke="#242429" strokeWidth="1" />

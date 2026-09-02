@@ -55,4 +55,25 @@ describe('SuggestionsPanel', () => {
     expect(await screen.findByText('Add Command Palette to a control')).toBeInTheDocument()
     expect(screen.queryByText(/Noma hasn.t noticed a pattern yet\./)).not.toBeInTheDocument()
   })
+
+  it('shows which application a suggestion came from when the card carries one', async () => {
+    window.flow = mockFlow({
+      getSuggestions: vi
+        .fn()
+        .mockResolvedValue([{ ...PENDING_SUGGESTION, applicationName: 'Visual Studio Code' }])
+    })
+
+    render(<SuggestionsPanel />)
+
+    expect(await screen.findByText('Visual Studio Code')).toBeInTheDocument()
+  })
+
+  it('renders no app tag when a suggestion has no applicationName (e.g. a pre-existing row)', async () => {
+    window.flow = mockFlow({ getSuggestions: vi.fn().mockResolvedValue([PENDING_SUGGESTION]) })
+
+    render(<SuggestionsPanel />)
+
+    await screen.findByText('Add Command Palette to a control')
+    expect(screen.queryByText('Visual Studio Code')).not.toBeInTheDocument()
+  })
 })

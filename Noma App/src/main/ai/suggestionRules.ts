@@ -17,11 +17,18 @@ import { REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/pat
  * math (confidenceBias already carries that), only the confidenceBreakdown
  * attached to the returned suggestion, so "why am I seeing this?" can cite
  * real prior accept/reject counts instead of just the resulting nudge.
+ *
+ * `applicationName` is the application's real display name (e.g. "Visual
+ * Studio Code"), resolved by the caller — this function stays pure/DB-free
+ * (see the class doc above), so it can't look the name up itself. Falls
+ * back to the raw `applicationId` (e.g. "code") when the caller doesn't
+ * have one, rather than silently dropping the app context.
  */
 export function suggestionForPattern(
   pattern: DetectedPattern,
   confidenceBias = 0,
-  priorHistory: { accepted: number; rejected: number } = { accepted: 0, rejected: 0 }
+  priorHistory: { accepted: number; rejected: number } = { accepted: 0, rejected: 0 },
+  applicationName: string | null = null
 ): Suggestion | null {
   const now = Date.now()
 
@@ -33,7 +40,7 @@ export function suggestionForPattern(
       return {
         id: `suggestion:${pattern.id}`,
         title: `Assign ${combo} to a Flow control?`,
-        explanation: `You've used ${combo} ${pattern.count} times${appSuffix(pattern.applicationId)} today. Assigning it to one of your 4 controls means one press instead of the full shortcut.`,
+        explanation: `You've used ${combo} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. Assigning it to one of your 4 controls means one press instead of the full shortcut.`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,
@@ -57,7 +64,7 @@ export function suggestionForPattern(
       return {
         id: `suggestion:${pattern.id}`,
         title: 'Create a macro for this sequence?',
-        explanation: `You've repeated ${first} → ${second} ${pattern.count} times${appSuffix(pattern.applicationId)} today. Flow could turn this into a one-press macro on one of your 4 controls.`,
+        explanation: `You've repeated ${first} → ${second} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. Flow could turn this into a one-press macro on one of your 4 controls.`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,
@@ -82,8 +89,13 @@ export function suggestionForPattern(
   }
 }
 
-function appSuffix(applicationId: string | null): string {
-  return applicationId ? ` in ${applicationId}` : ''
+function appSuffix(applicationId: string | null, applicationName: string | null): string {
+  if (!applicationId) return ''
+  // Prefer the real display name ("Visual Studio Code") when the caller
+  // resolved one; fall back to the raw id ("code") rather than dropping
+  // the app context entirely when it hasn't been (or can't be — a pattern
+  // from an application Flow hasn't recorded a name for yet).
+  return ` in ${applicationName ?? applicationId}`
 }
 
 /** At the threshold: 0.5 confidence. Each additional occurrence nudges it

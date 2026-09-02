@@ -22,7 +22,11 @@ export interface PatternHistory {
  * by suggestionsRepository.getSuggestionHistoryForKind (the "UPDATE USER
  * MODEL / IMPROVE FUTURE SUGGESTIONS" step of the learning loop, section
  * 14); tests can pass nothing and get an unbiased, history-free `0` for
- * every kind.
+ * every kind. `getApplicationName` is injected the same way, backed by
+ * applicationsRepository.getApplicationById in production — so a
+ * suggestion's `explanation` names the real application ("Visual Studio
+ * Code") instead of its raw internal id ("code"); see suggestionRules.ts's
+ * `applicationName` param.
  */
 export class LocalRuleBasedProvider implements AIProvider {
   readonly name = 'local-rule-based'
@@ -32,17 +36,21 @@ export class LocalRuleBasedProvider implements AIProvider {
       accepted: 0,
       rejected: 0,
       bias: 0
-    })
+    }),
+    private readonly getApplicationName: (applicationId: string) => string | null = () => null
   ) {}
 
   async generateSuggestions(patterns: DetectedPattern[]): Promise<Suggestion[]> {
     const suggestions: Suggestion[] = []
     for (const pattern of patterns) {
       const history = this.getHistory(pattern.kind)
-      const suggestion = suggestionForPattern(pattern, history.bias, {
-        accepted: history.accepted,
-        rejected: history.rejected
-      })
+      const applicationName = pattern.applicationId ? this.getApplicationName(pattern.applicationId) : null
+      const suggestion = suggestionForPattern(
+        pattern,
+        history.bias,
+        { accepted: history.accepted, rejected: history.rejected },
+        applicationName
+      )
       if (suggestion) suggestions.push(suggestion)
     }
     return suggestions

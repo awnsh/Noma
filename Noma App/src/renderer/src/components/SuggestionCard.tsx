@@ -35,6 +35,17 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
     <div className="rounded-xl border border-flow/30 bg-flow/[0.04] px-4 py-3">
       <div className="flex items-start justify-between gap-3">
         <div>
+          {/* A glanceable app tag, separate from the same fact already
+              spelled out in `explanation`'s prose ("...5 times in Visual
+              Studio Code today.") — that sentence is easy to skim past,
+              this isn't. `applicationName` is joined live from the
+              applications table (see suggestionsRepository.ts), so it's
+              never a stale copy. */}
+          {suggestion.applicationName && (
+            <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-flow/70">
+              {suggestion.applicationName}
+            </div>
+          )}
           <div className="text-sm font-medium text-neutral-100">{suggestion.title}</div>
           <p className="mt-1 text-sm text-neutral-400">{suggestion.explanation}</p>
         </div>

@@ -9,6 +9,7 @@ import {
   insertSuggestionIfNew,
   resolveSuggestion
 } from './suggestionsRepository'
+import { upsertApplication } from './applicationsRepository'
 import type { Suggestion } from '@shared/types'
 
 function makeSuggestion(overrides: Partial<Suggestion> = {}): Suggestion {
@@ -44,6 +45,19 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
     const [pending] = getPendingSuggestions()
     expect(pending.applicationId).toBe('code')
     expect(pending.action).toEqual({ kind: 'assignShortcutToControl', comboKeys: ['Control', 'S'] })
+  })
+
+  it('joins applicationName live from the applications table, not a frozen copy', () => {
+    upsertApplication({ id: 'code', name: 'Visual Studio Code', processName: 'Code.exe' })
+    insertSuggestionIfNew(makeSuggestion())
+    const [pending] = getPendingSuggestions()
+    expect(pending.applicationName).toBe('Visual Studio Code')
+  })
+
+  it('leaves applicationName null when the application id has no matching row', () => {
+    insertSuggestionIfNew(makeSuggestion())
+    const [pending] = getPendingSuggestions()
+    expect(pending.applicationName).toBeNull()
   })
 
   it('degrades gracefully for a suggestion with no action (e.g. legacy row)', () => {

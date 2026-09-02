@@ -134,6 +134,33 @@ describe('suggestionForPattern', () => {
     expect(suggestion?.confidenceBreakdown?.occurrenceCount).toBe(4)
   })
 
+  it('uses the resolved application name in the explanation when the caller provides one', () => {
+    const pattern: DetectedPattern = {
+      id: 'shortcut:code::Control+S',
+      kind: 'repeatedShortcut',
+      applicationId: 'code',
+      description: '',
+      count: 5,
+      comboKeys: ['Control', 'S']
+    }
+    const suggestion = suggestionForPattern(pattern, 0, { accepted: 0, rejected: 0 }, 'Visual Studio Code')
+    expect(suggestion?.explanation).toContain('Visual Studio Code')
+    expect(suggestion?.explanation).not.toContain('in code ')
+  })
+
+  it('falls back to the raw applicationId when no application name is provided', () => {
+    const pattern: DetectedPattern = {
+      id: 'sequence:code::Control+C->Control+V',
+      kind: 'repeatedSequence',
+      applicationId: 'code',
+      description: '',
+      count: 3,
+      sequence: ['Control+C', 'Control+V']
+    }
+    const suggestion = suggestionForPattern(pattern)
+    expect(suggestion?.explanation).toContain('in code')
+  })
+
   it('produces a stable, deterministic id derived from the pattern id (for dedup)', () => {
     const pattern: DetectedPattern = {
       id: 'shortcut:code::Control+S',

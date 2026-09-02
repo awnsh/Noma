@@ -12,6 +12,7 @@ import { CaptureService } from './workflow/captureService'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
 import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
 import { getSuggestionHistoryForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
+import { getApplicationById } from './database/repositories/applicationsRepository'
 import { LocalRuleBasedProvider } from './ai/localProvider'
 import { SuggestionEngine } from './ai/suggestionEngine'
 import { executeControlAction } from './actions/actionExecutor'
@@ -21,7 +22,10 @@ let mainWindow: BrowserWindow | null = null
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
 const hardwareDevice = getDefaultHardwareDevice()
-const aiProvider = new LocalRuleBasedProvider(getSuggestionHistoryForKind)
+const aiProvider = new LocalRuleBasedProvider(
+  getSuggestionHistoryForKind,
+  (applicationId) => getApplicationById(applicationId)?.name ?? null
+)
 const suggestionEngine = new SuggestionEngine(aiProvider)
 
 /** Re-runs pattern detection -> suggestion generation, then pushes the

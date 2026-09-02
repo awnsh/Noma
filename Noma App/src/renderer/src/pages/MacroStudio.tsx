@@ -15,6 +15,7 @@ export function MacroStudio() {
   }, [refresh])
 
   const selectedMacro = macros.find((macro) => macro.id === selectedMacroId) ?? null
+  const applicationNameById = new Map(applications.map((application) => [application.id, application.name]))
 
   const handleSelect = (macro: Macro): void => {
     setIsCreatingNew(false)
@@ -77,6 +78,13 @@ export function MacroStudio() {
                   </div>
                   <div className="text-[11px] text-neutral-600">
                     {macro.actions.length} step{macro.actions.length === 1 ? '' : 's'}
+                    {/* Which application this macro was scoped to — set
+                        automatically when Flow creates a macro from an
+                        accepted sequence suggestion (suggestionResolution.ts),
+                        or left unset for a macro built from scratch here. */}
+                    {macro.applicationId && applicationNameById.get(macro.applicationId) && (
+                      <> · {applicationNameById.get(macro.applicationId)}</>
+                    )}
                   </div>
                 </button>
               </li>

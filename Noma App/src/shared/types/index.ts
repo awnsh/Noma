@@ -112,6 +112,14 @@ export interface Suggestion {
   resolvedAt?: number
   /** Which application's profile this suggestion (and its slot picker) applies to. */
   applicationId?: string | null
+  /** The application's current display name (e.g. "Visual Studio Code"),
+   *  resolved live from `applicationId` on every read (not persisted, so it
+   *  can never go stale the way a frozen-at-creation-time copy could) —
+   *  null if `applicationId` is null, or if that id has no matching row
+   *  (a pattern from an application Flow hasn't recorded yet). This is
+   *  what the Suggestions panel shows as "in <app>"; `explanation` also
+   *  bakes the name in as prose, resolved once at generation time. */
+  applicationName?: string | null
   /** Absent for suggestions created before this field existed. */
   action?: SuggestionAction
   /** Absent for suggestions created before this field existed, or for

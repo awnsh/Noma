@@ -10,10 +10,21 @@ interface SuggestionRow {
   created_at: number
   resolved_at: number | null
   application_id: string | null
+  /** Joined live from `applications.name` — see the SELECTs below. Never a
+   *  persisted column of its own, so it can't go stale the way a name
+   *  frozen at suggestion-creation time could (e.g. if a profile is later
+   *  renamed). */
+  application_name: string | null
   action_kind: string | null
   action_payload: string | null
   confidence_breakdown: string | null
 }
+
+const SUGGESTION_SELECT = `
+  SELECT s.*, a.name AS application_name
+  FROM suggestions s
+  LEFT JOIN applications a ON a.id = s.application_id
+`
 
 function rowToSuggestion(row: SuggestionRow): Suggestion {
   return {
@@ -25,6 +36,7 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
     createdAt: row.created_at,
     resolvedAt: row.resolved_at ?? undefined,
     applicationId: row.application_id,
+    applicationName: row.application_name,
     // action_kind/action_payload/confidence_breakdown are only absent for
     // rows from before those columns existed — degrade gracefully rather
     // than throw.
@@ -41,7 +53,7 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
 export function getPendingSuggestions(): Suggestion[] {
   const db = getDatabase()
   const rows = db
-    .prepare(`SELECT * FROM suggestions WHERE status = 'pending' ORDER BY created_at DESC`)
+    .prepare(`${SUGGESTION_SELECT} WHERE s.status = 'pending' ORDER BY s.created_at DESC`)
     .all() as SuggestionRow[]
   return rows.map(rowToSuggestion)
 }
@@ -50,15 +62,13 @@ export function getPendingSuggestions(): Suggestion[] {
  *  Learning Center's history list, most recent first. */
 export function getAllSuggestions(): Suggestion[] {
   const db = getDatabase()
-  const rows = db.prepare('SELECT * FROM suggestions ORDER BY created_at DESC').all() as SuggestionRow[]
+  const rows = db.prepare(`${SUGGESTION_SELECT} ORDER BY s.created_at DESC`).all() as SuggestionRow[]
   return rows.map(rowToSuggestion)
 }
 
 export function getSuggestionById(id: string): Suggestion | null {
   const db = getDatabase()
-  const row = db.prepare('SELECT * FROM suggestions WHERE id = ?').get(id) as
-    | SuggestionRow
-    | undefined
+  const row = db.prepare(`${SUGGESTION_SELECT} WHERE s.id = ?`).get(id) as SuggestionRow | undefined
   return row ? rowToSuggestion(row) : null
 }
 
