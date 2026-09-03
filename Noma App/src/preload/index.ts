@@ -102,6 +102,8 @@ const flowApi: FlowApi = {
 
   getAllSuggestions: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_SUGGESTIONS),
   getLearningStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LEARNING_STATS),
+  getShortcutUsageStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SHORTCUT_USAGE_STATS),
+  getDailyActivityCounts: (days) => ipcRenderer.invoke(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, days),
 
   listApplicationProfileSummaries: () =>
     ipcRenderer.invoke(IPC_CHANNELS.LIST_APPLICATION_PROFILE_SUMMARIES),

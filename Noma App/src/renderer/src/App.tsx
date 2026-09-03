@@ -5,6 +5,7 @@ import { Demo } from './pages/Demo'
 import { VirtualKeyboard } from './pages/VirtualKeyboard'
 import { MacroStudio } from './pages/MacroStudio'
 import { LearningCenter } from './pages/LearningCenter'
+import { UsageStats } from './pages/UsageStats'
 import { Profiles } from './pages/Profiles'
 import { Settings } from './pages/Settings'
 import { Developer } from './pages/Developer'
@@ -42,6 +43,7 @@ function App() {
       {activePage === 'virtual-keyboard' && <VirtualKeyboard />}
       {activePage === 'macros' && <MacroStudio />}
       {activePage === 'learning' && <LearningCenter />}
+      {activePage === 'usage-stats' && <UsageStats />}
       {activePage === 'profiles' && <Profiles />}
       {activePage === 'settings' && <Settings />}
       {activePage === 'developer' && <Developer />}

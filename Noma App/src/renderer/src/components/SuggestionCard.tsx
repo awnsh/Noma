@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ApplicationProfile, Suggestion } from '@shared/types'
 import { useSuggestionsStore } from '../stores/suggestionsStore'
 import { explainConfidence } from '../lib/explainConfidence'
+import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 
 interface SuggestionCardProps {
   suggestion: Suggestion
@@ -50,6 +51,16 @@ export function SuggestionCard({ suggestion, onReject, onDismiss }: SuggestionCa
           <p className="mt-1 text-sm text-neutral-400">{suggestion.explanation}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
+          {/* When Flow actually noticed this pattern — relative so it's
+              glanceable ("3h ago"), with the exact moment one hover away
+              via the title tooltip, same pairing the Learning Center's
+              history row uses for its own full-date version of this. */}
+          <span
+            className="text-[10px] text-neutral-600"
+            title={formatAbsoluteTime(suggestion.createdAt)}
+          >
+            {formatRelativeTime(suggestion.createdAt)}
+          </span>
           <div
             className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-neutral-500"
             title="Confidence"

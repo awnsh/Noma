@@ -17,7 +17,11 @@ import {
   getWorkflowMonitoringEnabled,
   setWorkflowMonitoringEnabled
 } from '../database/repositories/settingsRepository'
-import { getWorkflowEventsSince } from '../database/repositories/workflowEventsRepository'
+import {
+  getDailyActivityCounts,
+  getShortcutUsageStats,
+  getWorkflowEventsSince
+} from '../database/repositories/workflowEventsRepository'
 import {
   getAllSuggestions,
   getPendingSuggestions,
@@ -217,6 +221,12 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_ALL_SUGGESTIONS, () => getAllSuggestions())
 
   ipcMain.handle(IPC_CHANNELS.GET_LEARNING_STATS, () => getLearningStats(getSuggestionHistoryForKind))
+
+  ipcMain.handle(IPC_CHANNELS.GET_SHORTCUT_USAGE_STATS, () => getShortcutUsageStats())
+
+  ipcMain.handle(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, (_event, days: number) =>
+    getDailyActivityCounts(days)
+  )
 
   ipcMain.handle(IPC_CHANNELS.LIST_APPLICATION_PROFILE_SUMMARIES, () =>
     listApplicationProfileSummaries()

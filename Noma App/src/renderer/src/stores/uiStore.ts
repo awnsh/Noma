@@ -6,6 +6,7 @@ export type Page =
   | 'virtual-keyboard'
   | 'macros'
   | 'learning'
+  | 'usage-stats'
   | 'profiles'
   | 'settings'
   | 'developer'

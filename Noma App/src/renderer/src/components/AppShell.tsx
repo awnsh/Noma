@@ -7,6 +7,7 @@ import {
   KeyboardIcon,
   MacroIcon,
   LearningIcon,
+  StatsIcon,
   ProfilesIcon,
   SettingsIcon,
   DeveloperIcon,
@@ -22,6 +23,7 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: 'Virtual Keyboard', page: 'virtual-keyboard', Icon: KeyboardIcon },
   { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
   { label: 'Learning Center', page: 'learning', Icon: LearningIcon },
+  { label: 'Usage Stats', page: 'usage-stats', Icon: StatsIcon },
   { label: 'Profiles', page: 'profiles', Icon: ProfilesIcon },
   { label: 'Settings', page: 'settings', Icon: SettingsIcon }
 ]

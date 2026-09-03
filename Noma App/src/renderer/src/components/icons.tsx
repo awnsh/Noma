@@ -65,6 +65,18 @@ export function LearningIcon({ className }: IconProps) {
   )
 }
 
+export function StatsIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M4 20V4" />
+      <path d="M4 20h16" />
+      <path d="M7.5 20v-6" />
+      <path d="M12 20v-9.5" />
+      <path d="M16.5 20V7" />
+    </svg>
+  )
+}
+
 export function ProfilesIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>

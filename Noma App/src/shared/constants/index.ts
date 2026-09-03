@@ -33,6 +33,8 @@ export const IPC_CHANNELS = {
   TEST_MACRO_STEPS: 'flow:test-macro-steps',
   GET_ALL_SUGGESTIONS: 'flow:get-all-suggestions',
   GET_LEARNING_STATS: 'flow:get-learning-stats',
+  GET_SHORTCUT_USAGE_STATS: 'flow:get-shortcut-usage-stats',
+  GET_DAILY_ACTIVITY_COUNTS: 'flow:get-daily-activity-counts',
   LIST_APPLICATION_PROFILE_SUMMARIES: 'flow:list-application-profile-summaries',
   CREATE_PROFILE_FOR_APPLICATION: 'flow:create-profile-for-application',
   RENAME_APPLICATION_PROFILE: 'flow:rename-application-profile',

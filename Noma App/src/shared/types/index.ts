@@ -129,6 +129,40 @@ export interface Suggestion {
 }
 
 /**
+ * One keyboard shortcut Flow has observed being pressed, aggregated across
+ * *all* recorded history (not just today) — the Usage Stats page's main
+ * list. Keyed by the exact combo + application it happened in, so the same
+ * combo used in two different apps is tracked separately, matching how
+ * patternDetection.ts already scopes everything per-app.
+ *
+ * Deliberately scoped to `shortcut` events only, not `controlActivation` —
+ * a control's own label can be renamed or its profile deleted entirely,
+ * which would leave a `controlId`-keyed stat with nothing stable to display
+ * (unlike `applicationName`, there's no live join that could keep it
+ * accurate). A raw key combo has no such staleness problem.
+ */
+export interface ShortcutUsageStat {
+  id: string
+  comboKeys: string[]
+  applicationId: string | null
+  /** Live-resolved from `applicationId`, same staleness-free join
+   *  `Suggestion.applicationName` uses. Null if never seen in any app. */
+  applicationName: string | null
+  count: number
+  firstUsed: number
+  lastUsed: number
+}
+
+/** Total shortcut-press counts per local calendar day, oldest first — the
+ *  Usage Stats page's activity-over-time chart. `date` is a local
+ *  `YYYY-MM-DD` key (see `localDateKey`), not UTC, so "today" always lines
+ *  up with what `startOfTodayMs` considers today. */
+export interface DailyActivityCount {
+  date: string
+  count: number
+}
+
+/**
  * One pattern kind's learning state — the Flow Learning Center's per-kind
  * card. `label`/`description`/`threshold` are the static "how it works"
  * half; `accepted`/`rejected`/`bias` are the live history half (same
@@ -367,6 +401,13 @@ export interface FlowApi {
    *  the resulting bias) — the Flow Learning Center's "how Flow decides"
    *  cards. */
   getLearningStats(): Promise<LearningStats>
+  /** Every shortcut Flow has ever recorded, aggregated by combo + application,
+   *  most-used first — the Usage Stats page's main list. See ShortcutUsageStat. */
+  getShortcutUsageStats(): Promise<ShortcutUsageStat[]>
+  /** Shortcut-press counts per local day for the last `days` days (inclusive
+   *  of today), oldest first, zero-filled for days with no activity — the
+   *  Usage Stats page's activity chart. */
+  getDailyActivityCounts(days: number): Promise<DailyActivityCount[]>
   /**
    * Resolves a suggestion directly: always for reject/dismiss, and for
    * accept only as a fallback when there's no profile to assign a slot in
