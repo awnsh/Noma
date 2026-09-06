@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+@import "@fontsource-variable/sora/wght.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/*
+ * Palette ported verbatim from the Noma Website (src/index.css's @theme) and
+ * the Noma App (tailwind.config.js) — this prototype is a third,
+ * independent project, so the tokens are duplicated by hand rather than
+ * shared, same as those two already do with each other. Do not invent new
+ * colors here; extend this block instead. See DESIGN.md.
+ */
+@theme {
+  --color-base-950: #050506;
+  --color-base-900: #09090b;
+  --color-base-850: #0e0e11;
+  --color-base-800: #131317;
+  --color-base-700: #1c1c21;
+  --color-base-600: #28282f;
+  --color-base-500: #3c3c44;
+  --color-base-400: #6b6b74;
+  --color-base-300: #98989f;
+  --color-base-200: #c2c2c8;
+  --color-base-100: #eaeaec;
+  --color-base-50: #f7f7f8;
+
+  /* Signature brand blue — the one color that means "this is the interface,
+     active or ready to be pressed." Never repurposed. */
+  --color-accent: #4c7eff;
+  --color-accent-bright: #8babff;
+  --color-accent-dim: #3150a4;
+  --color-accent-950: #0a0f1f;
+
+  /* Reserved for a real physical hardware contact in the eventual product —
+     kept here for continuity with the brand, unused as decoration. */
+  --color-gold: #cda15a;
+  --color-gold-bright: #e8c383;
+  --color-gold-dim: #6b5730;
+  --color-gold-950: #1a1409;
+
+  /* Flow violet — Noma's own noticing-and-suggesting layer, wherever it
+     shows up. Never used for the resulting interface change itself (that
+     stays blue) — only for Noma proposing something. */
+  --color-flow: #a78bd1;
+  --color-flow-bright: #c4aee0;
+  --color-flow-dim: #5c4a78;
+  --color-flow-950: #150f1e;
+
+  --font-display: "Sora Variable", "Inter", sans-serif;
+  --font-sans: "Inter", -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-base-700);
+  }
+
+  html {
+    background: var(--color-base-950);
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--color-base-950);
+    color: var(--color-base-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-base-950);
+  }
+
+  /* Themed scrollbars — the parts of a page you didn't draw still carry
+     the design. An unstyled OS scrollbar over the keyboard's horizontal
+     scroll fallback or the Validation Mode panel's lists would be the
+     cheapest tell that this was assembled, not built. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-base-600) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--color-base-600);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-base-500);
+    background-clip: padding-box;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

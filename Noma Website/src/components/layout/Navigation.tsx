@@ -6,7 +6,6 @@ import nomaWordmark from '../../assets/noma-wordmark.png'
 const links = [
   { label: 'How It Works', href: '#how' },
   { label: 'Hardware', href: '#hardware' },
-  { label: 'Modules', href: '#modules' },
   { label: 'About', href: '#founder' },
 ]
 
@@ -38,7 +37,7 @@ export default function Navigation() {
           </ul>
 
           <a
-            href="#demo"
+            href="#app"
             className="hidden rounded-full border border-base-500/70 px-5 py-2 text-sm font-medium text-base-100 transition-colors hover:border-accent hover:text-accent md:inline-flex"
           >
             Explore Noma
@@ -83,7 +82,7 @@ export default function Navigation() {
                 ))}
                 <li className="pt-2">
                   <a
-                    href="#demo"
+                    href="#app"
                     onClick={() => setMenuOpen(false)}
                     className="inline-flex rounded-full border border-base-500 px-5 py-2 text-sm font-medium text-base-100"
                   >

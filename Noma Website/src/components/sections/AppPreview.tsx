@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import Section, { Kicker } from '../layout/Section'
+import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import AppKeyboardGrid from '../visuals/AppKeyboardGrid'
 import VirtualControlTile from '../visuals/VirtualControlTile'
@@ -64,13 +64,12 @@ export default function AppPreview() {
   return (
     <Section id="app">
       <Reveal>
-        <Kicker index="03" label="The App" />
-        <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
+        <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
           The companion software, today.
         </h2>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          Noma runs as a desktop app right now, ahead of the physical keyboard &mdash; switch applications, press a
-          control, build a macro below. It&rsquo;s the real interface responding, not a mockup of one.
+          Noma runs as a desktop app today, ahead of the physical keyboard. Try it below &mdash; this is the real
+          interface, not a mockup.
         </p>
       </Reveal>
 

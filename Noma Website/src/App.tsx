@@ -3,13 +3,11 @@ import { useReducedMotion } from 'framer-motion'
 import Navigation from './components/layout/Navigation'
 import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
+import WorkflowDemo from './components/sections/WorkflowDemo'
 import Problem from './components/sections/Problem'
 import HowNomaWorks from './components/sections/HowNomaWorks'
 import AppPreview from './components/sections/AppPreview'
-import InteractiveDemo from './components/sections/InteractiveDemo'
 import Hardware from './components/sections/Hardware'
-import Modules from './components/sections/Modules'
-import Vision from './components/sections/Vision'
 import Founder from './components/sections/Founder'
 import CTA from './components/sections/CTA'
 
@@ -24,13 +22,11 @@ export default function App() {
       <Navigation />
       <main>
         <Hero />
+        <WorkflowDemo />
         <Problem />
         <HowNomaWorks />
         <AppPreview />
-        <InteractiveDemo />
         <Hardware />
-        <Modules />
-        <Vision />
         <Founder />
         <CTA />
       </main>

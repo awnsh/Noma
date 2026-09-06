@@ -1,4 +1,4 @@
-import Section, { Kicker } from '../layout/Section'
+import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import AppOrbit from '../visuals/AppOrbit'
 import { appProfiles } from '../../data/appProfiles'
@@ -23,8 +23,7 @@ export default function Problem() {
     <Section id="problem">
       <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-8">
         <Reveal>
-          <Kicker index="01" label="The Problem" />
-          <h2 className="mt-5 text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
+          <h2 className="text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
             Every application has different controls.
             <br />
             <span className="text-base-400">Your keyboard doesn&rsquo;t.</span>

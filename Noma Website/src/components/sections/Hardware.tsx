@@ -1,6 +1,7 @@
-import Section, { Kicker } from '../layout/Section'
+import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import KeyboardVisual from '../visuals/KeyboardVisual'
+import ModuleEnclosure, { type ModuleType } from '../visuals/ModuleEnclosure'
 
 // Pin-Connector Docking gets gold, matching the real lit-pin color elsewhere
 // in this same illustration — the other two stay accent blue (interface).
@@ -16,22 +17,42 @@ const legend = [
   { label: 'Pin-Connector Docking', body: 'Visible magnetic contacts on the sides and top edge where separate physical modules snap into place.' },
 ]
 
+const modules: { type: ModuleType; name: string; line: string }[] = [
+  { type: 'rotary', name: 'Rotary Encoder', line: 'Zoom, scroll, play / pause' },
+  { type: 'button', name: 'Button Pad', line: 'Four programmable buttons' },
+  { type: 'slider', name: 'Slider', line: 'Brush size, volume, any range' },
+]
+
+const roadmap = [
+  { label: 'Today', body: 'Software prototype', current: true },
+  { label: 'Next', body: 'Physical STM32 prototype', current: false },
+  { label: 'Then', body: 'Modular Noma keyboard', current: false },
+  { label: 'Eventually', body: 'A full ecosystem', current: false },
+]
+
+/**
+ * Folds what used to be three separate sections (Hardware, Modules, Vision)
+ * into one — all three were telling one story (this is becoming real,
+ * physical hardware) in three passes with three headings. The pin-docking
+ * legend item below already sets up what a "module" is, so the modules row
+ * needs a label, not a second explanation; the roadmap closes the section
+ * as a compact strip instead of a whole page of its own.
+ */
 export default function Hardware() {
   return (
     <Section id="hardware">
       <Reveal>
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <Kicker index="05" label="Hardware" />
+          <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
+            Built to become physical.
+          </h2>
           <span className="rounded-md border border-base-600 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-base-400">
             In Development
           </span>
         </div>
-        <h2 className="mt-5 max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-          Built to become physical.
-        </h2>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          The software is only the beginning. Every part of Noma is designed with a future physical keyboard in
-          mind.
+          The software is only the beginning &mdash; every part of Noma is designed with a future physical keyboard,
+          and modules that snap onto it, in mind.
         </p>
       </Reveal>
 
@@ -65,6 +86,36 @@ export default function Hardware() {
           </Reveal>
         ))}
       </div>
+
+      <Reveal delay={0.15}>
+        <p className="mt-20 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-base-500">
+          Modules that snap into the dock
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {modules.map((m) => (
+            <div key={m.name} className="flex flex-col items-center gap-3 rounded-2xl border border-base-700 bg-base-850/60 p-6 text-center">
+              <ModuleEnclosure type={m.type} className="h-16 w-20" />
+              <div>
+                <p className="text-sm font-medium text-base-100">{m.name}</p>
+                <p className="mt-1 font-mono text-[11px] text-base-400">{m.line}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.2}>
+        <div className="mx-auto mt-20 grid max-w-3xl grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-4">
+          {roadmap.map((stop) => (
+            <div key={stop.label}>
+              <p className={`font-mono text-xs uppercase tracking-[0.2em] ${stop.current ? 'text-accent' : 'text-base-500'}`}>
+                {stop.label}
+              </p>
+              <p className="mt-1.5 text-sm text-base-300">{stop.body}</p>
+            </div>
+          ))}
+        </div>
+      </Reveal>
     </Section>
   )
 }

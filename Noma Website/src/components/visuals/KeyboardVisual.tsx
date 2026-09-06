@@ -25,6 +25,11 @@ interface KeyboardVisualProps {
    *  pin connectors are omitted rather than shrunk offscreen. Used where the screen's
    *  content changing is the point, e.g. the interactive demo. */
   oledOnly?: boolean
+  /** Labels (matching entries in `controls`) to render in Flow violet instead
+   *  of the default accent — Noma recognizing a specific pattern among the
+   *  controls already on screen, rather than a controls list. Never used to
+   *  swap which controls are shown, only to call out ones already there. */
+  emphasizedLabels?: string[]
   /**
    * A 0-1 scroll-progress `MotionValue` (e.g. Hero.tsx's own `scrollYProgress`)
    * that makes a random key flash "pressed" as the visitor scrolls down past
@@ -204,6 +209,7 @@ export default function KeyboardVisual({
   float = true,
   className = '',
   oledOnly = false,
+  emphasizedLabels,
   typingProgress,
 }: KeyboardVisualProps) {
   const reduceMotion = useReducedMotion()
@@ -403,18 +409,33 @@ export default function KeyboardVisual({
                     {screenCells.map((cell, i) => {
                       const label = controls[i]
                       if (!label) return null
+                      // Flow violet, not the interface's own accent blue —
+                      // this is Noma calling out a control it recognized as
+                      // part of a pattern, same split as everywhere else the
+                      // two colors sit next to each other (see DESIGN.md).
+                      const isEmphasized = emphasizedLabels?.includes(label) ?? false
                       return (
                         <g key={label + i}>
                           {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
                           <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: '100%', color: '#8babff' }}>
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 3,
+                                height: '100%',
+                                color: isEmphasized ? '#c4aee0' : '#8babff',
+                              }}
+                            >
                               <OledIcon label={label} className="h-3 w-3" />
                               <span
                                 style={{
                                   fontFamily: "'JetBrains Mono', monospace",
                                   fontSize: 6.5,
                                   letterSpacing: 0.4,
-                                  color: '#c2c2c8',
+                                  color: isEmphasized ? '#e4d9f2' : '#c2c2c8',
                                   textAlign: 'center',
                                   lineHeight: 1.1,
                                   whiteSpace: 'nowrap',

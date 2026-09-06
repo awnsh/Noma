@@ -45,7 +45,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="mx-auto mt-7 max-w-xl text-balance text-lg text-base-300"
         >
-          Noma is an adaptive computer interface that learns how you work and evolves around your workflow.
+          Every app has different controls. Your keyboard becomes whichever one you're using &mdash; automatically.
         </motion.p>
 
         <motion.div
@@ -54,7 +54,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
-          <Button href="#demo" variant="primary">
+          <Button href="#app" variant="primary">
             Explore Noma
           </Button>
           <Button href="#how" variant="secondary">

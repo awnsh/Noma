@@ -4,7 +4,6 @@ import nomaWordmark from '../../assets/noma-wordmark.png'
 const links = [
   { label: 'How It Works', href: '#how' },
   { label: 'Hardware', href: '#hardware' },
-  { label: 'Modules', href: '#modules' },
   { label: 'About', href: '#founder' },
 ]
 
@@ -17,7 +16,7 @@ export default function Footer() {
             <img src={nomaMark} alt="" className="h-6 w-auto" />
             <img src={nomaWordmark} alt="Noma" className="h-3.5 w-auto" />
           </div>
-          <span className="text-xs text-base-500">An adaptive computer interface. In development.</span>
+          <span className="text-xs text-base-500">A keyboard that becomes whichever app you're using. In development.</span>
         </div>
 
         <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

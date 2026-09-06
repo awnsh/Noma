@@ -93,8 +93,3 @@ const oledShortLabels: Record<string, string> = {
 export function oledLabel(label: string): string {
   return oledShortLabels[label] ?? label.toUpperCase()
 }
-
-// The deterministic "Flow moment": the personalized control set Flow
-// proposes for VS Code after noticing a repeated pattern. Reused by the
-// interactive demo.
-export const vscodeLearnedControls = ['Command Palette', 'Git Commit', 'Terminal', 'Run']
