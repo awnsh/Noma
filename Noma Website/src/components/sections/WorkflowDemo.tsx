@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import KeyboardVisual, { KEYBOARD_OLED_FOCUS } from '../visuals/KeyboardVisual'
 import ControlChip from '../ui/ControlChip'
+import WindowDots from '../ui/WindowDots'
 import { usePinnedScroll, stageLocalT, lerp } from '../../hooks/usePinnedScroll'
 
 // See usePinnedScroll's own doc comment for why this is pinned and
@@ -162,9 +163,7 @@ function FeaturePreview({ debug }: { debug: boolean }) {
       className="w-full overflow-hidden rounded-xl border border-base-700 bg-base-900/80 shadow-lg shadow-black/30"
     >
       <div className="flex items-center gap-1.5 border-b border-base-700 bg-base-850 px-3 py-2">
-        <span className="h-2 w-2 rounded-full bg-base-600" />
-        <span className="h-2 w-2 rounded-full bg-base-600" />
-        <span className="h-2 w-2 rounded-full bg-base-600" />
+        <WindowDots size="h-2 w-2" />
         <span className="ml-2 font-mono text-[11px] uppercase tracking-wide text-base-500">{APP.name}</span>
       </div>
 

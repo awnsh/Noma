@@ -17,7 +17,7 @@ export default function AppControlTile({ slot, label, caption }: AppControlTileP
         {label && <span className="text-sm text-base-500">⌨</span>}
       </div>
       <div>
-        <div className="text-lg font-medium text-base-100">{label ?? <span className="text-base-600">—</span>}</div>
+        <div className="truncate text-lg font-medium text-base-100">{label ?? <span className="text-base-600">—</span>}</div>
         {caption && <div className="mt-0.5 font-mono text-[11px] text-base-400">{caption}</div>}
       </div>
     </div>

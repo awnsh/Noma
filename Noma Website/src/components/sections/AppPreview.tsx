@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
+import WindowDots from '../ui/WindowDots'
 import AppKeyboardGrid from '../visuals/AppKeyboardGrid'
 import VirtualControlTile from '../visuals/VirtualControlTile'
 import DashboardDemo from '../visuals/DashboardDemo'
@@ -92,9 +93,7 @@ export default function AppPreview() {
           {/* window chrome */}
           <div className="overflow-hidden rounded-2xl border border-base-700 bg-base-850/60 shadow-2xl shadow-black/40">
             <div className="flex items-center gap-2 border-b border-base-700 bg-base-900/60 px-4 py-3">
-              <span className="h-2.5 w-2.5 rounded-full bg-base-600" />
-              <span className="h-2.5 w-2.5 rounded-full bg-base-600" />
-              <span className="h-2.5 w-2.5 rounded-full bg-base-600" />
+              <WindowDots />
               <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">
                 Noma &mdash; {active.label}
               </span>
