@@ -19,6 +19,20 @@ const DEBUGGING_CONTROLS = ['Run', 'Debug']
 // autoplay advancing on its own) before Flow calls it a recognized workflow.
 const WORKFLOW_THRESHOLD = 2
 
+// The three-beat mechanism this section demonstrates, named plainly rather
+// than with a numbered eyebrow above the heading (this site removed those
+// sitewide already — see noma-website-project memory — a small numbered
+// index inside a legend row, same idiom Hardware.tsx already uses, isn't
+// that same pattern). "Execute" is shown via the recognition banner below
+// rather than an animated key-press — KeyboardVisual's press animation is
+// scroll-driven only (see its own doc comment), not wired for a one-off
+// trigger, and adding that is out of scope for this pass.
+const MECHANISM = [
+  { label: 'Detect', body: "Noma knows what you're using." },
+  { label: 'Adapt', body: 'Noma changes your controls.' },
+  { label: 'Execute', body: 'You press. It happens.' },
+]
+
 // The autoplay "workday" script: which app is active and how long to hold
 // before advancing. vscode appears twice — once before Flow has recognized
 // anything about it, once after — so the in-app-recognition moment plays out
@@ -144,9 +158,21 @@ export default function HowNomaWorks() {
           <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
             It knows what you're doing.
           </h2>
-          <p className="mt-4 text-sm text-base-400">
-            Not just which app is open — what you're doing inside it. Click an app below to take the wheel.
-          </p>
+          <p className="mt-4 text-sm text-base-400">Click an app below to take the wheel.</p>
+        </Reveal>
+
+        <Reveal delay={0.05}>
+          <div className="mx-auto mt-10 grid max-w-2xl gap-x-8 gap-y-6 sm:grid-cols-3">
+            {MECHANISM.map((step, i) => (
+              <div key={step.label} className="flex gap-3">
+                <span className="font-mono text-xs text-accent">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <p className="text-sm font-medium text-base-100">{step.label}</p>
+                  <p className="mt-1 text-sm text-base-400">{step.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </Reveal>
 
         <Reveal delay={0.1}>

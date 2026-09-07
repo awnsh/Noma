@@ -10,7 +10,7 @@ echoes its visual language.
 - Vite
 - Tailwind CSS v4 (via `@tailwindcss/vite`)
 - Framer Motion
-- Self-hosted fonts: Space Grotesk (display), Inter (body), JetBrains Mono (technical labels)
+- Self-hosted fonts: Sora (display), Inter (body), JetBrains Mono (technical labels)
 
 ## Structure
 
@@ -19,12 +19,18 @@ src/
   components/
     layout/      Navigation, Footer, Section shell
     ui/           Button, ControlChip, WaitlistForm, Reveal (scroll-in animation)
-    visuals/      KeyboardVisual (the keyboard SVG, reused across Hero/Hardware/Demo/Modules),
-                   ModuleEnclosure (module cards + the attach animation), OledIcon
+    visuals/      KeyboardVisual (the keyboard SVG, reused across Hero/ProductDemo/
+                   WorkflowDemo/Hardware), ModuleEnclosure (module cards + the attach
+                   animation), OledIcon
     sections/     One component per landing-page section
+  hooks/
+    usePinnedScroll.ts   Shared pinned-scroll-scene mechanics (fixed→absolute hand-off,
+                          short-viewport fit), used by ProductDemo and WorkflowDemo
   data/
-    appProfiles.ts   Shared VS Code / Chrome / Premiere / SolidWorks control sets,
-                      reused across the Problem, Noma-intro, and Interactive Demo sections
+    appProfiles.ts   Shared VS Code / Chrome / Premiere / SolidWorks / etc. control sets,
+                      reused across AppPreview and HowNomaWorks (ProductDemo and
+                      WorkflowDemo define their own local control sets instead — see
+                      those files' own comments for why)
     config.ts        Waitlist endpoint — see "Before shipping" below
   App.tsx          Assembles all sections in order
 ```
@@ -60,3 +66,4 @@ the Vite preset.
 - The footer/CTA "Contact" link points at a placeholder `mailto:` address — swap in a real one.
 - `KeyboardVisual` is an abstract, hand-drawn SVG concept, not a CAD render — replace it once real hardware imagery exists.
 - Social links (YouTube, TikTok, LinkedIn) are placeholder `#` hrefs.
+- `FAQ.tsx`'s five questions are a first draft, not real copy — written to be honest (grounded only in facts already stated elsewhere on the site) but not reviewed. Replace with real FAQ content before shipping.

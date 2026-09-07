@@ -36,7 +36,7 @@ export default function Hero() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="text-balance font-display text-[clamp(2.5rem,5.5vw,4rem)] font-medium leading-[1.08] tracking-tight text-base-50"
         >
-          Your interface should adapt to <span className="text-accent">you.</span>
+          Your keyboard knows <span className="text-accent">what you're doing.</span>
         </motion.h1>
 
         <motion.p
@@ -45,20 +45,24 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="mx-auto mt-7 max-w-xl text-balance text-lg text-base-300"
         >
-          Every app has different controls. Your keyboard becomes whichever one you're using &mdash; automatically.
+          Noma adapts its controls to the app you're using.
         </motion.p>
 
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+          className="mt-10 flex flex-col items-center justify-center gap-5 sm:flex-row"
         >
-          <Button href="#app" variant="primary">
-            Explore Noma
+          <Button href="#cta" variant="primary">
+            Join the waitlist
           </Button>
-          <Button href="#how" variant="secondary">
-            See How It Works
+          {/* A scroll cue, not a second nav-jump button — brief called this
+              out as a "secondary interaction," quieter than the primary CTA,
+              so it uses the ghost variant rather than a second bordered
+              button competing for the same visual weight. */}
+          <Button href="#demo" variant="ghost">
+            Scroll to see it work ↓
           </Button>
         </motion.div>
       </div>

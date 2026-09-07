@@ -92,6 +92,33 @@ const paths: Record<string, ReactElement> = {
       <circle cx="12" cy="12" r="4" />
     </>
   ),
+  split: (
+    <>
+      <rect x="3.5" y="6" width="7" height="12" rx="1.3" />
+      <rect x="13.5" y="6" width="7" height="12" rx="1.3" />
+    </>
+  ),
+  'ripple delete': (
+    <>
+      <circle cx="12" cy="12" r="2.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="6.5" opacity="0.6" />
+      <circle cx="12" cy="12" r="10.5" opacity="0.3" />
+    </>
+  ),
+  undo: <path d="M7 7L3 11l4 4M3 11h10a6 6 0 1 1 -6 6" />,
+  brush: (
+    <>
+      <path d="M15.5 4.5l4 4-8.5 8.5-5 1 1-5z" />
+      <circle cx="6" cy="18" r="1.4" fill="currentColor" stroke="none" />
+    </>
+  ),
+  erase: (
+    <>
+      <rect x="4" y="9" width="12" height="7" rx="1.4" />
+      <line x1="4" y1="16" x2="20" y2="16" />
+      <line x1="15" y1="9" x2="19.5" y2="13.5" />
+    </>
+  ),
 }
 
 const fallback = <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />

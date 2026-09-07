@@ -3,13 +3,20 @@ import { useReducedMotion } from 'framer-motion'
 import Navigation from './components/layout/Navigation'
 import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
-import WorkflowDemo from './components/sections/WorkflowDemo'
-import Problem from './components/sections/Problem'
+import ProductDemo from './components/sections/ProductDemo'
 import HowNomaWorks from './components/sections/HowNomaWorks'
 import AppPreview from './components/sections/AppPreview'
+import Problem from './components/sections/Problem'
 import Hardware from './components/sections/Hardware'
 import Founder from './components/sections/Founder'
+import FAQ from './components/sections/FAQ'
 import CTA from './components/sections/CTA'
+// `WorkflowDemo` (the "Flow learns a shortcut" adaptive-workflow section,
+// the second pinned scroll demo) is shelved by request — the user wasn't
+// sold on it sitting here. `Problem`'s app-orbit carousel takes its old spot
+// instead. Not deleted: `WorkflowDemo.tsx` and the `usePinnedScroll` hook it
+// shares with `ProductDemo` are untouched on disk, in case it comes back.
+// import WorkflowDemo from './components/sections/WorkflowDemo'
 
 export default function App() {
   // Reduced-motion users get plain native scroll rather than Lenis's eased
@@ -22,12 +29,13 @@ export default function App() {
       <Navigation />
       <main>
         <Hero />
-        <WorkflowDemo />
-        <Problem />
+        <ProductDemo />
         <HowNomaWorks />
         <AppPreview />
+        <Problem />
         <Hardware />
         <Founder />
+        <FAQ />
         <CTA />
       </main>
       <Footer />

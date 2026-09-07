@@ -1,19 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import KeyboardVisual from '../visuals/KeyboardVisual'
+import { AnimatePresence, motion } from 'framer-motion'
+import KeyboardVisual, { KEYBOARD_OLED_FOCUS } from '../visuals/KeyboardVisual'
 import ControlChip from '../ui/ControlChip'
+import { usePinnedScroll, stageLocalT, lerp } from '../../hooks/usePinnedScroll'
 
-// The pinned scroll distance is (SCROLL_VH - 1) viewport heights — deliberately
-// large. An earlier attempt at this section made content a pure function of
-// scroll position with no minimum exposure time, and a fast scroll flick could
-// clear the whole thing before it registered ("scrolling too fast will miss
-// it" — real user feedback). Pinning the section so the page can't advance
-// past it until this much scroll distance has been consumed is the actual
-// fix — not a tuning knob on the old approach.
+// See usePinnedScroll's own doc comment for why this is pinned and
+// scroll-distance-gated rather than a pure function of scroll position with
+// no minimum exposure time.
 const SCROLL_VH = 3
 
-// Six stages — see STAGES below for what each is.
-const STAGE_BOUNDS = [0, 1 / 6, 2 / 6, 3 / 6, 4 / 6, 5 / 6, 1.001]
+// Five stages — see STAGES below for what each is.
+const STAGE_BOUNDS = [0, 1 / 5, 2 / 5, 3 / 5, 4 / 5, 1.001]
 
 interface Stage {
   caption: string
@@ -29,6 +25,9 @@ interface Stage {
    *  section is `aria-hidden` and non-interactive by design (autoplay/pin,
    *  not a thing to click), so it's a styled span, not a control. */
   action?: string
+  /** The resolution of `action` one stage later — same visual weight, but a
+   *  confirmed/quiet style (outline, not filled) instead of a new ask. */
+  confirmed?: string
 }
 
 const STAGES: Stage[] = [
@@ -36,26 +35,20 @@ const STAGES: Stage[] = [
   { caption: 'Flow notices the pattern.', isNotification: true },
   { caption: 'It recognizes the workflow inside the app.', isNotification: true },
   { caption: 'It suggests a shortcut.', isNotification: true, action: 'Pin Debug to a key' },
-  { caption: 'You switch to something else —', isNotification: true },
-  { caption: 'and it already adapted.', isNotification: true },
+  { caption: 'Added.', isNotification: true, confirmed: 'Debug pinned to a key' },
 ]
 
 // The exact three shortcuts named in stage 0's chips — reused as the
 // keyboard's own displayed controls for that stage (see the `controls`
 // prop below) so the board isn't showing an unrelated, hardcoded default
 // while the caption above it is talking about these three specifically.
-// Copy → switch window → paste is deliberately a cross-app motion, not a
-// single-app one — it's the same repeated action later stages name as a
-// recognized *workflow* between two applications, not just a habit inside
-// one of them.
 const REPEATED_KEYS = ['Ctrl+C', 'Alt+Tab', 'Ctrl+V']
 
-// The two apps this sequence demonstrates recognizing a switch between —
-// VS Code's own controls (Run/Debug) get called out first as the in-app
-// half of the story, then the board relabels for Chrome as the cross-app
-// half, without any control ever becoming a physical add-on.
-const APP_A = { name: 'VS Code', controls: ['Run', 'Debug', 'Terminal', 'Search'], emphasize: ['Run', 'Debug'] }
-const APP_B = { name: 'Chrome', controls: ['Back', 'Forward', 'New Tab', 'Close Tab'] }
+// The one app this sequence recognizes a pattern inside — deliberately a
+// single app now (see the doc comment below on why the cross-app "switch to
+// Chrome" half of the old sequence moved to ProductDemo.tsx, the site's
+// flagship app-switching demo).
+const APP = { name: 'VS Code', controls: ['Run', 'Debug', 'Terminal', 'Search'], emphasize: ['Run', 'Debug'] }
 
 function stageFromProgress(p: number) {
   for (let i = 0; i < STAGE_BOUNDS.length - 1; i++) {
@@ -64,23 +57,49 @@ function stageFromProgress(p: number) {
   return STAGE_BOUNDS.length - 2
 }
 
+// A scroll-synced "camera" push on the keyboard itself, so the illustration
+// visibly leans in while Flow's own noticing/recognizing/suggesting beats
+// are on screen — same idiom as ProductDemo.tsx's copy of this comment.
+// Stays zoomed all the way through "Added" (rather than pulling back out
+// like ProductDemo does) since this section's job ends on that confirmed,
+// zoomed-in readout, not on revealing the whole board — that reveal is
+// ProductDemo's closing beat, not this section's.
+const ZOOM_SCALE = 1.2
+const ZOOM_FOCUS = {
+  x: KEYBOARD_OLED_FOCUS.xPct * 0.45 + 50 * 0.55,
+  y: KEYBOARD_OLED_FOCUS.yPct * 0.45 + 50 * 0.55,
+}
+const CAMERA_FLAT = { scale: 1, x: 50, y: 50 }
+const CAMERA_ZOOMED = { scale: ZOOM_SCALE, x: ZOOM_FOCUS.x, y: ZOOM_FOCUS.y }
+const CAMERA_BY_STAGE = [
+  { from: CAMERA_FLAT, to: CAMERA_FLAT },
+  { from: CAMERA_FLAT, to: CAMERA_ZOOMED },
+  { from: CAMERA_ZOOMED, to: CAMERA_ZOOMED },
+  { from: CAMERA_ZOOMED, to: CAMERA_ZOOMED },
+  { from: CAMERA_ZOOMED, to: CAMERA_ZOOMED },
+]
+
+function cameraFromProgress(progress: number, stage: number) {
+  const t = stageLocalT(progress, STAGE_BOUNDS[stage], STAGE_BOUNDS[stage + 1])
+  const { from, to } = CAMERA_BY_STAGE[stage]
+  return { scale: lerp(from.scale, to.scale, t), x: lerp(from.x, to.x, t), y: lerp(from.y, to.y, t) }
+}
+
 // Fixed and generous — this keyboard is the section's whole point, so it
 // gets a real size, not a size squeezed by whatever the caption above it
-// needs. Never made conditional on stage/content: the popup card and the
-// feature preview both have their own fixed-height slots specifically so
-// nothing above the keyboard ever pushes or shrinks it as text length
-// changes between stages.
-const KEYBOARD_WRAP_CLASS = 'relative mx-auto mt-6 w-full max-w-xl sm:max-w-3xl'
-// One fixed-height slot for the popup, sized for its tallest variant
-// (caption + chips, or caption + the suggestion button) — every stage's
-// content is vertically centered inside the same box instead of resizing it.
-const POPUP_SLOT_CLASS = 'mx-auto flex h-[176px] max-w-2xl flex-col items-center justify-center px-6 sm:h-[188px] sm:px-8'
+// needs. Fills the outer content column (`max-w-6xl`, the site-wide
+// standard via `Section.tsx`) rather than capping itself narrower.
+const KEYBOARD_WRAP_CLASS = 'relative mx-auto mt-8 w-full max-w-6xl'
+// One fixed-height slot for the popup, sized for its tallest variant —
+// every stage's content is vertically centered inside the same box instead
+// of resizing it.
+const POPUP_SLOT_CLASS = 'mx-auto flex h-[210px] max-w-3xl flex-col items-center justify-center px-6 sm:h-[220px] sm:px-8'
 // Same idea for the feature preview below it, sized for its tallest variant
 // (the debug view's extra Variables strip).
 const FEATURE_SLOT_CLASS = 'mx-auto mt-5 flex h-[150px] w-full max-w-xs items-center justify-center sm:h-[160px] sm:max-w-sm'
 
 function Popup({ stage }: { stage: number }) {
-  const { caption, isNotification, action } = STAGES[stage]
+  const { caption, isNotification, action, confirmed } = STAGES[stage]
   return (
     <motion.div
       key={stage}
@@ -92,15 +111,15 @@ function Popup({ stage }: { stage: number }) {
         isNotification ? 'border-flow/30 bg-flow/[0.06] shadow-[0_20px_45px_-20px_rgba(167,139,209,0.35)]' : 'border-base-700 bg-base-850/60'
       }`}
     >
-      <div className="flex items-center gap-2.5">
-        {isNotification && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-flow" />}
-        <p className={`font-display text-xl font-semibold sm:text-2xl ${isNotification ? 'text-base-50' : 'text-base-200'}`}>{caption}</p>
+      <div className="flex items-center gap-3">
+        {isNotification && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-flow" />}
+        <p className={`text-balance font-display text-2xl font-semibold sm:text-4xl ${isNotification ? 'text-base-50' : 'text-base-200'}`}>{caption}</p>
       </div>
 
       {stage === 0 && (
         <div className="flex flex-wrap justify-center gap-2.5">
           {REPEATED_KEYS.map((k) => (
-            <ControlChip key={k} size="sm" muted>
+            <ControlChip key={k} size="lg" muted>
               {k}
             </ControlChip>
           ))}
@@ -108,28 +127,34 @@ function Popup({ stage }: { stage: number }) {
       )}
 
       {action && (
-        <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-mono text-[11px] font-medium uppercase tracking-wide text-base-950">
+        <span className="mt-1 inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 font-mono text-sm font-medium uppercase tracking-wide text-base-950">
           + {action}
+        </span>
+      )}
+
+      {confirmed && (
+        <span className="mt-1 inline-flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-5 py-2.5 font-mono text-sm font-medium uppercase tracking-wide text-accent">
+          ✓ {confirmed}
         </span>
       )}
     </motion.div>
   )
 }
 
-type FeatureVariant = 'editor' | 'editor-debug' | 'browser'
-
 /**
  * A small, recognizable slice of the real application's own UI — not the
  * keyboard, not a caption, an actual feature (a code pane, a breakpoint and
- * its variables, a browser's tab strip) so "it knows what you're doing"
- * has something concrete to point at. Reuses the same window-chrome
- * (dots + title bar) already established in AppPreview.tsx so this reads
- * as the same kind of real-app-window convention, not a one-off graphic.
+ * its variables) so "it knows what you're doing" has something concrete to
+ * point at. Reuses the same window-chrome (dots + title bar) already
+ * established in AppPreview.tsx so this reads as the same kind of real-app-
+ * window convention, not a one-off graphic. Single app, single variant
+ * family now (editor / editor-debug) — the cross-app "switch to Chrome"
+ * variant moved to ProductDemo.tsx along with the rest of that story.
  */
-function FeaturePreview({ variant, label }: { variant: FeatureVariant; label: string }) {
+function FeaturePreview({ debug }: { debug: boolean }) {
   return (
     <motion.div
-      key={variant}
+      key={debug ? 'debug' : 'editor'}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
@@ -140,113 +165,59 @@ function FeaturePreview({ variant, label }: { variant: FeatureVariant; label: st
         <span className="h-2 w-2 rounded-full bg-base-600" />
         <span className="h-2 w-2 rounded-full bg-base-600" />
         <span className="h-2 w-2 rounded-full bg-base-600" />
-        <span className="ml-2 font-mono text-[9px] uppercase tracking-wide text-base-500">{label}</span>
+        <span className="ml-2 font-mono text-[11px] uppercase tracking-wide text-base-500">{APP.name}</span>
       </div>
 
       <div className="p-3.5">
-        {variant === 'browser' ? (
-          <div className="space-y-2">
-            <div className="flex gap-1.5">
-              <div className="h-5 flex-1 rounded-md bg-base-800" />
-              <div className="h-5 w-12 rounded-md border border-accent/40 bg-accent/10" />
+        <div className="space-y-1.5">
+          {[62, 88, 40, 72, 55].map((w, i) => (
+            <div key={i} className="flex items-center gap-2">
+              {debug && i === 2 && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-error" />}
+              <div className={`h-2 rounded-full ${i % 2 ? 'bg-accent/25' : 'bg-base-700'}`} style={{ width: `${w}%` }} />
             </div>
-            <div className="h-16 rounded-md bg-base-800/60" />
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {[62, 88, 40, 72, 55].map((w, i) => (
-              <div key={i} className="flex items-center gap-2">
-                {variant === 'editor-debug' && i === 2 && <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-error" />}
-                <div className={`h-2 rounded-full ${i % 2 ? 'bg-accent/25' : 'bg-base-700'}`} style={{ width: `${w}%` }} />
-              </div>
-            ))}
-            {variant === 'editor-debug' && (
-              <div className="mt-2 rounded-md border border-flow/20 bg-flow/[0.06] px-2.5 py-1.5">
-                <p className="font-mono text-[8px] uppercase tracking-wide text-flow">Variables</p>
-                <p className="mt-0.5 font-mono text-[9px] text-base-300">count = 27</p>
-              </div>
-            )}
-          </div>
-        )}
+          ))}
+          {debug && (
+            <div className="mt-2 rounded-md border border-flow/20 bg-flow/[0.06] px-2.5 py-1.5">
+              <p className="font-mono text-[10px] uppercase tracking-wide text-flow">Variables</p>
+              <p className="mt-0.5 font-mono text-xs text-base-300">count = 27</p>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   )
 }
 
-const endState = <KeyboardVisual appName={APP_B.name} controls={APP_B.controls} readout={{ label: 'WORKFLOW', sub: 'VS CODE ↔ CHROME' }} glow={false} float={false} />
-
 /**
- * The site's one flagship "show don't tell" moment — the two mechanisms the
- * product is actually about (Flow recognizing what you're doing inside an
- * app, and recognizing when you keep moving between two apps) fused into
- * one continuous sequence instead of two separate sections told with
- * paragraphs. Flow's own moments render as the same popup-card notification
- * the real app uses rather than bare headline text, and a real feature from
- * each application (a code pane with a live breakpoint, a browser's tab
- * strip) sits below it — real feedback was that the sequence read as text
- * describing the product rather than the product itself; the fix is
- * showing an actual recognizable slice of each application's own UI at
- * every stage, not just the keyboard and a caption.
+ * The site's proof that Noma learns, not just adapts — Flow noticing a
+ * repeated shortcut, recognizing the workflow it belongs to, suggesting a
+ * dedicated key for it, and confirming once that key is pinned. Positioned
+ * after the "Noma software" section (not right after Hero anymore — that
+ * flagship spot now belongs to ProductDemo.tsx's app-switching demo, which
+ * proves the more fundamental "adapts per app" claim first). This section's
+ * old final two stages (switching to Chrome, the keyboard relabeling for
+ * it) were cut, not just moved — that exact beat, generalized across three
+ * real applications instead of one hand-off, is what ProductDemo.tsx now
+ * opens the site with; keeping both would repeat the same demonstration
+ * twice (see noma-website-project memory on why that was already a
+ * problem once). What's left is the half of the old story ProductDemo
+ * doesn't tell: Flow *learning* a pattern well enough to suggest fixing it
+ * permanently, not just relabeling controls per app. Never uses generic AI
+ * marketing language ("powered by AI") — every beat is a specific, visible
+ * mechanism (a counter, a recognized pair of controls, a suggested key, a
+ * confirmed pin).
  *
- * Deliberately not about a physical module docking onto the keyboard —
- * every stage here is the same keyboard, the same controls, just noticed
- * and re-emphasized. The hardware section further down the page is the
- * honest place for the physical modular story; this section is the
- * software recognition story, which is the part that has to land first.
+ * Flow's own moments render as the same popup-card notification the real
+ * app uses rather than bare headline text, and a real feature slice (a code
+ * pane with a live breakpoint) sits below it — real feedback was that an
+ * earlier draft of this sequence read as text describing the product
+ * rather than the product itself.
  *
- * The keyboard's own wrapper, the popup's slot, and the feature preview's
- * slot are all fixed-size regardless of stage — real user feedback was
- * that the keyboard appeared to change size as captions of different
- * lengths reflowed the content above it.
- *
- * Pinned via `position: fixed` + an `absolute` hand-off at the crossover
- * point, not CSS `position: sticky` — Lenis's root scroll mode breaks
- * native sticky (see noma-website-project memory). See SCROLL_VH's comment
- * for why this is pinned and scroll-distance-gated rather than the earlier,
- * reverted approach of making content a pure function of scroll position
- * with no minimum exposure time.
+ * Pinned via the shared `usePinnedScroll` hook — see its doc comment for
+ * the fixed→absolute technique and the short-viewport fit safety net.
  */
 export default function WorkflowDemo() {
-  const reduceMotion = useReducedMotion()
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [phase, setPhase] = useState<'before' | 'pinned' | 'after'>('before')
-  const [progress, setProgress] = useState(0)
-
-  useEffect(() => {
-    if (reduceMotion) return
-    let ticking = false
-    const update = () => {
-      ticking = false
-      const el = wrapRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
-      const vh = window.innerHeight
-      const total = rect.height - vh
-      if (rect.top > 0) {
-        setPhase('before')
-        setProgress(0)
-      } else if (rect.top <= -total) {
-        setPhase('after')
-        setProgress(1)
-      } else {
-        setPhase('pinned')
-        setProgress(total > 0 ? -rect.top / total : 1)
-      }
-    }
-    const onScroll = () => {
-      if (!ticking) {
-        ticking = true
-        requestAnimationFrame(update)
-      }
-    }
-    update()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('resize', onScroll)
-    return () => {
-      window.removeEventListener('scroll', onScroll)
-      window.removeEventListener('resize', onScroll)
-    }
-  }, [reduceMotion])
+  const { reduceMotion, wrapRef, panelRef, contentRef, phase, progress, contentScale, panelPositionClass } = usePinnedScroll({ scrollVh: SCROLL_VH })
 
   // Reduced motion: skip pinning and scroll-scrubbing entirely and just show
   // the resolved end-state as a plain still illustration — this section's
@@ -256,54 +227,46 @@ export default function WorkflowDemo() {
     return (
       <section className="relative border-t border-base-800 bg-base-950 py-24 sm:py-32">
         <div className="mx-auto max-w-3xl px-6 text-center sm:px-8">
-          <p className="font-display text-2xl font-semibold text-base-50 sm:text-3xl">{STAGES[5].caption}</p>
+          <p className="font-display text-2xl font-semibold text-base-50 sm:text-3xl">{STAGES[4].caption}</p>
           <div className="mx-auto mt-5 max-w-xs sm:max-w-sm">
-            <FeaturePreview variant="browser" label="Chrome" />
+            <FeaturePreview debug />
           </div>
-          <div className={KEYBOARD_WRAP_CLASS}>{endState}</div>
+          <div className={KEYBOARD_WRAP_CLASS}>
+            <KeyboardVisual appName={APP.name} controls={APP.controls} readout={{ label: 'DEBUG', sub: 'PINNED' }} glow={false} float={false} />
+          </div>
         </div>
       </section>
     )
   }
 
   const stage = stageFromProgress(progress)
-  const recognizeFraction = Math.min(1, Math.max(0, (progress - STAGE_BOUNDS[1]) / (STAGE_BOUNDS[2] - STAGE_BOUNDS[1])))
+  const recognizeFraction = stageLocalT(progress, STAGE_BOUNDS[1], STAGE_BOUNDS[2])
   const count = Math.round(recognizeFraction * 27)
-  const onAppB = stage >= 4
 
-  // Every stage now drives its own keyboard content — no generic fallback
-  // that's disconnected from the caption above it. Stage 0 shows the exact
-  // shortcuts named in its chips (via `controls`, below) rather than an
-  // unrelated default; every other stage has its own `readout` or emphasis.
+  // Every stage drives its own keyboard content — no generic fallback
+  // that's disconnected from the caption above it.
   const readout =
     stage === 1
       ? { label: `${count}×`, sub: 'REPETITIONS' }
       : stage === 3
         ? { label: 'DEBUG?', sub: 'SUGGESTED' }
         : stage === 4
-          ? { label: 'CHROME', sub: 'NOW IN FOCUS' }
-          : stage >= 5
-            ? { label: 'WORKFLOW', sub: 'VS CODE ↔ CHROME' }
-            : null
+          ? { label: 'DEBUG', sub: 'PINNED' }
+          : null
 
-  const featureVariant: FeatureVariant = stage <= 1 ? 'editor' : stage <= 3 ? 'editor-debug' : 'browser'
-  const featureLabel = onAppB ? APP_B.name : APP_A.name
-
-  const panelPositionClass =
-    phase === 'pinned' ? 'fixed inset-x-0 top-0 h-screen' : phase === 'after' ? 'absolute inset-x-0 bottom-0 h-screen' : 'absolute inset-x-0 top-0 h-screen'
+  const camera = cameraFromProgress(progress, stage)
 
   return (
-    <div ref={wrapRef} style={{ height: `${SCROLL_VH * 100}vh` }} className="relative border-t border-base-800 bg-base-950">
+    <div ref={wrapRef} className="relative border-t border-base-800 bg-base-950" style={{ height: `${SCROLL_VH * 100}vh` }}>
       {/* Top-anchored with real clearance, not vertically centered in the raw
-          100vh panel — centering here meant this section's own content (tall
-          enough on some stages that its centered top edge landed within the
-          floating nav pill's ~90px footprint) rendered underneath the nav
-          instead of below it. Every other section gets this clearance for
-          free from `Section`'s own py-24/32 padding; this one needs it
-          explicitly since it bypasses `Section` for its custom pinned
-          wrapper. */}
-      <div className={`${panelPositionClass} flex flex-col items-center justify-start pt-28 pb-10 sm:pt-32`}>
-        <div className="mx-auto w-full max-w-3xl px-6 text-center sm:px-8" aria-hidden="true">
+          100vh panel — see usePinnedScroll's doc comment for why. */}
+      <div ref={panelRef} className={`${panelPositionClass} flex flex-col items-center justify-start pt-28 pb-10 sm:pt-32`}>
+        <div
+          ref={contentRef}
+          className="mx-auto w-full max-w-6xl px-6 text-center sm:px-8"
+          style={{ transform: `scale(${contentScale})`, transformOrigin: '50% 0%' }}
+          aria-hidden="true"
+        >
           <div className={POPUP_SLOT_CLASS}>
             <AnimatePresence mode="wait">
               <Popup stage={stage} />
@@ -312,24 +275,26 @@ export default function WorkflowDemo() {
 
           <div className={FEATURE_SLOT_CLASS}>
             <AnimatePresence mode="wait">
-              <FeaturePreview variant={featureVariant} label={featureLabel} />
+              <FeaturePreview debug={stage >= 2} />
             </AnimatePresence>
           </div>
 
-          <div className={KEYBOARD_WRAP_CLASS}>
-            <KeyboardVisual
-              appName={onAppB ? APP_B.name : APP_A.name}
-              controls={stage === 0 ? REPEATED_KEYS : onAppB ? APP_B.controls : APP_A.controls}
-              readout={readout}
-              emphasizedLabels={stage === 2 || stage === 3 ? APP_A.emphasize : undefined}
-              glow={false}
-              float={false}
-            />
+          <div className={`${KEYBOARD_WRAP_CLASS} overflow-hidden`} style={{ aspectRatio: '1000 / 460' }}>
+            <div className="h-full w-full" style={{ transform: `scale(${camera.scale})`, transformOrigin: `${camera.x}% ${camera.y}%` }}>
+              <KeyboardVisual
+                appName={APP.name}
+                controls={stage === 0 ? REPEATED_KEYS : APP.controls}
+                readout={readout}
+                emphasizedLabels={stage === 2 || stage === 3 ? APP.emphasize : undefined}
+                glow={false}
+                float={false}
+              />
+            </div>
           </div>
 
           <p
             className="mt-8 font-mono text-[10px] uppercase tracking-[0.2em] text-base-500 transition-opacity duration-300"
-            style={{ opacity: phase === 'pinned' && stage < 5 ? 1 : 0 }}
+            style={{ opacity: phase === 'pinned' && stage < 4 ? 1 : 0 }}
           >
             Keep scrolling
           </p>
@@ -338,10 +303,9 @@ export default function WorkflowDemo() {
         <p className="sr-only">
           Illustration: Flow notices you repeating the same three shortcuts, counts 27 repetitions, and recognizes
           that you're actively using Run and Debug inside VS Code — shown alongside a live code editor with a
-          breakpoint and its variables. It suggests pinning Debug to a dedicated key. When you switch to Chrome, the
-          preview becomes the browser's own tab strip, the keyboard's controls relabel for Chrome, and Flow names the
-          two apps as a recognized workflow — nothing here is installed or made permanent, the interface simply
-          keeps up with what you're doing.
+          breakpoint and its variables. It suggests pinning Debug to a dedicated key, then confirms once that key is
+          pinned — nothing here is installed or made permanent without that confirmation, the interface simply keeps
+          up with what you're doing and offers to make it permanent when a pattern is clear.
         </p>
       </div>
     </div>

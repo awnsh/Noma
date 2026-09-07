@@ -3,18 +3,26 @@ import Reveal from '../ui/Reveal'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 import ModuleEnclosure, { type ModuleType } from '../visuals/ModuleEnclosure'
 
-// Pin-Connector Docking gets gold, matching the real lit-pin color elsewhere
-// in this same illustration — the other two stay accent blue (interface).
+// Four hotspots, each pointing at something genuinely distinct drawn in
+// KeyboardVisual — a fifth legend entry (Software Integration) has no dot at
+// all, since it isn't a physical location on the board; forcing an arbitrary
+// pointer for it would be less honest than the "conceptual illustration, not
+// a CAD render" framing this SVG already carries. Pin-Connector Docking gets
+// gold, matching the real lit-pin color elsewhere in this same illustration
+// — every other hotspot stays accent blue (interface, not physical contact).
 const hotspots = [
   { x: 45.5, y: 50, gold: false },
   { x: 90, y: 43.5, gold: false },
+  { x: 90, y: 72, gold: false },
   { x: 96, y: 43.5, gold: true },
 ]
 
 const legend = [
-  { label: 'Core Input', body: 'A regular compact 65% key field for everyday typing — nothing unusual to relearn.' },
-  { label: 'Vertical OLED Strip', body: 'Built into the key field beside the arrow keys — a dynamic, touch-style control panel, not a status screen.' },
-  { label: 'Pin-Connector Docking', body: 'Visible magnetic contacts on the sides and top edge where separate physical modules snap into place.' },
+  { label: 'Mechanical Switches', body: 'A regular compact 65% key field, real mechanical switches — nothing unusual to relearn.', gold: false },
+  { label: 'Display', body: 'A dynamic, touch-style OLED strip built into the key field — shows exactly what each control does right now.', gold: false },
+  { label: 'Adaptive Controls', body: 'The cluster beside the screen relabels itself for whichever app is in focus — the same keys, a different job every time.', gold: false },
+  { label: 'Pin-Connector Docking', body: 'Visible magnetic contacts on the sides and top edge where separate physical modules snap into place.', gold: true },
+  { label: 'Software Integration', body: 'Every control here is defined in the Noma app, not soldered in — see it in action above.', gold: false },
 ]
 
 const modules: { type: ModuleType; name: string; line: string }[] = [
@@ -44,40 +52,45 @@ export default function Hardware() {
       <Reveal>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-            Built to become physical.
+            Built like a keyboard. Designed like a computer.
           </h2>
           <span className="rounded-md border border-base-600 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-base-400">
             In Development
           </span>
         </div>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          The software is only the beginning &mdash; every part of Noma is designed with a future physical keyboard,
-          and modules that snap onto it, in mind.
+          Every part of Noma is designed for a future physical keyboard, and modules that snap onto it.
         </p>
       </Reveal>
 
-      <Reveal delay={0.1}>
-        <div className="relative mx-auto mt-16 max-w-3xl">
+      <div className="relative mx-auto mt-16 max-w-3xl">
+        <Reveal delay={0.1}>
           <KeyboardVisual glow={false} />
-          {hotspots.map((h, i) => (
-            <span
-              key={i}
-              className="absolute -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${h.x}%`, top: `${h.y}%` }}
-              aria-hidden
-            >
+        </Reveal>
+
+        {/* Hotspots animate into focus one at a time rather than all at
+            once — "individual hardware components," per the brief, not a
+            single simultaneous batch. Each dot's outer `span` carries the
+            actual `left`/`top` positioning (a plain static wrapper); the
+            `Reveal` inside just handles that one hotspot's own fade-in
+            timing — `Reveal`'s own tag has no positioning of its own, so it
+            doesn't interfere with the ping dot's `absolute` resolving
+            against this positioned wrapper. */}
+        {hotspots.map((h, i) => (
+          <span key={i} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${h.x}%`, top: `${h.y}%` }} aria-hidden>
+            <Reveal delay={0.3 + i * 0.15} y={0} as="span">
               <span className={`absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full ${h.gold ? 'bg-gold/60' : 'bg-accent/60'}`} />
               <span className={`relative block h-2.5 w-2.5 rounded-full ${h.gold ? 'bg-gold' : 'bg-accent'}`} />
-            </span>
-          ))}
-        </div>
-      </Reveal>
+            </Reveal>
+          </span>
+        ))}
+      </div>
 
-      <div className="mt-16 grid gap-x-8 gap-y-6 sm:grid-cols-3">
+      <div className="mt-16 grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
         {legend.map((item, i) => (
           <Reveal key={item.label} delay={i * 0.05}>
             <div className="flex gap-3">
-              <span className={`font-mono text-xs ${i === 2 ? 'text-gold' : 'text-accent'}`}>{String(i + 1).padStart(2, '0')}</span>
+              <span className={`font-mono text-xs ${item.gold ? 'text-gold' : 'text-accent'}`}>{String(i + 1).padStart(2, '0')}</span>
               <div>
                 <p className="text-sm font-medium text-base-100">{item.label}</p>
                 <p className="mt-1 text-sm text-base-400">{item.body}</p>

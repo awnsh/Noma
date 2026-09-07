@@ -65,11 +65,10 @@ export default function AppPreview() {
     <Section id="app">
       <Reveal>
         <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-          The companion software, today.
+          Your keyboard has software now.
         </h2>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          Noma runs as a desktop app today, ahead of the physical keyboard. Try it below &mdash; this is the real
-          interface, not a mockup.
+          Every control you just saw is defined here — try it below, this is the real interface, not a mockup.
         </p>
       </Reveal>
 

@@ -1,21 +1,19 @@
 import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import WaitlistForm from '../ui/WaitlistForm'
+import KeyboardVisual from '../visuals/KeyboardVisual'
 
 export default function CTA() {
   return (
     <Section id="cta" className="text-center">
       <Reveal>
         <h2 className="mx-auto max-w-2xl text-balance font-display text-[clamp(2rem,5vw,3.5rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-          Be first to try it.
+          Stop reaching for shortcuts.
         </h2>
-        <p className="mx-auto mt-5 max-w-md text-balance text-base text-base-300">
-          Noma doesn&rsquo;t exist as a finished product yet &mdash; it&rsquo;s being built in the open, one
-          prototype at a time. Join the waitlist to follow along and get early access.
-        </p>
+        <p className="mx-auto mt-5 max-w-md text-balance text-base text-base-300">Make your keyboard adapt to you.</p>
 
         <div className="mt-10">
-          <WaitlistForm />
+          <WaitlistForm submitLabel="Join the Noma Beta" />
         </div>
 
         <div className="mt-8 flex items-center justify-center gap-6 text-sm">
@@ -28,6 +26,15 @@ export default function CTA() {
           >
             Contact
           </a>
+        </div>
+      </Reveal>
+
+      {/* The same hardware image the page opened on in Hero, closing the
+          loop rather than ending on text and a form alone — final hero
+          state, per the brief. */}
+      <Reveal delay={0.1}>
+        <div className="mx-auto mt-16 max-w-2xl" aria-hidden>
+          <KeyboardVisual float={false} />
         </div>
       </Reveal>
     </Section>

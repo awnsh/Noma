@@ -4,15 +4,26 @@ import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
-  { label: 'How It Works', href: '#how' },
-  { label: 'Hardware', href: '#hardware' },
-  { label: 'About', href: '#founder' },
+  { label: 'Product', href: '#demo' },
+  { label: 'How it works', href: '#how' },
+  { label: 'Software', href: '#app' },
+  { label: 'FAQ', href: '#faq' },
 ]
 
 // Shared by the pill and its mobile dropdown so the glass reads as one
 // material rather than two different treatments stacked on top of each other.
+// The fill is a dark, near-opaque `base-950` — not the white-only tint this
+// used to be — because a light tint over a dark page barely darkens what's
+// behind it: real user feedback was a section headline clearly showing
+// through the pill while scrolling past it, reading as a layout mistake
+// rather than a material. Even 75% dark opacity plus the blur still let
+// bold white headline text ghost through legibly (measured: white text
+// behind a 75%-opaque base-950 composites to roughly 25% gray — plainly
+// readable against the ~2% pill); 92% was the point it actually read as a
+// material instead of a see-through mistake. The white gradient on top is
+// now just a thin glossy sheen, not the thing doing the obscuring.
 const GLASS =
-  'border border-white/15 bg-gradient-to-b from-white/[0.1] to-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.3),inset_0_-1px_0_0_rgba(255,255,255,0.04),0_12px_36px_-8px_rgba(0,0,0,0.55)] backdrop-blur-2xl backdrop-saturate-150'
+  'border border-white/10 bg-base-950/92 bg-gradient-to-b from-white/[0.06] to-transparent shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),inset_0_-1px_0_0_rgba(255,255,255,0.03),0_12px_36px_-8px_rgba(0,0,0,0.6)] backdrop-blur-2xl backdrop-saturate-150'
 
 export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -37,10 +48,10 @@ export default function Navigation() {
           </ul>
 
           <a
-            href="#app"
+            href="#cta"
             className="hidden rounded-full border border-base-500/70 px-5 py-2 text-sm font-medium text-base-100 transition-colors hover:border-accent hover:text-accent md:inline-flex"
           >
-            Explore Noma
+            Join the waitlist
           </a>
 
           <button
@@ -82,11 +93,11 @@ export default function Navigation() {
                 ))}
                 <li className="pt-2">
                   <a
-                    href="#app"
+                    href="#cta"
                     onClick={() => setMenuOpen(false)}
                     className="inline-flex rounded-full border border-base-500 px-5 py-2 text-sm font-medium text-base-100"
                   >
-                    Explore Noma
+                    Join the waitlist
                   </a>
                 </li>
               </ul>

@@ -74,8 +74,12 @@ const ROW_GAP = 8
 
 // Vertical screen: narrow, ~1 key wide, 4 keys tall — sits where the nav
 // cluster normally would, immediately right of the main block, ending flush
-// above the arrow keys.
-const SCR_W = 70
+// above the arrow keys. Widened from 70→92 units alongside the label/readout
+// font-size bump below — real feedback was that the OLED's control labels
+// and readout were too small to read; this shaves a few percent off the main
+// key field's width (negligible) to give the text more room instead of just
+// growing it into a cramped strip.
+const SCR_W = 92
 const SCR_X = IN_RIGHT - SCR_W
 const SCR_Y = IN_Y
 const SCR_H = ROW_H * 4 + ROW_GAP * 3
@@ -147,6 +151,13 @@ const topPinCenterX = CH_X + CH_W / 2
 const topPinOffsets = [-36, -18, 0, 18, 36]
 
 export const KEYBOARD_RIGHT_DOCK = { xPct: (rightPinX / VB_W) * 100, yPct: (dockCenterY / VB_H) * 100 }
+
+// Percentage position of the OLED screen's own center within the rendered
+// SVG — same "percent of VB_W/VB_H" technique as KEYBOARD_RIGHT_DOCK above,
+// so a consumer can use it as a CSS `transform-origin` to zoom the keyboard
+// toward the screen (the SVG's `h-auto w-full` sizing means these percentages
+// line up with the rendered box as long as nothing crops via `oledOnly`).
+export const KEYBOARD_OLED_FOCUS = { xPct: ((SCR_X + SCR_W / 2) / VB_W) * 100, yPct: ((SCR_Y + SCR_H / 2) / VB_H) * 100 }
 
 function PinStrip({
   x,
@@ -383,10 +394,10 @@ export default function KeyboardVisual({
                   <g>
                     <text
                       x={SCR_X + SCR_W / 2}
-                      y={SCR_Y + SCR_H / 2 - 4}
+                      y={SCR_Y + SCR_H / 2 - 5}
                       textAnchor="middle"
                       fontFamily="'Inter', sans-serif"
-                      fontSize="11.5"
+                      fontSize="16"
                       fontWeight="600"
                       fill="#8babff"
                     >
@@ -394,11 +405,11 @@ export default function KeyboardVisual({
                     </text>
                     <text
                       x={SCR_X + SCR_W / 2}
-                      y={SCR_Y + SCR_H / 2 + 12}
+                      y={SCR_Y + SCR_H / 2 + 16}
                       textAnchor="middle"
                       fontFamily="'JetBrains Mono', monospace"
-                      fontSize="7"
-                      letterSpacing="1"
+                      fontSize="9.5"
+                      letterSpacing="0.8"
                       fill="#3150a4"
                     >
                       {readout.sub}
@@ -429,12 +440,12 @@ export default function KeyboardVisual({
                                 color: isEmphasized ? '#c4aee0' : '#8babff',
                               }}
                             >
-                              <OledIcon label={label} className="h-3 w-3" />
+                              <OledIcon label={label} className="h-4 w-4" />
                               <span
                                 style={{
                                   fontFamily: "'JetBrains Mono', monospace",
-                                  fontSize: 6.5,
-                                  letterSpacing: 0.4,
+                                  fontSize: 9,
+                                  letterSpacing: 0.3,
                                   color: isEmphasized ? '#e4d9f2' : '#c2c2c8',
                                   textAlign: 'center',
                                   lineHeight: 1.1,
@@ -468,7 +479,7 @@ export default function KeyboardVisual({
           </g>
 
           {/* app context label, etched just above the screen */}
-          <text x={SCR_X + SCR_W / 2} y={SCR_Y - 8} textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="7.5" letterSpacing="1" fill="#3a3a41">
+          <text x={SCR_X + SCR_W / 2} y={SCR_Y - 8} textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="9" letterSpacing="0.8" fill="#3a3a41">
             {appName.toUpperCase()}
           </text>
 
