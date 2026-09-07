@@ -195,12 +195,19 @@ export default function HowNomaWorks() {
           </div>
 
           <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border border-base-700 bg-base-850/60">
-            <div className="flex border-b border-base-700 p-2">
+            {/* `flex-wrap`, not `flex-1` — four equal-width flex items with
+                no `min-width: 0` overflowed the row on narrow screens
+                (SolidWorks alone doesn't fit a quarter-width share at
+                390px), and since the parent clips overflow, the last tab
+                just got cut off mid-word instead of wrapping. Matches the
+                same wrapping convention AppPreview's own screen switcher
+                already uses. */}
+            <div className="flex flex-wrap justify-center gap-1 border-b border-base-700 p-2">
               {apps.map((app) => (
                 <button
                   key={app.id}
                   onClick={() => selectApp(app.id)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     app.id === activeId && !autoplay ? 'bg-accent/10 text-accent' : 'text-base-400 hover:text-base-100'
                   }`}
                 >
