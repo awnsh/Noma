@@ -203,19 +203,26 @@ executable-path registry yet to launch an app by id, and no other
 `flowAction` has been given concrete semantics. Both are explicit, visible
 failures, not silent no-ops.
 
-**Window-closing keystrokes are never executed — this rule survives the
-redesign unchanged.** The `Ctrl+W` incident may well have been caused
-specifically by `AttachThreadInput`, which no longer exists in the
-codebase — but "closing a window can end a whole application's session"
-was always true independent of which focus mechanism sent the keystroke,
-and closing already has a strictly safer dedicated path
-(`flowAction: 'closeWindow'`, below) with no reason to also allow it as a
-keystroke. `actionExecutor.ts`'s `BLOCKED_COMBOS` list (`Alt+F4`, `Ctrl+W`,
-`Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`, checked order-independently) refuses
-all of these outright, for both direct shortcuts and macro steps, before
-the focus dance is even attempted. This is a blocklist, not a proof of
-safety — see the comment at its definition before adding to or relying on
-it further.
+**Most window-closing keystrokes are never executed — this rule survives
+the redesign, with one deliberate exception below.** The `Ctrl+W` incident
+may well have been caused specifically by `AttachThreadInput`, which no
+longer exists in the codebase — but "closing a window can end a whole
+application's session" was always true independent of which focus
+mechanism sent the keystroke, and closing already has a strictly safer
+dedicated path (`flowAction: 'closeWindow'`, below) with no reason to also
+allow it as a keystroke. `actionExecutor.ts`'s `BLOCKED_COMBOS` list
+(`Alt+F4`, `Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`, checked
+order-independently) refuses all of these outright, for both direct
+shortcuts and macro steps, before the focus dance is even attempted. This
+is a blocklist, not a proof of safety — see the comment at its definition
+before adding to or relying on it further.
+
+**Exception: plain `Ctrl+W` was deliberately removed from that list
+(2026-09-07), by explicit user request, after being told this is the
+exact combo that caused the incident above.** It now executes as a real
+keystroke like any other shortcut. This is a known, accepted reintroduction
+of that risk, not an oversight — see the comment at `BLOCKED_COMBOS` and
+`docs/security-review.md`.
 
 Blocking the keystroke doesn't mean closing a window has to stay
 impossible, though — it means the *keystroke* route is the wrong tool for

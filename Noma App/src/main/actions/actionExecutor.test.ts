@@ -78,7 +78,6 @@ describe('resolveShortcutParts', () => {
 describe('isBlockedShortcut', () => {
   it('blocks the combos that can close a window or quit an application', () => {
     expect(isBlockedShortcut(['Alt', 'F4'])).toBe(true)
-    expect(isBlockedShortcut(['Control', 'W'])).toBe(true)
     expect(isBlockedShortcut(['Control', 'Shift', 'W'])).toBe(true)
     expect(isBlockedShortcut(['Control', 'Q'])).toBe(true)
     expect(isBlockedShortcut(['Control', 'F4'])).toBe(true)
@@ -94,18 +93,28 @@ describe('isBlockedShortcut', () => {
     expect(isBlockedShortcut(['Control', 'F5'])).toBe(false)
     expect(isBlockedShortcut(['Control', 'T'])).toBe(false)
   })
+
+  it('no longer blocks plain Control+W — deliberately removed by explicit user request (2026-09-07), see the comment at BLOCKED_COMBOS', () => {
+    expect(isBlockedShortcut(['Control', 'W'])).toBe(false)
+  })
 })
 
 describe('executeControlAction — shortcut', () => {
   it('refuses a window-closing combo without attempting to focus anything', async () => {
     const result = await executeControlAction(
-      { type: 'shortcut', keys: ['Control', 'W'] },
+      { type: 'shortcut', keys: ['Control', 'Q'] },
       // Even a plausible-looking handle must never be touched for a
       // blocked combo — the block is checked before any focus attempt.
       999999999
     )
     expect(result.ok).toBe(false)
-    expect(result.reason).toContain('Control+W')
+    expect(result.reason).toContain('Control+Q')
+  })
+
+  it('sends plain Control+W as a real keystroke — deliberately unblocked (2026-09-07), see BLOCKED_COMBOS', async () => {
+    const result = await executeControlAction({ type: 'shortcut', keys: ['Control', 'W'] }, null)
+    expect(result.ok).toBe(true)
+    expect(uIOhook.keyTap).toHaveBeenCalledTimes(1)
   })
 
   it('fails closed when the target window handle is invalid', async () => {
@@ -149,9 +158,9 @@ describe('executeControlAction — shortcut', () => {
   })
 
   it('never marks a combo that was refused before reaching the real send', async () => {
-    await executeControlAction({ type: 'shortcut', keys: ['Control', 'W'] }, 999999999)
+    await executeControlAction({ type: 'shortcut', keys: ['Control', 'Q'] }, 999999999)
     expect(uIOhook.keyTap).not.toHaveBeenCalled()
-    expect(isSelfInjected(['Control', 'W'])).toBe(false)
+    expect(isSelfInjected(['Control', 'Q'])).toBe(false)
   })
 })
 
@@ -192,10 +201,10 @@ describe('executeMacroSteps', () => {
   })
 
   it('refuses a blocked shortcut step the same way a direct shortcut control is refused', async () => {
-    const steps: MacroStep[] = [{ type: 'shortcut', keys: ['Control', 'W'] }]
+    const steps: MacroStep[] = [{ type: 'shortcut', keys: ['Control', 'Q'] }]
     const result = await executeMacroSteps(steps, null)
     expect(result.ok).toBe(false)
-    expect(result.reason).toContain('Control+W')
+    expect(result.reason).toContain('Control+Q')
   })
 
   it('marks each shortcut step as self-injected too, not just a direct control press', async () => {

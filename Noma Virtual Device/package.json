@@ -1,0 +1,13 @@
+{
+  "name": "noma-virtual-device",
+  "version": "0.1.0",
+  "description": "Standalone virtual hardware device — the eventual physical module's OLED screen + 4 buttons, rendered as its own native window. Connects to a running Noma App over a local WebSocket and drives the real thing: real shortcuts, real Flow logic, real bugs. See README.md.",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "44.0.0"
+  }
+}

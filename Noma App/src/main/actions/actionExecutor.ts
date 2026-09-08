@@ -10,7 +10,7 @@ import { executeSystemCommand, isKnownSystemCommand } from './systemCommands'
 
 /**
  * The only implemented flowAction so far. Deliberately the *safe*
- * replacement for sending Ctrl+W/Alt+F4 as a keystroke (see
+ * replacement for sending Alt+F4/Ctrl+Q as a keystroke (see
  * BLOCKED_COMBOS below and windowClose.ts): posts WM_CLOSE — the same
  * message a title bar's X button sends — rather than simulating a
  * shortcut, so there's no keystroke, no focus-stealing, and no risk of a
@@ -77,10 +77,22 @@ export function isKeystrokeExecutionEnabled(): boolean {
  * automating potentially dangerous actions, these never execute as a
  * keystroke — refused with a clear reason, same as an unrecognized key
  * name. Order-independent (checked as a set).
+ *
+ * `Control+W` was deliberately removed from this list by explicit user
+ * request (2026-09-07), to let a control map directly to it (e.g. closing
+ * a browser tab) — even after being told the specific incident this list
+ * exists to prevent: sending `Ctrl+W` to Chrome's last tab once left
+ * Chrome running as an unresponsive background process, needing every
+ * `chrome.exe` killed by hand before it would open again (see
+ * docs/security-review.md and docs/architecture.md's "Real execution"
+ * section for the full history). That failure mode is real and this
+ * change reintroduces it — if it recurs, that's this change, not a new
+ * bug, and the fix is to re-add `['Control', 'W']` here rather than
+ * re-investigate from scratch. `flowAction: 'closeWindow'` below remains
+ * the safer choice for "close a window" in any new configuration.
  */
 const BLOCKED_COMBOS: string[][] = [
   ['Alt', 'F4'],
-  ['Control', 'W'],
   ['Control', 'Shift', 'W'],
   ['Control', 'Q'],
   ['Control', 'F4']

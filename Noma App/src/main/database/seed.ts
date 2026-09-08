@@ -44,9 +44,13 @@ const SEED_APPLICATIONS: SeedApplication[] = [
     profileName: 'Browsing',
     controls: [
       { slot: 1, label: 'NEW TAB', action: { type: 'shortcut', keys: ['Control', 'T'] } },
-      // Not Ctrl+W: that's a blocked keystroke combo (see actionExecutor.ts's
-      // BLOCKED_COMBOS — the real incident that prompted it). This closes
-      // the window gracefully via WM_CLOSE instead, same as clicking X.
+      // Not Ctrl+W, even though that's no longer a blocked keystroke combo
+      // (see actionExecutor.ts's BLOCKED_COMBOS — Ctrl+W was later
+      // deliberately unblocked by explicit user request, 2026-09-07): this
+      // is the seeded default, and WM_CLOSE remains the safer choice for
+      // it — no keystroke, no focus needed, and it closes the window
+      // gracefully the same way clicking X does. A user is still free to
+      // remap this control to a raw Ctrl+W shortcut themselves.
       { slot: 2, label: 'CLOSE WINDOW', action: { type: 'flowAction', action: 'closeWindow' } },
       { slot: 3, label: 'RELOAD', action: { type: 'shortcut', keys: ['Control', 'R'] } },
       { slot: 4, label: 'FIND', action: { type: 'shortcut', keys: ['Control', 'F'] } }

@@ -58,6 +58,16 @@ export const IPC_CHANNELS = {
 export const PROTOCOL_VERSION = '0.1.0'
 
 /**
+ * Loopback-only port the local device transport (deviceTransportServer.ts)
+ * listens on — see docs/hardware-protocol.md's "Local software transport"
+ * section. The standalone `Noma Virtual Device` app hardcodes this same
+ * number (there's no shared package between the two projects, same as the
+ * website/app color-token sync — see the app's own docs) since it can't
+ * import from here directly; keep both in sync by hand if this ever changes.
+ */
+export const DEVICE_TRANSPORT_PORT = 47156
+
+/**
  * The module types a user can add to the virtual keyboard (brainstorm.md
  * section 10). Shared so the renderer's "Add Module" picker and the main
  * process's module-creation logic can't drift out of sync.

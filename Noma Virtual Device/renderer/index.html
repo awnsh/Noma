@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Noma Virtual Device</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="chassis">
+      <!-- No native OS title bar (see main.js) — this is the whole
+           window's drag handle. The close button is explicitly carved
+           out as a non-drag region so it stays clickable. -->
+      <div class="titlebar">
+        <div class="brand">noma</div>
+        <button type="button" class="close-btn" id="close-btn" title="Close" aria-label="Close">✕</button>
+      </div>
+
+      <div class="oled" id="oled">
+        <div class="oled-status" id="oled-status">connecting…</div>
+        <div class="oled-app" id="oled-app">—</div>
+        <div class="oled-line" id="oled-line">Idle</div>
+      </div>
+
+      <div class="buttons" id="buttons">
+        <!-- 4 buttons rendered by app.js, one per slot -->
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -289,7 +289,9 @@ The window-closing keystroke blocklist (`Alt+F4`, `Ctrl+W`,
 has a strictly safer dedicated path (`flowAction: 'closeWindow'` /
 `windowClose.ts`, posting `WM_CLOSE` — the same message a title bar's X
 sends, no keystroke, no focus needed at all). Full account in
-`docs/architecture.md`'s "Real execution" section.
+`docs/architecture.md`'s "Real execution" section. (Plain `Ctrl+W` was
+later deliberately removed from that list, 2026-09-07, by explicit user
+request — see the comment at `actionExecutor.ts`'s `BLOCKED_COMBOS`.)
 
 Done (Phase 7): `docs/hardware-protocol.md` documents the full HOST↔DEVICE
 message protocol (`SET_CONTROLS`, `SET_DISPLAY`, `SET_LED`, `BUTTON_PRESS`,

@@ -16,13 +16,29 @@ variant (DEVICE → HOST) — see `src/main/hardware/types.ts` and
 implementation; every message it sends/receives is recorded to a live log
 visible in Developer Mode, using the exact message names below.
 
-**Not yet real**: there is no serial/USB transport, no framing, no
-firmware. The wire format below (message names, JSON shape) is designed
-now so that work is "write a transport and a firmware parser for an
-already-agreed contract," not "invent a protocol under deadline while also
-bringing up hardware for the first time."
+**Implemented for real, over a local software transport**: the standalone
+`Noma Virtual Device` app (a native window that's just the eventual
+module's OLED + 4 buttons, in its own project sibling to this one) speaks
+this exact vocabulary over a loopback WebSocket —
+`src/main/hardware/deviceTransportServer.ts` on the host side. This is a
+**pre-hardware testing transport**, not the future firmware transport
+below: JSON over a local WebSocket rather than line-delimited JSON over
+USB CDC, and it additionally owns `VirtualHardwareDevice`'s connect/
+disconnect lifecycle — the device reports `connected: true` only while
+the virtual-device app is actually attached, exactly like a real keyboard
+being plugged in or unplugged (see `docs/security-review.md` §4a for the
+trust-boundary notes on this transport specifically).
 
-## Transport (proposed, not yet built)
+**Still not real**: the serial/USB transport described below, for actual
+STM32 firmware, doesn't exist yet — no framing, no firmware. The wire
+format below (message names, JSON shape) is designed now so that work is
+"write a transport and a firmware parser for an already-agreed contract,"
+not "invent a protocol under deadline while also bringing up hardware for
+the first time." The local WebSocket transport above deliberately reuses
+the same message names/shapes for exactly this reason — a real transport
+swap changes the framing, not the messages.
+
+## Transport (proposed, not yet built — for real firmware)
 
 Line-delimited JSON over USB CDC (virtual serial port), one JSON object
 per line, UTF-8, newline-terminated (`\n`). Chosen over a binary format

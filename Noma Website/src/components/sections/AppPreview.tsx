@@ -69,7 +69,8 @@ export default function AppPreview() {
           Your keyboard has software now.
         </h2>
         <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          Every control you just saw is defined here — try it below, this is the real interface, not a mockup.
+          So how do you actually control all of this? Every control you just saw is defined here — try it below,
+          this is the real interface, not a mockup.
         </p>
       </Reveal>
 

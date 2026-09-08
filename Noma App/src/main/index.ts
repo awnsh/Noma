@@ -8,6 +8,7 @@ import { registerIpcHandlers } from './ipc/handlers'
 import { WindowsOSAdapter } from './os/windowsAdapter'
 import { ApplicationContextService } from './applications/contextService'
 import { getDefaultHardwareDevice } from './hardware/virtualDevice'
+import { DeviceTransportServer } from './hardware/deviceTransportServer'
 import { CaptureService } from './workflow/captureService'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
 import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
@@ -22,6 +23,7 @@ let mainWindow: BrowserWindow | null = null
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
 const hardwareDevice = getDefaultHardwareDevice()
+const deviceTransportServer = new DeviceTransportServer(hardwareDevice)
 const aiProvider = new LocalRuleBasedProvider(
   getSuggestionHistoryForKind,
   (applicationId) => getApplicationById(applicationId)?.name ?? null
@@ -172,6 +174,11 @@ app.whenReady().then(() => {
               ok: result.ok,
               reason: result.reason
             })
+            deviceTransportServer.notifyActionExecuted({
+              controlId: event.controlId,
+              ok: result.ok,
+              reason: result.reason
+            })
 
             // Flash the decorative keyboard layout's keys — the same
             // "digital twin reacts to real input" feedback a genuinely
@@ -194,7 +201,11 @@ app.whenReady().then(() => {
       }
     }
   })
-  void hardwareDevice.connect()
+  // The device no longer auto-connects here — it starts disconnected
+  // ("no keyboard attached") and DeviceTransportServer connects/
+  // disconnects it as the standalone Noma Virtual Device app actually
+  // attaches/detaches, the same way a real USB keyboard would.
+  void deviceTransportServer.start()
 
   // Workflow monitoring is off by default (see docs/privacy-and-legal.md).
   // Only re-engage the global hook here if the user previously opted in.
@@ -212,6 +223,7 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   captureService.stop()
   contextService.stop()
+  deviceTransportServer.stop()
   osAdapter.dispose()
   if (process.platform !== 'darwin') {
     app.quit()

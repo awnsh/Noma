@@ -19,20 +19,6 @@ const DEBUGGING_CONTROLS = ['Run', 'Debug']
 // autoplay advancing on its own) before Flow calls it a recognized workflow.
 const WORKFLOW_THRESHOLD = 2
 
-// The three-beat mechanism this section demonstrates, named plainly rather
-// than with a numbered eyebrow above the heading (this site removed those
-// sitewide already — see noma-website-project memory — a small numbered
-// index inside a legend row, same idiom Hardware.tsx already uses, isn't
-// that same pattern). "Execute" is shown via the recognition banner below
-// rather than an animated key-press — KeyboardVisual's press animation is
-// scroll-driven only (see its own doc comment), not wired for a one-off
-// trigger, and adding that is out of scope for this pass.
-const MECHANISM = [
-  { label: 'Detect', body: "Noma knows what you're using." },
-  { label: 'Adapt', body: 'Noma changes your controls.' },
-  { label: 'Execute', body: 'You press. It happens.' },
-]
-
 // The autoplay "workday" script: which app is active and how long to hold
 // before advancing. vscode appears twice — once before Flow has recognized
 // anything about it, once after — so the in-app-recognition moment plays out
@@ -54,12 +40,17 @@ const AUTOPLAY_SEQUENCE: { appId: string; recognized: boolean; ms: number }[] = 
  * the product in action* rather than a static illustration. The very first
  * click on a tab stops the loop and hands full control to the visitor.
  *
- * Deliberately NOT "notice a pattern, offer to make it a permanent control"
- * (that moment lived here before, and its close cousin — a physical module
- * docking onto the keyboard — lives in WorkflowDemo.tsx). This section is
- * the other half of the pitch: Flow recognizing what you're doing *inside*
- * an app, and recognizing when you keep moving between two apps — both
- * ambient, both true without the visitor accepting or installing anything.
+ * Deliberately not a second copy of ProductDemo.tsx's flagship sequence
+ * above — that section is a passive, cinematic "watch it adapt" (scroll
+ * controls the state, nothing to click); this one is the hands-on
+ * counterpart, and its claim is different too: Flow recognizing what
+ * you're doing *inside* an app and recognizing when you keep moving between
+ * two apps, not just relabeling controls per app. Used to also carry a
+ * three-beat Detect/Adapt/Execute legend explaining that mechanism in
+ * prose; cut once ProductDemo started teaching the identical mechanism by
+ * direct demonstration — explaining in words what the visitor just watched
+ * happen is exactly the "product tells the story" principle this site is
+ * built around not doing.
  *
  * Each autoplay transition still announces itself with a transient "New
  * workflow detected" flash — real feedback was that autoplay silently
@@ -158,21 +149,7 @@ export default function HowNomaWorks() {
           <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
             It knows what you're doing.
           </h2>
-          <p className="mt-4 text-sm text-base-400">Click an app below to take the wheel.</p>
-        </Reveal>
-
-        <Reveal delay={0.05}>
-          <div className="mx-auto mt-10 grid max-w-2xl gap-x-8 gap-y-6 sm:grid-cols-3">
-            {MECHANISM.map((step, i) => (
-              <div key={step.label} className="flex gap-3">
-                <span className="font-mono text-xs text-accent">{String(i + 1).padStart(2, '0')}</span>
-                <div>
-                  <p className="text-sm font-medium text-base-100">{step.label}</p>
-                  <p className="mt-1 text-sm text-base-400">{step.body}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <p className="mt-4 text-sm text-base-400">You just watched it adapt. Now try it yourself — click an app below.</p>
         </Reveal>
 
         <Reveal delay={0.1}>

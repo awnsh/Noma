@@ -134,12 +134,18 @@ call; now neither spawns anything at all.
   Early in this feature, sending `Ctrl+W` to Chrome's last tab closed its
   only window and left Chrome running as an unresponsive background
   process — every `chrome.exe` had to be killed by hand before it would
-  open again. `Alt+F4`/`Ctrl+W`/`Ctrl+Shift+W`/`Ctrl+Q`/`Ctrl+F4` are now
-  refused before anything is sent, for both direct shortcuts and macro
-  steps (`isBlockedShortcut` in `actionExecutor.ts`, tested directly). This
-  is a fixed blocklist, not a general "is this combo dangerous" classifier
-  — treat it as a specific fix for a specific class of failure, not a
+  open again. `Alt+F4`/`Ctrl+Shift+W`/`Ctrl+Q`/`Ctrl+F4` are refused before
+  anything is sent, for both direct shortcuts and macro steps
+  (`isBlockedShortcut` in `actionExecutor.ts`, tested directly). This is a
+  fixed blocklist, not a general "is this combo dangerous" classifier —
+  treat it as a specific fix for a specific class of failure, not a
   guarantee that every risky combo is covered.
+  **Update, 2026-09-07: plain `Ctrl+W` was deliberately removed from this
+  list by explicit user request**, after being told this exact incident —
+  so it now executes as a real keystroke like any other shortcut. The risk
+  above is real and reintroduced on purpose, knowingly, not a regression;
+  see the comment at `BLOCKED_COMBOS`'s definition before "fixing" this
+  back without checking whether that's actually wanted.
 - **Closing is still possible, but only via a graceful path.**
   `flowAction: 'closeWindow'` (`windowClose.ts`) posts `WM_CLOSE` — the
   same message a title bar's X sends — directly to the target window
@@ -154,6 +160,32 @@ call; now neither spawns anything at all.
   behavior — there's no remote or multi-user path that could inject an
   action into a profile. That constraint matters and should be re-checked
   if a shared-profile or cloud-sync feature is ever added.
+
+## 4a. Local device transport — a new loopback network surface
+
+`src/main/hardware/deviceTransportServer.ts` opens a real TCP listener
+(WebSocket, `docs/hardware-protocol.md`'s message vocabulary) so the
+standalone `Noma Virtual Device` app — a native window that's just the
+OLED+4-button module, for testing pre-hardware — can drive the same
+`VirtualHardwareDevice` the in-app Virtual Keyboard page uses, including
+real `BUTTON_PRESS` → `actionExecutor` execution.
+
+- **Bound to `127.0.0.1` explicitly, never `0.0.0.0`** — not reachable
+  from another machine on the network, only from this one.
+- **No authentication/token.** Any other local process on the machine can
+  connect to the port and send `BUTTON_PRESS` messages, triggering the
+  same real shortcut execution a physical button press would. Accepted
+  trade-off, not an oversight: this is the same trust boundary a real USB
+  keyboard has (any process with the right permissions can already
+  synthesize input on a single-user dev machine), and this is a
+  single-developer pre-hardware testing tool, not a shipped feature.
+  Revisit (a shared secret exchanged out-of-band, or an OS-level named
+  pipe/socket instead of TCP) if this transport is ever extended toward
+  something a non-developer runs.
+- Malformed input on the socket is parsed defensively (`JSON.parse` in a
+  `try`/`catch`, unrecognized `type` values ignored) — a misbehaving or
+  malicious local client can't crash the host process, only send the same
+  `BUTTON_PRESS`/`GET_STATUS`/`PING` messages a legitimate client could.
 
 ## 5. Database
 

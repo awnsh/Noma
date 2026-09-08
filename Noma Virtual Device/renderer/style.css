@@ -1,0 +1,214 @@
+/* Same near-black/accent-blue palette Noma App and the website share
+   (#4c7eff signature brand blue) — hand-copied since there's no shared
+   package between the three projects; keep in sync by eye if it changes. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0c;
+  --panel: #111114;
+  --border: rgba(255, 255, 255, 0.08);
+  --oled-border: rgba(76, 126, 255, 0.25);
+  --text-dim: #6b6b73;
+  --text-mid: #9a9aa2;
+  --text-bright: #f2f2f4;
+  --accent: #4c7eff;
+  --accent-dim: rgba(76, 126, 255, 0.35);
+  --warn: #d18b4c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-bright);
+  font-family:
+    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.chassis {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  padding: 22px;
+}
+
+.titlebar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* The whole bar is the window's drag handle (there's no native OS
+     title bar — see main.js's `frame: false`); the close button carves
+     itself back out as non-drag below so it stays clickable. */
+  -webkit-app-region: drag;
+  cursor: move;
+}
+
+.brand {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.close-btn {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.close-btn:hover {
+  color: var(--text-bright);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.oled {
+  flex: 0 0 auto;
+  background: #000;
+  border: 1px solid var(--oled-border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 96px;
+  justify-content: center;
+}
+
+.oled-status {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.oled-status.connected {
+  color: var(--accent);
+}
+
+.oled-status.waiting {
+  color: var(--warn);
+}
+
+.oled-app {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oled-line {
+  font-size: 11px;
+  color: var(--text-mid);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.oled-line.warn {
+  /* A press was refused/failed (e.g. a permanently-blocked shortcut like
+     Ctrl+Q) — same warn color the connection-waiting state uses, so
+     "something needs your attention" reads consistently everywhere on
+     this screen. */
+  color: var(--warn);
+}
+
+.buttons {
+  /* A vertical stack of individual keys, not a grid of tiles — matches
+     the real module (a narrow vertical strip beside the arrow keys, see
+     Noma Website's KeyboardVisual.tsx) rather than a dashboard layout. */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.control-btn {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: linear-gradient(to bottom, var(--panel), #0d0d10);
+  color: var(--text-bright);
+  font-family: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
+}
+
+.control-btn:disabled {
+  cursor: default;
+  border-style: dashed;
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-dim);
+}
+
+.control-btn:not(:disabled):hover {
+  border-color: var(--accent-dim);
+}
+
+.control-btn:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.control-btn.pressed {
+  border-color: var(--accent);
+  box-shadow: 0 4px 20px -4px rgba(76, 126, 255, 0.5);
+}
+
+.control-btn.failed {
+  /* The press reached Noma App but was refused or failed for real (e.g. a
+     control mapped to Ctrl+Q — permanently blocked, since it can quit an
+     application) — a longer, distinctly-colored flash so it doesn't read
+     as just another ordinary press. See app.js's applyActionResult(). */
+  border-color: var(--warn);
+  box-shadow: 0 4px 20px -4px rgba(209, 139, 76, 0.55);
+}
+
+.control-slot {
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  font-size: 7px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+
+.control-label {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
