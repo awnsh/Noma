@@ -11,14 +11,31 @@
            window's drag handle. The close button is explicitly carved
            out as a non-drag region so it stays clickable. -->
       <div class="titlebar">
-        <div class="brand">noma</div>
+        <!-- Hover the mark and the wordmark slides out from it — a small
+             reveal, not a second static logo, see style.css's .brand-word-wrap. -->
+        <div class="brand">
+          <img class="brand-mark" src="assets/noma-mark.png" alt="Noma" />
+          <span class="brand-word-wrap">
+            <img class="brand-word" src="assets/noma-wordmark.png" alt="" />
+          </span>
+        </div>
         <button type="button" class="close-btn" id="close-btn" title="Close" aria-label="Close">✕</button>
       </div>
 
+      <!-- Same visual language as the website's OLED illustration
+           (KeyboardVisual.tsx): a small etched app-name label above the
+           screen, a black screen with a thin accent-blue border and a
+           corner status dot, and (below, on the physical buttons rather
+           than inside the screen, matching this app's real hardware
+           model — see README.md) icon+label cells using the same
+           monoline glyph set. -->
+      <div class="oled-appname" id="oled-appname">NOMA VIRTUAL DEVICE</div>
       <div class="oled" id="oled">
-        <div class="oled-status" id="oled-status">connecting…</div>
-        <div class="oled-app" id="oled-app">—</div>
-        <div class="oled-line" id="oled-line">Idle</div>
+        <span class="oled-dot" id="oled-dot"></span>
+        <div class="oled-readout">
+          <div class="oled-status" id="oled-status">connecting…</div>
+          <div class="oled-line" id="oled-line">Idle</div>
+        </div>
       </div>
 
       <div class="buttons" id="buttons">
@@ -26,6 +43,7 @@
       </div>
     </div>
 
+    <script src="oledIcons.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

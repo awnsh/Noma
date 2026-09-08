@@ -1,6 +1,10 @@
 /* Same near-black/accent-blue palette Noma App and the website share
    (#4c7eff signature brand blue) — hand-copied since there's no shared
    package between the three projects; keep in sync by eye if it changes. */
+/* OLED-specific tokens below (--oled-*) are copied exactly from Noma
+   Website's KeyboardVisual.tsx (the SVG illustration's own fill/stroke
+   values) rather than reusing the general UI palette above — that's the
+   whole point of matching the site's look, not an inconsistency. */
 :root {
   color-scheme: dark;
   --bg: #0a0a0c;
@@ -13,6 +17,14 @@
   --accent: #4c7eff;
   --accent-dim: rgba(76, 126, 255, 0.35);
   --warn: #d18b4c;
+
+  --oled-bg: #050506;
+  --oled-stroke: rgba(76, 126, 255, 0.3);
+  --oled-etched: #3a3a41;
+  --oled-readout: #8babff;
+  --oled-sub: #3150a4;
+  --oled-label: #c2c2c8;
+  --oled-label-emphasized: #e4d9f2;
 }
 
 * {
@@ -52,10 +64,55 @@ body {
 }
 
 .brand {
-  font-size: 11px;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* No fixed width — grows as the wordmark reveals on hover, shrinks back
+     when it doesn't. .titlebar's `space-between` just gives the room. */
+}
+
+.brand-mark {
+  /* The actual Noma logo mark (the "N" glyph), not the wordmark — same
+     transparent asset the Website/App use, hand-copied since there's no
+     shared package between the projects. Height-constrained since the
+     source PNG isn't square (2602x1673). */
+  height: 14px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+  opacity: 0.85;
+  -webkit-user-drag: none;
+}
+
+.brand-word-wrap {
+  /* Collapsed to nothing until `.brand` is hovered — `max-width` (not
+     `width`) is what's animated here specifically because CSS can't
+     transition to/from `width: auto`, and the wordmark's rendered width
+     depends on its aspect ratio, not a value we want to hardcode twice. */
+  display: inline-block;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition:
+    max-width 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 200ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.brand:hover .brand-word-wrap {
+  /* Comfortably above the wordmark's real rendered width (~78px at this
+     height) — just a cap for the max-width transition, not the actual size. */
+  max-width: 96px;
+  opacity: 0.85;
+  transform: translateX(0);
+}
+
+.brand-word {
+  height: 11px;
+  width: auto;
+  display: block;
+  -webkit-user-drag: none;
 }
 
 .close-btn {
@@ -79,49 +136,92 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.oled-appname {
+  /* The app-context label "etched" just above the screen — same
+     placement/treatment as KeyboardVisual.tsx's <text> above its OLED
+     strip (fontSize 9, letterSpacing 0.8, fill #3a3a41, uppercase). */
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--oled-etched);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .oled {
+  position: relative;
   flex: 0 0 auto;
-  background: #000;
-  border: 1px solid var(--oled-border);
+  /* Exact screen fill/stroke from KeyboardVisual.tsx's <rect> (fill
+     #050506, stroke #4c7eff at 30% opacity, 1.25px, rx 9) — not this
+     app's general dark-panel tokens. */
+  background: var(--oled-bg);
+  border: 1.25px solid var(--oled-stroke);
   border-radius: 10px;
   padding: 16px;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 96px;
+  align-items: center;
   justify-content: center;
+  min-height: 96px;
+}
+
+.oled-dot {
+  /* The small solid dot in the screen's top-right corner
+     (KeyboardVisual.tsx's <circle>, r 2.3, fill accent) — there it's
+     decorative; here it doubles as the actual connection indicator,
+     since this device is the real thing, not an illustration. */
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.oled-dot.connected {
+  background: var(--accent);
+  box-shadow: 0 0 8px 1px rgba(76, 126, 255, 0.55);
+}
+
+.oled-dot.waiting {
+  background: var(--warn);
+}
+
+.oled-readout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
 }
 
 .oled-status {
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-}
-
-.oled-status.connected {
-  color: var(--accent);
+  /* Same two-tier "readout" treatment KeyboardVisual.tsx uses for its
+     recognized-pattern moment (a bold colored label + a small dim sub-
+     label below it) — repurposed here for the one thing that actually
+     needs top billing on a real device: connection state. */
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--oled-readout);
 }
 
 .oled-status.waiting {
   color: var(--warn);
 }
 
-.oled-app {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--accent);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .oled-line {
-  font-size: 11px;
-  color: var(--text-mid);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--oled-sub);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .oled-line.warn {
@@ -133,58 +233,61 @@ body {
 }
 
 .buttons {
-  /* A vertical stack of individual keys, not a grid of tiles — matches
-     the real module (a narrow vertical strip beside the arrow keys, see
-     Noma Website's KeyboardVisual.tsx) rather than a dashboard layout. */
+  /* One seamless module, not 4 separate floating tiles — same idea as
+     KeyboardVisual.tsx's OLED screen, where the 4 controls live inside
+     ONE bordered rect divided by thin lines, not 4 separate boxes. The
+     border/radius/background live here, on the outer container; each
+     row below is unstyled chrome-wise, just a divider between them. */
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(to bottom, var(--panel), #0d0d10);
+  overflow: hidden; /* clips each row's corners to the outer radius */
 }
 
 .control-btn {
   position: relative;
-  flex: 0 0 auto;
-  width: 64px;
-  height: 64px;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3px;
   padding: 6px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: linear-gradient(to bottom, var(--panel), #0d0d10);
-  color: var(--text-bright);
+  border: none;
+  background: transparent;
+  color: var(--oled-readout);
   font-family: inherit;
   text-align: center;
   cursor: pointer;
-  transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease,
-    transform 80ms ease;
+  transition: background-color 120ms ease;
+}
+
+.control-btn:not(:first-child) {
+  /* The separator between cells — matches KeyboardVisual.tsx's own
+     inter-cell <line> (stroke #1c1c21) rather than a generic UI border. */
+  border-top: 1px solid #1c1c21;
 }
 
 .control-btn:disabled {
   cursor: default;
-  border-style: dashed;
-  border-color: var(--border);
-  background: rgba(255, 255, 255, 0.02);
   color: var(--text-dim);
 }
 
 .control-btn:not(:disabled):hover {
-  border-color: var(--accent-dim);
+  background-color: rgba(255, 255, 255, 0.035);
 }
 
 .control-btn:not(:disabled):active {
-  transform: scale(0.97);
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 .control-btn.pressed {
-  border-color: var(--accent);
-  box-shadow: 0 4px 20px -4px rgba(76, 126, 255, 0.5);
+  background-color: rgba(76, 126, 255, 0.14);
 }
 
 .control-btn.failed {
@@ -192,8 +295,7 @@ body {
      control mapped to Ctrl+Q — permanently blocked, since it can quit an
      application) — a longer, distinctly-colored flash so it doesn't read
      as just another ordinary press. See app.js's applyActionResult(). */
-  border-color: var(--warn);
-  box-shadow: 0 4px 20px -4px rgba(209, 139, 76, 0.55);
+  background-color: rgba(209, 139, 76, 0.16);
 }
 
 .control-slot {
@@ -205,10 +307,36 @@ body {
   color: var(--text-dim);
 }
 
+.control-icon {
+  /* Same monoline glyph set as the website's OLED cells
+     (oledIcons.js, ported from OledIcon.tsx) — color comes from
+     `.control-btn`'s own `color` via `currentColor`, so it's blue
+     normally and dims along with everything else when disabled. */
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.control-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .control-label {
-  font-size: 10px;
+  /* Deliberately its own color, not inherited blue — matches
+     KeyboardVisual.tsx's cells, where the icon is blue but the label
+     text underneath it is a plain light gray. */
+  color: var(--oled-label);
+  font-size: 9px;
+  letter-spacing: 0.02em;
   font-weight: 500;
   line-height: 1.2;
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+.control-btn:disabled .control-label {
+  color: inherit; /* falls back to the disabled state's dim gray */
 }

@@ -1,12 +1,22 @@
 # Noma Virtual Device
 
 A standalone native window that is *only* the eventual physical module: a
-narrow vertical OLED screen and 4 key-sized buttons stacked underneath it
-(matching Noma Website's `KeyboardVisual.tsx` — the real module is a
-narrow vertical strip beside the arrow keys, not a wide tile grid).
-Nothing else — no dashboard, no settings, no keyboard alpha block. It
-exists to test that exact surface, and Flow's logic behind it, before any
-hardware exists.
+narrow vertical OLED screen and 4 key-sized controls stacked underneath it
+as one seamless module, separated by thin divider lines rather than 4
+separate floating buttons (matching Noma Website's `KeyboardVisual.tsx` —
+the real module is a narrow vertical strip beside the arrow keys, and its
+OLED illustration renders its 4 controls as cells inside one screen, not
+4 separate boxes). Nothing else — no dashboard, no settings, no keyboard
+alpha block. It exists to test that exact surface, and Flow's logic
+behind it, before any hardware exists.
+
+Visually, this deliberately reuses the website's own OLED design language
+rather than inventing a new look: the same near-black screen fill with a
+translucent accent-blue border and corner status dot, the same JetBrains
+Mono/uppercase/letter-spaced etched labels, and the same monoline symbol
+set per control (`renderer/oledIcons.js`, ported from the website's
+`OledIcon.tsx` — RUN's play triangle, DEBUG's target, TERMINAL's chevron,
+and so on, with the same short-label abbreviations like TERM/SRCH/TAB).
 
 This is not a mockup and not the pitch/user-testing `Noma Software
 Prototype` (which deliberately fakes execution). Every button press here

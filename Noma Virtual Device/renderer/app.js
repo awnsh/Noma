@@ -21,8 +21,9 @@ const SLOT_COUNT = 4
 const closeBtnEl = document.getElementById('close-btn')
 closeBtnEl.addEventListener('click', () => window.close())
 
+const oledAppnameEl = document.getElementById('oled-appname')
+const oledDotEl = document.getElementById('oled-dot')
 const oledStatusEl = document.getElementById('oled-status')
-const oledAppEl = document.getElementById('oled-app')
 const oledLineEl = document.getElementById('oled-line')
 const buttonsEl = document.getElementById('buttons')
 
@@ -42,13 +43,16 @@ let lineRevertTimeout = null
 function setConnectionState(state) {
   // state: 'connecting' | 'connected' | 'waiting'
   oledStatusEl.classList.remove('connected', 'waiting')
+  oledDotEl.classList.remove('connected', 'waiting')
   if (state === 'connected') {
     oledStatusEl.textContent = 'connected'
     oledStatusEl.classList.add('connected')
+    oledDotEl.classList.add('connected')
   } else if (state === 'waiting') {
     oledStatusEl.textContent = 'noma not running — waiting…'
     oledStatusEl.classList.add('waiting')
-    oledAppEl.textContent = '—'
+    oledDotEl.classList.add('waiting')
+    oledAppnameEl.textContent = 'NOMA VIRTUAL DEVICE'
     setIdleLine('Idle') // also clears any stale failure message/timeout
     controlsBySlot = new Array(SLOT_COUNT + 1).fill(undefined)
     renderButtons()
@@ -70,12 +74,23 @@ function renderButtons() {
     slotLabel.className = 'control-slot'
     slotLabel.textContent = String(slot) // a real key just has a position, not a full "Control N" caption
     slotLabel.title = `Control ${slot}`
+    btn.appendChild(slotLabel)
+
+    if (control) {
+      // Same monoline glyph set the website's OLED cells use
+      // (oledIcons.js) — set via innerHTML because it's always one of
+      // our own fixed SVG strings keyed by a lowercase lookup, never
+      // built from the control's label text itself.
+      const icon = document.createElement('span')
+      icon.className = 'control-icon'
+      icon.innerHTML = oledIconMarkup(control.label)
+      btn.appendChild(icon)
+    }
 
     const label = document.createElement('span')
     label.className = 'control-label'
-    label.textContent = control ? control.label : '—'
-
-    btn.append(slotLabel, label)
+    label.textContent = control ? oledLabel(control.label) : '—' // same short-label rules as the website (TERM/SRCH/TAB/…)
+    btn.appendChild(label)
 
     if (control) {
       btn.addEventListener('click', () => pressControl(control, btn))
@@ -152,7 +167,7 @@ function applyStatus(status) {
   renderButtons()
 
   const appName = status.displays && status.displays.status
-  oledAppEl.textContent = appName || 'Idle'
+  oledAppnameEl.textContent = appName || 'Idle'
   setIdleLine(status.deviceType === 'virtual' ? 'virtual device' : status.deviceType)
 }
 
