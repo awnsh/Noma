@@ -30,13 +30,25 @@ export default function Hero() {
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[640px] hero-glow" />
 
       <div className="relative mx-auto max-w-5xl px-6 text-center sm:px-8">
+        {/* Pushed noticeably bigger/bolder than before (clamp ceiling
+            4rem→5.75rem, tighter leading) — part of a pass modeling this
+            site's structure after naya.tech's monumental, product-first
+            hero type, built in Noma's own font/color, not a new scale
+            borrowed wholesale. */}
         <motion.h1
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-          className="text-balance font-display text-[clamp(2.5rem,5.5vw,4rem)] font-medium leading-[1.08] tracking-tight text-base-50"
+          className="text-balance font-display text-[clamp(2.75rem,7.5vw,5.75rem)] font-medium leading-[1.03] tracking-tight text-base-50"
         >
-          Your keyboard knows <span className="text-accent">what you're doing.</span>
+          {/* A slight top-to-bottom gradient, not flat `text-accent` — by
+              request, the one accent-colored emphasis span on the page
+              (the site's only other `text-accent` uses are small hover
+              states/badges, not headline emphasis) gets a subtle glossy
+              sheen instead of a flat fill. Two existing accent tokens, not
+              a new color. */}
+          Your keyboard knows{' '}
+          <span className="bg-gradient-to-b from-accent-bright to-accent bg-clip-text text-transparent">what you're doing.</span>
         </motion.h1>
 
         <motion.p
@@ -71,8 +83,12 @@ export default function Hero() {
         initial={{ opacity: 0, y: 32 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.9, delay: 0.32, ease: [0.16, 1, 0.3, 1] }}
-        className="relative mx-auto mt-20 max-w-4xl px-6 sm:px-8"
+        className="relative mx-auto mt-20 max-w-6xl px-6 sm:px-8"
       >
+        {/* Widened from max-w-4xl — the illustration reads as the dominant
+            product shot now (naya.tech's own hero puts its hardware/software
+            renders large and front-and-center), not a smaller supporting
+            visual under the headline. */}
         {/* The continuous scroll-linked parallax lives on its own inner
             element, separate from the one-time entrance above — mixing a
             live scroll-bound `style` value with a declarative `animate` on

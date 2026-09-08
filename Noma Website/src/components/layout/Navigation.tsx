@@ -47,9 +47,14 @@ export default function Navigation() {
             ))}
           </ul>
 
+          {/* Solid `bg-accent`, not the outlined pill this used to be — the
+              same primary-button pairing `Button.tsx` already uses, just
+              here too, so the nav's own CTA reads as the dominant,
+              high-contrast anchor of the bar rather than one link among
+              several with a thin border. */}
           <a
             href="#cta"
-            className="hidden rounded-full border border-base-500/70 px-5 py-2 text-sm font-medium text-base-100 transition-colors hover:border-accent hover:text-accent md:inline-flex"
+            className="hidden rounded-full bg-accent px-5 py-2 text-sm font-semibold text-base-950 transition-colors hover:bg-accent-bright md:inline-flex"
           >
             Join the waitlist
           </a>
@@ -95,7 +100,7 @@ export default function Navigation() {
                   <a
                     href="#cta"
                     onClick={() => setMenuOpen(false)}
-                    className="inline-flex rounded-full border border-base-500 px-5 py-2 text-sm font-medium text-base-100"
+                    className="inline-flex rounded-full bg-accent px-5 py-2 text-sm font-semibold text-base-950"
                   >
                     Join the waitlist
                   </a>

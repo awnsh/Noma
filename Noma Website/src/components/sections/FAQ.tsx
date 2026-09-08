@@ -31,11 +31,13 @@ const faqs = [
   },
 ]
 
-/** Plain compact Q&A, not an accordion — every answer is one sentence, so
- *  the extra click-to-expand interaction would add weight without adding
- *  clarity (see the brief's own "never use a large paragraph when an
- *  animation can communicate the idea" rule; the inverse holds here too —
- *  don't add interaction where a plain list already reads instantly). */
+/** A rounded dark-card grid, not a plain text list — the one visual pattern
+ *  borrowed from naya.tech's own structure for this section (their version
+ *  is a grid of testimonial cards; Noma has no verified buyers or press to
+ *  show yet, so the same card treatment holds its five real FAQ entries
+ *  instead — see this file's top comment). Not an accordion: every answer
+ *  is one sentence, so click-to-expand would add weight without adding
+ *  clarity — the card is the whole affordance. */
 export default function FAQ() {
   return (
     <Section id="faq">
@@ -45,11 +47,13 @@ export default function FAQ() {
         </h2>
       </Reveal>
 
-      <div className="mx-auto mt-12 grid max-w-3xl gap-x-12 gap-y-8 sm:grid-cols-2">
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {faqs.map((item, i) => (
           <Reveal key={item.q} delay={i * 0.05}>
-            <p className="text-sm font-medium text-base-100">{item.q}</p>
-            <p className="mt-1.5 text-sm text-base-400">{item.a}</p>
+            <div className="h-full rounded-2xl border border-base-700 bg-base-850/60 p-6">
+              <p className="text-sm font-medium text-base-100">{item.q}</p>
+              <p className="mt-2 text-sm text-base-400">{item.a}</p>
+            </div>
           </Reveal>
         ))}
       </div>

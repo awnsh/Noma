@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-08-29T18:34:35.706Z",
         "reason": "bg-grid-fade is masked/faded and used only as a schematic backdrop behind the keyboard hardware illustration (a literal blueprint-style visual), not decorative texture on ordinary content — matches the rule's own blueprint/measurement-surface exception"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "Noma Website/src/components/sections/Hero.tsx"
+        ],
+        "createdAt": "2026-09-08T16:52:42.108Z",
+        "reason": "user confirmed: explicitly asked for a slight shiny gradient on standout blue emphasis text"
       }
     ]
   }
