@@ -300,3 +300,26 @@ per-application-behavior suggestions, adaptive layout recommendations,
 local analytics page, user-testing feedback mechanism, profile
 duplication, and full per-key configuration for Macro/Numpad/Creator
 modules.
+
+## Update — Physical Prototype Stage (2026-09-09)
+
+Context shift, not a software rebuild: a competing product (Logitech MX
+Keypad) now covers "customizable physical control center," so Noma's
+differentiation moves from the hardware concept itself to the software
+intelligence the hardware makes tangible. No suggestion/pattern/macro logic
+changed in this pass — see `docs/hardware-protocol.md`'s status section for
+the technical detail. Summary: `SerialHardwareDevice`
+(`src/main/hardware/serialDevice.ts`) is a real, tested `HardwareDevice`
+implementation for a physical device over USB serial, and
+`Noma Device Firmware/` is a starter ESP32 sketch implementing the same
+protocol — both written directly against the already-existing, already-
+implemented-in-`VirtualHardwareDevice` message vocabulary, no protocol
+changes needed. Neither is wired into the running app yet: there is no
+physical board in hand yet to flash the firmware onto or verify pin/timing
+choices against, and wiring `SerialHardwareDevice` in as the default raises
+a real product question (what happens to the Virtual Keyboard's simulate-
+a-press/add-a-module tools once a device with real buttons exists) that's
+better answered once there's an actual board to point at than guessed at
+now. Next steps once hardware is physically in hand: flash + bring up the
+firmware standalone (see the firmware README's bring-up order), then decide
+how `SerialHardwareDevice` and `VirtualHardwareDevice` coexist.

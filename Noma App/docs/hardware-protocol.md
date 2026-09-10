@@ -29,14 +29,23 @@ the virtual-device app is actually attached, exactly like a real keyboard
 being plugged in or unplugged (see `docs/security-review.md` §4a for the
 trust-boundary notes on this transport specifically).
 
-**Still not real**: the serial/USB transport described below, for actual
-STM32 firmware, doesn't exist yet — no framing, no firmware. The wire
-format below (message names, JSON shape) is designed now so that work is
-"write a transport and a firmware parser for an already-agreed contract,"
-not "invent a protocol under deadline while also bringing up hardware for
-the first time." The local WebSocket transport above deliberately reuses
-the same message names/shapes for exactly this reason — a real transport
-swap changes the framing, not the messages.
+**Now real, on both sides, but not yet flashed/wired in (2026-09-09)**: the
+serial/USB transport described below has a real implementation —
+`src/main/hardware/serialDevice.ts` (`SerialHardwareDevice`, tested against
+an in-memory fake transport in `serialDevice.test.ts`) on the host side, and
+`Noma Device Firmware/noma_device/noma_device.ino` (an ESP32 sketch) on the
+device side — both written directly against this document's message
+vocabulary, not a reinterpretation of it. Two things are still genuinely
+missing before this is a working physical prototype: the firmware has never
+been flashed onto or verified against real hardware (no board has existed
+in this repo's history to test it on), and `SerialHardwareDevice` is
+deliberately not wired into `main/index.ts`'s default device yet — see that
+file's doc comment for why (the Virtual Keyboard page's simulate-a-press/
+add-a-module tools have no equivalent on a device with real buttons and no
+module bus). The local WebSocket transport above deliberately reuses the
+same message names/shapes for exactly this reason — a real transport swap
+changes the framing, not the messages — and remains the fastest way to
+smoke-test a protocol or UI change before real hardware is involved.
 
 ## Transport (proposed, not yet built — for real firmware)
 
