@@ -1,4 +1,5 @@
 import { WorkflowMonitoringPanel } from '../components/WorkflowMonitoringPanel'
+import { InputSourcePanel } from '../components/InputSourcePanel'
 import { DataManagementPanel } from '../components/DataManagementPanel'
 
 const COLLECTED = [
@@ -64,6 +65,8 @@ export function Settings() {
       <div className="mb-8">
         <WorkflowMonitoringPanel />
       </div>
+
+      <InputSourcePanel />
 
       <DataManagementPanel />
     </div>

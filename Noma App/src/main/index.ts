@@ -19,6 +19,13 @@ import { SuggestionEngine } from './ai/suggestionEngine'
 import { executeControlAction } from './actions/actionExecutor'
 
 let mainWindow: BrowserWindow | null = null
+/** The last application a genuine appSwitch WorkflowEvent was recorded for
+ *  (see contextService.onContextChanged below) — distinct from
+ *  contextService's own `current`, which also updates for reasons that
+ *  aren't a real switch (a control reassignment's same-app context
+ *  refresh, Demo Mode handing control back to the real OS adapter). Lets
+ *  that listener record one row per genuine switch, not one per emission. */
+let lastRecordedApplicationId: string | null = null
 
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
@@ -131,6 +138,23 @@ app.whenReady().then(() => {
     void hardwareDevice.setControls(context.profile?.controls ?? [])
     void hardwareDevice.updateDisplay('status', context.application?.name ?? 'Idle')
     captureService.setCurrentApplicationId(context.application?.id ?? null)
+
+    // Which app the user just moved into is workflow metadata like any
+    // other captured event — Flow needs it to recognize workflows that
+    // span multiple applications (e.g. a screenshot tool -> an editor -> a
+    // git client), not only the shortcuts pressed within one. Only
+    // recorded on a genuine change (this listener also re-fires for a
+    // same-app profile refresh and Demo Mode's hand-back-to-real-OS
+    // resync — neither is a real switch) so one real switch is one row,
+    // the same way a control activation is logged once per press. Still
+    // exactly `{ applicationId, timestamp }` — see docs/privacy-and-legal.md.
+    const newApplicationId = context.application?.id ?? null
+    if (getWorkflowMonitoringEnabled() && newApplicationId !== lastRecordedApplicationId) {
+      insertWorkflowEvent({ applicationId: newApplicationId, eventType: 'appSwitch', timestamp: Date.now() })
+      void refreshSuggestions()
+    }
+    lastRecordedApplicationId = newApplicationId
+
     mainWindow?.webContents.send(IPC_CHANNELS.ACTIVE_CONTEXT_CHANGED, context)
   })
   contextService.start()

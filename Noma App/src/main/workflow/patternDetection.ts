@@ -1,4 +1,4 @@
-import type { DetectedPattern, WorkflowEvent } from '@shared/types'
+import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types'
 
 /**
  * Deterministic/statistical pattern detection (brainstorm.md sections
@@ -12,6 +12,16 @@ import type { DetectedPattern, WorkflowEvent } from '@shared/types'
  * need more context (the full set of configured controls, and a richer
  * per-application baseline) than is worth building before there's a
  * suggestion engine (Phase 5) to act on it.
+ *
+ * A fourth capability, `detectCrossAppWorkflows`, was added later: the
+ * three detectors above only ever look *within* one application (every
+ * group key is scoped `applicationId::...`), so a workflow that spans
+ * multiple apps — take a screenshot, switch to an editor, paste, repeat,
+ * eventually commit — never showed up as anything more than isolated
+ * per-app noise. It reads the same already-captured WorkflowEvent stream,
+ * just including 'appSwitch' events (see shared/types) alongside shortcuts,
+ * so Flow can recognize the shape of a workflow across platforms, not only
+ * the individual keystrokes within one.
  */
 
 // Exported so the suggestion engine's confidence math (src/main/ai/
@@ -39,6 +49,27 @@ const SEQUENCE_WINDOW_MS = 15_000
  * separate real uses.
  */
 const MIN_REPEAT_GAP_MS = 400
+
+export const CROSS_APP_WORKFLOW_THRESHOLD = 3
+/**
+ * How far apart two steps (an app switch or a shortcut) can be while still
+ * counting as one continuous cross-app move — wider than SEQUENCE_WINDOW_MS
+ * on purpose. A cross-app hop (alt-tabbing to paste into another window,
+ * waiting a moment for it to focus) naturally takes longer than two
+ * shortcuts pressed back-to-back inside one app.
+ */
+const WORKFLOW_STEP_WINDOW_MS = 20_000
+/**
+ * How soon after a workflow pair's last completed round a following step
+ * still counts as "what this workflow leads to" — e.g. switching to a git
+ * client right after several rounds of pasting into an editor — rather than
+ * an unrelated later action picked up by coincidence.
+ */
+const CLOSING_STEP_WINDOW_MS = 30_000
+/** A closing step needs to follow the pattern's own repeat-runs at least
+ *  this many separate times before it's reported — one coincidence isn't a
+ *  pattern. */
+const CLOSING_STEP_MIN_RUNS = 2
 
 /**
  * Collapses a burst of same-key timestamps down to how many *count* as
@@ -68,7 +99,8 @@ export function detectPatterns(events: WorkflowEvent[]): DetectedPattern[] {
   return [
     ...detectRepeatedShortcuts(events),
     ...detectFrequentControls(events),
-    ...detectRepeatedSequences(events)
+    ...detectRepeatedSequences(events),
+    ...detectCrossAppWorkflows(events)
   ]
 }
 
@@ -198,4 +230,163 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
     })
   }
   return patterns
+}
+
+interface WorkflowStepEvent {
+  step: WorkflowStep
+  timestamp: number
+}
+
+/** A short, stable, human-readable label for one step — used both for
+ *  descriptions and as the per-step piece of a group's signature key. */
+function stepSignature(step: WorkflowStep): string {
+  return step.type === 'appSwitch'
+    ? `app:${step.applicationId ?? 'unknown'}`
+    : `key:${step.applicationId ?? 'unknown'}:${step.comboKeys.join('+')}`
+}
+
+function describeStep(step: WorkflowStep): string {
+  return step.type === 'appSwitch' ? (step.applicationId ?? 'another app') : step.comboKeys.join('+')
+}
+
+/**
+ * Rebuilds the chronological "what did the user do" stream that
+ * detectCrossAppWorkflows reasons over: appSwitch and shortcut events
+ * interleaved in the order they actually happened, controlActivation
+ * excluded (a physical control press on Noma's own hardware isn't "moving
+ * between platforms"). Two appSwitch rows landing on the same application
+ * back-to-back collapse into one — a real hop always moves to a
+ * *different* app, so a stray duplicate (e.g. a context refresh that isn't
+ * a genuine switch) shouldn't count as a second one.
+ */
+function buildWorkflowSteps(events: WorkflowEvent[]): WorkflowStepEvent[] {
+  const relevant = events
+    .filter((event) => event.eventType === 'shortcut' || event.eventType === 'appSwitch')
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  const steps: WorkflowStepEvent[] = []
+  for (const event of relevant) {
+    if (event.eventType === 'appSwitch') {
+      const last = steps[steps.length - 1]
+      if (last?.step.type === 'appSwitch' && last.step.applicationId === event.applicationId) continue
+      steps.push({ timestamp: event.timestamp, step: { type: 'appSwitch', applicationId: event.applicationId } })
+    } else if (event.comboKeys) {
+      steps.push({
+        timestamp: event.timestamp,
+        step: { type: 'shortcut', applicationId: event.applicationId, comboKeys: event.comboKeys }
+      })
+    }
+  }
+  return steps
+}
+
+interface WorkflowOccurrence {
+  /** Index of the pair's first step in the full `steps` array — kept
+   *  (rather than just the timestamp) so findClosingStep can look up
+   *  exactly what happened right after this specific occurrence. */
+  index: number
+  timestamp: number
+}
+
+/**
+ * Recognizes short (two-step) chains that involve moving between
+ * applications — the app-switch-aware sibling of detectRepeatedSequences,
+ * which only ever looks at two shortcuts inside one app. A pair here always
+ * includes at least one 'appSwitch' step; a same-app pair of two shortcuts
+ * stays exclusively detectRepeatedSequences' territory, so the two
+ * detectors never double-report the same underlying behavior.
+ *
+ * This is deliberately not an executable macro suggestion the way
+ * repeatedSequence is — there's no "switch to this app" step in the macro
+ * vocabulary (see actionExecutor.ts; launchApplication is disabled on
+ * purpose) — so suggestionRules.ts treats this as informational: naming the
+ * real workflow Flow noticed, not offering to automate half of it.
+ */
+function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
+  const steps = buildWorkflowSteps(events)
+
+  const groups = new Map<
+    string,
+    { steps: [WorkflowStep, WorkflowStep]; applicationIds: Array<string | null>; occurrences: WorkflowOccurrence[] }
+  >()
+
+  for (let i = 0; i < steps.length - 1; i++) {
+    const first = steps[i]
+    const second = steps[i + 1]
+    if (second.timestamp - first.timestamp > WORKFLOW_STEP_WINDOW_MS) continue
+    if (first.step.type !== 'appSwitch' && second.step.type !== 'appSwitch') continue
+
+    const signature = `${stepSignature(first.step)}->${stepSignature(second.step)}`
+    const existing = groups.get(signature)
+    const occurrence: WorkflowOccurrence = { index: i, timestamp: second.timestamp }
+    if (existing) {
+      existing.occurrences.push(occurrence)
+    } else {
+      const applicationIds = [...new Set([first.step.applicationId, second.step.applicationId])]
+      groups.set(signature, { steps: [first.step, second.step], applicationIds, occurrences: [occurrence] })
+    }
+  }
+
+  const patterns: DetectedPattern[] = []
+  for (const [signature, group] of groups) {
+    const count = countSpacedOccurrences(group.occurrences.map((occurrence) => occurrence.timestamp))
+    if (count < CROSS_APP_WORKFLOW_THRESHOLD) continue
+
+    const closingStep = findClosingStep(group.occurrences, steps)
+    const chain = group.steps.map(describeStep).join(' → ')
+    const description = closingStep
+      ? `${chain} repeated ${count} times — usually followed by ${describeStep(closingStep)}`
+      : `${chain} repeated ${count} times`
+
+    patterns.push({
+      id: `workflow:${signature}`,
+      kind: 'crossAppWorkflow',
+      applicationId: group.applicationIds[group.applicationIds.length - 1],
+      applicationIds: group.applicationIds,
+      steps: group.steps,
+      description,
+      count,
+      ...(closingStep ? { closingStep } : {})
+    })
+  }
+  return patterns
+}
+
+/**
+ * What, if anything, consistently happens right after this chain finishes a
+ * "run" — one or more back-to-back repeats with no real break in between.
+ * Only the last occurrence of each run is a candidate point (an occurrence
+ * still mid-loop would just see the next repeat starting, not the
+ * workflow's actual conclusion), and a candidate needs to show up after at
+ * least CLOSING_STEP_MIN_RUNS separate runs before it's reported — one
+ * coincidence isn't a pattern.
+ */
+function findClosingStep(occurrences: WorkflowOccurrence[], steps: WorkflowStepEvent[]): WorkflowStep | undefined {
+  const sorted = [...occurrences].sort((a, b) => a.timestamp - b.timestamp)
+
+  const runEnds: WorkflowOccurrence[] = []
+  let previous: WorkflowOccurrence | null = null
+  for (const occurrence of sorted) {
+    if (previous && occurrence.timestamp - previous.timestamp > WORKFLOW_STEP_WINDOW_MS) {
+      runEnds.push(previous)
+    }
+    previous = occurrence
+  }
+  if (previous) runEnds.push(previous)
+
+  const candidates = new Map<string, { step: WorkflowStep; count: number }>()
+  for (const runEnd of runEnds) {
+    const next = steps[runEnd.index + 2]
+    if (!next || next.timestamp - runEnd.timestamp > CLOSING_STEP_WINDOW_MS) continue
+    const key = stepSignature(next.step)
+    const bucket = candidates.get(key)
+    if (bucket) bucket.count += 1
+    else candidates.set(key, { step: next.step, count: 1 })
+  }
+
+  let best: { step: WorkflowStep; count: number } | undefined
+  for (const candidate of candidates.values()) {
+    if (!best || candidate.count > best.count) best = candidate
+  }
+  return best && best.count >= CLOSING_STEP_MIN_RUNS ? best.step : undefined
 }

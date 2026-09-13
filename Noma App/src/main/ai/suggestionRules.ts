@@ -1,5 +1,5 @@
-import type { DetectedPattern, Suggestion } from '@shared/types'
-import { REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/patternDetection'
+import type { DetectedPattern, Suggestion, WorkflowStep } from '@shared/types'
+import { CROSS_APP_WORKFLOW_THRESHOLD, REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/patternDetection'
 
 /**
  * Turns one detected pattern into one suggestion — the deterministic
@@ -23,12 +23,18 @@ import { REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/pat
  * (see the class doc above), so it can't look the name up itself. Falls
  * back to the raw `applicationId` (e.g. "code") when the caller doesn't
  * have one, rather than silently dropping the app context.
+ *
+ * `chainApplicationNames` is the same idea, pluralized: a crossAppWorkflow
+ * pattern can touch several applications at once (its own `applicationIds`),
+ * so a single `applicationName` isn't enough to name the whole chain — this
+ * is a caller-resolved id -> display-name lookup covering all of them.
  */
 export function suggestionForPattern(
   pattern: DetectedPattern,
   confidenceBias = 0,
   priorHistory: { accepted: number; rejected: number } = { accepted: 0, rejected: 0 },
-  applicationName: string | null = null
+  applicationName: string | null = null,
+  chainApplicationNames: Record<string, string | null> = {}
 ): Suggestion | null {
   const now = Date.now()
 
@@ -81,12 +87,61 @@ export function suggestionForPattern(
       }
     }
 
+    case 'crossAppWorkflow': {
+      const threshold = CROSS_APP_WORKFLOW_THRESHOLD
+      const base = baseConfidence(pattern.count, threshold)
+      const chain = describeChain(pattern.steps, pattern.closingStep, chainApplicationNames)
+      return {
+        id: `suggestion:${pattern.id}`,
+        // No `applicationId` (and so no `action`) on purpose: this pattern
+        // spans multiple apps, and there's no single profile to assign it
+        // to or executable macro step for "switch application" (see
+        // detectCrossAppWorkflows' doc comment). SuggestionCard already has
+        // an informational-only accept path for exactly this case (no
+        // profile to pick a slot from) — reused here rather than building a
+        // second one.
+        title: 'Flow noticed a workflow across apps',
+        explanation: `You've repeated ${chain} ${pattern.count} times today. Flow watches for patterns like this across every app, not just within one.`,
+        confidence: clampConfidence(base + confidenceBias),
+        status: 'pending',
+        createdAt: now,
+        applicationId: null,
+        confidenceBreakdown: {
+          occurrenceCount: pattern.count,
+          threshold,
+          baseConfidence: base,
+          historyBias: confidenceBias,
+          priorAccepted: priorHistory.accepted,
+          priorRejected: priorHistory.rejected
+        }
+      }
+    }
+
     case 'frequentControl':
       return null
 
     default:
       return null
   }
+}
+
+/** Resolves one step to display text, preferring the caller-resolved name
+ *  for an appSwitch step and falling back to the raw id — same fallback
+ *  convention as appSuffix below, just per-step instead of per-suggestion. */
+function describeWorkflowStep(step: WorkflowStep, names: Record<string, string | null>): string {
+  if (step.type === 'shortcut') return step.comboKeys.join('+')
+  if (!step.applicationId) return 'another app'
+  return names[step.applicationId] ?? step.applicationId
+}
+
+function describeChain(
+  steps: [WorkflowStep, WorkflowStep],
+  closingStep: WorkflowStep | undefined,
+  names: Record<string, string | null>
+): string {
+  const parts = steps.map((step) => describeWorkflowStep(step, names))
+  if (closingStep) parts.push(`then ${describeWorkflowStep(closingStep, names)}`)
+  return parts.join(' → ')
 }
 
 function appSuffix(applicationId: string | null, applicationName: string | null): string {

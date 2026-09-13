@@ -129,6 +129,8 @@ function idPrefixForKind(kind: PatternKind): string {
       return 'suggestion:sequence:'
     case 'frequentControl':
       return 'suggestion:control:'
+    case 'crossAppWorkflow':
+      return 'suggestion:workflow:'
   }
 }
 

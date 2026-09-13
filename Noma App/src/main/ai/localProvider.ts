@@ -45,11 +45,24 @@ export class LocalRuleBasedProvider implements AIProvider {
     for (const pattern of patterns) {
       const history = this.getHistory(pattern.kind)
       const applicationName = pattern.applicationId ? this.getApplicationName(pattern.applicationId) : null
+      // crossAppWorkflow is the one pattern kind whose explanation needs
+      // more than one application's name (see suggestionRules.ts's
+      // `chainApplicationNames` doc comment) — resolve every id its own
+      // `applicationIds` names, via the exact same injected resolver.
+      const chainApplicationNames: Record<string, string | null> =
+        pattern.kind === 'crossAppWorkflow'
+          ? Object.fromEntries(
+              pattern.applicationIds
+                .filter((id): id is string => id != null)
+                .map((id) => [id, this.getApplicationName(id)])
+            )
+          : {}
       const suggestion = suggestionForPattern(
         pattern,
         history.bias,
         { accepted: history.accepted, rejected: history.rejected },
-        applicationName
+        applicationName,
+        chainApplicationNames
       )
       if (suggestion) suggestions.push(suggestion)
     }

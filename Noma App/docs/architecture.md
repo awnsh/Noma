@@ -236,6 +236,63 @@ the target application decides how to respond, including raising an
 "unsaved changes" prompt and declining to close — exactly as it would for
 a real click on X, and never a forceful termination.
 
+## Holo — the free, no-hardware input option
+
+Not everyone wants to buy the physical keyboard, or owns a laptop with no
+room/need for one. Holo (`src/renderer/src/lib/holo`, `pages/Holo.tsx`,
+`InputSourcePanel.tsx`) is a second way to fire the exact same 4 `Control`
+slots, by tapping the desk around a laptop instead — a simplified,
+from-scratch reimplementation of the *concept* behind the open-source
+`github.com/JustinGamer191/Holo` project (macOS/Swift, MIT-licensed; its
+code never runs in this Windows/Electron app — see classifier.ts's doc
+comment for exactly what's simplified and why). See
+docs/privacy-and-legal.md's "Holo — microphone input" section for the
+privacy reasoning specifically; this section is the architecture.
+
+**Deliberately layered on top of the existing control system, not a
+parallel one.** Holo has no `HardwareDevice` implementation, no
+`DeviceStatus`, no `DeviceEvent` of its own — a classified tap just calls
+`window.flow.pressControl(controlId)`, the identical call
+`VirtualControlButton`'s click handler makes. This means every downstream
+concern (which action a control runs, execution safety, workflow-event
+logging, suggestion generation) already works for Holo for free, with zero
+special-casing anywhere in `main/`. `InputSource` (`'keyboard' | 'holo'`)
+only ever decides *which UI/engine is allowed to originate that call* —
+nothing about the control model itself changes based on it.
+
+**Split the same way keyboard capture is split.** `classifier.ts` is pure,
+DOM-free math (feature extraction, nearest-centroid classification, onset
+thresholding) — unit tested the same way `patternDetection.ts` is.
+`holoCapture.ts` owns the actual `getUserMedia`/`AudioContext`/
+`AnalyserNode` plumbing and is *not* unit tested, for the same reason
+`windowsAdapter.ts`'s real PowerShell process isn't: jsdom (this project's
+DOM test environment) has no Web Audio implementation to test against.
+Every piece of logic that doesn't strictly require real audio hardware
+lives in the tested half on purpose.
+
+**No paywall exists — all 4 zones are free, by explicit request.** A
+`SubscriptionTier`/`getMaxHoloZones` zone-count gate (free: 2 zones, pro:
+4) existed briefly and was **removed** after the user asked twice to not
+have it get in the way of testing — see git history if a real one is ever
+wanted. The right seam for a future paywall, if one comes back, is
+`holoRepository.saveHoloCalibration` (the actual persistence/enforcement
+point, not the renderer's UI) filtering the zone list by whatever
+entitlement check replaces this note — not a client-side lock on the zone
+grid, which a user could just ignore.
+
+**Manual choice today; hardware-presence auto-detection is a documented
+gap, not implemented.** The long-term intent (explicit user request) is
+for Flow to auto-detect whether a real/virtual keyboard is present and
+default `InputSource` accordingly, only falling back to a manual Settings
+toggle when detection is ambiguous. That auto-detection doesn't exist yet
+for the same underlying reason `OnboardingHardwareScreen.tsx`'s "real
+device connected" branch (`status.connected && status.deviceType !== 'virtual'`)
+is unreachable today: `getDefaultHardwareDevice()` always returns
+`VirtualHardwareDevice`, so `DeviceStatus.deviceType` is always `'virtual'`
+in every build — there's no real hardware transport wired in to detect
+presence *of* yet. `InputSource` is fully manual (Settings) until that
+changes; don't assume it reflects anything about actual connected hardware.
+
 ## Hardware embedding considerations (forward-looking)
 
 The physical keyboard doesn't exist yet, but several Phase 1 decisions

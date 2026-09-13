@@ -161,6 +161,66 @@ describe('suggestionForPattern', () => {
     expect(suggestion?.explanation).toContain('in code')
   })
 
+  it('generates an informational suggestion for a crossAppWorkflow pattern, with no applicationId or action', () => {
+    const pattern: DetectedPattern = {
+      id: 'workflow:app:screenshot->app:code',
+      kind: 'crossAppWorkflow',
+      applicationId: 'code',
+      applicationIds: ['screenshot', 'code'],
+      description: 'screenshot → code repeated 4 times',
+      count: 4,
+      steps: [
+        { type: 'appSwitch', applicationId: 'screenshot' },
+        { type: 'appSwitch', applicationId: 'code' }
+      ]
+    }
+    const suggestion = suggestionForPattern(pattern)
+    expect(suggestion).not.toBeNull()
+    expect(suggestion?.applicationId).toBeNull()
+    expect(suggestion?.action).toBeUndefined()
+    expect(suggestion?.explanation).toContain('4 times')
+  })
+
+  it('names every application in a crossAppWorkflow chain by its resolved display name', () => {
+    const pattern: DetectedPattern = {
+      id: 'workflow:app:screenshot->app:code',
+      kind: 'crossAppWorkflow',
+      applicationId: 'code',
+      applicationIds: ['screenshot', 'code'],
+      description: '',
+      count: 4,
+      steps: [
+        { type: 'appSwitch', applicationId: 'screenshot' },
+        { type: 'appSwitch', applicationId: 'code' }
+      ]
+    }
+    const suggestion = suggestionForPattern(pattern, 0, { accepted: 0, rejected: 0 }, null, {
+      screenshot: 'Snip & Sketch',
+      code: 'Visual Studio Code'
+    })
+    expect(suggestion?.explanation).toContain('Snip & Sketch → Visual Studio Code')
+  })
+
+  it('names a crossAppWorkflow chain\'s consistent closing step when one was found', () => {
+    const pattern: DetectedPattern = {
+      id: 'workflow:app:code->key:code:Control+V',
+      kind: 'crossAppWorkflow',
+      applicationId: 'code',
+      applicationIds: ['code'],
+      description: '',
+      count: 4,
+      steps: [
+        { type: 'appSwitch', applicationId: 'code' },
+        { type: 'shortcut', applicationId: 'code', comboKeys: ['Control', 'V'] }
+      ],
+      closingStep: { type: 'appSwitch', applicationId: 'git' }
+    }
+    const suggestion = suggestionForPattern(pattern, 0, { accepted: 0, rejected: 0 }, null, {
+      git: 'GitHub Desktop'
+    })
+    expect(suggestion?.explanation).toContain('then GitHub Desktop')
+  })
+
   it('produces a stable, deterministic id derived from the pattern id (for dedup)', () => {
     const pattern: DetectedPattern = {
       id: 'shortcut:code::Control+S',

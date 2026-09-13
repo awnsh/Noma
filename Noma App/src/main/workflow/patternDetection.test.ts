@@ -18,6 +18,10 @@ function controlEvent(
   return { applicationId, eventType: 'controlActivation', controlId, timestamp }
 }
 
+function appSwitchEvent(applicationId: string | null, timestamp: number): WorkflowEvent {
+  return { applicationId, eventType: 'appSwitch', timestamp }
+}
+
 // Spaced well beyond SEQUENCE_WINDOW_MS so identical back-to-back
 // shortcuts don't also register as a repeated A->A sequence — that cross-
 // interaction is real (and covered below), just not what these cases test.
@@ -198,5 +202,109 @@ describe('detectPatterns — spam vs. a real workflow', () => {
     const patterns = detectPatterns([...spam, ...real])
     expect(patterns.some((p) => p.description.includes('Control+S'))).toBe(true)
     expect(patterns.some((p) => p.description.includes('Control+T'))).toBe(false)
+  })
+})
+
+describe('detectPatterns — cross-app workflows', () => {
+  it('reports a two-step chain repeated across applications', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 3; i++) {
+      const base = i * 100_000
+      events.push(appSwitchEvent('screenshot', base))
+      events.push(appSwitchEvent('code', base + 2_000))
+    }
+    const patterns = detectPatterns(events)
+    const workflow = patterns.find((p) => p.kind === 'crossAppWorkflow')
+    expect(workflow).toMatchObject({ count: 3 })
+    expect(workflow?.description).toContain('screenshot')
+    expect(workflow?.description).toContain('code')
+  })
+
+  it('recognizes an app switch immediately followed by a shortcut in the new app', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 3; i++) {
+      const base = i * 100_000
+      events.push(appSwitchEvent('claude', base))
+      events.push(shortcutEvent(['Control', 'V'], base + 1_000, 'claude'))
+    }
+    const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
+    expect(workflow).toMatchObject({ count: 3 })
+    expect(workflow?.description).toContain('Control+V')
+  })
+
+  it('does not treat a same-app shortcut pair as a cross-app workflow (that stays repeatedSequence)', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 3; i++) {
+      const base = i * 100_000
+      events.push(shortcutEvent(['Control', 'C'], base))
+      events.push(shortcutEvent(['Control', 'V'], base + 2_000))
+    }
+    const patterns = detectPatterns(events)
+    expect(patterns.some((p) => p.kind === 'crossAppWorkflow')).toBe(false)
+    expect(patterns.some((p) => p.kind === 'repeatedSequence')).toBe(true)
+  })
+
+  it('does not report a cross-app chain below the threshold', () => {
+    const events = [0, 1].flatMap((i) => {
+      const base = i * 100_000
+      return [appSwitchEvent('screenshot', base), appSwitchEvent('code', base + 2_000)]
+    })
+    expect(detectPatterns(events).some((p) => p.kind === 'crossAppWorkflow')).toBe(false)
+  })
+
+  it('does not link an app switch and a shortcut that are far apart in time', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 3; i++) {
+      const base = i * 200_000
+      events.push(appSwitchEvent('claude', base))
+      events.push(shortcutEvent(['Control', 'V'], base + 60_000, 'claude')) // outside the window
+    }
+    expect(detectPatterns(events).some((p) => p.kind === 'crossAppWorkflow')).toBe(false)
+  })
+
+  it('does not report a cross-app chain spammed in a quick burst', () => {
+    const times = [0, 60, 120, 180, 240, 300, 360, 420]
+    const events = times.map((t, i) => appSwitchEvent(i % 2 === 0 ? 'screenshot' : 'code', t))
+    expect(detectPatterns(events).some((p) => p.kind === 'crossAppWorkflow')).toBe(false)
+  })
+
+  it('attaches a consistent closing step once it follows the chain across multiple separate runs', () => {
+    // Two runs of "screenshot -> code" repeated twice back-to-back, each
+    // run followed a few seconds later by switching to a git client —
+    // exactly the "screenshot -> Claude Code, repeated, then commit" shape.
+    const events: WorkflowEvent[] = [
+      appSwitchEvent('screenshot', 0),
+      appSwitchEvent('code', 2_000),
+      appSwitchEvent('screenshot', 5_000),
+      appSwitchEvent('code', 7_000),
+      appSwitchEvent('git', 10_000),
+      appSwitchEvent('screenshot', 40_000),
+      appSwitchEvent('code', 42_000),
+      appSwitchEvent('screenshot', 45_000),
+      appSwitchEvent('code', 47_000),
+      appSwitchEvent('git', 50_000)
+    ]
+    const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
+    expect(workflow).toMatchObject({ count: 4 })
+    expect(workflow?.description).toContain('usually followed by git')
+  })
+
+  it('does not report a closing step that has only followed the chain once', () => {
+    const events: WorkflowEvent[] = [
+      appSwitchEvent('screenshot', 0),
+      appSwitchEvent('code', 2_000),
+      appSwitchEvent('screenshot', 5_000),
+      appSwitchEvent('code', 7_000),
+      appSwitchEvent('git', 10_000),
+      // A second run of the same chain — but nothing follows it this time,
+      // so "git" has only shown up once and isn't a consistent follow-up yet.
+      appSwitchEvent('screenshot', 100_000),
+      appSwitchEvent('code', 102_000),
+      appSwitchEvent('screenshot', 105_000),
+      appSwitchEvent('code', 107_000)
+    ]
+    const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
+    expect(workflow).toMatchObject({ count: 4 })
+    expect(workflow?.description).not.toContain('usually followed by')
   })
 })

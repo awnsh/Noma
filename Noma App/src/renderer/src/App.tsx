@@ -3,6 +3,7 @@ import { AppShell } from './components/AppShell'
 import { Dashboard } from './pages/Dashboard'
 import { Demo } from './pages/Demo'
 import { VirtualKeyboard } from './pages/VirtualKeyboard'
+import { Holo } from './pages/Holo'
 import { MacroStudio } from './pages/MacroStudio'
 import { LearningCenter } from './pages/LearningCenter'
 import { UsageStats } from './pages/UsageStats'
@@ -41,6 +42,7 @@ function App() {
     <AppShell>
       {activePage === 'demo' && <Demo />}
       {activePage === 'virtual-keyboard' && <VirtualKeyboard />}
+      {activePage === 'holo' && <Holo />}
       {activePage === 'macros' && <MacroStudio />}
       {activePage === 'learning' && <LearningCenter />}
       {activePage === 'usage-stats' && <UsageStats />}

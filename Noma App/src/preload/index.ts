@@ -140,7 +140,14 @@ const flowApi: FlowApi = {
   clearDeviceLog: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_DEVICE_LOG),
 
   getOnboardingState: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ONBOARDING_STATE),
-  saveOnboardingState: (update) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_ONBOARDING_STATE, update)
+  saveOnboardingState: (update) => ipcRenderer.invoke(IPC_CHANNELS.SAVE_ONBOARDING_STATE, update),
+
+  getInputSource: () => ipcRenderer.invoke(IPC_CHANNELS.GET_INPUT_SOURCE),
+  setInputSource: (source) => ipcRenderer.invoke(IPC_CHANNELS.SET_INPUT_SOURCE, source),
+  getHoloCalibration: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HOLO_CALIBRATION),
+  saveHoloCalibration: (calibration) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SAVE_HOLO_CALIBRATION, calibration),
+  clearHoloCalibration: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HOLO_CALIBRATION)
 }
 
 if (process.contextIsolated) {

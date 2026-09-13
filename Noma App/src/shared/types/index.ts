@@ -52,10 +52,13 @@ export interface ApplicationProfileSummary {
   profileName?: string
 }
 
-export type WorkflowEventType = 'shortcut' | 'sequence' | 'controlActivation'
+export type WorkflowEventType = 'shortcut' | 'sequence' | 'controlActivation' | 'appSwitch'
 
 export interface WorkflowEvent {
   id?: number
+  /** For 'appSwitch', the application just switched *into* — same meaning
+   *  as every other event kind's applicationId ("the context this happened
+   *  in"), just that here the event itself *is* the context changing. */
   applicationId: string | null
   eventType: WorkflowEventType
   /** Command-modifier key combo only — never raw typed content. See captureFilter.ts. */
@@ -272,16 +275,88 @@ export interface DeviceStatus {
 }
 
 /**
+ * Which physical/virtual input Flow should treat as the user's "keyboard"
+ * right now — not everyone owns (or wants to buy) the real module, so
+ * 'holo' is a second, free, no-hardware option (tapping the desk around a
+ * laptop, see src/renderer/src/lib/holo). Both ultimately drive the exact
+ * same 4 `Control` slots via `pressControl` — this only decides which
+ * *source* is allowed to fire that call, not anything about the controls
+ * themselves. Manually chosen today (Settings); real hardware-presence
+ * auto-detection is a documented future step, not implemented yet — see
+ * docs/architecture.md.
+ */
+export type InputSource = 'keyboard' | 'holo'
+
+/**
+ * One of the four fixed desk zones Holo listens for taps in — see
+ * HOLO_ZONE_ORDER (shared/constants) for the canonical order, which maps
+ * 1:1 to control slots 1-4 (frontLeft -> slot 1, ... rearRight -> slot 4).
+ * Named after Holo's own zone layout (github.com/JustinGamer191/Holo), the
+ * open-source macOS project this feature's *concept* — not its Swift code,
+ * which never runs here — is adapted from. See docs/architecture.md.
+ */
+export type HoloZone = 'frontLeft' | 'frontRight' | 'rearLeft' | 'rearRight'
+
+/**
+ * One zone's calibration reference — the averaged acoustic feature vector
+ * from the taps the user provided for this zone during calibration (see
+ * src/renderer/src/lib/holo/classifier.ts for exactly what a "feature" is).
+ * Never audio, never a recording — a small array of normalized numbers.
+ */
+export interface HoloZoneProfile {
+  zone: HoloZone
+  features: number[]
+  /** How many taps were averaged into `features` — shown in the UI so a
+   *  thin (e.g. interrupted) calibration is visibly distinguishable from a
+   *  full one, even though both produce a usable profile. */
+  sampleCount: number
+}
+
+/**
+ * The "not a desk tap at all" reference — typing, mouse clicks, whatever
+ * ambient sound the user demonstrated during calibration's reject step
+ * (see holoStore.ts's `calibrate`). Same shape as a zone profile minus the
+ * zone id, since it isn't one; kept as a distinct type rather than
+ * shoehorning it into `HoloZoneProfile` with a fake zone value, so a caller
+ * can never accidentally treat it as a pressable zone.
+ */
+export interface HoloRejectProfile {
+  features: number[]
+  sampleCount: number
+}
+
+/** A completed calibration — one profile per zone the user calibrated
+ *  (all 4 today; there's no paywall/tier gate on Holo), plus an optional
+ *  reject reference. `zones`/`reject` can be a partial set if calibration
+ *  was interrupted; `reject` is also absent for calibrations saved before
+ *  that field existed. */
+export interface HoloCalibration {
+  zones: HoloZoneProfile[]
+  reject?: HoloRejectProfile
+  calibratedAt: number
+}
+
+/**
+ * One step in a recognized cross-app workflow chain — either the app you
+ * switched into, or a shortcut you pressed once there. Built entirely from
+ * already-captured, already-sanitized WorkflowEvent fields (patternDetection.ts's
+ * detectCrossAppWorkflows) — never anything richer, e.g. no window title.
+ */
+export type WorkflowStep =
+  | { type: 'appSwitch'; applicationId: string | null }
+  | { type: 'shortcut'; applicationId: string | null; comboKeys: string[] }
+
+/**
  * A repeated-behavior pattern found by the deterministic pattern-detection
  * engine (brainstorm.md section 11) over already-captured, already-sanitized
  * WorkflowEvent metadata. Never derived from anything but comboKeys/
- * controlId/timestamp — see docs/privacy-and-legal.md.
+ * controlId/applicationId/timestamp — see docs/privacy-and-legal.md.
  *
  * Discriminated on `kind` so the suggestion engine (Phase 5) can pull the
- * specific structured data (comboKeys/sequence/controlId) it needs to write
- * suggestion copy, instead of parsing the human-readable `description`.
+ * specific structured data (comboKeys/sequence/controlId/steps) it needs to
+ * write suggestion copy, instead of parsing the human-readable `description`.
  */
-export type PatternKind = 'repeatedShortcut' | 'repeatedSequence' | 'frequentControl'
+export type PatternKind = 'repeatedShortcut' | 'repeatedSequence' | 'frequentControl' | 'crossAppWorkflow'
 
 interface DetectedPatternBase {
   id: string
@@ -294,6 +369,22 @@ export type DetectedPattern =
   | (DetectedPatternBase & { kind: 'repeatedShortcut'; comboKeys: string[] })
   | (DetectedPatternBase & { kind: 'repeatedSequence'; sequence: string[] })
   | (DetectedPatternBase & { kind: 'frequentControl'; controlId: string })
+  | (DetectedPatternBase & {
+      kind: 'crossAppWorkflow'
+      /** The two steps that make up the recognized chain, in order — at
+       *  least one is always an 'appSwitch' (a same-app pair of shortcuts
+       *  is repeatedSequence's job, not this). */
+      steps: [WorkflowStep, WorkflowStep]
+      /** Every distinct application touched by `steps`, in first-seen
+       *  order. Resolving display names for the whole chain needs all of
+       *  them, unlike every other pattern kind's single `applicationId`. */
+      applicationIds: Array<string | null>
+      /** The step that, across multiple completed repeats of this chain,
+       *  consistently followed it — e.g. switching to a git client right
+       *  after several rounds of pasting into an editor. Absent when no
+       *  consistent follow-up was found. */
+      closingStep?: WorkflowStep
+    })
 
 /** Whether pressing a control actually did what it was configured to do —
  *  pushed after every press so a failure (e.g. couldn't focus the target
@@ -569,4 +660,21 @@ export interface FlowApi {
    *  result — every screen saves incrementally as the user moves through
    *  the flow, not just once at the end. */
   saveOnboardingState(update: Partial<OnboardingState>): Promise<OnboardingState>
+
+  /**
+   * Holo — the free, no-hardware input option (Settings). Which "keyboard"
+   * Flow currently trusts to fire pressControl; 'keyboard' (physical/
+   * virtual) by default.
+   */
+  getInputSource(): Promise<InputSource>
+  setInputSource(source: InputSource): Promise<InputSource>
+  /** null until the user has calibrated at least one zone. */
+  getHoloCalibration(): Promise<HoloCalibration | null>
+  /** Persists a calibration exactly as sent — all 4 zones are available to
+   *  everyone today; there is no paywall/tier gate on Holo. See
+   *  docs/architecture.md's Holo section for where a future one would hook
+   *  in if that ever changes. */
+  saveHoloCalibration(calibration: HoloCalibration): Promise<HoloCalibration>
+  /** Erases calibration entirely — the "recalibrate from scratch" action. */
+  clearHoloCalibration(): Promise<void>
 }

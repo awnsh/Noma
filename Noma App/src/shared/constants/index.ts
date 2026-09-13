@@ -1,3 +1,5 @@
+import type { HoloZone } from '../types'
+
 export const IPC_CHANNELS = {
   GET_FLOW_STATUS: 'flow:get-flow-status',
   GET_ACTIVE_CONTEXT: 'flow:get-active-context',
@@ -51,7 +53,12 @@ export const IPC_CHANNELS = {
   SIMULATE_ENCODER_ROTATION: 'flow:simulate-encoder-rotation',
   CLEAR_DEVICE_LOG: 'flow:clear-device-log',
   GET_ONBOARDING_STATE: 'flow:get-onboarding-state',
-  SAVE_ONBOARDING_STATE: 'flow:save-onboarding-state'
+  SAVE_ONBOARDING_STATE: 'flow:save-onboarding-state',
+  GET_INPUT_SOURCE: 'flow:get-input-source',
+  SET_INPUT_SOURCE: 'flow:set-input-source',
+  GET_HOLO_CALIBRATION: 'flow:get-holo-calibration',
+  SAVE_HOLO_CALIBRATION: 'flow:save-holo-calibration',
+  CLEAR_HOLO_CALIBRATION: 'flow:clear-holo-calibration'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */
@@ -97,3 +104,27 @@ export const SYSTEM_COMMAND_CATALOG: string[] = ['volumeMute', 'volumeUp', 'volu
 
 /** The exact allowlist `actionExecutor.ts`'s `isKnownFlowAction` accepts. */
 export const FLOW_ACTION_CATALOG: string[] = ['closeWindow']
+
+/**
+ * Holo (the free, no-hardware input option — see the `HoloZone` doc
+ * comment in shared/types). Canonical order, shared by the calibration
+ * wizard, the zone grid, and pattern-detection-style classification code:
+ * index N maps 1:1 to control slot N+1 (frontLeft -> slot 1, frontRight ->
+ * slot 2, rearLeft -> slot 3, rearRight -> slot 4) — one source of truth so
+ * "which slot does this zone control" can never drift between files.
+ */
+export const HOLO_ZONE_ORDER: HoloZone[] = ['frontLeft', 'frontRight', 'rearLeft', 'rearRight']
+
+export const HOLO_ZONE_LABELS: Record<HoloZone, string> = {
+  frontLeft: 'Front Left',
+  frontRight: 'Front Right',
+  rearLeft: 'Rear Left',
+  rearRight: 'Rear Right'
+}
+
+// No paywall/tier gate on Holo — all 4 zones are available to everyone
+// today, by explicit request. A `getMaxHoloZones(tier)`-shaped function
+// (free: 2, pro: 4) existed briefly and was removed; if a real paywall
+// is ever wanted, that's the shape to reintroduce, hooked into
+// holoRepository.saveHoloCalibration's zone list (the actual enforcement
+// point, not the renderer's UI) — see docs/architecture.md's Holo section.

@@ -106,3 +106,15 @@ export function DeveloperIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+/** Holo — a tap's ripple, since there's no hardware to draw: concentric
+ *  rings expanding from a point, echoing a desk-tap's own physical effect. */
+export function HoloIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="9" strokeOpacity="0.5" />
+    </svg>
+  )
+}

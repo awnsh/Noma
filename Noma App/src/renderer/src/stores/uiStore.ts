@@ -4,6 +4,7 @@ export type Page =
   | 'dashboard'
   | 'demo'
   | 'virtual-keyboard'
+  | 'holo'
   | 'macros'
   | 'learning'
   | 'usage-stats'

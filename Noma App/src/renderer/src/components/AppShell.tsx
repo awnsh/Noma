@@ -5,6 +5,7 @@ import {
   DashboardIcon,
   DemoIcon,
   KeyboardIcon,
+  HoloIcon,
   MacroIcon,
   LearningIcon,
   StatsIcon,
@@ -21,6 +22,7 @@ type NavItem = { label: string; page: Page; Icon: IconComponent }
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', page: 'dashboard', Icon: DashboardIcon },
   { label: 'Virtual Keyboard', page: 'virtual-keyboard', Icon: KeyboardIcon },
+  { label: 'Holo', page: 'holo', Icon: HoloIcon },
   { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
   { label: 'Learning Center', page: 'learning', Icon: LearningIcon },
   { label: 'Usage Stats', page: 'usage-stats', Icon: StatsIcon },

@@ -40,6 +40,19 @@ Principle") is the constraint this document exists to satisfy.
   `{ applicationId, comboKeys: ['Control', 'Shift', 'P'], timestamp }` —
   never which character was typed, never window content, never clipboard,
   never a screenshot.
+- **Which application is in the foreground, and when it changes, is stored
+  too** — `{ applicationId, timestamp }`, an `appSwitch` WorkflowEvent
+  logged whenever the real OS-reported foreground process changes (see
+  `ApplicationContextService`/`WindowsOSAdapter`, gated by the exact same
+  monitoring toggle as everything else here). This isn't new *access* — Flow
+  already reads the foreground process continuously to drive "Current
+  Application" on the Dashboard — it's a new decision to *persist* a
+  timestamped history of it, specifically so pattern detection can
+  recognize a workflow that spans multiple applications (screenshot tool ->
+  editor -> git client), not only the shortcuts pressed within one. Still
+  never a window title, never a URL, never window content — just the same
+  `Application` identity (`id`/`name`/`processName`) the contextual-UI
+  feature already resolves.
 
 ## Why this holds up (general reasoning, not legal advice)
 
@@ -115,6 +128,74 @@ Principle") is the constraint this document exists to satisfy.
   `workflow_events`, tagged with whichever application was active at the
   moment of capture (from Phase 2's `ApplicationContextService`) — exactly
   the shape described above, nothing more.
+- **Cross-app workflow recognition** (`detectCrossAppWorkflows` in
+  `src/main/workflow/patternDetection.ts`) reads `appSwitch` rows alongside
+  `shortcut` rows from that same table — no new capture surface, no new
+  table, just a detector that no longer assumes every pattern lives inside
+  one application.
+
+## Holo — microphone input (the free, no-hardware option)
+
+Holo (`src/renderer/src/lib/holo`, `pages/Holo.tsx`) lets someone use Noma
+without buying the physical keyboard, by tapping the desk around their
+laptop instead — a simplified, from-scratch reimplementation of the
+*concept* behind the open-source `github.com/JustinGamer191/Holo` project
+(MIT-licensed; its actual Swift/macOS code never runs here). This is a
+**materially different privacy shape than the keystroke policy above**,
+worth stating plainly rather than implying it's covered by the same
+reasoning:
+
+- **The keystroke design has a hard content/metadata boundary** —
+  `shouldCaptureKeyCombo` structurally cannot see typed characters at all,
+  by construction, before anything is even considered for storage.
+  **A live microphone has no equivalent boundary.** Classifying "which desk
+  zone was tapped" requires analyzing the actual waveform — there is no way
+  to compute that without the raw audio passing through memory first,
+  including whatever ambient sound (including speech, if someone is talking
+  near the laptop) happens to be present at that instant. The privacy
+  guarantee here is necessarily about *what happens to that audio after*,
+  not about never processing it in the first place.
+- **What's actually kept, and for how long:** a rolling in-memory buffer
+  (Web Audio API's `AnalyserNode`) that the app reads every ~20ms to check
+  loudness, and — only in the brief instant an onset is detected — one
+  frequency-domain snapshot, immediately collapsed to a 16-number
+  "spectral shape" vector (`extractFeatures` in `classifier.ts`) that
+  discards timing/phase/content entirely. That derived vector, never the
+  audio itself, is the only thing that can be persisted (as part of a
+  calibration profile), and only when the user explicitly runs the
+  calibration wizard. The wizard's last step deliberately captures a
+  reference for "not a desk tap" too — the user is asked to type/click
+  normally so Holo learns to reject those sounds instead of misfiring on
+  them (`HoloCalibration.reject`, `classifyZone`'s `rejectFeatures` param)
+  — this is still just a handful of derived numbers, captured, averaged,
+  and stored by the exact same mechanism and exact same explicit action as
+  every zone's own profile, not a special or broader capture. **No raw
+  audio buffer, recording, or waveform is ever written to disk or sent
+  anywhere** — there is no code path in this feature that does either.
+- **Off by default, explicit action required every time.** `getUserMedia`
+  is called only from two explicit user actions on the Holo page —
+  clicking "Calibrate" or "Start Listening" — never automatically on app
+  launch, never merely because `inputSource` is set to `'holo'` in
+  Settings. (Auto-starting Holo's listening loop in the background when
+  it's the chosen input source, the way the physical keyboard's capture
+  hook auto-starts with workflow monitoring, is a documented future step —
+  see docs/architecture.md — not implemented yet; today the mic is only
+  ever live while the Holo page's own controls have been used.)
+- **The OS's own mic indicator still applies.** Electron surfaces the
+  standard browser mic-permission prompt and Windows' own "microphone in
+  use" privacy indicator whenever the stream is actually open — Holo adds
+  no separate suppression of that, so the same system-level signal a user
+  would get from any other app using their mic still applies here.
+- **Inspect and delete.** The Holo page shows exactly what's calibrated
+  (per-zone sample counts, not raw numbers meant to be human-legible, but
+  nothing hidden) and a "Clear" action erases it immediately; `deleteAllData()`
+  (the existing factory-reset action) wipes it along with everything else
+  in `settings`, with no separate carve-out.
+- **Not yet true acoustic-zone security.** The classifier here is a
+  simplified nearest-centroid match on a coarse feature vector (see
+  `classifier.ts`'s doc comment), not Holo's own trained model — it's a
+  convenience/ergonomics feature, not something to rely on as an access
+  control. Don't market it as more precise or more secure than it is.
 
 ## Disclaimer
 
@@ -124,4 +205,10 @@ shipping Flow to any user other than its developer — and especially before
 any deployment on shared or employer-owned machines, or any feature that
 adds screen content, clipboard, or cloud sync — have this reviewed by an
 actual attorney familiar with wiretap, computer-monitoring, and state
-spyware statutes in the relevant jurisdictions.
+spyware statutes in the relevant jurisdictions. **Holo's microphone input
+raises this document's stakes specifically** — recording or transmitting
+audio (which this feature deliberately never does) would implicate wiretap/
+eavesdropping statutes far more directly than keystroke metadata does, and
+a shared/multi-person room is a meaningfully different situation than a
+solo desk (see point 5 above, which applies here too) — get real legal
+review before this leaves single-user, single-developer use.

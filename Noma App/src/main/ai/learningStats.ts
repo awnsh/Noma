@@ -1,5 +1,9 @@
 import type { LearningStats, PatternKind } from '@shared/types'
-import { REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/patternDetection'
+import {
+  CROSS_APP_WORKFLOW_THRESHOLD,
+  REPEATED_SHORTCUT_THRESHOLD,
+  SEQUENCE_THRESHOLD
+} from '../workflow/patternDetection'
 
 /** What generates a `getHistory` callback needs to know about a pattern
  *  kind — same shape as suggestionsRepository's SuggestionHistory, restated
@@ -38,6 +42,13 @@ const ACTIONABLE_KIND_INFO: Array<{
     label: 'Repeated sequences',
     description: 'Two shortcuts used back-to-back, repeatedly, within a 15-second window.',
     threshold: SEQUENCE_THRESHOLD
+  },
+  {
+    kind: 'crossAppWorkflow',
+    label: 'Cross-app workflows',
+    description:
+      'A short step spanning two applications — switching into one, then what happens right after — repeated across your work.',
+    threshold: CROSS_APP_WORKFLOW_THRESHOLD
   }
 ]
 
