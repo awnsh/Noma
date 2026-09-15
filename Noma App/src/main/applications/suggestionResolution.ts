@@ -1,8 +1,9 @@
-import type { ApplicationProfile, Suggestion } from '@shared/types'
+import type { ApplicationProfile, MacroStep, Suggestion, WorkflowStep } from '@shared/types'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
 import { assignControlAction, toDisplayLabel } from '../database/repositories/controlsRepository'
 import { createMacro } from '../database/repositories/macrosRepository'
 import { getSuggestionById, resolveSuggestion } from '../database/repositories/suggestionsRepository'
+import { describeStep } from '../workflow/patternDetection'
 
 /**
  * Accepts a suggestion by writing its action onto a control slot the user
@@ -69,5 +70,73 @@ function buildControlUpdate(
         action: { type: 'macro', macroId: macro.id }
       }
     }
+
+    // WORKFLOW LEARNING: the executable counterpart to crossAppWorkflow's
+    // informational-only suggestion — see buildWorkflowMacroSteps.
+    case 'createWorkflowMacroAndAssignToControl': {
+      const macro = createMacro({
+        name: action.steps.map(describeStep).join(' → '),
+        applicationId: suggestion.applicationId ?? undefined,
+        trigger: 'flow-control',
+        actions: buildWorkflowMacroSteps(action.steps),
+        delayMs: 0,
+        enabled: true
+      })
+      return {
+        label: toDisplayLabel(macro.name),
+        action: { type: 'macro', macroId: macro.id }
+      }
+    }
   }
+}
+
+/** A chain the same shortcut a paste uses, by combo — kept as a constant
+ *  rather than reaching for shortcutDisplayLabel's "Paste" copy, which is
+ *  presentation text, not something execution logic should pattern-match
+ *  against. */
+const PASTE_COMBO = 'Control+V'
+
+function isPasteShortcut(step: WorkflowStep): boolean {
+  return step.type === 'shortcut' && step.comboKeys.join('+') === PASTE_COMBO
+}
+
+/**
+ * A detected workflow chain often ends by switching back to where it
+ * started (the "...and switches back" tail in the product's own flagship
+ * example) — that's what the workflow *leads to*, not part of *doing* it,
+ * so it's dropped from the executable macro. Same "the closing step is
+ * informational, not executable" rule `crossAppWorkflow` already follows
+ * for its own trailing step.
+ */
+function trimTrailingAppSwitches(steps: WorkflowStep[]): WorkflowStep[] {
+  let end = steps.length
+  while (end > 0 && steps[end - 1].type === 'appSwitch') end -= 1
+  return steps.slice(0, end)
+}
+
+/**
+ * Converts a detected workflow's steps into a real, executable macro:
+ * `shortcut` steps pass straight through, an `appSwitch` becomes a
+ * `focusApplication` step (see that ControlAction variant's doc comment in
+ * shared/types for why "focus an existing window" is the safe capability
+ * here, not `launchApplication`), a trailing "switched back" tail is
+ * dropped (see trimTrailingAppSwitches), and a chain ending in a paste gets
+ * a submit keystroke appended — reproducing the flagship "screenshot ->
+ * paste -> submit" shape generically, without hardcoding any one
+ * application (STEP 7: this has to generalize beyond Claude Code).
+ */
+function buildWorkflowMacroSteps(steps: WorkflowStep[]): MacroStep[] {
+  const core = trimTrailingAppSwitches(steps)
+  const macroSteps: MacroStep[] = core.map((step) =>
+    step.type === 'shortcut'
+      ? { type: 'shortcut', keys: step.comboKeys }
+      : { type: 'focusApplication', applicationId: step.applicationId ?? '' }
+  )
+
+  const lastStep = core[core.length - 1]
+  if (lastStep && isPasteShortcut(lastStep)) {
+    macroSteps.push({ type: 'shortcut', keys: ['Enter'] })
+  }
+
+  return macroSteps
 }

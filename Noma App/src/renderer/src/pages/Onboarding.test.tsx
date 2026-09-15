@@ -47,8 +47,8 @@ function mockFlow(overrides: Partial<FlowApi> = {}): FlowApi {
 
 function seedStores(initialState: OnboardingState = DEFAULT_STATE): void {
   useOnboardingStore.setState({ state: initialState, isLoading: false })
-  // Deliberately not 'dashboard' — the completion test below asserts this
-  // actually changes, not that it was 'dashboard' all along.
+  // Deliberately not 'home' — the completion test below asserts this
+  // actually changes, not that it was 'home' all along.
   useUiStore.setState({ activePage: 'settings' })
   useHardwareStore.setState({ status: VIRTUAL_STATUS, lastEvent: null, lastExecution: null, isLoading: false })
   useWorkflowStore.setState({ enabled: false, patterns: [], isLoading: false })
@@ -136,7 +136,7 @@ describe('Onboarding', () => {
     // setActivePage only runs after `await save(...)` resolves, so poll for
     // the end result rather than the (synchronously-true) call assertion.
     await vi.waitFor(() => {
-      expect(useUiStore.getState().activePage).toBe('dashboard')
+      expect(useUiStore.getState().activePage).toBe('home')
     })
     expect(window.flow.saveOnboardingState).toHaveBeenCalledWith(
       expect.objectContaining({ completed: true, step: 'completion' })

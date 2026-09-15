@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { Control } from '@shared/types'
 import { actionCaption, actionGlyph } from '../lib/describeAction'
 import { KEYCAP_SHADOW } from '../lib/surfaces'
@@ -45,8 +45,8 @@ export function VirtualControlButton({
         editMode
           ? 'border-dashed border-accent-muted/60 bg-base-900 hover:border-accent'
           : control
-            ? `border-white/[0.08] bg-gradient-to-b from-base-800 to-base-900 ${KEYCAP_SHADOW} hover:border-accent-muted active:scale-95`
-            : 'cursor-default border-white/5 bg-base-900/50'
+            ? `border-black/[0.08] bg-gradient-to-b from-base-800 to-base-900 ${KEYCAP_SHADOW} hover:border-accent-muted active:scale-95`
+            : 'cursor-default border-black/5 bg-base-900/50'
       } ${
         // A real press flashes the signature brand blue — this used to be
         // the app's original pre-rebrand teal (rgb(125,211,192), see

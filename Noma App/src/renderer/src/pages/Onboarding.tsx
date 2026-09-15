@@ -90,7 +90,7 @@ export function Onboarding() {
           <OnboardingCompletionScreen
             onStart={async () => {
               await save({ completed: true, step: 'completion' })
-              setActivePage('dashboard')
+              setActivePage('home')
             }}
           />
         )}

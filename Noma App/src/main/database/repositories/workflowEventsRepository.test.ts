@@ -2,6 +2,7 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { __setDatabaseForTesting, runMigrations } from '../db'
 import {
+  getControlUsageStats,
   getDailyActivityCounts,
   getShortcutUsageStats,
   insertWorkflowEvent
@@ -92,6 +93,51 @@ describe('getShortcutUsageStats', () => {
     expect(stats).toHaveLength(1)
     expect(stats[0].applicationId).toBeNull()
     expect(stats[0].applicationName).toBeNull()
+  })
+})
+
+describe('getControlUsageStats', () => {
+  it('aggregates controlActivation events by controlId, across all applications', () => {
+    insertWorkflowEvent({
+      applicationId: 'code',
+      eventType: 'controlActivation',
+      controlId: 'control-1',
+      timestamp: 1000
+    })
+    insertWorkflowEvent({
+      applicationId: 'code',
+      eventType: 'controlActivation',
+      controlId: 'control-1',
+      timestamp: 2000
+    })
+    insertWorkflowEvent({
+      applicationId: 'chrome',
+      eventType: 'controlActivation',
+      controlId: 'control-2',
+      timestamp: 1500
+    })
+
+    const stats = getControlUsageStats()
+
+    expect(stats).toHaveLength(2)
+    const control1 = stats.find((s) => s.controlId === 'control-1')
+    expect(control1).toMatchObject({ count: 2, firstUsed: 1000, lastUsed: 2000 })
+    const control2 = stats.find((s) => s.controlId === 'control-2')
+    expect(control2).toMatchObject({ count: 1, firstUsed: 1500, lastUsed: 1500 })
+  })
+
+  it('ignores shortcut events — only real control presses count', () => {
+    insertWorkflowEvent({
+      applicationId: 'code',
+      eventType: 'shortcut',
+      comboKeys: ['Control', 'S'],
+      timestamp: 1000
+    })
+    expect(getControlUsageStats()).toHaveLength(0)
+  })
+
+  it('returns an empty list when nothing has been pressed yet', () => {
+    expect(getControlUsageStats()).toEqual([])
   })
 })
 

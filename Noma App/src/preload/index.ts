@@ -103,6 +103,7 @@ const flowApi: FlowApi = {
   getAllSuggestions: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_SUGGESTIONS),
   getLearningStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LEARNING_STATS),
   getShortcutUsageStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SHORTCUT_USAGE_STATS),
+  getControlUsageStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_CONTROL_USAGE_STATS),
   getDailyActivityCounts: (days) => ipcRenderer.invoke(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, days),
 
   listApplicationProfileSummaries: () =>
@@ -125,6 +126,8 @@ const flowApi: FlowApi = {
   setDemoApplication: (applicationId) =>
     ipcRenderer.invoke(IPC_CHANNELS.DEMO_SET_APPLICATION, applicationId),
   simulateDemoWorkflow: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_SIMULATE_WORKFLOW),
+  simulateDemoMultiStepWorkflow: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.DEMO_SIMULATE_MULTI_STEP_WORKFLOW),
   resetDemoData: () => ipcRenderer.invoke(IPC_CHANNELS.DEMO_RESET),
 
   clearLearningData: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_LEARNING_DATA),

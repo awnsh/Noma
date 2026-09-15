@@ -71,7 +71,13 @@ describe('getControlsReferencingMacro', () => {
 
     const refs = getControlsReferencingMacro('macro-1')
     expect(refs).toEqual([
-      { applicationId: 'code', applicationName: 'Visual Studio Code', slot: 1, label: 'My Macro' }
+      {
+        controlId: 'ctrl-1',
+        applicationId: 'code',
+        applicationName: 'Visual Studio Code',
+        slot: 1,
+        label: 'My Macro'
+      }
     ])
   })
 

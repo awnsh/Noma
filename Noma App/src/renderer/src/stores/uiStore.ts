@@ -1,15 +1,20 @@
 import { create } from 'zustand'
 
+// The 5 primary surfaces (product brief's information architecture) plus
+// the existing power-user/presentation pages, demoted to a secondary nav
+// group in AppShell.tsx rather than deleted — see that file's doc comment.
 export type Page =
-  | 'dashboard'
-  | 'demo'
+  | 'home'
+  | 'controls'
+  | 'learning'
+  | 'activity'
+  | 'settings'
   | 'virtual-keyboard'
   | 'holo'
   | 'macros'
-  | 'learning'
-  | 'usage-stats'
   | 'profiles'
-  | 'settings'
+  | 'usage-stats'
+  | 'demo'
   | 'developer'
 
 interface UiStoreState {
@@ -18,6 +23,6 @@ interface UiStoreState {
 }
 
 export const useUiStore = create<UiStoreState>((set) => ({
-  activePage: 'dashboard',
+  activePage: 'home',
   setActivePage: (page) => set({ activePage: page })
 }))

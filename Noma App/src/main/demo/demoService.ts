@@ -4,6 +4,7 @@ import { getProfileForApplicationId } from '../database/repositories/profileRepo
 import { assignControlAction } from '../database/repositories/controlsRepository'
 import { deleteMacro } from '../database/repositories/macrosRepository'
 import { insertWorkflowEvent } from '../database/repositories/workflowEventsRepository'
+import { upsertApplication } from '../database/repositories/applicationsRepository'
 import { getSeedDefaultControl } from '../database/seed'
 
 /**
@@ -23,15 +24,21 @@ import { getSeedDefaultControl } from '../database/seed'
  * considerations", item 1.
  */
 
-export type DemoApplicationId = 'code' | 'chrome'
+export type DemoApplicationId = 'code' | 'chrome' | 'claude'
 
-/** The two seeded applications Demo Mode switches between — chosen because
- *  they already have real, seeded profiles (see database/seed.ts), so the
+/** The seeded applications Demo Mode switches between. 'code' and 'chrome'
+ *  already have real, seeded profiles (see database/seed.ts), so the
  *  control changes the demo shows are the product's actual configured
- *  behavior, not demo-only fake data. */
+ *  behavior, not demo-only fake data. 'claude' (Claude Code — the flagship
+ *  WORKFLOW LEARNING story's destination app) deliberately has no seeded
+ *  profile: the demo never actually switches the *live* context into it
+ *  (see simulateDemoMultiStepWorkflow's doc comment), it only appears as an
+ *  application id inside the simulated workflow_events, so upsertApplication
+ *  is what gives it a real applications row when that's inserted. */
 export const DEMO_APPLICATIONS: Record<DemoApplicationId, Application> = {
   code: { id: 'code', name: 'Visual Studio Code', processName: 'Code.exe' },
-  chrome: { id: 'chrome', name: 'Google Chrome', processName: 'chrome.exe' }
+  chrome: { id: 'chrome', name: 'Google Chrome', processName: 'chrome.exe' },
+  claude: { id: 'claude', name: 'Claude Code', processName: 'Claude.exe' }
 }
 
 const DEMO_WORKFLOW_APPLICATION_ID: DemoApplicationId = 'chrome'
@@ -83,6 +90,67 @@ export function simulateDemoWorkflow(): void {
       eventType: 'shortcut',
       comboKeys: ['Control', 'V'],
       timestamp: pasteAt
+    })
+  }
+}
+
+/**
+ * WORKFLOW LEARNING's flagship demo — "the Noma Moment," v2 (Product
+ * Development Phase 3). Inserts a deterministic, backdated repetition of
+ * the exact story this feature exists to demonstrate: screenshot -> switch
+ * to Claude Code -> paste -> switch back, repeated — tuned to produce
+ * exactly one `multiStepWorkflow` suggestion once pattern detection re-runs.
+ *
+ * Deliberately does NOT call `setDemoApplication('claude')` anywhere: the
+ * live "Current Application" context stays on VS Code throughout, matching
+ * the real framing this feature is built for — you're working in one app,
+ * and Noma notices a workflow that happens *around* it, in the background,
+ * without needing you to actually Alt-Tab into Claude Code for the demo to
+ * work. `upsertApplication` gives 'claude' a real row so the suggestion's
+ * explanation and the eventual macro's `focusApplication` step both resolve
+ * a real display name/process, exactly as a genuinely-learned workflow
+ * would.
+ *
+ * Timing mirrors simulateDemoWorkflow's reasoning: REPEAT_COUNT is >=
+ * MULTI_STEP_WORKFLOW_THRESHOLD (3) so one suggestion appears, each step
+ * within a repetition is well inside WORKFLOW_STEP_WINDOW_MS so the 4 steps
+ * chain into one window, and each repetition starts well outside that same
+ * window so repetitions never bridge into one one giant (and wrongly
+ * longer) chain.
+ */
+const MULTI_STEP_DEMO_REPEAT_COUNT = 4
+const MULTI_STEP_DEMO_REPEAT_GAP_MS = 30_000
+const MULTI_STEP_DEMO_STEP_GAP_MS = 2_000
+
+export function simulateDemoMultiStepWorkflow(): void {
+  upsertApplication(DEMO_APPLICATIONS.claude)
+
+  const now = Date.now()
+  const base = now - MULTI_STEP_DEMO_REPEAT_COUNT * MULTI_STEP_DEMO_REPEAT_GAP_MS
+
+  for (let i = 0; i < MULTI_STEP_DEMO_REPEAT_COUNT; i++) {
+    const start = base + i * MULTI_STEP_DEMO_REPEAT_GAP_MS
+    insertWorkflowEvent({
+      applicationId: DEMO_APPLICATIONS.code.id,
+      eventType: 'shortcut',
+      comboKeys: ['Meta', 'Shift', 'S'], // Windows' own screenshot shortcut
+      timestamp: start
+    })
+    insertWorkflowEvent({
+      applicationId: DEMO_APPLICATIONS.claude.id,
+      eventType: 'appSwitch',
+      timestamp: start + MULTI_STEP_DEMO_STEP_GAP_MS
+    })
+    insertWorkflowEvent({
+      applicationId: DEMO_APPLICATIONS.claude.id,
+      eventType: 'shortcut',
+      comboKeys: ['Control', 'V'],
+      timestamp: start + 2 * MULTI_STEP_DEMO_STEP_GAP_MS
+    })
+    insertWorkflowEvent({
+      applicationId: DEMO_APPLICATIONS.code.id,
+      eventType: 'appSwitch',
+      timestamp: start + 3 * MULTI_STEP_DEMO_STEP_GAP_MS
     })
   }
 }

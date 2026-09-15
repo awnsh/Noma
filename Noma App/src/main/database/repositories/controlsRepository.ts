@@ -39,6 +39,7 @@ export function assignControlAction(
 }
 
 interface ReferencingControlRow {
+  control_id: string
   application_id: string
   application_name: string
   slot: number
@@ -48,17 +49,19 @@ interface ReferencingControlRow {
 
 /** Every control (across every application) currently assigned a
  *  `{type: 'macro', macroId}` action pointing at this macro — used by the
- *  Macro Studio to warn before deleting a macro that's still in use.
- *  Deliberately a plain string search over action_type = 'macro' rows
- *  rather than a dedicated foreign-key column, since action_payload is
- *  already the single source of truth for a control's action. */
+ *  Macro Studio to warn before deleting a macro that's still in use, and by
+ *  the Controls page to show a learned action's current context and (via
+ *  `controlId` + `getControlUsageStats`) its real usage count. Deliberately
+ *  a plain string search over action_type = 'macro' rows rather than a
+ *  dedicated foreign-key column, since action_payload is already the single
+ *  source of truth for a control's action. */
 export function getControlsReferencingMacro(
   macroId: string
-): Array<{ applicationId: string; applicationName: string; slot: number; label: string }> {
+): Array<{ controlId: string; applicationId: string; applicationName: string; slot: number; label: string }> {
   const rows = getDatabase()
     .prepare(
-      `SELECT a.id AS application_id, a.name AS application_name, c.slot AS slot, c.label AS label,
-              c.action_payload AS action_payload
+      `SELECT c.id AS control_id, a.id AS application_id, a.name AS application_name, c.slot AS slot,
+              c.label AS label, c.action_payload AS action_payload
        FROM controls c
        JOIN profiles p ON p.id = c.profile_id
        JOIN applications a ON a.id = p.application_id
@@ -72,6 +75,7 @@ export function getControlsReferencingMacro(
       return action.type === 'macro' && action.macroId === macroId
     })
     .map((row) => ({
+      controlId: row.control_id,
       applicationId: row.application_id,
       applicationName: row.application_name,
       slot: row.slot,

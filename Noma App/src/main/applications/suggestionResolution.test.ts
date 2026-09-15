@@ -116,6 +116,91 @@ describe('assignSuggestionToControl — repeatedSequence', () => {
   })
 })
 
+function workflowSuggestion(overrides: Partial<Suggestion> = {}): Suggestion {
+  return {
+    id: 'suggestion:multistep:key:code:Meta+Shift+S->app:claude->key:claude:Control+V->app:code',
+    title: 'Noma noticed a workflow',
+    explanation: '...',
+    confidence: 0.8,
+    status: 'pending',
+    createdAt: Date.now(),
+    applicationId: 'code',
+    action: {
+      kind: 'createWorkflowMacroAndAssignToControl',
+      steps: [
+        { type: 'shortcut', applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
+        { type: 'appSwitch', applicationId: 'claude' },
+        { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'] },
+        { type: 'appSwitch', applicationId: 'code' }
+      ]
+    },
+    ...overrides
+  }
+}
+
+describe('assignSuggestionToControl — multiStepWorkflow (WORKFLOW LEARNING)', () => {
+  it('creates a real macro — focus, paste, and an appended submit — and assigns it to the chosen slot', () => {
+    insertSuggestionIfNew(workflowSuggestion())
+
+    const result = assignSuggestionToControl(
+      'suggestion:multistep:key:code:Meta+Shift+S->app:claude->key:claude:Control+V->app:code',
+      2
+    )
+
+    expect(result).not.toBeNull()
+    expect(result?.suggestion.status).toBe('accepted')
+
+    const updatedControl = result?.profile.controls.find((c) => c.slot === 2)
+    expect(updatedControl?.action.type).toBe('macro')
+    if (updatedControl?.action.type === 'macro') {
+      const macroRow = getDatabase()
+        .prepare('SELECT * FROM macros WHERE id = ?')
+        .get(updatedControl.action.macroId) as { actions: string } | undefined
+      expect(macroRow).toBeDefined()
+      expect(JSON.parse(macroRow!.actions)).toEqual([
+        { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
+        { type: 'focusApplication', applicationId: 'claude' },
+        { type: 'shortcut', keys: ['Control', 'V'] },
+        // The trailing "switch back to code" step is dropped (it's what the
+        // workflow leads to, not part of doing it) and a submit keystroke
+        // is appended because the chain ends in a paste.
+        { type: 'shortcut', keys: ['Enter'] }
+      ])
+    }
+  })
+
+  it('does not append a submit keystroke when the chain does not end in a paste', () => {
+    insertSuggestionIfNew(
+      workflowSuggestion({
+        id: 'suggestion:multistep:no-paste',
+        action: {
+          kind: 'createWorkflowMacroAndAssignToControl',
+          steps: [
+            { type: 'shortcut', applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
+            { type: 'appSwitch', applicationId: 'claude' },
+            { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'Shift', 'L'] }
+          ]
+        }
+      })
+    )
+
+    const result = assignSuggestionToControl('suggestion:multistep:no-paste', 3)
+    const updatedControl = result?.profile.controls.find((c) => c.slot === 3)
+    if (updatedControl?.action.type === 'macro') {
+      const macroRow = getDatabase()
+        .prepare('SELECT * FROM macros WHERE id = ?')
+        .get(updatedControl.action.macroId) as { actions: string }
+      expect(JSON.parse(macroRow.actions)).toEqual([
+        { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
+        { type: 'focusApplication', applicationId: 'claude' },
+        { type: 'shortcut', keys: ['Control', 'Shift', 'L'] }
+      ])
+    } else {
+      expect.fail('expected a macro action')
+    }
+  })
+})
+
 describe('assignSuggestionToControl — failure cases (fail closed, never guess)', () => {
   it('returns null for a suggestion that does not exist', () => {
     expect(assignSuggestionToControl('does-not-exist', 1)).toBeNull()

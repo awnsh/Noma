@@ -229,7 +229,9 @@ describe('detectPatterns — cross-app workflows', () => {
     }
     const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
     expect(workflow).toMatchObject({ count: 3 })
-    expect(workflow?.description).toContain('Control+V')
+    // Control+V is common enough to name by what it does — see
+    // shortcutDisplayLabel in patternDetection.ts.
+    expect(workflow?.description).toContain('Paste')
   })
 
   it('does not treat a same-app shortcut pair as a cross-app workflow (that stays repeatedSequence)', () => {
@@ -306,5 +308,144 @@ describe('detectPatterns — cross-app workflows', () => {
     const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
     expect(workflow).toMatchObject({ count: 4 })
     expect(workflow?.description).not.toContain('usually followed by')
+  })
+})
+
+describe('detectPatterns — multi-step workflow learning', () => {
+  /** The flagship story: screenshot -> switch to Claude Code -> paste ->
+   *  switch back. Repetitions are spaced far enough apart that they never
+   *  chain continuously into each other (see WORKFLOW_STEP_WINDOW_MS). */
+  function flagshipWorkflowEvents(repeatCount: number, repeatGapMs = 30_000): WorkflowEvent[] {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < repeatCount; i++) {
+      const base = i * repeatGapMs
+      events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'code'))
+      events.push(appSwitchEvent('claude', base + 2_000))
+      events.push(shortcutEvent(['Control', 'V'], base + 4_000, 'claude'))
+      events.push(appSwitchEvent('code', base + 6_000))
+    }
+    return events
+  }
+
+  it('recognizes the flagship repeated cross-app workflow and names the app it starts in', () => {
+    const patterns = detectPatterns(flagshipWorkflowEvents(4))
+    const workflows = patterns.filter((p) => p.kind === 'multiStepWorkflow')
+
+    expect(workflows).toHaveLength(1)
+    const workflow = workflows[0]
+    expect(workflow).toMatchObject({ count: 4, contextApplicationId: 'code' })
+    expect(workflow.description).toContain('Screenshot')
+    expect(workflow.description).toContain('claude')
+    expect(workflow.description).toContain('Paste')
+    if (workflow.kind === 'multiStepWorkflow') {
+      expect(workflow.consistency).toBe(1)
+      expect(workflow.applicationIds).toEqual(['code', 'claude'])
+    }
+  })
+
+  it('drops the redundant crossAppWorkflow pairs once the fuller chain subsumes them', () => {
+    // Every 2-step pair inside the flagship chain (screenshot->claude,
+    // claude->paste, paste->code) also clears CROSS_APP_WORKFLOW_THRESHOLD
+    // on its own — without subsumption this would surface 3 extra,
+    // redundant "Flow noticed a workflow across apps" cards.
+    const patterns = detectPatterns(flagshipWorkflowEvents(4))
+    expect(patterns.filter((p) => p.kind === 'crossAppWorkflow')).toHaveLength(0)
+    expect(patterns.filter((p) => p.kind === 'multiStepWorkflow')).toHaveLength(1)
+  })
+
+  it('does not report a multi-step workflow below the threshold', () => {
+    const patterns = detectPatterns(flagshipWorkflowEvents(2))
+    expect(patterns.some((p) => p.kind === 'multiStepWorkflow')).toBe(false)
+  })
+
+  it('tolerates an occurrence with an extra step in the middle (approximate matching)', () => {
+    const events = flagshipWorkflowEvents(3)
+    // A 4th repetition where an extra, unrelated shortcut happens between
+    // the app switch and the paste — e.g. an uncaptured keystroke elsewhere
+    // in the flow. Same first/last anchors, one extra middle step.
+    const base = 3 * 30_000
+    events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'code'))
+    events.push(appSwitchEvent('claude', base + 2_000))
+    events.push(shortcutEvent(['Control', 'Shift', 'L'], base + 3_000, 'claude'))
+    events.push(shortcutEvent(['Control', 'V'], base + 4_000, 'claude'))
+    events.push(appSwitchEvent('code', base + 6_000))
+
+    const patterns = detectPatterns(events)
+    const workflows = patterns.filter((p) => p.kind === 'multiStepWorkflow')
+    expect(workflows).toHaveLength(1)
+    const workflow = workflows[0]
+    expect(workflow.count).toBe(4)
+    if (workflow.kind === 'multiStepWorkflow') {
+      // 3 of the 4 occurrences matched exactly; one was only approximate.
+      expect(workflow.consistency).toBeCloseTo(0.75)
+    }
+  })
+
+  it('does not merge workflows interrupted by genuinely unrelated actions into the same chain', () => {
+    // Same repeated shape, but each repetition is broken up by a long gap
+    // in the middle — never continuous, so it never forms one window at
+    // all. Repetitions are spaced far enough apart (100s) that the tail of
+    // one repetition and the head of the next don't accidentally bridge
+    // into a *different* continuous 3-step run of their own.
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 4; i++) {
+      const base = i * 100_000
+      events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'code'))
+      events.push(appSwitchEvent('claude', base + 40_000)) // far outside the continuity window
+      events.push(shortcutEvent(['Control', 'V'], base + 42_000, 'claude'))
+    }
+    expect(detectPatterns(events).some((p) => p.kind === 'multiStepWorkflow')).toBe(false)
+  })
+
+  it('rejects a low-diversity same-app burst instead of treating it as a workflow', () => {
+    // Alternating two same-app shortcuts, no app switch, no third distinct
+    // step — exactly the "keypress -> keypress -> keypress" shape STEP 4
+    // calls out to avoid, even though it technically repeats.
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 5; i++) {
+      const base = i * 1_000
+      events.push(shortcutEvent(['Control', 'C'], base, 'code'))
+      events.push(shortcutEvent(['Control', 'V'], base + 500, 'code'))
+    }
+    expect(detectPatterns(events).some((p) => p.kind === 'multiStepWorkflow')).toBe(false)
+  })
+
+  it('never reports a workflow shorter than 3 steps', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 5; i++) {
+      const base = i * 30_000
+      events.push(appSwitchEvent('claude', base))
+      events.push(shortcutEvent(['Control', 'V'], base + 2_000, 'claude'))
+    }
+    expect(detectPatterns(events).some((p) => p.kind === 'multiStepWorkflow')).toBe(false)
+  })
+
+  it('still recognizes a long (>6 step) recurring chain via its best sub-window', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 4; i++) {
+      const base = i * 60_000
+      events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'code'))
+      events.push(appSwitchEvent('claude', base + 2_000))
+      events.push(shortcutEvent(['Control', 'V'], base + 4_000, 'claude'))
+      events.push(shortcutEvent(['Control', 'Enter'], base + 6_000, 'claude'))
+      events.push(appSwitchEvent('code', base + 8_000))
+      events.push(shortcutEvent(['Control', 'S'], base + 10_000, 'code'))
+      events.push(shortcutEvent(['Control', 'Shift', 'F'], base + 12_000, 'code'))
+    }
+    const workflows = detectPatterns(events).filter((p) => p.kind === 'multiStepWorkflow')
+    expect(workflows.length).toBeGreaterThan(0)
+    for (const workflow of workflows) {
+      if (workflow.kind === 'multiStepWorkflow') {
+        expect(workflow.steps.length).toBeLessThanOrEqual(6)
+      }
+    }
+  })
+
+  it('does not report duplicate suggestions for the same recurring chain across repeated calls', () => {
+    const events = flagshipWorkflowEvents(4)
+    const first = detectPatterns(events).filter((p) => p.kind === 'multiStepWorkflow')
+    const second = detectPatterns(events).filter((p) => p.kind === 'multiStepWorkflow')
+    expect(first).toHaveLength(1)
+    expect(second).toEqual(first)
   })
 })

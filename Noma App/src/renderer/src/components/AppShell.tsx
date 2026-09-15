@@ -1,14 +1,16 @@
 import type { ReactNode } from 'react'
 import { useUiStore, type Page } from '../stores/uiStore'
-import logo from '../assets/logo.png'
+import logo from '../assets/logo-black.png'
 import {
-  DashboardIcon,
+  HomeIcon,
   DemoIcon,
   KeyboardIcon,
   HoloIcon,
   MacroIcon,
   LearningIcon,
+  ActivityIcon,
   StatsIcon,
+  ControlsIcon,
   ProfilesIcon,
   SettingsIcon,
   DeveloperIcon,
@@ -17,84 +19,81 @@ import {
 
 type NavItem = { label: string; page: Page; Icon: IconComponent }
 
-// The actual product surfaces a real user works in day to day — ordered
-// roughly by how often they'd reach for each one.
+// The primary loop, quiet and text-led — three items, not a wall of icons.
 const PRIMARY_NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', page: 'dashboard', Icon: DashboardIcon },
-  { label: 'Virtual Keyboard', page: 'virtual-keyboard', Icon: KeyboardIcon },
-  { label: 'Holo', page: 'holo', Icon: HoloIcon },
-  { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
-  { label: 'Learning Center', page: 'learning', Icon: LearningIcon },
-  { label: 'Usage Stats', page: 'usage-stats', Icon: StatsIcon },
-  { label: 'Profiles', page: 'profiles', Icon: ProfilesIcon },
-  { label: 'Settings', page: 'settings', Icon: SettingsIcon }
+  { label: 'Home', page: 'home', Icon: HomeIcon },
+  { label: 'Controls', page: 'controls', Icon: ControlsIcon },
+  { label: 'Learning', page: 'learning', Icon: LearningIcon }
 ]
 
-// Presentation/engineering tools, not something a customer reaches for —
-// anchored to the bottom of the rail (see the `mt-auto` spacer below) and
-// visually separated, rather than sitting ahead of Virtual Keyboard/
-// Profiles/Settings in the list a real user sees first.
-const SECONDARY_NAV_ITEMS: NavItem[] = [
+// Noma understands your workflow -> Noma builds the interface -> Holo or
+// the physical Noma Device displays it. Both are different physical
+// manifestations of the same underlying system, so they sit together, as
+// their own small group — not lumped in with the rest of the app.
+const DEVICE_NAV_ITEMS: NavItem[] = [
+  { label: 'Holo', page: 'holo', Icon: HoloIcon },
+  { label: 'Noma Device', page: 'virtual-keyboard', Icon: KeyboardIcon }
+]
+
+const SETTINGS_NAV_ITEM: NavItem = { label: 'Settings', page: 'settings', Icon: SettingsIcon }
+
+// Power-user and presentation/engineering tools — real, working
+// functionality that just isn't part of the quiet primary story. Anchored
+// to the bottom, below Settings, so they read as available but clearly
+// tertiary — never deleted just to make the sidebar shorter.
+const TOOLS_NAV_ITEMS: NavItem[] = [
+  { label: 'Activity', page: 'activity', Icon: ActivityIcon },
+  { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
+  { label: 'Profiles', page: 'profiles', Icon: ProfilesIcon },
+  { label: 'Usage Stats', page: 'usage-stats', Icon: StatsIcon },
   { label: 'Demo', page: 'demo', Icon: DemoIcon },
   { label: 'Developer', page: 'developer', Icon: DeveloperIcon }
 ]
 
-// The rail's own material — a soft gradient sheen over the base fill, a
-// crisp inset top highlight (the "beveled glass edge"), and an ambient
-// drop shadow for real elevation off the content plane. backdrop-blur is
-// kept even though nothing currently scrolls behind this floating rail —
-// harmless today, and correct the day a future layout lets content pass
-// under it — but the *visible* glass read here comes from the gradient +
-// highlight + shadow, exactly like Apple/Logitech chrome: material is
-// mostly about light, not literally what's blurred behind it.
-const RAIL_GLASS =
-  'bg-gradient-to-b from-white/[0.07] via-base-900/70 to-base-900/70 backdrop-blur-xl backdrop-saturate-150 border border-white/[0.08] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6),inset_0_1px_0_0_rgba(255,255,255,0.08)]'
-
-function NavButton({ label, page, Icon, isActive, onClick }: NavItem & { isActive: boolean; onClick: () => void }) {
+function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: boolean; onClick: () => void }) {
   return (
-    <div className="group relative">
-      <button
-        type="button"
-        aria-label={label}
-        title={label}
-        onClick={onClick}
-        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ${
-          isActive
-            ? 'bg-accent/15 text-accent shadow-[0_4px_20px_-4px_rgba(76,126,255,0.45)] ring-1 ring-inset ring-accent/30'
-            : 'text-neutral-400 hover:bg-white/[0.06] hover:text-neutral-100'
-        }`}
-      >
-        <Icon className="h-5 w-5" />
-      </button>
-      {/* A real floating glass tooltip — genuine page content sits behind
-          it (it's positioned over `main`), so the blur actually does
-          something here, unlike the rail above. */}
-      <span className="pointer-events-none absolute left-full top-1/2 z-10 ml-2 hidden -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-base-800/70 px-2.5 py-1.5 text-xs text-neutral-100 shadow-lg shadow-black/40 backdrop-blur-md group-hover:block">
-        {label}
-      </span>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
+        isActive ? 'bg-accent/[0.08] font-medium text-accent' : 'text-neutral-400 hover:text-neutral-100'
+      }`}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
   )
 }
 
+function NavDivider() {
+  return <div className="my-3 h-px bg-base-700" />
+}
+
+function NavGroupLabel({ children }: { children: ReactNode }) {
+  return <div className="mb-1.5 px-2.5 text-[11px] text-neutral-600">{children}</div>
+}
+
+/**
+ * The app's one persistent chrome element, deliberately quiet: a fixed,
+ * unstyled-feeling left column, plain text labels (small icons alongside
+ * them, never icon-only), no card, no shadow, no glass. Its whole job is
+ * to stay out of the way of the content pane.
+ */
 export function AppShell({ children }: { children: ReactNode }) {
   const activePage = useUiStore((state) => state.activePage)
   const setActivePage = useUiStore((state) => state.setActivePage)
 
   return (
-    <div className="flex h-screen w-screen gap-3 bg-base-950 p-3 text-neutral-200">
-      <aside className={`flex w-20 shrink-0 flex-col items-center rounded-[28px] py-5 ${RAIL_GLASS}`}>
-        <div className="mb-6 flex h-14 w-14 items-center justify-center">
-          {/* Genuinely transparent PNG (src/renderer/src/assets/logo.png) —
-              no mix-blend-mode trick needed to hide a baked-in background
-              anymore, see [[noma-app-glass-redesign]]. The mark's native
-              aspect ratio is ~1.56:1 (wider than tall), so it's sized by
-              width/height directly rather than `object-contain`-ing it
-              into a square box. */}
-          <img src={logo} alt="Noma" title="Noma" className="h-8 w-12" />
+    <div className="flex h-screen w-screen bg-base-950 text-neutral-100">
+      <aside className="flex w-56 shrink-0 flex-col border-r border-base-700 px-4 py-6">
+        <div className="mb-8 flex items-center gap-2 px-1">
+          <img src={logo} alt="" className="h-6 w-9" />
+          <span className="font-display text-sm font-semibold text-neutral-100">Noma</span>
         </div>
-        <nav className="flex flex-col gap-1.5">
+
+        <nav className="flex flex-col gap-0.5">
           {PRIMARY_NAV_ITEMS.map((item) => (
-            <NavButton
+            <NavRow
               key={item.label}
               {...item}
               isActive={item.page === activePage}
@@ -103,13 +102,30 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        {/* Pushed to the bottom of the rail and separated by a soft-fade
-            divider — presentation/engineering tools, not the product
-            itself. */}
-        <div className="mt-auto flex flex-col items-center gap-1.5 pt-3">
-          <div className="mb-2 h-px w-8 bg-gradient-to-r from-transparent via-white/15 to-transparent" />
-          {SECONDARY_NAV_ITEMS.map((item) => (
-            <NavButton
+        <NavDivider />
+        <NavGroupLabel>Device</NavGroupLabel>
+        <div className="flex flex-col gap-0.5">
+          {DEVICE_NAV_ITEMS.map((item) => (
+            <NavRow
+              key={item.label}
+              {...item}
+              isActive={item.page === activePage}
+              onClick={() => setActivePage(item.page)}
+            />
+          ))}
+        </div>
+
+        <NavDivider />
+        <NavRow
+          {...SETTINGS_NAV_ITEM}
+          isActive={SETTINGS_NAV_ITEM.page === activePage}
+          onClick={() => setActivePage(SETTINGS_NAV_ITEM.page)}
+        />
+
+        <div className="mt-auto flex flex-col gap-0.5 pt-4">
+          <NavDivider />
+          {TOOLS_NAV_ITEMS.map((item) => (
+            <NavRow
               key={item.label}
               {...item}
               isActive={item.page === activePage}

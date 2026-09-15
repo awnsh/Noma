@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import type { Application, Macro } from '@shared/types'
 import { useMacrosStore } from '../stores/macrosStore'
 import { MacroEditor } from '../components/MacroEditor'
@@ -40,7 +40,7 @@ export function MacroStudio() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 p-6">
+      <aside className="flex w-72 shrink-0 flex-col border-r border-black/10 p-6">
         <div className="mb-1 font-display text-xl font-semibold text-neutral-100">Macro Studio</div>
         <p className="mb-5 text-xs text-neutral-500">
           Build a sequence of actions once, then assign it to any control.
@@ -66,8 +66,8 @@ export function MacroStudio() {
                   onClick={() => handleSelect(macro)}
                   className={`w-full rounded-lg px-3 py-2 text-left text-sm ${
                     !isCreatingNew && selectedMacroId === macro.id
-                      ? 'bg-white/5 text-neutral-100'
-                      : 'text-neutral-400 hover:bg-white/5 hover:text-neutral-100'
+                      ? 'bg-black/5 text-neutral-100'
+                      : 'text-neutral-400 hover:bg-black/5 hover:text-neutral-100'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">

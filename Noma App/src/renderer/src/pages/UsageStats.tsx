@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import type { DailyActivityCount, ShortcutUsageStat } from '@shared/types'
 import { formatShortcutCaption } from '../lib/describeAction'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
@@ -8,7 +8,7 @@ const ACTIVITY_WINDOW_DAYS = 14
 
 function ShortcutUsageRow({ stat }: { stat: ShortcutUsageStat }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-base-900 px-4 py-3">
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-base-900 px-4 py-3">
       <div className="min-w-0">
         <div className="font-mono text-sm text-neutral-100">{formatShortcutCaption(stat.comboKeys)}</div>
         <div className="mt-0.5 truncate text-[11px] text-neutral-600">
@@ -17,7 +17,7 @@ function ShortcutUsageRow({ stat }: { stat: ShortcutUsageStat }) {
       </div>
       <div className="flex shrink-0 items-center gap-4">
         <div
-          className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-300"
+          className="rounded-full border border-black/10 px-2 py-0.5 text-[11px] text-neutral-300"
           title={`Used ${stat.count} time${stat.count === 1 ? '' : 's'} since ${formatAbsoluteTime(stat.firstUsed)}`}
         >
           {stat.count}×

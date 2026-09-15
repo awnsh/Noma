@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useFlowStore } from '../stores/flowStore'
 import { KeyboardLayout } from '../components/KeyboardLayout'
@@ -101,7 +101,7 @@ export function VirtualKeyboard() {
         <KeyboardLayout flashingKeys={flashingKeys} />
 
         {/* Display strip */}
-        <div className="mb-6 rounded-xl border border-white/10 bg-black px-4 py-3 font-mono text-sm text-accent">
+        <div className="mb-6 rounded-xl border border-black/10 bg-black px-4 py-3 font-mono text-sm text-accent">
           {statusDisplay}
         </div>
 
@@ -116,7 +116,7 @@ export function VirtualKeyboard() {
             className={`rounded-full border px-3 py-1 text-[11px] ${
               isEditMode
                 ? 'border-accent-muted bg-accent/10 text-accent'
-                : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'
+                : 'border-black/10 text-neutral-400 hover:border-black/30 hover:text-neutral-200'
             }`}
           >
             {isEditMode ? 'Done editing' : 'Edit Controls'}
@@ -138,7 +138,7 @@ export function VirtualKeyboard() {
         {/* Last device event + whether the action actually executed */}
         <div
           className={`mb-6 rounded-lg border px-3 py-2 text-xs transition-colors ${
-            flashEvent ? 'border-accent-muted text-accent' : 'border-white/5 text-neutral-600'
+            flashEvent ? 'border-accent-muted text-accent' : 'border-black/5 text-neutral-600'
           }`}
         >
           {lastEvent ? describeEvent(lastEvent) : 'No device events yet — press a control above.'}

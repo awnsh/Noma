@@ -1,4 +1,5 @@
 import type {
+  ControlUsageStat,
   DailyActivityCount,
   ShortcutUsageStat,
   WorkflowEvent,
@@ -100,6 +101,43 @@ export function getShortcutUsageStats(): ShortcutUsageStat[] {
     comboKeys: JSON.parse(row.combo_keys) as string[],
     applicationId: row.application_id,
     applicationName: row.application_name,
+    count: row.count,
+    firstUsed: row.first_used,
+    lastUsed: row.last_used
+  }))
+}
+
+interface ControlUsageRow {
+  control_id: string
+  count: number
+  first_used: number
+  last_used: number
+}
+
+/**
+ * Every control Noma has ever recorded a real press for, aggregated by
+ * `controlId` across all history — the Controls page's "Used N times" line.
+ * A control with no rows here simply hasn't been pressed yet (via
+ * `pressControl`/the virtual device — not the same as being newly created),
+ * which callers should treat as "0 uses," not missing data.
+ */
+export function getControlUsageStats(): ControlUsageStat[] {
+  const db = getDatabase()
+  const rows = db
+    .prepare(
+      `SELECT
+         control_id AS control_id,
+         COUNT(*) AS count,
+         MIN(timestamp) AS first_used,
+         MAX(timestamp) AS last_used
+       FROM workflow_events
+       WHERE event_type = 'controlActivation' AND control_id IS NOT NULL
+       GROUP BY control_id`
+    )
+    .all() as ControlUsageRow[]
+
+  return rows.map((row) => ({
+    controlId: row.control_id,
     count: row.count,
     firstUsed: row.first_used,
     lastUsed: row.last_used

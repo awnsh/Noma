@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { usePrivacyStore } from '../stores/privacyStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { useFlowStore } from '../stores/flowStore'
@@ -39,7 +39,7 @@ export function DataManagementPanel() {
   }
 
   return (
-    <section className="rounded-xl border border-white/10 bg-base-900 px-5 py-4">
+    <section className="rounded-xl border border-black/10 bg-base-900 px-5 py-4">
       <div className="text-xs uppercase tracking-widest text-neutral-500">Your Data</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
         Everything Flow has observed and suggested is stored locally, never sent anywhere. You can
@@ -121,7 +121,7 @@ function ActionButton({
       className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
         danger
           ? 'border-red-900/60 text-red-400 hover:border-red-700 hover:bg-red-950/40'
-          : 'border-white/10 text-neutral-300 hover:border-accent-muted hover:text-neutral-100'
+          : 'border-black/10 text-neutral-300 hover:border-accent-muted hover:text-neutral-100'
       }`}
     >
       {label}

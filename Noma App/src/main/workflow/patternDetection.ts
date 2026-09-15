@@ -22,6 +22,18 @@ import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types
  * just including 'appSwitch' events (see shared/types) alongside shortcuts,
  * so Flow can recognize the shape of a workflow across platforms, not only
  * the individual keystrokes within one.
+ *
+ * A fifth capability, `detectMultiStepWorkflows` — WORKFLOW LEARNING, Noma's
+ * core differentiator (see docs/product-audit.md) — generalizes
+ * `detectCrossAppWorkflows` from a fixed 2-step pair to an arbitrary-length
+ * (3-6 step) chain, matched *approximately* rather than exactly: two
+ * occurrences count as "the same workflow" even if one has an extra step in
+ * the middle that the other doesn't (captureFilter.ts never records raw
+ * typed content, so a real repeat that differs only by what the user typed
+ * looks, to this detector, like an occasional extra/missing step around the
+ * same anchors). This is what turns "screenshot -> switch to Claude Code ->
+ * paste -> switch back," repeated, into one recognized, nameable workflow
+ * instead of three separate two-step coincidences.
  */
 
 // Exported so the suggestion engine's confidence math (src/main/ai/
@@ -96,12 +108,50 @@ function countSpacedOccurrences(timestamps: number[]): number {
 }
 
 export function detectPatterns(events: WorkflowEvent[]): DetectedPattern[] {
+  const multiStepWorkflows = detectMultiStepWorkflows(events)
+  const crossAppWorkflows = detectCrossAppWorkflows(events).filter(
+    (pattern) => !isSubsumedByMultiStepWorkflow(pattern, multiStepWorkflows)
+  )
+
   return [
     ...detectRepeatedShortcuts(events),
     ...detectFrequentControls(events),
     ...detectRepeatedSequences(events),
-    ...detectCrossAppWorkflows(events)
+    ...crossAppWorkflows,
+    ...multiStepWorkflows
   ]
+}
+
+/**
+ * A `crossAppWorkflow` pair is exactly the shape `detectMultiStepWorkflows`
+ * generalizes — so whenever a richer, already-threshold-passing multi-step
+ * chain fully contains a 2-step pair (as a contiguous run of the same step
+ * signatures), the pair is the same underlying behavior seen through a
+ * narrower lens, not a second, independent thing the user did. Reported on
+ * its own it would just be redundant noise next to the fuller suggestion
+ * (STEP 4: fewer, higher-quality suggestions) — so it's dropped here, in
+ * favor of the multi-step suggestion, rather than shown twice.
+ */
+function isSubsumedByMultiStepWorkflow(pair: DetectedPattern, multiStepWorkflows: DetectedPattern[]): boolean {
+  if (pair.kind !== 'crossAppWorkflow') return false
+  const pairSignature = pair.steps.map(stepSignature)
+  return multiStepWorkflows.some((workflow) => {
+    if (workflow.kind !== 'multiStepWorkflow') return false
+    return isContiguousSubarray(pairSignature, workflow.steps.map(stepSignature))
+  })
+}
+
+/** Whether every element of `needle`, in order, appears as a contiguous run
+ *  somewhere inside `haystack`. Pure array containment — used both to drop
+ *  a `crossAppWorkflow` pair already covered by a fuller multi-step chain
+ *  (above) and, inside `detectMultiStepWorkflows` itself, to drop a shorter
+ *  chain that's already covered by a longer one. */
+function isContiguousSubarray(needle: string[], haystack: string[]): boolean {
+  if (needle.length === 0 || needle.length > haystack.length) return false
+  for (let start = 0; start + needle.length <= haystack.length; start++) {
+    if (needle.every((value, offset) => haystack[start + offset] === value)) return true
+  }
+  return false
 }
 
 function detectRepeatedShortcuts(events: WorkflowEvent[]): DetectedPattern[] {
@@ -245,8 +295,30 @@ function stepSignature(step: WorkflowStep): string {
     : `key:${step.applicationId ?? 'unknown'}:${step.comboKeys.join('+')}`
 }
 
-function describeStep(step: WorkflowStep): string {
-  return step.type === 'appSwitch' ? (step.applicationId ?? 'another app') : step.comboKeys.join('+')
+/**
+ * A handful of shortcuts are meaningful enough, on sight, that showing the
+ * raw combo instead of what it *does* would undersell what Flow noticed —
+ * "Screenshot -> Claude Code -> Paste" reads as a real workflow; "Meta+
+ * Shift+S -> Claude Code -> Control+V" reads as a debug log. Deliberately
+ * small and Windows-specific (the same closed-vocabulary spirit as
+ * keyNames.ts): only combos common enough to name confidently, everything
+ * else still falls back to the raw combo, never a guess.
+ */
+const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
+  'Meta+Shift+S': 'Screenshot',
+  'Control+V': 'Paste',
+  'Control+C': 'Copy',
+  'Control+X': 'Cut'
+}
+
+/** e.g. ['Control', 'V'] -> "Paste", ['Control', 'K'] -> "Control+K". */
+export function shortcutDisplayLabel(comboKeys: string[]): string {
+  const combo = comboKeys.join('+')
+  return SHORTCUT_DISPLAY_LABELS[combo] ?? combo
+}
+
+export function describeStep(step: WorkflowStep): string {
+  return step.type === 'appSwitch' ? (step.applicationId ?? 'another app') : shortcutDisplayLabel(step.comboKeys)
 }
 
 /**
@@ -389,4 +461,246 @@ function findClosingStep(occurrences: WorkflowOccurrence[], steps: WorkflowStepE
     if (!best || candidate.count > best.count) best = candidate
   }
   return best && best.count >= CLOSING_STEP_MIN_RUNS ? best.step : undefined
+}
+
+// ---------------------------------------------------------------------------
+// WORKFLOW LEARNING — multi-step, approximately-matched workflow detection.
+// ---------------------------------------------------------------------------
+
+export const MULTI_STEP_WORKFLOW_THRESHOLD = 3
+const MULTI_STEP_MIN_LENGTH = 3
+const MULTI_STEP_MAX_LENGTH = 6
+/** A window needs at least this fraction of *distinct* steps to count as
+ *  informative — rejects degenerate "A, B, A, B" filler that would
+ *  otherwise pad out a window's length without saying anything new (STEP 4:
+ *  "avoid extremely broad patterns such as keypress -> keypress -> keypress"). */
+const MIN_INFORMATIVENESS = 0.5
+/**
+ * Two step-chains count as "the same workflow" once their longest-common-
+ * subsequence ratio clears this bar AND they start and end on the same
+ * step — the anchor requirement keeps matching semantically meaningful
+ * (a chain that starts or ends somewhere completely different is a
+ * different workflow, however similar its middle), while the ratio itself
+ * is what lets one occurrence with an extra/missing middle step (e.g. an
+ * uncaptured keystroke — see captureFilter.ts) still match another that
+ * doesn't have it.
+ */
+const WORKFLOW_SIMILARITY_THRESHOLD = 0.75
+
+interface WorkflowWindow {
+  steps: WorkflowStep[]
+  signatures: string[]
+  /** Timestamp of the window's last step — this occurrence's marker for
+   *  countSpacedOccurrences, same convention every other detector uses. */
+  completedAt: number
+}
+
+/** Every contiguous, time-continuous, sufficiently-informative window of
+ *  length 3-6 steps in the given step stream — the raw candidates
+ *  `clusterWorkflowWindows` groups into recurring workflows. */
+function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
+  const windows: WorkflowWindow[] = []
+
+  for (let length = MULTI_STEP_MIN_LENGTH; length <= MULTI_STEP_MAX_LENGTH; length++) {
+    for (let start = 0; start + length <= steps.length; start++) {
+      const slice = steps.slice(start, start + length)
+
+      let continuous = true
+      for (let i = 1; i < slice.length; i++) {
+        if (slice[i].timestamp - slice[i - 1].timestamp > WORKFLOW_STEP_WINDOW_MS) {
+          continuous = false
+          break
+        }
+      }
+      if (!continuous) continue
+
+      const signatures = slice.map((s) => stepSignature(s.step))
+
+      let hasAdjacentDuplicate = false
+      for (let i = 1; i < signatures.length; i++) {
+        if (signatures[i] === signatures[i - 1]) {
+          hasAdjacentDuplicate = true
+          break
+        }
+      }
+      if (hasAdjacentDuplicate) continue
+
+      const distinctCount = new Set(signatures).size
+      if (distinctCount / signatures.length < MIN_INFORMATIVENESS) continue
+
+      // Require either a genuine app switch (this is the "workflow" case —
+      // moving between contexts) or enough distinct steps to be a rich,
+      // clearly-not-random same-app chain — mirrors the same reasoning
+      // detectCrossAppWorkflows uses for its own 2-step case, generalized.
+      const hasAppSwitch = slice.some((s) => s.step.type === 'appSwitch')
+      if (!hasAppSwitch && distinctCount < 3) continue
+
+      windows.push({
+        steps: slice.map((s) => s.step),
+        signatures,
+        completedAt: slice[slice.length - 1].timestamp
+      })
+    }
+  }
+
+  return windows
+}
+
+function lcsLength(a: string[], b: string[]): number {
+  const table: number[][] = Array.from({ length: a.length + 1 }, () => new Array<number>(b.length + 1).fill(0))
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      table[i][j] = a[i - 1] === b[j - 1] ? table[i - 1][j - 1] + 1 : Math.max(table[i - 1][j], table[i][j - 1])
+    }
+  }
+  return table[a.length][b.length]
+}
+
+/** 0 if the two chains don't start and end the same way; otherwise the
+ *  Dice/LCS similarity ratio between them (1.0 for an exact match). */
+function workflowSimilarity(a: string[], b: string[]): number {
+  if (a.length === 0 || b.length === 0) return 0
+  if (a[0] !== b[0] || a[a.length - 1] !== b[b.length - 1]) return 0
+  return (2 * lcsLength(a, b)) / (a.length + b.length)
+}
+
+interface WorkflowCluster {
+  representative: WorkflowWindow
+  occurrences: WorkflowWindow[]
+}
+
+/**
+ * Greedily groups windows into clusters of "the same workflow, approximately
+ * matched" — see WORKFLOW_SIMILARITY_THRESHOLD. Longer windows are
+ * considered first and become representatives before shorter ones, so a
+ * fuller chain anchors its cluster rather than a partial one; a window that
+ * doesn't clear the similarity bar against any existing representative
+ * starts a new cluster of its own.
+ */
+function clusterWorkflowWindows(windows: WorkflowWindow[]): WorkflowCluster[] {
+  const clusters: WorkflowCluster[] = []
+  const sorted = [...windows].sort(
+    (a, b) => b.signatures.length - a.signatures.length || a.completedAt - b.completedAt
+  )
+
+  for (const window of sorted) {
+    let best: WorkflowCluster | undefined
+    let bestScore = 0
+    for (const cluster of clusters) {
+      const score = workflowSimilarity(cluster.representative.signatures, window.signatures)
+      if (score > bestScore) {
+        bestScore = score
+        best = cluster
+      }
+    }
+
+    if (best && bestScore >= WORKFLOW_SIMILARITY_THRESHOLD) {
+      best.occurrences.push(window)
+    } else {
+      clusters.push({ representative: window, occurrences: [window] })
+    }
+  }
+
+  return clusters
+}
+
+/**
+ * The cluster's most common exact shape (by occurrence count, first-seen to
+ * break ties) — NOT necessarily the window that happened to seed the
+ * cluster during greedy grouping (clusterWorkflowWindows may seed a cluster
+ * with a longer, rarer, only-approximately-matching window before the more
+ * common exact shape is even seen). Recomputing this after clustering is
+ * what makes `consistency` mean what it says: "how many occurrences matched
+ * the chain's *typical* shape," not "how many matched whatever the first
+ * window happened to look like."
+ */
+function representativeWindow(occurrences: WorkflowWindow[]): WorkflowWindow {
+  const buckets = new Map<string, { window: WorkflowWindow; count: number }>()
+  for (const occurrence of occurrences) {
+    const key = occurrence.signatures.join('|')
+    const bucket = buckets.get(key)
+    if (bucket) bucket.count += 1
+    else buckets.set(key, { window: occurrence, count: 1 })
+  }
+
+  let best: { window: WorkflowWindow; count: number } | undefined
+  for (const bucket of buckets.values()) {
+    if (!best || bucket.count > best.count) best = bucket
+  }
+  return best!.window
+}
+
+/**
+ * Recognizes recurring multi-step (3-6 step) chains — WORKFLOW LEARNING,
+ * Noma's core differentiator: "screenshot -> switch to Claude Code -> paste
+ * -> switch back," repeated, becomes one recognized workflow, not isolated
+ * per-pair noise. Reuses the same time-continuity window
+ * (WORKFLOW_STEP_WINDOW_MS) and spam guard (countSpacedOccurrences) every
+ * other sequence-shaped detector in this file already uses; what's new is
+ * approximate matching (clusterWorkflowWindows) so one occurrence with an
+ * extra or missing middle step still counts as the same workflow, and a
+ * containment pass (isContiguousSubarray) that keeps only the longest,
+ * most-informative chain when several overlapping window lengths all
+ * describe the same underlying repetition.
+ */
+export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
+  const steps = buildWorkflowSteps(events)
+  const windows = buildWorkflowWindows(steps)
+  const clusters = clusterWorkflowWindows(windows)
+
+  const candidates: Array<{
+    representative: WorkflowWindow
+    count: number
+    consistency: number
+  }> = []
+
+  for (const cluster of clusters) {
+    const count = countSpacedOccurrences(cluster.occurrences.map((occurrence) => occurrence.completedAt))
+    if (count < MULTI_STEP_WORKFLOW_THRESHOLD) continue
+
+    const representative = representativeWindow(cluster.occurrences)
+    const exactMatches = cluster.occurrences.filter(
+      (occurrence) => occurrence.signatures.join('|') === representative.signatures.join('|')
+    ).length
+    const consistency = exactMatches / cluster.occurrences.length
+
+    candidates.push({ representative, count, consistency })
+  }
+
+  // Keep only the longest chain among any that are contiguous subsets of a
+  // longer surviving one — the "screenshot -> Claude Code -> paste" chain
+  // should produce exactly one suggestion, not also a redundant "screenshot
+  // -> Claude Code" one for the same underlying behavior.
+  const sortedByLength = [...candidates].sort(
+    (a, b) => b.representative.signatures.length - a.representative.signatures.length
+  )
+  const kept: typeof candidates = []
+  for (const candidate of sortedByLength) {
+    const subsumed = kept.some((longer) =>
+      isContiguousSubarray(candidate.representative.signatures, longer.representative.signatures)
+    )
+    if (!subsumed) kept.push(candidate)
+  }
+
+  const patterns: DetectedPattern[] = []
+  for (const candidate of kept) {
+    const { representative, count, consistency } = candidate
+    const applicationIds = [...new Set(representative.steps.map((step) => step.applicationId))]
+    const contextApplicationId = representative.steps[0]?.applicationId ?? null
+    const chain = representative.steps.map(describeStep).join(' → ')
+
+    patterns.push({
+      id: `multistep:${representative.signatures.join('->')}`,
+      kind: 'multiStepWorkflow',
+      applicationId: contextApplicationId,
+      applicationIds,
+      contextApplicationId,
+      steps: representative.steps,
+      description: `${chain} repeated ${count} times`,
+      count,
+      consistency
+    })
+  }
+
+  return patterns
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import type { Module, ModuleFunctionConfig } from '@shared/types'
 import { ModuleConfigModal, MODULE_FUNCTIONS_BY_TYPE } from './ModuleConfigModal'
 
@@ -50,7 +50,7 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
   }
 
   return (
-    <div className="w-44 rounded-xl border border-white/10 bg-base-900 px-4 py-3">
+    <div className="w-44 rounded-xl border border-black/10 bg-base-900 px-4 py-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg text-neutral-400">{glyph}</span>
@@ -67,14 +67,14 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
           type="button"
           onClick={() => onRemove(module.id)}
           aria-label={`Remove ${module.name}`}
-          className="rounded-full border border-white/10 px-1.5 text-xs text-neutral-500 hover:border-white/30 hover:text-neutral-300"
+          className="rounded-full border border-black/10 px-1.5 text-xs text-neutral-500 hover:border-black/30 hover:text-neutral-300"
         >
           ×
         </button>
       </div>
 
       {functions ? (
-        <div className="mt-3 space-y-1.5 border-t border-white/5 pt-2.5">
+        <div className="mt-3 space-y-1.5 border-t border-black/5 pt-2.5">
           {functions.map((fn) => {
             const entry = configuration[fn.key]
             return (
@@ -107,7 +107,7 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
           <button
             type="button"
             onClick={() => setIsConfiguring(true)}
-            className="mt-1 w-full rounded-md border border-dashed border-white/10 py-1 text-[10px] uppercase tracking-widest text-neutral-500 hover:border-accent-muted hover:text-accent"
+            className="mt-1 w-full rounded-md border border-dashed border-black/10 py-1 text-[10px] uppercase tracking-widest text-neutral-500 hover:border-accent-muted hover:text-accent"
           >
             Configure
           </button>

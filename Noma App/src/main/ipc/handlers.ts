@@ -27,6 +27,7 @@ import {
   saveHoloCalibration
 } from '../database/repositories/holoRepository'
 import {
+  getControlUsageStats,
   getDailyActivityCounts,
   getShortcutUsageStats,
   getWorkflowEventsSince
@@ -63,7 +64,12 @@ import {
   executeMacroSteps,
   isKeystrokeExecutionEnabled
 } from '../actions/actionExecutor'
-import { DEMO_APPLICATIONS, resetDemoData, simulateDemoWorkflow } from '../demo/demoService'
+import {
+  DEMO_APPLICATIONS,
+  resetDemoData,
+  simulateDemoMultiStepWorkflow,
+  simulateDemoWorkflow
+} from '../demo/demoService'
 import type { DemoApplicationId } from '../demo/demoService'
 import { clearLearningData, deleteAllData } from '../privacy/dataManagement'
 import { getOnboardingState, saveOnboardingState } from '../database/repositories/onboardingRepository'
@@ -233,6 +239,8 @@ export function registerIpcHandlers(
 
   ipcMain.handle(IPC_CHANNELS.GET_SHORTCUT_USAGE_STATS, () => getShortcutUsageStats())
 
+  ipcMain.handle(IPC_CHANNELS.GET_CONTROL_USAGE_STATS, () => getControlUsageStats())
+
   ipcMain.handle(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, (_event, days: number) =>
     getDailyActivityCounts(days)
   )
@@ -273,6 +281,11 @@ export function registerIpcHandlers(
 
   ipcMain.handle(IPC_CHANNELS.DEMO_SIMULATE_WORKFLOW, async () => {
     simulateDemoWorkflow()
+    await triggerSuggestionRefresh()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DEMO_SIMULATE_MULTI_STEP_WORKFLOW, async () => {
+    simulateDemoMultiStepWorkflow()
     await triggerSuggestionRefresh()
   })
 

@@ -1,5 +1,11 @@
 import type { DetectedPattern, Suggestion, WorkflowStep } from '@shared/types'
-import { CROSS_APP_WORKFLOW_THRESHOLD, REPEATED_SHORTCUT_THRESHOLD, SEQUENCE_THRESHOLD } from '../workflow/patternDetection'
+import {
+  CROSS_APP_WORKFLOW_THRESHOLD,
+  MULTI_STEP_WORKFLOW_THRESHOLD,
+  REPEATED_SHORTCUT_THRESHOLD,
+  SEQUENCE_THRESHOLD,
+  shortcutDisplayLabel
+} from '../workflow/patternDetection'
 
 /**
  * Turns one detected pattern into one suggestion — the deterministic
@@ -96,7 +102,7 @@ export function suggestionForPattern(
         // No `applicationId` (and so no `action`) on purpose: this pattern
         // spans multiple apps, and there's no single profile to assign it
         // to or executable macro step for "switch application" (see
-        // detectCrossAppWorkflows' doc comment). SuggestionCard already has
+        // detectCrossAppWorkflows' doc comment). NomaMoment already has
         // an informational-only accept path for exactly this case (no
         // profile to pick a slot from) — reused here rather than building a
         // second one.
@@ -106,6 +112,39 @@ export function suggestionForPattern(
         status: 'pending',
         createdAt: now,
         applicationId: null,
+        chainApplicationNames,
+        confidenceBreakdown: {
+          occurrenceCount: pattern.count,
+          threshold,
+          baseConfidence: base,
+          historyBias: confidenceBias,
+          priorAccepted: priorHistory.accepted,
+          priorRejected: priorHistory.rejected
+        }
+      }
+    }
+
+    case 'multiStepWorkflow': {
+      const threshold = MULTI_STEP_WORKFLOW_THRESHOLD
+      // Consistency (how many occurrences matched the chain's typical shape
+      // exactly, vs. only approximately) tempers confidence without
+      // dominating it — a chain seen 8 times at 75% consistency is still a
+      // real workflow, just slightly less certain than one seen identically
+      // every time.
+      const base = baseConfidence(pattern.count, threshold) * (0.85 + 0.15 * pattern.consistency)
+      const chain = pattern.steps.map((step) => describeWorkflowStep(step, chainApplicationNames)).join(' → ')
+      return {
+        id: `suggestion:${pattern.id}`,
+        title: 'Noma noticed a workflow',
+        explanation: `You frequently do this: ${chain}. Detected ${pattern.count} times recently. Turn it into one action?`,
+        confidence: clampConfidence(base + confidenceBias),
+        status: 'pending',
+        createdAt: now,
+        // Offered alongside the other controls for the app the chain starts
+        // in — see the field's own doc comment in shared/types.
+        applicationId: pattern.contextApplicationId,
+        action: { kind: 'createWorkflowMacroAndAssignToControl', steps: pattern.steps },
+        chainApplicationNames,
         confidenceBreakdown: {
           occurrenceCount: pattern.count,
           threshold,
@@ -127,9 +166,11 @@ export function suggestionForPattern(
 
 /** Resolves one step to display text, preferring the caller-resolved name
  *  for an appSwitch step and falling back to the raw id — same fallback
- *  convention as appSuffix below, just per-step instead of per-suggestion. */
+ *  convention as appSuffix below, just per-step instead of per-suggestion.
+ *  A shortcut step prefers its human label ("Paste") over the raw combo —
+ *  see shortcutDisplayLabel. */
 function describeWorkflowStep(step: WorkflowStep, names: Record<string, string | null>): string {
-  if (step.type === 'shortcut') return step.comboKeys.join('+')
+  if (step.type === 'shortcut') return shortcutDisplayLabel(step.comboKeys)
   if (!step.applicationId) return 'another app'
   return names[step.applicationId] ?? step.applicationId
 }

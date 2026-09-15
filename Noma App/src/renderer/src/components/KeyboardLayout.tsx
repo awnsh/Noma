@@ -1,4 +1,4 @@
-interface LayoutKey {
+﻿interface LayoutKey {
   /** Canonical key name (matches src/main/workflow/keyNames.ts /
    *  shared/constants/domKeyCodes.ts) — what a captured combo's entries
    *  actually look like, so this is exactly what a flash has to match
@@ -72,7 +72,7 @@ function Key({ layoutKey, isFlashing }: { layoutKey: LayoutKey; isFlashing: bool
       className={`flex h-7 shrink-0 items-center justify-center rounded-md border text-[11px] transition-colors duration-150 ${layoutKey.width ?? 'w-7'} ${
         isFlashing
           ? 'border-accent bg-accent/20 text-accent'
-          : 'border-white/5 bg-base-900 text-neutral-600'
+          : 'border-black/5 bg-base-900 text-neutral-600'
       }`}
     >
       {layoutKey.label ?? layoutKey.name}
@@ -100,7 +100,7 @@ interface KeyboardLayoutProps {
  */
 export function KeyboardLayout({ flashingKeys = new Set() }: KeyboardLayoutProps) {
   return (
-    <div className="mb-6 select-none rounded-2xl border border-white/5 bg-base-950/60 p-4">
+    <div className="mb-6 select-none rounded-2xl border border-black/5 bg-base-950/60 p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[9px] uppercase tracking-widest text-neutral-700">Standard Keys</div>
         <div className="text-[9px] text-neutral-700">

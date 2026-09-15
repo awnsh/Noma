@@ -18,6 +18,7 @@ interface SuggestionRow {
   action_kind: string | null
   action_payload: string | null
   confidence_breakdown: string | null
+  chain_application_names: string | null
 }
 
 const SUGGESTION_SELECT = `
@@ -46,6 +47,9 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
         : undefined,
     confidenceBreakdown: row.confidence_breakdown
       ? (JSON.parse(row.confidence_breakdown) as ConfidenceBreakdown)
+      : undefined,
+    chainApplicationNames: row.chain_application_names
+      ? (JSON.parse(row.chain_application_names) as Record<string, string | null>)
       : undefined
   }
 }
@@ -84,10 +88,10 @@ export function insertSuggestionIfNew(suggestion: Suggestion): void {
   db.prepare(
     `INSERT INTO suggestions
        (id, title, explanation, confidence, status, created_at, resolved_at,
-        application_id, action_kind, action_payload, confidence_breakdown)
+        application_id, action_kind, action_payload, confidence_breakdown, chain_application_names)
      VALUES
        (@id, @title, @explanation, @confidence, @status, @createdAt, @resolvedAt,
-        @applicationId, @actionKind, @actionPayload, @confidenceBreakdown)
+        @applicationId, @actionKind, @actionPayload, @confidenceBreakdown, @chainApplicationNames)
      ON CONFLICT(id) DO NOTHING`
   ).run({
     id: suggestion.id,
@@ -102,6 +106,9 @@ export function insertSuggestionIfNew(suggestion: Suggestion): void {
     actionPayload: suggestion.action ? JSON.stringify(suggestion.action) : null,
     confidenceBreakdown: suggestion.confidenceBreakdown
       ? JSON.stringify(suggestion.confidenceBreakdown)
+      : null,
+    chainApplicationNames: suggestion.chainApplicationNames
+      ? JSON.stringify(suggestion.chainApplicationNames)
       : null
   })
 }
@@ -131,6 +138,8 @@ function idPrefixForKind(kind: PatternKind): string {
       return 'suggestion:control:'
     case 'crossAppWorkflow':
       return 'suggestion:workflow:'
+    case 'multiStepWorkflow':
+      return 'suggestion:multistep:'
   }
 }
 

@@ -54,6 +54,26 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
     expect(pending.applicationName).toBe('Visual Studio Code')
   })
 
+  it('round-trips chainApplicationNames through insert -> read', () => {
+    insertSuggestionIfNew(
+      makeSuggestion({
+        id: 'suggestion:multistep:x',
+        chainApplicationNames: { code: 'Visual Studio Code', claude: 'Claude Code' }
+      })
+    )
+    const [pending] = getPendingSuggestions()
+    expect(pending.chainApplicationNames).toEqual({
+      code: 'Visual Studio Code',
+      claude: 'Claude Code'
+    })
+  })
+
+  it('leaves chainApplicationNames undefined when the suggestion never had one', () => {
+    insertSuggestionIfNew(makeSuggestion())
+    const [pending] = getPendingSuggestions()
+    expect(pending.chainApplicationNames).toBeUndefined()
+  })
+
   it('leaves applicationName null when the application id has no matching row', () => {
     insertSuggestionIfNew(makeSuggestion())
     const [pending] = getPendingSuggestions()

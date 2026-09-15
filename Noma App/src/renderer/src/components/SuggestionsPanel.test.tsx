@@ -52,28 +52,39 @@ describe('SuggestionsPanel', () => {
 
     render(<SuggestionsPanel />)
 
-    expect(await screen.findByText('Add Command Palette to a control')).toBeInTheDocument()
+    // The raw, configuration-flavored `title` field is no longer shown —
+    // NomaMoment replaces it with human framing (see NomaMoment.test.tsx);
+    // the suggestion's own explanation text is still real, still rendered.
+    expect(await screen.findByText(PENDING_SUGGESTION.explanation)).toBeInTheDocument()
     expect(screen.queryByText(/Noma hasn.t noticed a pattern yet\./)).not.toBeInTheDocument()
   })
 
-  it('shows which application a suggestion came from when the card carries one', async () => {
-    window.flow = mockFlow({
-      getSuggestions: vi
-        .fn()
-        .mockResolvedValue([{ ...PENDING_SUGGESTION, applicationName: 'Visual Studio Code' }])
-    })
+  it("folds which application a suggestion came from into its sentence when the card carries a real count", async () => {
+    const withCount: Suggestion = {
+      ...PENDING_SUGGESTION,
+      applicationName: 'Visual Studio Code',
+      confidenceBreakdown: {
+        occurrenceCount: 12,
+        threshold: 5,
+        baseConfidence: 0.85,
+        historyBias: 0,
+        priorAccepted: 0,
+        priorRejected: 0
+      }
+    }
+    window.flow = mockFlow({ getSuggestions: vi.fn().mockResolvedValue([withCount]) })
 
     render(<SuggestionsPanel />)
 
-    expect(await screen.findByText('Visual Studio Code')).toBeInTheDocument()
+    expect(await screen.findByText("You've repeated this workflow 12 times in Visual Studio Code.")).toBeInTheDocument()
   })
 
-  it('renders no app tag when a suggestion has no applicationName (e.g. a pre-existing row)', async () => {
+  it('falls back to the raw explanation (no app name) for a suggestion with no real count', async () => {
     window.flow = mockFlow({ getSuggestions: vi.fn().mockResolvedValue([PENDING_SUGGESTION]) })
 
     render(<SuggestionsPanel />)
 
-    await screen.findByText('Add Command Palette to a control')
+    await screen.findByText(PENDING_SUGGESTION.explanation)
     expect(screen.queryByText('Visual Studio Code')).not.toBeInTheDocument()
   })
 })

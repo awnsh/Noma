@@ -1,39 +1,30 @@
 /**
- * Shared "material" class strings for the app's glass redesign
- * (2026-08-31 — see the design contract in src/renderer/index.html).
- * Centralized so the handful of surfaces that share a material (modal
- * scrims/panels today) don't each redefine slightly different shadow/
- * gradient values by hand.
+ * Shared surface class strings (v2, light-first — 2026-09-15). Deliberately
+ * restrained: a thin border plus a very small, low-opacity ambient shadow,
+ * never a glass gradient sheen, never a colored glow. "Premium" here means
+ * everything reads as intentional at a glance, not that every surface is
+ * elevated — most of the app should feel like one calm canvas
+ * (`bg-base-950`) with occasional, genuinely-necessary white cards on top.
  */
 
-/** The scrim behind every modal — a real, visible blur now (there's
- *  always real page content behind a modal to blur), not a flat
- *  black wash. */
-export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'
+/** The scrim behind a modal — a soft, mostly-transparent wash over real
+ *  page content, not a heavy black-out. */
+export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-black/20 p-4 backdrop-blur-[2px]'
 
-/** The modal panel itself: a soft gradient sheen, a crisp inset top
- *  highlight (the "beveled glass edge"), and a real offset+blur ambient
- *  shadow for elevation — the same recipe AppShell's rail uses, sized up
- *  for a larger surface. Callers still supply their own `max-w-*`/`p-*`. */
-export const GLASS_PANEL =
-  'rounded-3xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-base-900 bg-base-900 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+/** A modal panel: white, a thin neutral border, a small close shadow.
+ *  Callers still supply their own `max-w-*`/`p-*`. */
+export const GLASS_PANEL = 'rounded-2xl border border-base-700 bg-base-900 shadow-[0_12px_28px_-16px_rgba(23,23,25,0.18)]'
 
-/** A lighter-weight version of GLASS_PANEL for inline cards (Dashboard's
- *  Flow Status card, etc.) rather than a full modal — same material
- *  language, smaller shadow spread since it's a smaller surface. */
-export const GLASS_CARD =
-  'rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.05] to-transparent bg-base-900 shadow-[0_8px_24px_-10px_rgba(0,0,0,0.55),inset_0_1px_0_0_rgba(255,255,255,0.06)]'
+/** The same recipe, for an inline card rather than a full modal — one
+ *  shade lighter a shadow, otherwise identical. This is the *only* card
+ *  treatment in the app; don't invent a second one per page. */
+export const GLASS_CARD = 'rounded-2xl border border-base-700 bg-base-900 shadow-[0_6px_16px_-10px_rgba(23,23,25,0.14)]'
 
 /**
  * The physical "keycap" material shared by ControlTile (read-only) and
- * VirtualControlButton (pressable) — this is the single most literal
- * "should look like real hardware" surface in the app. Three layers in
- * one box-shadow (Tailwind's shadow-* utilities can't be combined, they
- * all write the same property): an inset dark shadow for the recessed
- * key face, an inset top highlight for the bevel catching light, and a
- * real outer ambient shadow so the whole cap still reads as sitting
- * above the page — the exact combination real keycap product photography
- * uses, not just a flat bordered rectangle.
+ * VirtualControlButton (pressable) — a control should read as a small,
+ * tactile object, not a dashboard tile. A single soft ambient shadow (no
+ * inset highlight theatrics) is enough on a light surface to lift it
+ * slightly off the page.
  */
-export const KEYCAP_SHADOW =
-  'shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.45),inset_0_1px_0_0_rgba(255,255,255,0.05),0_10px_20px_-10px_rgba(0,0,0,0.55)]'
+export const KEYCAP_SHADOW = 'shadow-[0_2px_8px_-4px_rgba(23,23,25,0.16)]'

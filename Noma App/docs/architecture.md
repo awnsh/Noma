@@ -76,7 +76,8 @@ OBSERVE                  CaptureService (workflow_events, gated by the
    ↓
 IDENTIFY PATTERN          patternDetection.ts — pure, deterministic,
                           no LLM (repeated shortcuts / sequences / frequent
-                          controls)
+                          controls / cross-app pairs / learned multi-step
+                          workflows — see "WORKFLOW LEARNING" below)
    ↓
 GENERATE SUGGESTION       AIProvider.generateSuggestions() — LocalRuleBasedProvider
                           today; an LLM-backed provider could implement the
@@ -101,6 +102,73 @@ IMPROVE FUTURE SUGGESTIONS  fed back into LocalRuleBasedProvider via
 place that walks OBSERVE → GENERATE SUGGESTION; it's called after every
 captured event, and is idempotent by construction (safe to call as often as
 useful).
+
+## WORKFLOW LEARNING — Noma's core differentiator
+
+Everything above this line already existed before this feature: capture,
+storage, pattern detection, suggestions, accept/reject, real execution. This
+section is what makes Noma "learns how you actually work and builds your
+interface around you," not another Stream Deck — it *extends* that same
+pipeline, it doesn't sit beside it.
+
+**The gap this closes.** `detectRepeatedSequences` only ever sees two
+shortcuts inside one application. `detectCrossAppWorkflows` (added earlier)
+generalized that to a fixed 2-step pair that can include an app switch, but
+deliberately produces an *informational-only* suggestion — there was no safe
+executable step for "switch to this app," so there was nothing real to turn
+it into. Neither can represent "screenshot → switch to Claude Code → paste →
+switch back": that's 3-4 steps, crosses an app boundary, and (because
+`captureFilter.ts` never records raw typed content — see
+`docs/privacy-and-legal.md`) doesn't look *identical* every time a real user
+does it.
+
+**`detectMultiStepWorkflows`** (`patternDetection.ts`) closes this: a
+sliding-window search (3-6 steps) over the same already-captured
+`WorkflowEvent` stream every other detector reads, clustered with
+*approximate* matching (a longest-common-subsequence similarity ratio, gated
+on the chain starting and ending the same way) so one occurrence with an
+extra or missing middle step still counts as the same workflow. A
+containment pass keeps only the longest, most-informative chain when
+several overlapping window lengths describe the same underlying repetition,
+and `detectPatterns()` drops any `crossAppWorkflow` pair that's already
+fully covered by a richer multi-step chain — one high-quality suggestion,
+never several redundant ones for the same behavior.
+
+**`focusApplication`** (`ControlAction`/`MacroStep`, `shared/types`;
+resolved in `actions/processWindow.ts`, executed in `actions/actionExecutor.ts`)
+is the missing executable step: switches to an *already-running*
+application by id, via the exact same `SetForegroundWindow`-and-verify path
+`windowFocus.ts` already uses for shortcuts. Deliberately narrower than
+`launchApplication` (still unimplemented, see below) — it finds an existing
+window, it never starts a process. `processWindow.ts` resolves an
+application id to a window handle with a single validated, one-shot
+PowerShell query (same "no native module, no C++ toolchain" reasoning as
+`windowsAdapter.ts`'s polling watcher), and fails closed (never throws,
+never guesses) at every step: unknown application, not currently running, or
+focus not confirmed.
+
+**Accepting a suggestion** (`applications/suggestionResolution.ts`,
+`createWorkflowMacroAndAssignToControl`) converts the detected chain into a
+real `Macro`: shortcut steps pass through, an app-switch step becomes
+`focusApplication`, a trailing "...and switched back" tail is dropped (it's
+what the workflow *leads to*, not part of *doing* it — same rule
+`crossAppWorkflow`'s own closing step already follows), and a chain ending
+in a paste gets a synthesized submit keystroke appended. Nothing here is
+Claude-Code-specific: the same conversion works for any application pair the
+detector happens to notice, which is the point — Claude Code is the
+flagship demo, not a special case in the code.
+
+**The result is a real, reusable `Macro`**, assigned to a control through
+the exact same `assignSuggestionToControl` path every other suggestion kind
+uses, executable from the software interface today and, unchanged, from the
+virtual device and eventual physical hardware — pressing a control has never
+cared *why* a macro exists, only that it does.
+
+**Demo Mode** (`main/demo/demoService.ts`'s `simulateDemoMultiStepWorkflow`,
+`renderer/src/pages/Demo.tsx`'s `multiStep*` phases) plays the flagship story
+end to end — detect → suggest → accept → create action → assign to control →
+*execute* — deterministically, continuing straight from the existing
+Copy→Paste demo rather than replacing it.
 
 ## Real execution
 
@@ -201,7 +269,10 @@ except `closeWindow` (below) are refused
 (`{ ok: false, reason: '... not implemented yet' }`) — there's no stored
 executable-path registry yet to launch an app by id, and no other
 `flowAction` has been given concrete semantics. Both are explicit, visible
-failures, not silent no-ops.
+failures, not silent no-ops. `focusApplication` — added for WORKFLOW
+LEARNING (above) — is the one exception: it genuinely executes, but only
+ever *finds and focuses* an already-running window, deliberately never
+spawning a process the way a real `launchApplication` eventually would.
 
 **Most window-closing keystrokes are never executed — this rule survives
 the redesign, with one deliberate exception below.** The `Ctrl+W` incident

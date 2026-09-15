@@ -4,9 +4,9 @@ import type { ConfidenceBreakdown } from '@shared/types'
  * Turns the real numbers behind a suggestion's confidence into a plain-
  * language sentence — never a fabricated "AI reasoning" narrative, since
  * there isn't one: this is exactly what suggestionRules.ts computed.
- * Shared by SuggestionCard's per-suggestion "Why?" toggle and the Flow
- * Learning Center's history list, so the two never explain the same
- * numbers differently.
+ * Shared by NomaMoment's per-suggestion "Why?" toggle and the Learning
+ * page's history list, so the two never explain the same numbers
+ * differently.
  */
 export function explainConfidence(breakdown: ConfidenceBreakdown): string {
   const basePercent = Math.round(breakdown.baseConfidence * 100)

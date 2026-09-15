@@ -133,6 +133,17 @@ Principle") is the constraint this document exists to satisfy.
   `shortcut` rows from that same table — no new capture surface, no new
   table, just a detector that no longer assumes every pattern lives inside
   one application.
+- **WORKFLOW LEARNING** (`detectMultiStepWorkflows`, same file) reads the
+  identical `{ applicationId, eventType, comboKeys, timestamp }` rows every
+  other detector reads — no new capture surface, no new event type, no
+  richer data than what `shouldCaptureKeyCombo` already let through. It
+  recognizes a *sequence* by comparing the same command-modifier-gated combo
+  strings and application ids the schema already stored; it has no way to
+  know, and never stores, what was in a screenshot, what was typed into the
+  application switched into, or the contents of a paste. This is the literal
+  meaning of "behavioral metadata, not surveillance": Noma can tell you
+  *that* you repeated screenshot → switch app → paste, and how many times,
+  never *what* was in any of those steps.
 
 ## Holo — microphone input (the free, no-hardware option)
 

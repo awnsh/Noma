@@ -27,26 +27,24 @@ export function HoloZoneTile({ zone, slot, control, isCalibrated, isFlashing }: 
   return (
     <div
       key={flashKey}
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border p-4 text-left transition-all duration-150 ${
-        isFlashing
-          ? 'border-flow/60 bg-flow/[0.08] shadow-[0_4px_20px_-4px_rgba(167,139,209,0.5)]'
-          : 'border-white/[0.08] bg-gradient-to-b from-base-800 to-base-900'
+      className={`flex aspect-[4/3] flex-col justify-between rounded-xl border p-4 text-left transition-all duration-150 ${
+        isFlashing ? 'border-accent/60 bg-accent/[0.1]' : 'border-holo-border bg-holo-surface'
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-widest text-neutral-600">
+        <span className="text-[10px] text-holo-muted">
           {HOLO_ZONE_LABELS[zone]} · Slot {slot}
         </span>
         <span
-          className={`h-1.5 w-1.5 rounded-full ${isCalibrated ? 'bg-accent' : 'bg-neutral-700'}`}
+          className={`h-1.5 w-1.5 rounded-full ${isCalibrated ? 'bg-accent' : 'bg-holo-border'}`}
           title={isCalibrated ? 'Calibrated' : 'Not calibrated'}
         />
       </div>
       <div>
-        <div className="text-lg font-medium text-neutral-100">
-          {control?.label ?? <span className="text-neutral-600">—</span>}
+        <div className="text-lg font-medium text-holo-text">
+          {control?.label ?? <span className="text-holo-muted">—</span>}
         </div>
-        {!isCalibrated && <div className="mt-0.5 text-[11px] text-neutral-600">Not calibrated yet</div>}
+        {!isCalibrated && <div className="mt-0.5 text-[11px] text-holo-muted">Not calibrated yet</div>}
       </div>
     </div>
   )

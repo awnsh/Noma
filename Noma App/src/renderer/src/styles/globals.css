@@ -10,7 +10,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
@@ -24,6 +24,21 @@ body {
   font-feature-settings:
     'cv11',
     'ss01';
+}
+
+/* A single, purposeful entrance — used only for the moment a workflow
+   actually becomes an action (NomaMoment's success state). Physical and
+   precise (a small rise + fade), never a flashy/AI-style reveal, and used
+   nowhere else in the app. */
+@keyframes noma-settle {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @layer base {

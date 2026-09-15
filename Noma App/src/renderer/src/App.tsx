@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
 import { AppShell } from './components/AppShell'
-import { Dashboard } from './pages/Dashboard'
+import { Home } from './pages/Home'
+import { Controls } from './pages/Controls'
 import { Demo } from './pages/Demo'
 import { VirtualKeyboard } from './pages/VirtualKeyboard'
 import { Holo } from './pages/Holo'
 import { MacroStudio } from './pages/MacroStudio'
-import { LearningCenter } from './pages/LearningCenter'
+import { Learning } from './pages/Learning'
+import { Activity } from './pages/Activity'
 import { UsageStats } from './pages/UsageStats'
 import { Profiles } from './pages/Profiles'
 import { Settings } from './pages/Settings'
@@ -40,16 +42,18 @@ function App() {
 
   return (
     <AppShell>
+      {activePage === 'home' && <Home />}
+      {activePage === 'controls' && <Controls />}
+      {activePage === 'learning' && <Learning />}
+      {activePage === 'activity' && <Activity />}
+      {activePage === 'settings' && <Settings />}
       {activePage === 'demo' && <Demo />}
       {activePage === 'virtual-keyboard' && <VirtualKeyboard />}
       {activePage === 'holo' && <Holo />}
       {activePage === 'macros' && <MacroStudio />}
-      {activePage === 'learning' && <LearningCenter />}
       {activePage === 'usage-stats' && <UsageStats />}
       {activePage === 'profiles' && <Profiles />}
-      {activePage === 'settings' && <Settings />}
       {activePage === 'developer' && <Developer />}
-      {activePage === 'dashboard' && <Dashboard />}
     </AppShell>
   )
 }

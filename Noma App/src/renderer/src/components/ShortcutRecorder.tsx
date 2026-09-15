@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { DOM_CODE_TO_KEY_NAME, DOM_MODIFIER_CODE_TO_NAME } from '@shared/constants/domKeyCodes'
 
 interface ShortcutRecorderProps {
@@ -52,7 +52,7 @@ export function ShortcutRecorder({ value, onChange }: ShortcutRecorderProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-200">
+      <div className="flex-1 rounded-md border border-black/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-200">
         {isRecording
           ? 'Press keys…'
           : value.length > 0
@@ -65,7 +65,7 @@ export function ShortcutRecorder({ value, onChange }: ShortcutRecorderProps) {
         className={`shrink-0 rounded-md border px-3 py-2 text-xs ${
           isRecording
             ? 'border-accent-muted text-accent'
-            : 'border-white/10 text-neutral-300 hover:border-accent-muted'
+            : 'border-black/10 text-neutral-300 hover:border-accent-muted'
         }`}
       >
         {isRecording ? 'Recording… (Esc to cancel)' : 'Record'}

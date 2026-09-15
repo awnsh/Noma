@@ -4,9 +4,11 @@ import type { ControlAction, MacroStep } from '@shared/types'
 import { keyCodeForName } from '../workflow/keyNames'
 import { markSelfInjected } from '../workflow/selfInjectedKeys'
 import { getMacroById } from '../database/repositories/macrosRepository'
+import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { focusWindowAndVerify } from './windowFocus'
 import { closeWindowGracefully } from './windowClose'
 import { executeSystemCommand, isKnownSystemCommand } from './systemCommands'
+import { findMainWindowHandleForProcess } from './processWindow'
 
 /**
  * The only implemented flowAction so far. Deliberately the *safe*
@@ -177,6 +179,34 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Switches to an already-running application by id — the `focusApplication`
+ * ControlAction/MacroStep (see its doc comment in shared/types). Resolves
+ * the id to a process name (applicationsRepository), finds that process's
+ * main window (processWindow.ts), and focuses it via the exact same
+ * SetForegroundWindow + verify path every other real focus already uses.
+ * Fails closed at every step — unknown application, not currently running,
+ * or focus not confirmed — never guesses and never launches anything.
+ */
+async function focusApplicationById(applicationId: string): Promise<ExecutionResult> {
+  const application = getApplicationById(applicationId)
+  if (!application) {
+    return { ok: false, reason: 'Unknown application — nothing to focus' }
+  }
+
+  const hwnd = await findMainWindowHandleForProcess(application.processName)
+  if (hwnd === null) {
+    return {
+      ok: false,
+      reason: `${application.name} isn't currently running — Noma focuses existing windows, it doesn't launch applications`
+    }
+  }
+
+  return focusWindowAndVerify(hwnd)
+    ? { ok: true }
+    : { ok: false, reason: `Could not confirm focus on ${application.name}` }
+}
+
+/**
  * Best-effort refocuses `targetHwnd` (if given) before sending, and
  * refuses to send at all if that focus can't be confirmed — see
  * windowFocus.ts for why a naive focus call isn't trustworthy on its own.
@@ -250,6 +280,12 @@ export async function executeMacroSteps(
       case 'launchApplication':
         return { ok: false, reason: 'launchApplication execution is not implemented yet' }
 
+      case 'focusApplication': {
+        const result = await focusApplicationById(step.applicationId)
+        if (!result.ok) return result
+        break
+      }
+
       case 'macro': {
         if (visitedMacroIds.has(step.macroId)) {
           return { ok: false, reason: 'Refused: macro references itself, directly or indirectly' }
@@ -273,8 +309,12 @@ export async function executeMacroSteps(
 
     // Real input pacing between steps — skipped for 'delay' (already
     // waited above) and 'flowAction' (WM_CLOSE isn't synthetic input, so
-    // there's nothing to give the OS time to process).
-    if (step.type !== 'flowAction') {
+    // there's nothing to give the OS time to process). A freshly-focused
+    // window gets longer: raising a window can involve an animation, and
+    // the next step is very often a paste that needs to land inside it.
+    if (step.type === 'focusApplication') {
+      await sleep(200)
+    } else if (step.type !== 'flowAction') {
       await sleep(80)
     }
   }
@@ -346,5 +386,8 @@ export async function executeControlAction(
 
     case 'launchApplication':
       return { ok: false, reason: `${action.type} execution is not implemented yet` }
+
+    case 'focusApplication':
+      return focusApplicationById(action.applicationId)
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+﻿import { useEffect } from 'react'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { ToggleSwitch } from './ToggleSwitch'
 
@@ -10,7 +10,7 @@ export function WorkflowMonitoringPanel() {
   }, [refresh])
 
   return (
-    <section className="mb-10 rounded-xl border border-white/10 bg-base-900 px-5 py-4">
+    <section className="mb-10 rounded-xl border border-black/10 bg-base-900 px-5 py-4">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-widest text-neutral-500">
@@ -29,7 +29,7 @@ export function WorkflowMonitoringPanel() {
       </div>
 
       {enabled && (
-        <div className="mt-4 border-t border-white/5 pt-4">
+        <div className="mt-4 border-t border-black/5 pt-4">
           <div className="mb-2 text-xs uppercase tracking-widest text-neutral-500">
             Patterns detected today
           </div>

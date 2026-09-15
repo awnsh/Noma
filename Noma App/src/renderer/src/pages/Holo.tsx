@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useHoloStore, type CalibrationProgress } from '../stores/holoStore'
 import { useFlowStore } from '../stores/flowStore'
 import { HoloZoneTile } from '../components/HoloZoneTile'
-import { GLASS_PANEL } from '../lib/surfaces'
 import { HOLO_ZONE_LABELS, HOLO_ZONE_ORDER } from '@shared/constants'
 import type { HoloZone } from '@shared/types'
 
@@ -79,24 +78,28 @@ export function Holo() {
     <div className="mx-auto max-w-3xl px-10 py-10">
       <div className="mb-8">
         <h1 className="font-display text-xl font-semibold text-neutral-100">Holo</h1>
-        <p className="mt-1 max-w-xl text-sm text-neutral-500">
+        <p className="mt-1 max-w-xl text-sm text-neutral-600">
           No physical keyboard needed — tap the desk around your laptop in one of four zones and
-          Flow presses the matching control, exactly as if a real button were pressed. Free, and
+          Noma presses the matching control, exactly as if a real button were pressed. Free, and
           listens only while this is your chosen input (Settings) or you're testing it here.
         </p>
       </div>
 
       {inputSource !== 'holo' && (
-        <div className="mb-6 rounded-lg border border-white/10 bg-base-900 px-4 py-3 text-xs text-neutral-400">
-          Input Source is currently <span className="text-neutral-200">Keyboard</span> — Holo still
+        <div className="mb-6 rounded-lg border border-base-700 bg-base-900 px-4 py-3 text-xs text-neutral-600">
+          Input Source is currently <span className="text-neutral-100">Keyboard</span> — Holo still
           works here for testing, but won't fire outside this page until you switch Input Source to
           Holo in Settings.
         </div>
       )}
 
-      <div className={`p-6 ${GLASS_PANEL}`}>
+      {/* Holo's own self-contained dark surface — "a piece of Noma
+          hardware translated into software," deliberately not the app's
+          light canvas. Uses the dedicated `holo` color group, never
+          `base`/`neutral`, so it stays dark regardless of the app theme. */}
+      <div className="rounded-2xl bg-holo-bg p-6">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="text-xs text-holo-muted">
             {context.application ? context.application.name : 'No application detected'}
           </div>
           <div className="flex gap-2">
@@ -104,7 +107,7 @@ export function Holo() {
               type="button"
               onClick={() => void runCalibration()}
               disabled={isCalibrating}
-              className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-neutral-300 hover:border-white/30 hover:text-neutral-100 disabled:opacity-40"
+              className="rounded-full border border-holo-border px-3 py-1 text-[11px] text-holo-text/80 hover:border-holo-text/30 hover:text-holo-text disabled:opacity-40"
             >
               {calibration ? 'Recalibrate' : 'Calibrate'}
             </button>
@@ -113,7 +116,7 @@ export function Holo() {
                 type="button"
                 onClick={() => void clearCalibration()}
                 disabled={isCalibrating}
-                className="rounded-full border border-white/10 px-3 py-1 text-[11px] text-neutral-500 hover:border-white/30 hover:text-neutral-200 disabled:opacity-40"
+                className="rounded-full border border-holo-border px-3 py-1 text-[11px] text-holo-muted hover:border-holo-text/30 hover:text-holo-text disabled:opacity-40"
               >
                 Clear
               </button>
@@ -124,8 +127,8 @@ export function Holo() {
               disabled={!isFullyCalibrated || isCalibrating}
               className={`rounded-full border px-3 py-1 text-[11px] disabled:opacity-40 ${
                 isListening
-                  ? 'border-accent-muted bg-accent/10 text-accent'
-                  : 'border-white/10 text-neutral-300 hover:border-white/30 hover:text-neutral-100'
+                  ? 'border-accent/50 bg-accent/10 text-accent'
+                  : 'border-holo-border text-holo-text/80 hover:border-holo-text/30 hover:text-holo-text'
               }`}
             >
               {isListening ? 'Listening…' : 'Start Listening'}
@@ -133,7 +136,7 @@ export function Holo() {
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-4">
+        <div className="mb-6 grid grid-cols-2 gap-3">
           {HOLO_ZONE_ORDER.map((zone, index) => (
             <HoloZoneTile
               key={zone}
@@ -147,24 +150,27 @@ export function Holo() {
         </div>
 
         {wizard.status === 'running' && wizard.phase === 'zone' && (
-          <div className="mb-4 rounded-lg border border-flow/30 bg-flow/[0.05] px-4 py-3 text-sm text-neutral-200">
+          <div className="mb-4 rounded-lg border border-accent/30 bg-accent/[0.08] px-4 py-3 text-sm text-holo-text">
             Zone {wizard.zoneIndex + 1} of {wizard.totalZones} — {HOLO_ZONE_LABELS[wizard.zone]}: tap it now
             (tap {wizard.tapIndex + 1} of {TAPS_PER_ZONE})
           </div>
         )}
         {wizard.status === 'running' && wizard.phase === 'reject' && (
-          <div className="mb-4 rounded-lg border border-flow/30 bg-flow/[0.05] px-4 py-3 text-sm text-neutral-200">
+          <div className="mb-4 rounded-lg border border-accent/30 bg-accent/[0.08] px-4 py-3 text-sm text-holo-text">
             Almost done — now type on your keyboard, click your mouse, or make other normal sounds so
             Holo learns to ignore them (sample {wizard.sampleIndex + 1} of {wizard.totalSamples})
           </div>
         )}
         {(wizard.status === 'error' || micError) && (
-          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/[0.05] px-4 py-3 text-sm text-red-300">
+          // A brighter red than the app-wide `error` token (chosen for
+          // light surfaces) on purpose — this sits on Holo's own dark
+          // surface, where a muted light-mode red would read too dim.
+          <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/[0.08] px-4 py-3 text-sm text-red-300">
             {wizard.status === 'error' ? wizard.message : micError}
           </div>
         )}
 
-        <p className="text-xs text-neutral-600">
+        <p className="text-xs text-holo-muted">
           Holo only ever processes audio in memory to recognize a tap's zone — nothing is recorded
           or saved. Calibration (including the reject step, so Holo learns to ignore keyboard/mouse
           sounds) stores a small set of numbers describing each sound, never audio itself. See

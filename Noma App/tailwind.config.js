@@ -4,67 +4,72 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
-      // Shared with the Noma Website (src/index.css's @theme block there) —
-      // keep these two palettes in sync by hand; there's no shared package
-      // between the two deliberately-independent projects. Signature brand
-      // blue replaces the original teal; gold/flow are the same two
-      // semantic colors the website added (gold = real hardware dock
-      // contact, flow = Flow noticed a pattern and is suggesting
-      // something) — both available here now too, not yet applied
-      // everywhere a website equivalent uses them.
+      // 2026-09-15 visual system (v2, light-first): a warm, sophisticated
+      // neutral canvas, Noma Blue as the one accent (interaction only —
+      // never a glow, never a gradient), and a restrained editorial voice.
+      // Intelligence is communicated through information (the workflow
+      // itself, real counts, plain language), never through decoration —
+      // no sparkle, no "AI" color, no glass, no gradient.
       colors: {
+        // `base` is the surface ramp: 950 is the page canvas, 900 is the
+        // one true "elevated card" white, the rest are rarely-used
+        // in-between steps (a slightly recessed input, a hover wash).
+        // `neutral` is the text ramp: 100 is primary reading text (near-
+        // black), climbing toward 950 which — by design — lands on the
+        // exact same near-white as `base`'s own 900/950, mirroring how
+        // this scale was originally built.
         base: {
-          950: '#050506',
-          900: '#09090b',
-          850: '#0e0e11',
-          800: '#131317',
-          700: '#1c1c21',
-          600: '#28282f'
+          950: '#f7f7f5',
+          900: '#ffffff',
+          850: '#fbfbfa',
+          800: '#f0f0ee',
+          700: '#dcdcd8',
+          600: '#d0d0cc'
         },
         accent: {
-          DEFAULT: '#4c7eff',
-          muted: '#3150a4'
+          DEFAULT: '#536dff',
+          muted: '#c8d0fc'
         },
+        success: {
+          DEFAULT: '#3f8f5f',
+          muted: '#bfe3cd'
+        },
+        error: {
+          DEFAULT: '#c24f4f',
+          muted: '#f0cccc'
+        },
+        // Real hardware dock contact only (HardwareStatusPill, DeviceLogRow)
+        // — never a general brand color, and never used for "Noma learned
+        // something" (that's communicated through typography and real
+        // information now, not a color).
         gold: {
-          DEFAULT: '#cda15a',
-          muted: '#6b5730'
+          DEFAULT: '#b08d3f',
+          muted: '#e7d9b6'
         },
-        flow: {
-          DEFAULT: '#a78bd1',
-          muted: '#5c4a78'
-        },
-        // Overrides Tailwind's default neutral scale with the website's
-        // own cooler-tinted grays, so every existing text-neutral-*/
-        // bg-neutral-*/border-neutral-* class across the app (its de facto
-        // body-text scale) picks up the website's palette automatically.
-        //
-        // 400/500/600/700 are deliberately brighter than the website's own
-        // matching base-* values (2026-08-31 contrast fix — a real user
-        // reported non-white text being hard to read). Measured against
-        // this app's #050506 background, the original 400/500/600 sat at
-        // roughly 3.9:1 / 1.9:1 / 1.4:1 contrast — the two darkest were
-        // used constantly (secondary body text, every uppercase section
-        // label like "Current Application") and were functionally
-        // unreadable, not just "muted." Re-picked to land close to
-        // 5.4:1 / 4.4:1 / 3.1:1 / 2.0:1 respectively — 700 stays the
-        // dimmest, genuinely-tertiary tier (rare timestamps/asides), but
-        // even it is roughly double its old contrast. 50-300 were already
-        // fine (7:1+) and are untouched; this only affects the app's own
-        // `neutral` text ramp, not the shared `base` background ramp
-        // (bg-base-*), so no panel/card background changes at all — see
-        // [[noma-app-colors]] for that shared-palette history.
         neutral: {
-          50: '#f7f7f8',
-          100: '#eaeaec',
-          200: '#c2c2c8',
-          300: '#98989f',
-          400: '#82828c',
-          500: '#73737d',
-          600: '#5c5c65',
-          700: '#414148',
-          800: '#131317',
-          900: '#09090b',
-          950: '#050506'
+          50: '#000000',
+          100: '#111111',
+          200: '#28282a',
+          300: '#424244',
+          400: '#57575a',
+          500: '#6d6d72',
+          600: '#87878b',
+          700: '#a3a3a6',
+          800: '#f0f0ee',
+          900: '#ffffff',
+          950: '#f7f7f5'
+        },
+        // Holo is a deliberate exception to the rest of the app: "a piece
+        // of Noma hardware translated into software" (see Holo.tsx), so it
+        // keeps a small, self-contained dark palette instead of the
+        // app-wide light one — never reference `base`/`neutral` inside
+        // Holo's own components.
+        holo: {
+          bg: '#0a0a0b',
+          surface: '#17171a',
+          border: '#2a2a2e',
+          text: '#f5f5f2',
+          muted: '#9a9aa0'
         }
       },
       fontFamily: {

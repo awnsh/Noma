@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { ControlAction, Module, ModuleFunctionConfig } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
@@ -20,9 +20,10 @@ interface ModuleConfigModalProps {
 // 'launchApplication' has no working execution path anywhere yet
 // (actionExecutor.ts refuses it with "not implemented yet") — left out of
 // this picker so configuring a module function never leads to one that
-// silently does nothing when triggered. See ControlEditorModal.tsx, which
-// applies the same rule to control actions.
-type SelectableActionType = Exclude<ControlAction['type'], 'launchApplication'>
+// silently does nothing when triggered. 'focusApplication' does execute,
+// but (like here) has no "pick an application" picker of its own yet — see
+// ControlEditorModal.tsx, which applies the same rule to control actions.
+type SelectableActionType = Exclude<ControlAction['type'], 'launchApplication' | 'focusApplication'>
 
 const ACTION_TYPE_LABELS: Record<SelectableActionType, string> = {
   shortcut: 'Keyboard shortcut',
@@ -107,7 +108,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
             const entry = entries[fn.key]
             const testResult = testResults[fn.key]
             return (
-              <div key={fn.key} className="rounded-lg border border-white/10 p-3">
+              <div key={fn.key} className="rounded-lg border border-black/10 p-3">
                 <div className="mb-2 text-[10px] uppercase tracking-widest text-accent">
                   {fn.gesture}
                 </div>
@@ -118,7 +119,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                   onChange={(event) => updateEntry(fn.key, { label: event.target.value.slice(0, 20) })}
                   placeholder="e.g. Timeline Zoom"
                   maxLength={20}
-                  className="mb-2 w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-sm text-neutral-100"
+                  className="mb-2 w-full rounded-md border border-black/10 bg-base-950 px-3 py-1.5 text-sm text-neutral-100"
                 />
 
                 <select
@@ -128,7 +129,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                       action: defaultActionForType(event.target.value as SelectableActionType)
                     })
                   }
-                  className="mb-2 w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
+                  className="mb-2 w-full rounded-md border border-black/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
                 >
                   {(Object.keys(ACTION_TYPE_LABELS) as SelectableActionType[]).map((type) => (
                     <option key={type} value={type}>
@@ -149,7 +150,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                     onChange={(event) =>
                       updateEntry(fn.key, { action: { type: 'systemCommand', command: event.target.value } })
                     }
-                    className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
+                    className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
                   >
                     {SYSTEM_COMMAND_CATALOG.map((command) => (
                       <option key={command} value={command}>
@@ -164,7 +165,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                     onChange={(event) =>
                       updateEntry(fn.key, { action: { type: 'flowAction', action: event.target.value } })
                     }
-                    className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
+                    className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200"
                   >
                     {FLOW_ACTION_CATALOG.map((flowAction) => (
                       <option key={flowAction} value={flowAction}>
@@ -179,7 +180,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                     type="button"
                     disabled={isTesting === fn.key}
                     onClick={() => void handleTest(fn.key, entry.action)}
-                    className="rounded-md border border-white/10 px-2.5 py-1 text-[11px] text-neutral-300 hover:border-accent-muted"
+                    className="rounded-md border border-black/10 px-2.5 py-1 text-[11px] text-neutral-300 hover:border-accent-muted"
                   >
                     {isTesting === fn.key ? 'Testing…' : 'Test'}
                   </button>

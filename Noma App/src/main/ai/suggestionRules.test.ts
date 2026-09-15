@@ -201,6 +201,29 @@ describe('suggestionForPattern', () => {
     expect(suggestion?.explanation).toContain('Snip & Sketch → Visual Studio Code')
   })
 
+  it('attaches chainApplicationNames to a crossAppWorkflow suggestion, for a UI to render the chain visually', () => {
+    const pattern: DetectedPattern = {
+      id: 'workflow:app:screenshot->app:code',
+      kind: 'crossAppWorkflow',
+      applicationId: 'code',
+      applicationIds: ['screenshot', 'code'],
+      description: '',
+      count: 4,
+      steps: [
+        { type: 'appSwitch', applicationId: 'screenshot' },
+        { type: 'appSwitch', applicationId: 'code' }
+      ]
+    }
+    const suggestion = suggestionForPattern(pattern, 0, { accepted: 0, rejected: 0 }, null, {
+      screenshot: 'Snip & Sketch',
+      code: 'Visual Studio Code'
+    })
+    expect(suggestion?.chainApplicationNames).toEqual({
+      screenshot: 'Snip & Sketch',
+      code: 'Visual Studio Code'
+    })
+  })
+
   it('names a crossAppWorkflow chain\'s consistent closing step when one was found', () => {
     const pattern: DetectedPattern = {
       id: 'workflow:app:code->key:code:Control+V',
@@ -233,5 +256,70 @@ describe('suggestionForPattern', () => {
     const a = suggestionForPattern(pattern)
     const b = suggestionForPattern({ ...pattern, count: 12 })
     expect(a?.id).toBe(b?.id)
+  })
+
+  describe('multiStepWorkflow (WORKFLOW LEARNING)', () => {
+    function flagshipPattern(overrides: Partial<Extract<DetectedPattern, { kind: 'multiStepWorkflow' }>> = {}) {
+      return {
+        id: 'multistep:key:code:Meta+Shift+S->app:claude->key:claude:Control+V->app:code',
+        kind: 'multiStepWorkflow' as const,
+        applicationId: 'code',
+        applicationIds: ['code', 'claude'],
+        contextApplicationId: 'code',
+        description: 'Screenshot → claude → Paste → code repeated 8 times',
+        count: 8,
+        consistency: 1,
+        steps: [
+          { type: 'shortcut' as const, applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
+          { type: 'appSwitch' as const, applicationId: 'claude' },
+          { type: 'shortcut' as const, applicationId: 'claude', comboKeys: ['Control', 'V'] },
+          { type: 'appSwitch' as const, applicationId: 'code' }
+        ],
+        ...overrides
+      }
+    }
+
+    it('generates a pending, executable suggestion naming the chain and the app it starts in', () => {
+      const suggestion = suggestionForPattern(flagshipPattern(), 0, { accepted: 0, rejected: 0 }, 'Visual Studio Code', {
+        claude: 'Claude Code',
+        code: 'Visual Studio Code'
+      })
+      expect(suggestion).not.toBeNull()
+      expect(suggestion?.status).toBe('pending')
+      expect(suggestion?.title).toBe('Noma noticed a workflow')
+      expect(suggestion?.explanation).toContain('Screenshot')
+      expect(suggestion?.explanation).toContain('Claude Code')
+      expect(suggestion?.explanation).toContain('Paste')
+      expect(suggestion?.explanation).toContain('8 times')
+      // Offered in the *starting* application's context, not a floating
+      // global suggestion, and not the crossed-into app.
+      expect(suggestion?.applicationId).toBe('code')
+      expect(suggestion?.action).toEqual({
+        kind: 'createWorkflowMacroAndAssignToControl',
+        steps: flagshipPattern().steps
+      })
+      expect(suggestion?.chainApplicationNames).toEqual({
+        claude: 'Claude Code',
+        code: 'Visual Studio Code'
+      })
+    })
+
+    it('reduces confidence for a lower-consistency (more approximate) match', () => {
+      const consistent = suggestionForPattern(flagshipPattern({ consistency: 1 }))
+      const approximate = suggestionForPattern(flagshipPattern({ consistency: 0.5 }))
+      expect(approximate!.confidence).toBeLessThan(consistent!.confidence)
+    })
+
+    it('uses the multi-step workflow threshold for its confidence breakdown', () => {
+      const suggestion = suggestionForPattern(flagshipPattern())
+      expect(suggestion?.confidenceBreakdown?.threshold).toBe(3)
+      expect(suggestion?.confidenceBreakdown?.occurrenceCount).toBe(8)
+    })
+
+    it('produces a stable, deterministic id for dedup', () => {
+      const a = suggestionForPattern(flagshipPattern())
+      const b = suggestionForPattern(flagshipPattern({ count: 20 }))
+      expect(a?.id).toBe(b?.id)
+    })
   })
 })

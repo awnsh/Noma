@@ -187,6 +187,52 @@ real `BUTTON_PRESS` → `actionExecutor` execution.
   malicious local client can't crash the host process, only send the same
   `BUTTON_PRESS`/`GET_STATUS`/`PING` messages a legitimate client could.
 
+## 4b. `focusApplication` (WORKFLOW LEARNING) — a deliberate, narrow exception to "no process execution"
+
+Section 4 states plainly that the execution path spawns no child process at
+all. WORKFLOW LEARNING's `focusApplication` step (`actions/processWindow.ts`)
+is a deliberate, narrow exception to that, reviewed on its own terms rather
+than left as an unstated gap in the claim above:
+
+- **What it does and why it needs a process at all.** Switching to an
+  already-running application by id (see `docs/architecture.md`'s "WORKFLOW
+  LEARNING" section) needs to find *that specific application's* window
+  handle — something `windowsAdapter.ts`'s foreground-window watcher can't
+  answer (it only ever knows the *current* foreground process). There's no
+  `koffi`-only way to enumerate windows by owning process name without a
+  much larger FFI surface (`EnumWindows` + a native callback), so
+  `processWindow.ts` uses the same "single, short-lived PowerShell helper"
+  approach `windowsAdapter.ts` already uses for its own reasons (no C++
+  toolchain on this machine, no prebuilt native module for this exact
+  call) — just a one-shot query instead of a long-lived poll.
+- **The query is read-only.** `Get-Process -Name <name> | Where-Object
+  MainWindowHandle -ne 0 | Select-Object -First 1` — nothing is started,
+  stopped, or modified; the worst a malicious `processName` could do,
+  absent the mitigation below, is run different read-only PowerShell.
+- **Input is validated before it's anywhere near a command string.**
+  `normalizeProcessNameForLookup` refuses (returns `null`, which
+  `findMainWindowHandleForProcess` treats as "fail closed, resolve null")
+  any `processName` outside `^[A-Za-z0-9 _.-]{1,64}$` — no `;`, `` ` ``,
+  `$`, `|`, quotes, or any other PowerShell metacharacter can reach the
+  spawned command at all. The validated name is then embedded as a
+  PowerShell single-quoted string literal with embedded quotes doubled
+  (defense in depth on top of, not instead of, the regex), never
+  concatenated as a bare token. Tested directly in `processWindow.test.ts`,
+  including adversarial inputs (`; Remove-Item ...`, `` $(Get-Process) ``,
+  a backtick, an embedded single quote).
+- **Where `processName` actually comes from.** `applications.process_name`
+  — either seeded (`database/seed.ts`) or captured from a real, genuinely
+  running process's own executable name (`windowsAdapter.ts`'s
+  `toApplication`). There's no path today where a remote or untrusted
+  source writes this column; the same caveat section 4's closing bullet
+  already states ("only as trustworthy as how it was configured") applies
+  here too.
+- **This does not weaken any of section 4's other guarantees.** Shortcut,
+  macro, and system-command execution still send no process at all — this
+  exception is scoped to the one new capability that genuinely needs a
+  window-enumeration answer `koffi`'s existing `user32.dll` bindings can't
+  provide.
+
 ## 5. Database
 
 - All queries go through `better-sqlite3`'s parameterized `.prepare(...).run(params)` /

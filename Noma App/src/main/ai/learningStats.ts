@@ -1,6 +1,7 @@
 import type { LearningStats, PatternKind } from '@shared/types'
 import {
   CROSS_APP_WORKFLOW_THRESHOLD,
+  MULTI_STEP_WORKFLOW_THRESHOLD,
   REPEATED_SHORTCUT_THRESHOLD,
   SEQUENCE_THRESHOLD
 } from '../workflow/patternDetection'
@@ -49,6 +50,13 @@ const ACTIONABLE_KIND_INFO: Array<{
     description:
       'A short step spanning two applications — switching into one, then what happens right after — repeated across your work.',
     threshold: CROSS_APP_WORKFLOW_THRESHOLD
+  },
+  {
+    kind: 'multiStepWorkflow',
+    label: 'Learned workflows',
+    description:
+      'A longer, multi-step sequence — like taking a screenshot, switching apps, and pasting it — that Noma recognized even when it didn’t happen exactly the same way every time.',
+    threshold: MULTI_STEP_WORKFLOW_THRESHOLD
   }
 ]
 

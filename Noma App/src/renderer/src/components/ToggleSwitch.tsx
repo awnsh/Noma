@@ -1,4 +1,4 @@
-interface ToggleSwitchProps {
+﻿interface ToggleSwitchProps {
   checked: boolean
   onChange: (checked: boolean) => void
   label: string
@@ -24,7 +24,7 @@ export function ToggleSwitch({ checked, onChange, label }: ToggleSwitchProps) {
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={`flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-colors ${
-        checked ? 'justify-end border-accent-muted bg-accent/30' : 'justify-start border-white/15 bg-base-800'
+        checked ? 'justify-end border-accent-muted bg-accent/30' : 'justify-start border-black/15 bg-base-800'
       }`}
     >
       <span

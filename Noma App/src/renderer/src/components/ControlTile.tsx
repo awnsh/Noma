@@ -1,5 +1,5 @@
 import type { Control } from '@shared/types'
-import { actionCaption, actionGlyph } from '../lib/describeAction'
+import { actionCaption } from '../lib/describeAction'
 import { KEYCAP_SHADOW } from '../lib/surfaces'
 
 interface ControlTileProps {
@@ -7,28 +7,28 @@ interface ControlTileProps {
   control: Control | undefined
 }
 
-/** A read-only physical-identity tile — the Dashboard's "what does this
- *  button do" view. See VirtualControlButton for the interactive twin on
- *  the Virtual Keyboard page (same visual language, different job: that
- *  one presses for real and opens the editor). */
+/**
+ * A single physical control, read-only — the Home/Controls page's "what
+ * does this button do" view. Deliberately tactile rather than a dashboard
+ * tile: a small, bordered rectangle referencing the real hardware key, the
+ * control's name as the one confident statement on it, and its real
+ * shortcut (never an invented description) set in mono underneath — see
+ * VirtualControlButton for the interactive twin used on the Virtual
+ * Keyboard page.
+ */
 export function ControlTile({ slot, control }: ControlTileProps) {
   const caption = actionCaption(control?.action)
 
   return (
     <div
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-white/[0.08] bg-gradient-to-b from-base-800 to-base-900 p-4 ${KEYCAP_SHADOW}`}
+      className={`flex aspect-[4/3] flex-col justify-between rounded-xl border border-base-700 bg-base-900 p-4 transition-colors duration-150 hover:border-neutral-400 ${KEYCAP_SHADOW}`}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-widest text-neutral-600">
-          Control {slot}
-        </span>
-        {control && <span className="text-sm text-neutral-500">{actionGlyph(control.action)}</span>}
-      </div>
+      <span className="text-[10px] text-neutral-500">{slot}</span>
       <div>
-        <div className="text-lg font-medium text-neutral-100">
-          {control?.label ?? <span className="text-neutral-600">—</span>}
+        <div className="text-sm font-medium tracking-wide text-neutral-100">
+          {control?.label ?? <span className="text-neutral-500">—</span>}
         </div>
-        {caption && <div className="mt-0.5 font-mono text-[11px] text-neutral-500">{caption}</div>}
+        {caption && <div className="mt-1 font-mono text-xs text-neutral-500">{caption}</div>}
       </div>
     </div>
   )

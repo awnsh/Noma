@@ -37,6 +37,8 @@ export function actionGlyph(action: ControlAction | undefined): string {
       return '⚙'
     case 'flowAction':
       return action.action === 'closeWindow' ? '✕' : '◆'
+    case 'focusApplication':
+      return '⇥'
   }
 }
 
@@ -55,5 +57,7 @@ export function actionCaption(action: ControlAction | undefined): string | null 
       return 'Macro'
     case 'launchApplication':
       return 'Launch'
+    case 'focusApplication':
+      return 'Switch app'
   }
 }

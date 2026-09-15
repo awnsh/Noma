@@ -1,4 +1,4 @@
-import { WorkflowMonitoringPanel } from '../components/WorkflowMonitoringPanel'
+﻿import { WorkflowMonitoringPanel } from '../components/WorkflowMonitoringPanel'
 import { InputSourcePanel } from '../components/InputSourcePanel'
 import { DataManagementPanel } from '../components/DataManagementPanel'
 
@@ -26,7 +26,7 @@ export function Settings() {
         <p className="mt-1 text-sm text-neutral-500">Flow learning, and your data.</p>
       </div>
 
-      <section className="mb-8 rounded-xl border border-white/10 bg-base-900 px-5 py-4">
+      <section className="mb-8 rounded-xl border border-black/10 bg-base-900 px-5 py-4">
         <div className="text-xs uppercase tracking-widest text-neutral-500">Flow Learning</div>
         <p className="mt-2 max-w-md text-sm text-neutral-400">
           Flow learns from interaction metadata to identify repetitive workflows — never from what

@@ -20,6 +20,19 @@ export type ControlAction =
   | { type: 'launchApplication'; applicationId: string }
   | { type: 'systemCommand'; command: string }
   | { type: 'flowAction'; action: string }
+  /**
+   * Switches to an already-running application by id, resolved to a
+   * process name (applicationsRepository.getApplicationById) and focused
+   * via the same SetForegroundWindow path windowFocus.ts already uses —
+   * never spawns a process. This is deliberately narrower than
+   * `launchApplication` (still unimplemented): "bring the window Windows
+   * already has to the front" is a safe, bounded capability; "start an
+   * arbitrary executable" is a much bigger surface this feature doesn't
+   * need. Added for learned multi-step workflows (see `multiStepWorkflow`
+   * below) whose steps include switching into another app — the one
+   * step in that vocabulary `launchApplication` couldn't safely cover.
+   */
+  | { type: 'focusApplication'; applicationId: string }
 
 export interface Control {
   id: string
@@ -79,6 +92,18 @@ export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'dismissed'
 export type SuggestionAction =
   | { kind: 'assignShortcutToControl'; comboKeys: string[] }
   | { kind: 'createMacroAndAssignToControl'; sequence: string[] }
+  /**
+   * WORKFLOW LEARNING (see `multiStepWorkflow` below): turns a recognized
+   * multi-step, possibly cross-app chain into a real macro and assigns it
+   * to a control — the executable counterpart to `crossAppWorkflow`'s
+   * informational-only suggestion. `steps` is the detected chain itself
+   * (screenshot, switch app, paste, ...); suggestionResolution.ts converts
+   * each step into a MacroStep (shortcut -> shortcut, appSwitch ->
+   * focusApplication), drops a trailing appSwitch (the "and switches
+   * back" tail is what the workflow leads to, not part of *doing* it), and
+   * appends a submit keystroke when the chain ends in a paste.
+   */
+  | { kind: 'createWorkflowMacroAndAssignToControl'; steps: WorkflowStep[] }
 
 /**
  * The actual arithmetic behind one suggestion's confidence percentage —
@@ -129,6 +154,14 @@ export interface Suggestion {
    *  pattern kinds that don't carry one (there are none today, but a future
    *  AIProvider isn't required to supply it). */
   confidenceBreakdown?: ConfidenceBreakdown
+  /** Resolved display names for every application a multi-application
+   *  chain (`crossAppWorkflow`/`multiStepWorkflow`) touches, keyed by
+   *  application id — the same lookup `explanation`'s prose already bakes
+   *  in, persisted here too so a UI rendering the chain *visually* (see
+   *  `WorkflowChain` in the renderer) can show "Claude Code" instead of the
+   *  raw id `claude`. Absent for single-application suggestion kinds, and
+   *  for suggestions created before this field existed. */
+  chainApplicationNames?: Record<string, string | null>
 }
 
 /**
@@ -151,6 +184,21 @@ export interface ShortcutUsageStat {
   /** Live-resolved from `applicationId`, same staleness-free join
    *  `Suggestion.applicationName` uses. Null if never seen in any app. */
   applicationName: string | null
+  count: number
+  firstUsed: number
+  lastUsed: number
+}
+
+/**
+ * One control's press history, aggregated across all recorded history —
+ * how many times it's been used and when it was last reached for. Keyed
+ * by `controlId` (stable across a relabel/reassignment, unlike a slot
+ * number, which is reused by whatever control currently occupies it) —
+ * the Controls page's "Used 14 times" line for both manually-configured
+ * and Noma-learned controls alike.
+ */
+export interface ControlUsageStat {
+  controlId: string
   count: number
   firstUsed: number
   lastUsed: number
@@ -356,7 +404,12 @@ export type WorkflowStep =
  * specific structured data (comboKeys/sequence/controlId/steps) it needs to
  * write suggestion copy, instead of parsing the human-readable `description`.
  */
-export type PatternKind = 'repeatedShortcut' | 'repeatedSequence' | 'frequentControl' | 'crossAppWorkflow'
+export type PatternKind =
+  | 'repeatedShortcut'
+  | 'repeatedSequence'
+  | 'frequentControl'
+  | 'crossAppWorkflow'
+  | 'multiStepWorkflow'
 
 interface DetectedPatternBase {
   id: string
@@ -384,6 +437,38 @@ export type DetectedPattern =
        *  after several rounds of pasting into an editor. Absent when no
        *  consistent follow-up was found. */
       closingStep?: WorkflowStep
+    })
+  | (DetectedPatternBase & {
+      /**
+       * WORKFLOW LEARNING — Noma's core differentiator. A recurring chain of
+       * 3+ meaningful steps (any mix of appSwitch/shortcut), possibly
+       * spanning several applications, recognized with *approximate*
+       * matching (patternDetection.ts's detectMultiStepWorkflows) so minor,
+       * naturally-occurring variation between repeats — an extra uncaptured
+       * keystroke, one repeat missing a step another had — doesn't stop it
+       * from being recognized as "the same workflow." Unlike
+       * `crossAppWorkflow` (fixed at 2 steps, informational only), this
+       * kind's suggestion carries a real executable action — see
+       * `SuggestionAction`'s `createWorkflowMacroAndAssignToControl`.
+       */
+      kind: 'multiStepWorkflow'
+      /** The recognized chain itself, in order — the cluster's representative
+       *  (most information-preserving) form, not any single raw occurrence. */
+      steps: WorkflowStep[]
+      /** Every distinct application touched by `steps`, in first-seen order. */
+      applicationIds: Array<string | null>
+      /** The application the chain *starts* in — where the resulting
+       *  control is offered (suggestionRules.ts sets the suggestion's
+       *  `applicationId` to this), matching how the product is meant to
+       *  feel: the new control shows up alongside the other controls for
+       *  the app you were already in, not a floating global action. */
+      contextApplicationId: string | null
+      /** Fraction (0-1) of this pattern's occurrences that matched the
+       *  representative chain exactly, vs. only approximately (one step
+       *  inserted/missing) — a consistency signal folded into the
+       *  suggestion's confidence (STEP 4: "the detector must prioritize
+       *  semantically meaningful sequences," not just any recurring blob). */
+      consistency: number
     })
 
 /** Whether pressing a control actually did what it was configured to do —
@@ -495,6 +580,9 @@ export interface FlowApi {
   /** Every shortcut Flow has ever recorded, aggregated by combo + application,
    *  most-used first — the Usage Stats page's main list. See ShortcutUsageStat. */
   getShortcutUsageStats(): Promise<ShortcutUsageStat[]>
+  /** Every control's all-time press count, keyed by controlId — the
+   *  Controls page's "Used N times" line. See ControlUsageStat. */
+  getControlUsageStats(): Promise<ControlUsageStat[]>
   /** Shortcut-press counts per local day for the last `days` days (inclusive
    *  of today), oldest first, zero-filled for days with no activity — the
    *  Usage Stats page's activity chart. */
@@ -583,9 +671,11 @@ export interface FlowApi {
   deleteMacro(id: string): Promise<boolean>
   duplicateMacro(id: string): Promise<Macro | null>
   /** Which controls (application/slot/label) currently point at this macro
-   *  — shown as a warning before deleting one that's still in use. */
+   *  — shown as a warning before deleting one that's still in use, and (via
+   *  `controlId` + `getControlUsageStats`) used by the Controls page to show
+   *  a learned action's real usage count. */
   getControlsReferencingMacro(macroId: string): Promise<
-    Array<{ applicationId: string; applicationName: string; slot: number; label: string }>
+    Array<{ controlId: string; applicationId: string; applicationName: string; slot: number; label: string }>
   >
   /** Runs a step sequence once, for the Macro Studio's "Test" button —
    *  works on unsaved edits, same execution path a real macro press uses. */
@@ -607,6 +697,13 @@ export interface FlowApi {
    *  detection re-runs. Not real captured keystrokes — see the doc comment
    *  in demoService.ts for the exact numbers and why. */
   simulateDemoWorkflow(): Promise<void>
+  /** WORKFLOW LEARNING's flagship demo: inserts a deterministic, backdated
+   *  "screenshot -> switch to Claude Code -> paste -> switch back"
+   *  repetition, tuned to produce exactly one `multiStepWorkflow`
+   *  suggestion once pattern detection re-runs. See demoService.ts's
+   *  simulateDemoMultiStepWorkflow doc comment for the exact numbers and
+   *  why the live application context deliberately stays on VS Code. */
+  simulateDemoMultiStepWorkflow(): Promise<void>
   /** Restores Demo Mode to a clean, replayable state — clears workflow
    *  events/suggestions and resets the two demo profiles to their seeded
    *  defaults. Development/demo-only; never offered as a normal action. */

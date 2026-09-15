@@ -20,11 +20,37 @@ const BASE_PROPS = {
   strokeLinejoin: 'round' as const
 }
 
-export function DashboardIcon({ className }: IconProps) {
+export function HomeIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>
       <path d="M3 11.5 12 4l9 7.5" />
       <path d="M5.5 10v8a1 1 0 0 0 1 1H10v-6h4v6h3.5a1 1 0 0 0 1-1v-8" />
+    </svg>
+  )
+}
+
+/** Controls — a simple 2x2 button grid, distinct from KeyboardIcon's full
+ *  keyboard (that's the Virtual Keyboard page's own, busier icon). */
+export function ControlsIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+      <rect x="4" y="13" width="7" height="7" rx="1.5" />
+      <rect x="13" y="13" width="7" height="7" rx="1.5" />
+    </svg>
+  )
+}
+
+/** Activity — a short timeline of events, distinct from StatsIcon's bar
+ *  chart (Usage Stats' own icon). */
+export function ActivityIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M4 6h16M4 12h10M4 18h13" />
+      <circle cx="19" cy="6" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="12" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="18" r="1.5" fill="currentColor" stroke="none" />
     </svg>
   )
 }
@@ -103,6 +129,21 @@ export function DeveloperIcon({ className }: IconProps) {
       <rect x="3" y="4.5" width="18" height="15" rx="2" />
       <path d="M7 9.5 10 12l-3 2.5" />
       <path d="M13 14.5h4" />
+    </svg>
+  )
+}
+
+/**
+ * The "Noma learned/noticed something" mark — a small four-point sparkle,
+ * always paired with gold (see tailwind.config.js's color philosophy
+ * comment). Reserved for genuine intelligence moments (NomaMoment,
+ * LearnedActionCard) — never sprinkled next to every feature just because
+ * it's software.
+ */
+export function SparkleIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 3c.5 3.2 1.3 5 2.6 6.4C16 10.7 17.8 11.5 21 12c-3.2.5-5 1.3-6.4 2.6C13.3 16 12.5 17.8 12 21c-.5-3.2-1.3-5-2.6-6.4C8 13.3 6.2 12.5 3 12c3.2-.5 5-1.3 6.4-2.6C10.7 8 11.5 6.2 12 3Z" />
     </svg>
   )
 }

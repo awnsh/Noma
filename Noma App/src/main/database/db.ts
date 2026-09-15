@@ -131,6 +131,7 @@ export function runMigrations(database: Database.Database): void {
   ensureColumn(database, 'suggestions', 'action_kind', 'action_kind TEXT')
   ensureColumn(database, 'suggestions', 'action_payload', 'action_payload TEXT')
   ensureColumn(database, 'suggestions', 'confidence_breakdown', 'confidence_breakdown TEXT')
+  ensureColumn(database, 'suggestions', 'chain_application_names', 'chain_application_names TEXT')
 }
 
 /**

@@ -7,7 +7,8 @@ import { insertSuggestionIfNew } from '../database/repositories/suggestionsRepos
 import { createMacro } from '../database/repositories/macrosRepository'
 import { assignControlAction } from '../database/repositories/controlsRepository'
 import { detectPatterns } from '../workflow/patternDetection'
-import { resetDemoData, simulateDemoWorkflow } from './demoService'
+import { resetDemoData, simulateDemoMultiStepWorkflow, simulateDemoWorkflow } from './demoService'
+import { getApplicationById } from '../database/repositories/applicationsRepository'
 import type { Suggestion } from '@shared/types'
 
 /** Mirrors database/seed.ts's SEED_APPLICATIONS for 'code' and 'chrome' —
@@ -86,6 +87,52 @@ describe('simulateDemoWorkflow', () => {
   })
 })
 
+describe('simulateDemoMultiStepWorkflow (WORKFLOW LEARNING flagship demo)', () => {
+  it('produces exactly one multiStepWorkflow suggestion pattern, starting in VS Code', () => {
+    simulateDemoMultiStepWorkflow()
+
+    const events = getWorkflowEventsSince(0)
+    const patterns = detectPatterns(events)
+    const workflows = patterns.filter((p) => p.kind === 'multiStepWorkflow')
+
+    expect(workflows).toHaveLength(1)
+    const workflow = workflows[0]
+    expect(workflow.count).toBeGreaterThanOrEqual(3)
+    if (workflow.kind === 'multiStepWorkflow') {
+      expect(workflow.contextApplicationId).toBe('code')
+      expect(workflow.consistency).toBe(1)
+    }
+  })
+
+  it('does not also surface the redundant crossAppWorkflow pairs (subsumed by the fuller chain)', () => {
+    simulateDemoMultiStepWorkflow()
+    const patterns = detectPatterns(getWorkflowEventsSince(0))
+    expect(patterns.filter((p) => p.kind === 'crossAppWorkflow')).toHaveLength(0)
+  })
+
+  it('gives Claude Code a real applications row, for the eventual macro and suggestion copy', () => {
+    simulateDemoMultiStepWorkflow()
+    expect(getApplicationById('claude')).toEqual({
+      id: 'claude',
+      name: 'Claude Code',
+      processName: 'Claude.exe',
+      icon: undefined
+    })
+  })
+
+  it('is repeatable — reset then simulate again produces the exact same result', () => {
+    simulateDemoMultiStepWorkflow()
+    const first = detectPatterns(getWorkflowEventsSince(0)).filter((p) => p.kind === 'multiStepWorkflow')
+
+    resetDemoData()
+    simulateDemoMultiStepWorkflow()
+    const second = detectPatterns(getWorkflowEventsSince(0)).filter((p) => p.kind === 'multiStepWorkflow')
+
+    expect(second).toHaveLength(1)
+    expect(second[0].count).toBe(first[0].count)
+  })
+})
+
 describe('resetDemoData', () => {
   it('clears workflow events and suggestions', () => {
     simulateDemoWorkflow()
@@ -144,6 +191,33 @@ describe('resetDemoData', () => {
     expect(restored.controls.find((c) => c.slot === 4)?.action).toEqual({
       type: 'shortcut',
       keys: ['Control', 'F']
+    })
+  })
+
+  it('deletes a learned-workflow macro assigned to VS Code by a previous multi-step demo run', () => {
+    const codeProfile = getProfileForApplicationId('code')!
+    const macro = createMacro({
+      name: 'Screenshot → claude → Paste',
+      applicationId: 'code',
+      trigger: 'flow-control',
+      actions: [
+        { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
+        { type: 'focusApplication', applicationId: 'claude' },
+        { type: 'shortcut', keys: ['Control', 'V'] },
+        { type: 'shortcut', keys: ['Enter'] }
+      ],
+      delayMs: 0,
+      enabled: true
+    })
+    assignControlAction(codeProfile.id, 2, macro.name, { type: 'macro', macroId: macro.id })
+
+    resetDemoData()
+
+    expect(getDatabase().prepare('SELECT * FROM macros WHERE id = ?').get(macro.id)).toBeUndefined()
+    const restored = getProfileForApplicationId('code')!
+    expect(restored.controls.find((c) => c.slot === 2)?.action).toEqual({
+      type: 'shortcut',
+      keys: ['F5']
     })
   })
 
