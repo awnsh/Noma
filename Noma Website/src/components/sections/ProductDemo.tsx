@@ -166,7 +166,7 @@ export default function ProductDemo() {
   // scene as a plain still — same convention as every other pinned section.
   if (reduceMotion) {
     return (
-      <section id="demo" className="relative border-t border-base-800 bg-base-950 py-24 sm:py-32">
+      <section id="adapt" className="relative border-t border-base-800 bg-base-950 py-24 sm:py-32">
         <div className="mx-auto max-w-6xl px-6 text-center sm:px-8">
           <p className="font-display text-3xl font-semibold text-base-50 sm:text-5xl">{SCENES[last].caption}</p>
           <div className={KEYBOARD_WRAP_CLASS}>
@@ -183,7 +183,7 @@ export default function ProductDemo() {
   const glowColor = scene.app?.color
 
   return (
-    <div ref={wrapRef} id="demo" style={{ height: `${SCROLL_VH * 100}vh` }} className="relative border-t border-base-800 bg-base-950">
+    <div ref={wrapRef} id="adapt" style={{ height: `${SCROLL_VH * 100}vh` }} className="relative border-t border-base-800 bg-base-950">
       <div ref={panelRef} className={`${panelPositionClass} flex flex-col items-center justify-start pt-28 pb-10 sm:pt-32`}>
         <div
           ref={contentRef}

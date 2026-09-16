@@ -34,10 +34,10 @@ const SUGGESTION = {
 
 const CAPTIONS = [
   'You keep doing this.',
-  'Flow notices the pattern.',
-  'It suggests adding a control.',
+  'Noma is watching.',
+  'It suggests turning this into one action.',
   'You accept it.',
-  'Now it’s part of your keyboard.',
+  'Now it’s one action.',
 ]
 
 function stageFromProgress(p: number) {
@@ -125,7 +125,7 @@ export default function AdaptiveIntelligence() {
 
   if (reduceMotion) {
     return (
-      <section id="adaptive" className="relative border-t border-base-800 py-24 sm:py-32">
+      <section id="watch" className="relative border-t border-base-800 py-24 sm:py-32">
         <div className="absolute inset-3 rounded-[2rem] sm:inset-6" style={{ background: BACKDROP_BG }} />
         <div className={`${WRAP_CLASS} relative ${GRID_CLASS}`}>
           <div>
@@ -179,7 +179,7 @@ export default function AdaptiveIntelligence() {
   const flowStatus = stage === 0 ? "Flow isn't noticing anything yet." : stage < 4 ? 'Flow noticed something — see below.' : 'Flow is noticing patterns.'
 
   return (
-    <div ref={wrapRef} id="adaptive" className="relative border-t border-base-800 bg-base-950" style={{ height: `${SCROLL_VH * 100}vh` }}>
+    <div ref={wrapRef} id="watch" className="relative border-t border-base-800 bg-base-950" style={{ height: `${SCROLL_VH * 100}vh` }}>
       {/* Top-anchored with real clearance, not vertically centered — see
           usePinnedScroll's doc comment / WorkflowDemo.tsx's own history:
           centering a pinned panel's content risks its top edge landing

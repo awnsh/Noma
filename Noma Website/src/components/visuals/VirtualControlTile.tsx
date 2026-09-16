@@ -2,9 +2,11 @@
 // same structure and press behavior, re-themed onto this project's own color
 // tokens. The real one wires a click to `window.hardware.pressControl` (an
 // Electron IPC call); this one just fires the flash locally, which is the
-// entire difference between "real app" and "faithful demo of it."
+// entire difference between "real app" and "faithful demo of it." Updated
+// 2026-09-16 to match the real app's liquid-glass surface (KEYCAP_SHADOW).
 
 import { useState } from 'react'
+import { DEMO_KEYCAP } from './demoSurfaces'
 
 interface VirtualControlTileProps {
   slot: number
@@ -26,8 +28,8 @@ export default function VirtualControlTile({ slot, label, caption, onPress }: Vi
     <button
       type="button"
       onClick={handleClick}
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-base-600 bg-gradient-to-b from-base-800 to-base-900 p-4 text-left shadow-inner shadow-black/40 transition-all duration-150 hover:border-accent-dim active:scale-95 ${
-        isPressed ? 'border-accent/60 shadow-[0_0_0_1px_rgba(91,134,224,0.4)]' : ''
+      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-base-600/60 bg-base-100/[0.04] p-4 text-left backdrop-blur-xl transition-all duration-150 hover:border-accent/40 active:scale-95 ${DEMO_KEYCAP} ${
+        isPressed ? 'border-accent/60 shadow-[0_4px_20px_-4px_rgba(76,126,255,0.5)]' : ''
       }`}
     >
       <span className="font-mono text-[10px] uppercase tracking-widest text-base-500">Control {slot}</span>

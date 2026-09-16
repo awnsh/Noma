@@ -5,6 +5,7 @@ import { useUiStore } from '../stores/uiStore'
 import { InsightCard } from '../components/InsightCard'
 import { EmptyState } from '../components/EmptyState'
 import { workflowStepPlainText } from '../lib/insights'
+import { GLASS_CARD } from '../lib/surfaces'
 
 /**
  * Learning — "what Noma is learning": a plain-language read of the
@@ -68,7 +69,7 @@ export function Learning() {
         </p>
       </div>
 
-      <section className="mb-14">
+      <section className="mb-12">
         {patterns === null ? (
           <p className="text-sm text-neutral-600">Loading…</p>
         ) : crossAppInsights.length === 0 && !underused ? (
@@ -77,7 +78,7 @@ export function Learning() {
             hint="Once you repeat a workflow, Noma will describe what it noticed here."
           />
         ) : (
-          <div>
+          <div className={`${GLASS_CARD} px-5`}>
             {crossAppInsights.map((pattern) => {
               const patternApplicationId =
                 pattern.kind === 'multiStepWorkflow' ? pattern.contextApplicationId : (pattern.applicationIds[0] ?? null)
@@ -101,15 +102,17 @@ export function Learning() {
         )}
       </section>
 
+      <div className="mb-12 h-px bg-base-700" />
+
       <section>
         <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">How Noma decides</h2>
-        <p className="mb-4 text-sm text-neutral-600">
+        <p className="mb-5 text-sm text-neutral-600">
           Noma only suggests something once it's genuinely repeated — never automatic.
         </p>
         {!stats ? (
           <p className="text-sm text-neutral-600">Loading…</p>
         ) : (
-          <div>
+          <div className={`${GLASS_CARD} px-5`}>
             {stats.kinds.map((kind) => {
               const total = kind.accepted + kind.rejected
               return (

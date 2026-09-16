@@ -3,10 +3,10 @@ export interface AppProfile {
   name: string
   shortName: string
   controls: string[]
-  /** The app's own identifying color, shown as a small dot wherever it's named —
-   *  makes "every application is different" legible at a glance instead of every
-   *  environment reading as the same gray card. Omitted where an app has no single
-   *  identifying hue (e.g. Chrome's mark is inherently multicolor). */
+  /** The app's own identifying color — shown as a small dot wherever it's named,
+   *  and used to tint its icon (see `AppIcon.tsx`) wherever a real brand mark is
+   *  rendered. Makes "every application is different" legible at a glance instead
+   *  of every environment reading as the same gray card. */
   color?: string
 }
 
@@ -43,6 +43,7 @@ export const appProfiles: Record<string, AppProfile> = {
     name: 'Chrome',
     shortName: 'Chrome',
     controls: ['Back', 'Forward', 'New Tab', 'Close'],
+    color: '#4c8bf5',
   },
   figma: {
     id: 'figma',
@@ -78,6 +79,41 @@ export const appProfiles: Record<string, AppProfile> = {
     shortName: 'Spotify',
     controls: ['Play', 'Skip', 'Volume', 'Like'],
     color: '#1db954',
+  },
+  github: {
+    id: 'github',
+    name: 'GitHub',
+    shortName: 'GitHub',
+    controls: ['Commit', 'Push', 'Pull Request', 'Merge'],
+    color: '#f5f5f7',
+  },
+  claude: {
+    id: 'claude',
+    name: 'Claude',
+    shortName: 'Claude',
+    controls: ['New Chat', 'Paste', 'Screenshot', 'Send'],
+    color: '#d97757',
+  },
+  slack: {
+    id: 'slack',
+    name: 'Slack',
+    shortName: 'Slack',
+    controls: ['Reply', 'Mute', 'Search', 'Huddle'],
+    color: '#4a154b',
+  },
+  notion: {
+    id: 'notion',
+    name: 'Notion',
+    shortName: 'Notion',
+    controls: ['New Page', 'Search', 'Comment', 'Share'],
+    color: '#eaeaec',
+  },
+  terminal: {
+    id: 'terminal',
+    name: 'Terminal',
+    shortName: 'Terminal',
+    controls: ['Run', 'Clear', 'History', 'Kill'],
+    color: '#98989f',
   },
 }
 

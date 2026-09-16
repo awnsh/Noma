@@ -1,34 +1,62 @@
 import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 
-const links = [
-  { label: 'How It Works', href: '#how' },
-  { label: 'Hardware', href: '#hardware' },
-  { label: 'About', href: '#founder' },
+const columns: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Holo', href: '#holo' },
+      { label: 'Noma Device', href: '#device' },
+      { label: 'How it works', href: '#loop' },
+    ],
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'About', href: '#about' },
+      { label: 'Build in Public', href: '#about' },
+      { label: 'Contact', href: 'mailto:hello@noma.build' },
+    ],
+  },
+  {
+    title: 'Resources',
+    links: [
+      { label: 'GitHub', href: '#' },
+      { label: 'Privacy', href: '#' },
+      { label: 'Terms', href: '#' },
+    ],
+  },
 ]
 
 export default function Footer() {
   return (
     <footer className="overflow-hidden border-t border-base-800">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-12 sm:flex-row sm:justify-between sm:px-8">
-        <div className="flex flex-col items-center gap-2 sm:items-start">
+      <div className="mx-auto grid max-w-6xl gap-12 px-6 py-16 sm:px-8 sm:py-20 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2.5">
             <img src={nomaMark} alt="" className="h-6 w-auto" />
             <img src={nomaWordmark} alt="Noma" className="h-3.5 w-auto" />
           </div>
-          <span className="text-xs text-base-500">A keyboard that becomes whichever app you're using. In development.</span>
+          <p className="max-w-[26ch] text-sm text-base-500">A computer interface that learns how you work.</p>
         </div>
 
-        <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          {links.map((l) => (
-            <li key={l.href}>
-              <a href={l.href} className="text-sm text-base-400 transition-colors hover:text-base-100">
-                {l.label}
-              </a>
-            </li>
-          ))}
-        </ul>
+        {columns.map((col) => (
+          <div key={col.title}>
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-base-500">{col.title}</p>
+            <ul className="mt-4 flex flex-col gap-2.5">
+              {col.links.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="text-sm text-base-300 transition-colors hover:text-base-50">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
 
+      <div className="border-t border-base-800 px-6 py-6 sm:px-8">
         <p className="font-mono text-[11px] text-base-600">&copy; {new Date().getFullYear()} Noma</p>
       </div>
 

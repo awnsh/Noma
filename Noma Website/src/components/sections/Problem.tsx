@@ -1,6 +1,7 @@
 import Section from '../layout/Section'
 import Reveal from '../ui/Reveal'
 import AppOrbit from '../visuals/AppOrbit'
+import WorkflowChain, { type ChainStep } from '../visuals/WorkflowChain'
 import { appProfiles } from '../../data/appProfiles'
 
 // Eight domains, eight colors, on purpose — code, video, CAD, design, 3D,
@@ -18,20 +19,43 @@ const environments = [
   appProfiles.photoshop,
 ]
 
+// Three real, recognizable chains — the concrete answer to "too many
+// workflows," made of actual application icons and plain action words
+// rather than a paragraph describing the problem in the abstract.
+const chains: ChainStep[][] = [
+  [{ label: 'Screenshot' }, { app: 'claude' }, { label: 'Paste' }, { label: 'Enter' }],
+  [{ label: 'Copy' }, { label: 'Switch app' }, { label: 'Paste' }, { app: 'notion' }],
+  [{ app: 'github' }, { label: 'Commit' }, { label: 'Push' }, { label: 'Deploy' }],
+]
+
 export default function Problem() {
   return (
     <Section id="problem">
-      <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-8">
-        <Reveal>
-          <h2 className="text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-            Every application has different controls.
-            <br />
-            <span className="text-base-400">Your keyboard doesn&rsquo;t.</span>
-          </h2>
-          <p className="mt-6 max-w-md text-balance font-display text-xl font-medium text-base-200">
-            Why should your interface stay the same when your work changes?
-          </p>
-        </Reveal>
+      <Reveal>
+        <h2 className="text-balance font-display text-[clamp(2rem,5.5vw,4rem)] font-semibold uppercase leading-[1.05] tracking-tight text-base-50">
+          You already have
+          <br />
+          <span className="text-base-400">too many workflows.</span>
+        </h2>
+      </Reveal>
+
+      <div className="mt-14 grid items-center gap-16 lg:grid-cols-2 lg:gap-8">
+        <div>
+          <Reveal delay={0.05}>
+            <p className="max-w-md text-balance font-display text-xl font-medium text-base-200">
+              You repeat the same handful of steps, in the same apps, dozens of times a day. You just don&rsquo;t
+              call it a workflow.
+            </p>
+          </Reveal>
+
+          <div className="mt-8 flex flex-col gap-3">
+            {chains.map((chain, i) => (
+              <Reveal key={i} delay={0.1 + i * 0.06}>
+                <WorkflowChain steps={chain} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
 
         <Reveal delay={0.1} y={0}>
           <AppOrbit apps={environments} />

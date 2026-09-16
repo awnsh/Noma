@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import Section from '../layout/Section'
-import Reveal from '../ui/Reveal'
 import WindowDots from '../ui/WindowDots'
 import AppKeyboardGrid from '../visuals/AppKeyboardGrid'
 import VirtualControlTile from '../visuals/VirtualControlTile'
@@ -58,66 +56,59 @@ function VirtualKeyboardDemo() {
   )
 }
 
+/**
+ * The real, interactive Noma software — Holo's own proof, not a screenshot
+ * or a purpose-built mockup. This used to be its own standalone section
+ * ("Your keyboard has software now"); folded into `Holo.tsx` instead, since
+ * "no hardware, no problem" is a stronger, truer home for "this is literally
+ * software you can click" than a generic mid-page product tour was. No
+ * `Section`/heading of its own — the caller supplies both, matching however
+ * that section wants to frame it.
+ */
 export default function AppPreview() {
   const [activeId, setActiveId] = useState(screens[0].id)
   const active = screens.find((s) => s.id === activeId)!
 
   return (
-    <Section id="app">
-      <Reveal>
-        <h2 className="max-w-2xl text-balance font-display text-[clamp(1.9rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
-          Your keyboard has software now.
-        </h2>
-        <p className="mt-5 max-w-xl text-balance text-base text-base-300">
-          So how do you actually control all of this? Every control you just saw is defined here — try it below,
-          this is the real interface, not a mockup.
-        </p>
-      </Reveal>
+    <div className="mx-auto max-w-3xl">
+      {/* screen switcher */}
+      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+        {screens.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setActiveId(s.id)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              s.id === activeId ? 'bg-accent/10 text-accent' : 'text-base-400 hover:text-base-100'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
 
-      <Reveal delay={0.1}>
-        <div className="mx-auto mt-16 max-w-3xl">
-          {/* screen switcher */}
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-            {screens.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setActiveId(s.id)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                  s.id === activeId ? 'bg-accent/10 text-accent' : 'text-base-400 hover:text-base-100'
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-
-          {/* window chrome */}
-          <div className="overflow-hidden rounded-2xl border border-base-700 bg-base-850/60 shadow-2xl shadow-black/40">
-            <div className="flex items-center gap-2 border-b border-base-700 bg-base-900/60 px-4 py-3">
-              <WindowDots />
-              <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">
-                Noma &mdash; {active.label}
-              </span>
-            </div>
-
-            <div className="relative min-h-[26rem] w-full bg-base-950">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={active.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {active.id === 'dashboard' && <DashboardDemo />}
-                  {active.id === 'virtual-keyboard' && <VirtualKeyboardDemo />}
-                  {active.id === 'macros' && <MacroStudioDemo />}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
+      {/* window chrome */}
+      <div className="overflow-hidden rounded-2xl border border-base-700 bg-base-850/60 shadow-2xl shadow-black/40">
+        <div className="flex items-center gap-2 border-b border-base-700 bg-base-900/60 px-4 py-3">
+          <WindowDots />
+          <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">Holo &mdash; {active.label}</span>
         </div>
-      </Reveal>
-    </Section>
+
+        <div className="relative min-h-[26rem] w-full bg-base-950">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active.id}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {active.id === 'dashboard' && <DashboardDemo />}
+              {active.id === 'virtual-keyboard' && <VirtualKeyboardDemo />}
+              {active.id === 'macros' && <MacroStudioDemo />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
   )
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useUiStore, type Page } from '../stores/uiStore'
 import logo from '../assets/logo.png'
+import wordmark from '../assets/noma-wordmark.png'
 import {
   HomeIcon,
   DemoIcon,
@@ -106,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.03] px-4 py-6 backdrop-blur-2xl">
         <div className="mb-8 flex items-center gap-2 px-1">
           <img src={logo} alt="" className="h-6 w-9" />
-          <span className="font-display text-sm font-semibold text-neutral-100">Noma</span>
+          <img src={wordmark} alt="Noma" className="h-3.5 w-auto" />
         </div>
 
         <nav className="flex flex-col gap-0.5">

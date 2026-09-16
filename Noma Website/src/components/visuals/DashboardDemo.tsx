@@ -1,20 +1,25 @@
-// A faithful interactive recreation of the real app's Dashboard page
-// (src/renderer/src/pages/Dashboard.tsx) — same structure (Current Application
-// -> Current Controls -> Suggestions -> Flow Status), driven by local state
-// instead of the real app's window.flow IPC bridge (which only exists inside
-// Electron; see AppPreview.tsx's doc comment for why). Switching applications
-// here is standing in for what happens automatically when Windows reports a
-// new foreground app — the controls below update the same way either way.
+// A faithful interactive recreation of the real app's Home page
+// (src/renderer/src/pages/Home.tsx), driven by local state instead of the
+// real app's window.flow IPC bridge (which only exists inside Electron; see
+// AppPreview.tsx's doc comment). Switching applications here is standing in
+// for what happens automatically when Windows reports a new foreground app.
 //
-// The suggestion card is a simplified port of the real app's SuggestionCard
-// (src/renderer/src/components) — same shape (confidence, Accept picks a
-// slot to assign into, Reject/Dismiss just clear it), tinted flow violet to
-// match every other "Flow noticed a pattern" moment on the site.
+// The suggestion card is a simplified port of the real app's `NomaMoment`
+// component (src/renderer/src/components), `variant="hero"` — same shape
+// (a hero glass card with a signature-blue left edge, the occurrence
+// sentence, a `WorkflowChain`, then "Turn this into one action?" with a
+// gradient Create-action button), updated 2026-09-16 alongside the real
+// app's liquid-glass visual system. Not attempting the real component's
+// full "More / Why Noma suggested this" disclosure — this demo keeps the
+// primary two-choice moment and drops the optional explain affordance to
+// stay legible at the size a marketing page can give it.
 
 import { useState } from 'react'
 import AppControlTile from './AppControlTile'
+import DemoWorkflowChain, { type DemoChainStep } from './DemoWorkflowChain'
 import { appProfiles } from '../../data/appProfiles'
 import { controlKeys, formatShortcutCaption } from '../../data/controlActions'
+import { DEMO_HERO_CARD } from './demoSurfaces'
 
 const apps = [appProfiles.vscode, appProfiles.premiere, appProfiles.solidworks, appProfiles.chrome]
 
@@ -25,14 +30,14 @@ const flowStatusByApp: Record<string, string> = {
 }
 
 // The one seeded suggestion — mirrors the same "Command Palette before Git
-// Commit, 27 times this week" pattern the Interactive Demo section and the
-// Macro Studio's "Quick Commit" macro both reference, so all three tabs tell
-// the same, consistent Flow story rather than three unrelated ones.
-const SUGGESTION = {
-  title: 'Add Command Palette to your controls',
-  explanation: "You've opened the Command Palette right before Git Commit 27 times this week.",
-  confidence: 92,
-}
+// Commit, 27 times this week" pattern the rest of the site references, so
+// every tab tells the same, consistent Flow story rather than unrelated ones.
+const OCCURRENCE_COUNT = 27
+const CHAIN: DemoChainStep[] = [
+  { kind: 'app', appId: 'vscode', label: 'VS Code' },
+  { kind: 'shortcut', label: 'Command Palette' },
+  { kind: 'shortcut', label: 'Git Commit' },
+]
 
 export default function DashboardDemo() {
   const [activeId, setActiveId] = useState('vscode')
@@ -87,6 +92,61 @@ export default function DashboardDemo() {
         <div className="mt-1 text-sm text-base-400">Active profile: {active.shortName}</div>
       </section>
 
+      {/* The Noma Moment — a hero glass card with a signature-blue left edge,
+          outranking everything else on the page, exactly as it does on the
+          real app's Home. */}
+      {showSuggestion && (
+        <section className={`relative mb-8 p-6 ${DEMO_HERO_CARD}`}>
+          <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-base-500">Noma noticed</p>
+          <p className="mt-2 font-display text-xl font-semibold leading-snug text-base-100 sm:text-2xl">
+            You&rsquo;ve repeated this workflow {OCCURRENCE_COUNT} times in Visual Studio Code.
+          </p>
+
+          <div className="mt-5">
+            <DemoWorkflowChain steps={CHAIN} size="lg" />
+          </div>
+
+          {status === 'pending' ? (
+            <>
+              <p className="mt-6 text-base text-base-100">Turn this into one action?</p>
+              <div className="mt-3 flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setStatus('picking')}
+                  className="rounded-md bg-gradient-to-b from-accent-bright to-accent px-4 py-2 text-sm font-medium text-base-950 shadow-[0_4px_16px_-4px_rgba(76,126,255,0.55)] transition-shadow duration-150 hover:shadow-[0_6px_20px_-4px_rgba(76,126,255,0.7)] active:opacity-90"
+                >
+                  Create action
+                </button>
+                <button type="button" onClick={() => setStatus('resolved')} className="text-sm text-base-500 hover:text-base-100">
+                  Not now
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="mt-5 border-t border-base-700 pt-4">
+              <p className="mb-2 text-xs text-base-500">Which control should this replace? You choose — Noma never picks for you.</p>
+              <div className="grid grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => accept(slot)}
+                    className="rounded-md border border-base-700 px-2 py-2 text-center text-xs text-base-400 transition-colors hover:border-accent hover:text-base-100"
+                  >
+                    <div className="text-[10px] text-base-600">{slot}</div>
+                    <div className="mt-0.5 truncate text-base-100">{controls[slot - 1] ?? '—'}</div>
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setStatus('pending')} className="mt-3 text-xs text-base-500 hover:text-base-100">
+                Cancel
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="mb-8">
         <div className="mb-3 font-mono text-[10px] uppercase tracking-widest text-base-500">Current Controls</div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -95,7 +155,7 @@ export default function DashboardDemo() {
             const keys = label ? controlKeys[label] : undefined
             return (
               <div key={slot} className="relative">
-                <AppControlTile slot={slot} label={label} caption={keys && formatShortcutCaption(keys)} />
+                <AppControlTile slot={slot} label={label} caption={keys && formatShortcutCaption(keys)} appId={active.id} appName={active.name} />
                 {justAdded === slot && (
                   <span className="absolute -right-1.5 -top-1.5 rounded-full bg-flow px-1.5 py-0.5 text-[9px] font-medium text-base-950">
                     Added
@@ -106,73 +166,6 @@ export default function DashboardDemo() {
           })}
         </div>
       </section>
-
-      {showSuggestion && (
-        <section className="mb-8 rounded-xl border border-flow/30 bg-flow/[0.05] px-4 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-medium text-base-100">{SUGGESTION.title}</div>
-              <p className="mt-1 text-sm text-base-400">{SUGGESTION.explanation}</p>
-            </div>
-            <div
-              className="shrink-0 rounded-full border border-base-600 px-2 py-0.5 text-[10px] uppercase tracking-widest text-base-500"
-              title="Confidence"
-            >
-              {SUGGESTION.confidence}%
-            </div>
-          </div>
-
-          {status === 'pending' ? (
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setStatus('picking')}
-                className="rounded-md border border-flow-dim bg-flow/10 px-3 py-1 text-xs font-medium text-flow hover:bg-flow/20"
-              >
-                Accept
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('resolved')}
-                className="rounded-md border border-base-600 px-3 py-1 text-xs text-base-400 hover:border-base-400 hover:text-base-200"
-              >
-                Reject
-              </button>
-              <button
-                type="button"
-                onClick={() => setStatus('resolved')}
-                className="rounded-md px-3 py-1 text-xs text-base-600 hover:text-base-400"
-              >
-                Dismiss
-              </button>
-            </div>
-          ) : (
-            <div className="mt-3 rounded-lg border border-base-700 bg-base-950 p-3">
-              <p className="mb-2 text-xs text-base-500">Assign to which control? This replaces whatever&rsquo;s there.</p>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 2, 3, 4].map((slot) => (
-                  <button
-                    key={slot}
-                    type="button"
-                    onClick={() => accept(slot)}
-                    className="rounded-md border border-base-700 bg-base-900 px-2 py-2 text-center text-xs text-base-300 hover:border-flow-dim hover:text-base-100"
-                  >
-                    <div className="text-[9px] uppercase tracking-widest text-base-600">{slot}</div>
-                    <div className="mt-0.5 truncate">{controls[slot - 1] ?? '—'}</div>
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setStatus('pending')}
-                className="mt-2 text-xs text-base-600 hover:text-base-400"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-        </section>
-      )}
 
       <section className="flex items-center justify-between rounded-xl border border-base-700 bg-base-900/60 px-5 py-4">
         <div>

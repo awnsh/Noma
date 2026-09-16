@@ -4,10 +4,11 @@ import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
-  { label: 'Product', href: '#demo' },
-  { label: 'How it works', href: '#how' },
-  { label: 'Software', href: '#app' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Product', href: '#adapt' },
+  { label: 'How it works', href: '#loop' },
+  { label: 'Holo', href: '#holo' },
+  { label: 'Device', href: '#device' },
+  { label: 'Learning', href: '#watch' },
 ]
 
 // Shared by the pill and its mobile dropdown so the glass reads as one
@@ -31,13 +32,13 @@ export default function Navigation() {
   return (
     <header className="pointer-events-none fixed inset-x-0 top-4 z-50 flex justify-center px-4">
       <div className="pointer-events-auto flex flex-col items-center">
-        <nav className={`flex items-center gap-8 rounded-full px-5 py-3 ${GLASS}`}>
+        <nav className={`flex items-center gap-6 rounded-full px-5 py-3 ${GLASS}`}>
           <a href="#top" className="flex items-center gap-3">
             <img src={nomaMark} alt="" className="h-8 w-auto" />
             <img src={nomaWordmark} alt="Noma" className="h-4 w-auto" />
           </a>
 
-          <ul className="hidden items-center gap-7 md:flex">
+          <ul className="hidden items-center gap-6 lg:flex">
             {links.map((link) => (
               <li key={link.href}>
                 <a href={link.href} className="text-sm text-base-300 transition-colors hover:text-base-50">
@@ -53,10 +54,10 @@ export default function Navigation() {
               high-contrast anchor of the bar rather than one link among
               several with a thin border. */}
           <a
-            href="#cta"
-            className="hidden rounded-full bg-accent px-5 py-2 text-sm font-semibold text-base-950 transition-colors hover:bg-accent-bright md:inline-flex"
+            href="#holo"
+            className="hidden rounded-full bg-accent px-5 py-2 text-sm font-semibold text-base-950 transition-colors hover:bg-accent-bright lg:inline-flex"
           >
-            Join the waitlist
+            Try Noma
           </a>
 
           <button
@@ -64,7 +65,7 @@ export default function Navigation() {
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="flex flex-col gap-1.5 md:hidden"
+            className="flex flex-col gap-1.5 lg:hidden"
           >
             <span
               className={`h-px w-6 bg-base-100 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${menuOpen ? 'translate-y-[3.5px] rotate-45' : ''}`}
@@ -82,7 +83,7 @@ export default function Navigation() {
               animate={{ opacity: 1, y: 0, height: 'auto' }}
               exit={{ opacity: 0, y: -8, height: 0 }}
               transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className={`mt-2 w-56 overflow-hidden rounded-3xl md:hidden ${GLASS}`}
+              className={`mt-2 w-56 overflow-hidden rounded-3xl lg:hidden ${GLASS}`}
             >
               <ul className="flex flex-col gap-1 px-5 py-4">
                 {links.map((link) => (
@@ -98,11 +99,11 @@ export default function Navigation() {
                 ))}
                 <li className="pt-2">
                   <a
-                    href="#cta"
+                    href="#holo"
                     onClick={() => setMenuOpen(false)}
                     className="inline-flex rounded-full bg-accent px-5 py-2 text-sm font-semibold text-base-950"
                   >
-                    Join the waitlist
+                    Try Noma
                   </a>
                 </li>
               </ul>
