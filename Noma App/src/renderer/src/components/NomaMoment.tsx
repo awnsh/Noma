@@ -7,7 +7,7 @@ import { workflowChainSteps } from '../lib/workflowChain'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 import { WorkflowChain } from './WorkflowChain'
 import { AppIcon } from './AppIcon'
-import { HERO_CARD, HERO_CARD_GLOW } from '../lib/surfaces'
+import { HERO_CARD } from '../lib/surfaces'
 
 /**
  * The Noma Moment — the single most important component in the app: "Noma
@@ -15,12 +15,16 @@ import { HERO_CARD, HERO_CARD_GLOW } from '../lib/surfaces'
  * learned-workflow suggestion, wherever it needs to appear (Home's hero
  * slot, the Controls page's suggestion list, Demo Mode).
  *
- * `variant="hero"` gets the app's one hero-tier surface (`HERO_CARD`,
- * see `lib/surfaces.ts`) with a signature-blue left edge — Home's single
- * most important moment, deliberately outranking the cards around it.
- * `compact` stays undecorated (it already sits inside a list container of
- * its own, e.g. `SuggestionsPanel`'s divided rows) — no card, no glow, no
- * icon marking it as "AI." Either way the emphasis comes from typography
+ * `variant="hero"` gets the app's one hero-tier surface (`HERO_CARD`, see
+ * `lib/surfaces.ts`) — a restrained, mostly-solid card, deliberately with
+ * no colored glow (an earlier version had a blue/violet ambient wash here;
+ * real feedback was that it read as "glowing because it's AI," not a
+ * physical product). What makes this card outrank the ones around it is
+ * the real workflow inside it (`WorkflowChain`'s large application-icon
+ * nodes), not its own background. `compact` stays undecorated (it already
+ * sits inside a list container of its own, e.g. `SuggestionsPanel`'s
+ * divided rows) — no card, no glow, no icon marking it as "AI." Either way
+ * the emphasis comes from typography
  * and spacing, and the workflow sequence itself is the one visually
  * interesting element (see `WorkflowChain`). The primary row is a
  * confident, two-choice moment
@@ -107,7 +111,6 @@ export function NomaMoment({
         className={isHero ? `${HERO_CARD} p-8` : ''}
         style={{ animation: 'noma-settle 350ms ease-out' }}
       >
-        {isHero && <div aria-hidden className={HERO_CARD_GLOW} />}
         <p className="text-xs text-neutral-600">Action created</p>
         <p className={`mt-1.5 font-display font-semibold text-neutral-100 ${isHero ? 'text-2xl' : 'text-lg'}`}>
           {createdLabel === 'Noted' ? 'Noted' : createdLabel}
@@ -123,7 +126,6 @@ export function NomaMoment({
 
   return (
     <div className={isHero ? `${HERO_CARD} p-8` : ''}>
-      {isHero && <div aria-hidden className={HERO_CARD_GLOW} />}
       <div className="flex items-start justify-between gap-4">
         <p
           className={
@@ -169,7 +171,7 @@ export function NomaMoment({
             <button
               type="button"
               onClick={() => void startPicking()}
-              className={`rounded-md bg-gradient-to-b from-[#7188ff] to-accent font-medium text-white shadow-[0_4px_16px_-4px_rgba(99,124,255,0.55)] transition-all duration-150 hover:shadow-[0_6px_20px_-4px_rgba(99,124,255,0.7)] active:opacity-90 ${
+              className={`rounded-md bg-accent font-medium text-white shadow-[0_2px_8px_-2px_rgba(91,111,245,0.35)] transition-colors duration-150 hover:bg-accent/90 active:opacity-90 ${
                 isHero ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
               }`}
             >
@@ -221,7 +223,7 @@ export function NomaMoment({
               <button
                 type="button"
                 onClick={() => void handleAcceptInformational()}
-                className="shrink-0 rounded-md bg-gradient-to-b from-[#7188ff] to-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_4px_16px_-4px_rgba(99,124,255,0.55)] hover:shadow-[0_6px_20px_-4px_rgba(99,124,255,0.7)]"
+                className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_2px_8px_-2px_rgba(91,111,245,0.35)] transition-colors duration-150 hover:bg-accent/90"
               >
                 Accept
               </button>

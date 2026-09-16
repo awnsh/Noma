@@ -3,7 +3,10 @@
 // tokens. The real one wires a click to `window.hardware.pressControl` (an
 // Electron IPC call); this one just fires the flash locally, which is the
 // entire difference between "real app" and "faithful demo of it." Updated
-// 2026-09-16 to match the real app's liquid-glass surface (KEYCAP_SHADOW).
+// 2026-09-17 for the real app's v4 restrained-graphite system: a solid Card
+// surface at rest, not translucent glass. The blue flash on an actual press
+// stays — that's real interaction feedback, the one place a colored glow
+// still belongs, not ambient decoration.
 
 import { useState } from 'react'
 import { DEMO_KEYCAP } from './demoSurfaces'
@@ -28,8 +31,8 @@ export default function VirtualControlTile({ slot, label, caption, onPress }: Vi
     <button
       type="button"
       onClick={handleClick}
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-base-600/60 bg-base-100/[0.04] p-4 text-left backdrop-blur-xl transition-all duration-150 hover:border-accent/40 active:scale-95 ${DEMO_KEYCAP} ${
-        isPressed ? 'border-accent/60 shadow-[0_4px_20px_-4px_rgba(76,126,255,0.5)]' : ''
+      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-base-600 bg-base-850 p-4 text-left transition-all duration-150 hover:border-base-500 active:scale-95 ${DEMO_KEYCAP} ${
+        isPressed ? 'border-accent/60 shadow-[0_4px_16px_-6px_rgba(76,126,255,0.45)]' : ''
       }`}
     >
       <span className="font-mono text-[10px] uppercase tracking-widest text-base-500">Control {slot}</span>

@@ -1,7 +1,7 @@
 import { WorkflowMonitoringPanel } from '../components/WorkflowMonitoringPanel'
 import { InputSourcePanel } from '../components/InputSourcePanel'
 import { DataManagementPanel } from '../components/DataManagementPanel'
-import { GLASS_CARD } from '../lib/surfaces'
+import { CARD } from '../lib/surfaces'
 
 const COLLECTED = [
   'Which application is active',
@@ -27,7 +27,7 @@ export function Settings() {
         <p className="mt-1 text-sm text-neutral-500">Flow learning, and your data.</p>
       </div>
 
-      <section className={`mb-8 px-5 py-4 ${GLASS_CARD}`}>
+      <section className={`mb-8 px-5 py-4 ${CARD}`}>
         <div className="text-xs uppercase tracking-widest text-neutral-500">Flow Learning</div>
         <p className="mt-2 max-w-md text-sm text-neutral-400">
           Flow learns from interaction metadata to identify repetitive workflows — never from what

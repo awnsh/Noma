@@ -17,6 +17,14 @@ interface AppIconProps {
    *  control/workflow card where the icon needs to read as the card's own
    *  visual anchor. */
   variant?: 'bare' | 'tile'
+  /** `'bare'` only: renders the mark at ~92% of `size` instead of the
+   *  default 68%/58%, and drops the small inset background — for a caller
+   *  that already wraps this in its own sized container (e.g.
+   *  `WorkflowChain`'s icon chip) and wants the icon to actually fill it,
+   *  not float in the middle with a visible ring of empty space. The
+   *  default (smaller, own-background) sizing stays right for every inline
+   *  use that isn't already sitting in a purpose-built box. */
+  fill?: boolean
 }
 
 /**
@@ -45,7 +53,7 @@ interface AppIconProps {
  * `useApplicationsStore` (see that store's doc comment) rather than a
  * prop, so every existing call site keeps working unchanged.
  */
-export function AppIcon({ applicationId, name, size = 20, className = '', variant = 'bare' }: AppIconProps) {
+export function AppIcon({ applicationId, name, size = 20, className = '', variant = 'bare', fill = false }: AppIconProps) {
   const executablePath = useApplicationsStore((state) =>
     applicationId ? state.byId[applicationId]?.executablePath : undefined
   )
@@ -54,16 +62,12 @@ export function AppIcon({ applicationId, name, size = 20, className = '', varian
 
   const dim = { width: size, height: size }
   const tileDim = { width: Math.round(size * 1.6), height: Math.round(size * 1.6) }
+  const inset = fill ? '92%' : '68%'
 
   const content = osIcon ? (
-    <img
-      src={osIcon}
-      alt=""
-      style={{ width: '68%', height: '68%', objectFit: 'contain' }}
-      className="rounded-[3px]"
-    />
+    <img src={osIcon} alt="" style={{ width: inset, height: inset, objectFit: 'contain' }} className="rounded-[3px]" />
   ) : (
-    <Glyph className="h-[58%] w-[58%]" />
+    <Glyph className={fill ? 'h-[80%] w-[80%]' : 'h-[58%] w-[58%]'} />
   )
 
   return variant === 'tile' ? (
@@ -80,7 +84,7 @@ export function AppIcon({ applicationId, name, size = 20, className = '', varian
       role="img"
       aria-label={name}
       style={dim}
-      className={`flex shrink-0 items-center justify-center rounded-md bg-white/[0.06] text-neutral-300 ${className}`}
+      className={`flex shrink-0 items-center justify-center text-neutral-300 ${fill ? '' : 'rounded-md bg-white/[0.06]'} ${className}`}
     >
       {content}
     </span>

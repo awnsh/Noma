@@ -4,46 +4,53 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
-      // 2026-09-16 visual system (v3, dark/OLED): near-black page canvas,
-      // liquid-glass elevated surfaces (translucent white-on-black, real
-      // backdrop blur — see lib/surfaces.ts), Noma Blue plus a sparing
-      // violet secondary accent, and a soft ambient blue/violet light
-      // source behind the interface (AppShell's own gradient layer).
-      // Intelligence is still communicated through information — real
-      // counts, plain language, real application icons — decoration never
-      // substitutes for it: no sparkle, no rainbow gradients, no glass
-      // outside the handful of surfaces the product brief calls "important"
-      // (Noma Notice, controls, Holo, device status). Same token NAMES as
-      // the prior light system (base/neutral/accent/success/error/gold) so
-      // every existing `bg-base-900`/`text-neutral-100`/etc. class across
-      // the app repaints dark automatically — only the values changed.
+      // 2026-09-17 visual system (v4, "restrained graphite hardware"):
+      // supersedes v3's liquid-glass-everywhere direction — real user
+      // feedback was that v3 had drifted into "generic AI SaaS" (glowing
+      // borders, blue-to-violet gradients, glass on every card). The fix
+      // is a palette change, not a rewrite: solid graphite surfaces
+      // (`base.700`/`600` are now real hex borders, not translucent white
+      // overlays), one blue accent used sparingly, and violet retired from
+      // every actual UI surface (the `violet` token below is now dead
+      // — kept defined, referenced nowhere, in case a future rebrand wants
+      // it back, but no component should reach for it). Glass survives
+      // only where lib/surfaces.ts's own doc comment now scopes it to:
+      // navigation, device surfaces (Holo, the Noma Device card), and
+      // Noma Notice — never as a blanket "every card is glass" default.
+      // Intelligence is communicated through information — real counts,
+      // plain language, real application icons — never decoration: no
+      // sparkle, no rainbow gradients, no colored glow "because it's AI."
+      // Same token NAMES as the prior system so every existing
+      // `bg-base-900`/`text-neutral-100`/etc. class across the app
+      // repaints automatically — only the values changed.
       colors: {
         // `base` is the surface ramp: 950 is the page canvas (true
-        // near-black), 900 a hair lighter for a secondary flat panel
-        // (the sidebar's own fill before its glass layer), 850/800 flat
-        // "slightly raised" surfaces for plain (non-glass) chrome — an
-        // input, a divider's rest state — 700/600 borders and hairlines.
-        // The actual liquid-glass look (translucent + blurred) lives in
-        // lib/surfaces.ts's GLASS_CARD/HERO_CARD, not here.
+        // near-black), 900 a hair lighter for a secondary flat panel, 850
+        // is "Card" (the new default solid-card fill — see
+        // lib/surfaces.ts), 800 is "Elevated" (an input, a hover state, a
+        // step brighter than Card), and 700/600 are now real solid
+        // graphite hex borders ("Border"/"Strong border") — not
+        // translucent white overlays the way v3 had them, so a card's
+        // edge reads as a material seam, not a light catching glass.
         base: {
-          950: '#08090b',
-          900: '#0d0f12',
-          850: '#111318',
-          800: '#15171d',
-          700: 'rgba(255,255,255,0.09)',
-          600: 'rgba(255,255,255,0.14)'
+          950: '#08090a',
+          900: '#0d0f11',
+          850: '#111214',
+          800: '#15171a',
+          700: '#24262a',
+          600: '#30333a'
         },
         accent: {
-          DEFAULT: '#637cff',
-          muted: '#3d4a99',
+          DEFAULT: '#5b6ff5',
+          muted: '#384497',
           // The active-nav-item / "part of the adaptive loop" wash — a
           // translucent accent tint over dark glass, not a light color.
-          subtle: 'rgba(99,124,255,0.12)'
+          subtle: 'rgba(91,111,245,0.12)'
         },
-        // The sparing secondary accent (Part 4/17) — a soft violet used
-        // only as a rare second light source (a gradient's far end, an
-        // occasional highlight), never a second "meaning" color competing
-        // with accent blue's one-meaning rule.
+        // Dead token, deliberately: see this file's own top-of-block
+        // comment. Retained only so nothing importing `violet` from an
+        // older branch hard-fails; no component should add a new
+        // reference to it.
         violet: {
           DEFAULT: '#8b6cff',
           muted: 'rgba(139,108,255,0.16)'
@@ -73,13 +80,16 @@ module.exports = {
           100: '#f5f5f7',
           200: '#d5d6db',
           300: '#adaeb8',
-          400: '#8b8d94',
+          // 400 ("Secondary text") and 600 ("Muted") are the two tiers
+          // named explicitly in the new restrained palette; 500/700 are
+          // interpolated between them, unchanged from before.
+          400: '#96999f',
           500: '#75767e',
-          600: '#5f626a',
+          600: '#656970',
           700: '#45474e',
-          800: '#15171d',
-          900: '#0d0f12',
-          950: '#08090b'
+          800: '#15171a',
+          900: '#0d0f11',
+          950: '#08090a'
         },
         // Holo keeps its own small token group — "a piece of Noma hardware
         // translated into software" (see Holo.tsx) needs to read as a

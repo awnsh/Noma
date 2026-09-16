@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import type { WorkflowChainStep } from '../lib/workflowChain'
 import { AppIcon } from './AppIcon'
 import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
@@ -63,24 +64,27 @@ function groupIntoNodes(steps: WorkflowChainStep[]): WorkflowNode[] {
   return nodes
 }
 
-// `icon` is deliberately close to `box`, not a small glyph floating in a
-// big empty frame — AppIcon's own `'bare'` variant already insets its
-// content (real icon or fallback glyph) to ~68%/58% of whatever size it's
-// given, so passing `box - 8` here is what actually produces an icon that
-// reads as filling the chip, matching the "icon is the hero, not the
-// container" ask.
+// `icon` is a couple px under `box` — just enough that the icon's own
+// element doesn't literally touch the chip's rounded corners, not the old
+// "68% of whatever `size` is" inset. `AppIcon`'s `fill` prop (added for
+// exactly this call site) is what makes that possible: without it, `bare`
+// always draws its content at 68%/58% of `size`, so no `size` could ever
+// make the icon visually fill a same-size box — it'd either float in a
+// visible ring of empty space (small `size`) or overflow the chip
+// (`size` large enough to compensate). `fill` removes that inset (and the
+// small inner background that came with it) so `icon` can sit almost flush
+// with `box`.
 const SIZES = {
-  md: { box: 52, icon: 44, name: 'text-sm', action: 'text-[11px]', gap: 'gap-x-3' },
-  lg: { box: 72, icon: 64, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
+  md: { box: 52, icon: 48, name: 'text-sm', action: 'text-[11px]', gap: 'gap-x-3' },
+  lg: { box: 72, icon: 68, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
 } as const
 
-/** The "premium chip" container spec: dark glass square, exact values
- *  rather than the app's shared `GLASS_CARD` recipe — deliberately more
- *  restrained (no backdrop-blur, no heavy shadow) since a workflow can
- *  render many of these in a row and a full glass treatment on each would
- *  compete with itself. */
-const ICON_BOX =
-  'flex shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] shadow-[0_8px_24px_rgba(0,0,0,0.2)] transition-colors duration-150 hover:border-white/[0.16] hover:bg-white/[0.06]'
+/** Solid graphite chip, same material as the app's shared `CARD` recipe
+ *  (see `lib/surfaces.ts`) — not glass, and no hover state: these nodes
+ *  aren't interactive, so a hover glow here would be decoration with
+ *  nothing behind it to justify it. The real application icon inside is
+ *  what's supposed to earn the eye's attention, not the chip around it. */
+const ICON_BOX = 'flex shrink-0 items-center justify-center rounded-2xl border border-base-700 bg-base-850 shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]'
 
 export function WorkflowChain({ steps, size = 'md' }: { steps: WorkflowChainStep[]; size?: 'md' | 'lg' }) {
   const reduceMotion = usePrefersReducedMotion()
@@ -94,65 +98,75 @@ export function WorkflowChain({ steps, size = 'md' }: { steps: WorkflowChainStep
 
   return (
     <div className={`flex items-start overflow-x-auto overflow-y-hidden pb-1 ${compact ? 'gap-x-2' : dim.gap}`}>
-      {nodes.map((node, index) => {
-        const arrow = index < nodes.length - 1 && (
-          <span
-            aria-hidden
-            className={`mx-1.5 shrink-0 text-white/25 ${size === 'lg' ? 'text-lg' : 'text-sm'}`}
-          >
-            →
-          </span>
-        )
-
-        return (
+      {nodes.map((node, index) => (
+        // The arrow is now a real sibling flex item, a separate array
+        // entry from the node column it follows — not nested inside that
+        // column. Nesting it there (an earlier version did) meant the
+        // column's own `width` had to cover the icon box *and* the arrow,
+        // and it didn't, so the arrow silently overflowed the column's
+        // right edge into the next node's space — real feedback was "the
+        // box is being cut off ... to the right." A plain sibling never
+        // fights the column for the same pixels.
+        <Fragment key={node.key}>
           <div
-            key={node.key}
             className="flex shrink-0 flex-col items-center text-center"
-            style={{
-              width: node.kind === 'app' ? dim.box + 8 : undefined,
-              animation: reduceMotion ? undefined : `noma-node-in 200ms ease-out ${index * 80}ms both`
-            }}
+            style={{ animation: reduceMotion ? undefined : `noma-node-in 200ms ease-out ${index * 80}ms both` }}
           >
-            {/* The icon (or pill) and the arrow that follows it share one
-                row so the arrow lines up with the icon's own vertical
-                center, never the taller icon+name+action column below —
-                that's the whole point of keeping this row separate from
-                the row that holds the text. A fixed row height (matching
-                the icon box, even for a shorter action pill) keeps every
-                node's icon/pill vertically centered against every other
-                node's, regardless of which kind sits next to which. */}
-            <div className="flex items-center" style={{ height: dim.box }}>
-              {node.kind === 'app' ? (
-                <div className={ICON_BOX} style={{ width: dim.box, height: dim.box }}>
-                  <AppIcon applicationId={node.applicationId} name={node.label} size={dim.icon} variant="bare" />
-                </div>
-              ) : (
-                <span
-                  className={`rounded-md border border-base-700 px-2.5 py-1 font-mono text-neutral-300 ${
-                    size === 'lg' ? 'text-xs' : 'text-[11px]'
-                  }`}
-                >
-                  {node.label}
-                </span>
-              )}
-              {arrow}
-            </div>
+            {node.kind === 'app' ? (
+              <div className={ICON_BOX} style={{ width: dim.box, height: dim.box }}>
+                <AppIcon applicationId={node.applicationId} name={node.label} size={dim.icon} variant="bare" fill />
+              </div>
+            ) : (
+              <span
+                className={`flex items-center rounded-md border border-base-700 px-2.5 py-1 font-mono text-neutral-300 ${
+                  size === 'lg' ? 'text-xs' : 'text-[11px]'
+                }`}
+                style={{ height: dim.box }}
+              >
+                {node.label}
+              </span>
+            )}
 
             {node.kind === 'app' && (
               <>
-                <p className={`mt-2 truncate font-medium text-neutral-100 ${dim.name}`} style={{ maxWidth: dim.box + 24 }}>
+                {/* `text-left`, deliberately overriding the column's own
+                    `text-center`: centered text inside a `truncate`d,
+                    narrower-than-content box clips from *both* edges (the
+                    browser lays the centered text out past both sides of
+                    the box, then the ellipsis only marks the end) — a real
+                    bug hit here, where "Command Palette" silently rendered
+                    as "ommand Pale…", missing its own first letter with no
+                    visual indication anything was cut from the start.
+                    Left-aligned text only ever overflows (and correctly
+                    ellipsizes) on the one edge `truncate` actually handles. */}
+                <p className={`mt-2 truncate text-left font-medium text-neutral-100 ${dim.name}`} style={{ maxWidth: dim.box + 8 }}>
                   {node.label}
                 </p>
                 {node.action && (
-                  <p className={`mt-0.5 truncate font-mono text-neutral-500 ${dim.action}`} style={{ maxWidth: dim.box + 24 }}>
+                  <p className={`mt-0.5 truncate text-left font-mono text-neutral-500 ${dim.action}`} style={{ maxWidth: dim.box + 8 }}>
                     {node.action}
                   </p>
                 )}
               </>
             )}
           </div>
-        )
-      })}
+
+          {index < nodes.length - 1 && (
+            // Its own fixed-height box (matching the icon box, not the
+            // taller icon+text column) is what actually centers the glyph
+            // on the icon's vertical middle — the same technique the
+            // now-removed nested version used, just as a standalone item
+            // instead of a child fighting the column for width.
+            <span
+              aria-hidden
+              className={`flex shrink-0 items-center text-white/25 ${size === 'lg' ? 'text-lg' : 'text-sm'}`}
+              style={{ height: dim.box }}
+            >
+              →
+            </span>
+          )}
+        </Fragment>
+      ))}
     </div>
   )
 }

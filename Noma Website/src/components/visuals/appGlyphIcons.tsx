@@ -1,103 +1,25 @@
-// Ported from the real app's components/icons.tsx (the *_GlyphIcon exports)
-// and lib/appIcons.ts's resolution table — the app deliberately replaced an
-// earlier attempt at showing each app's own real logo with one consistent,
-// hand-drawn glyph per application category, because four different brands'
-// actual artwork next to the app's restrained line-icon language read as
-// noise, not "alive" (see the app's own doc comment). This preview is meant
-// to look like the real app, so it uses the app's real icon language here —
-// unlike the rest of this marketing site, which deliberately does use real
-// brand icons (AppIcon.tsx) for its own "look at all these apps" storytelling.
-// The two are different components on purpose; don't merge them.
+// The website-preview equivalent of the real app's `components/AppIcon.tsx`.
+//
+// Updated 2026-09-17: the real app used to show one consistent hand-drawn
+// glyph per application (a deliberate choice at the time — see git history
+// for the old REGISTRY of *_Glyph components this file used to re-export).
+// That decision was reversed in the real app: it now resolves each
+// application's actual OS-extracted icon as its primary identity, falling
+// back to a hand-drawn glyph only on the rare occasion the OS has nothing
+// to give it. A static marketing site can't call a live OS icon API, so the
+// closest faithful equivalent here is this site's own real-brand-icon
+// component (`AppIcon.tsx`, already used elsewhere on the site for exactly
+// this — Problem/Applications/Holo's "look at all these real apps"
+// sections) — real logo where `simple-icons` still carries one, a short
+// letterform badge otherwise (see that file's own doc comment for exactly
+// which apps fell into the badge tier and why). This preview and the rest
+// of the site now share one icon language on purpose, which they didn't
+// before — the two only diverged because the real app's own icon strategy
+// used to diverge from "show the real logo," and it no longer does.
 
 import type { ReactElement } from 'react'
-
-type IconProps = { className?: string }
-type IconComponent = (props: IconProps) => ReactElement
-
-const BASE_PROPS = {
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: 'currentColor',
-  strokeWidth: 1.75,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-}
-
-function TerminalGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="m7 9 3 3-3 3M12 15h5" />
-    </svg>
-  )
-}
-
-function CodeGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <path d="M16 6l6 6-6 6M8 6l-6 6 6 6" />
-    </svg>
-  )
-}
-
-function BrowserGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12h18M12 3c2.8 2.5 2.8 15.5 0 18M12 3c-2.8 2.5-2.8 15.5 0 18" />
-    </svg>
-  )
-}
-
-function AssistantGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5Z" />
-    </svg>
-  )
-}
-
-function MusicGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <path d="M9 18V5l11-2v13" />
-      <circle cx="6" cy="18" r="2.7" />
-      <circle cx="17" cy="16" r="2.7" />
-    </svg>
-  )
-}
-
-function BranchGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <circle cx="6" cy="5" r="2" />
-      <circle cx="6" cy="19" r="2" />
-      <circle cx="18" cy="8" r="2" />
-      <path d="M6 7v10M18 10a8 8 0 0 1-8 8" />
-    </svg>
-  )
-}
-
-function AppGlyph({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <rect x="4" y="4" width="16" height="16" rx="3" />
-      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-// Keyed by `appProfiles` id, exactly as the app's own registry is keyed by
-// `applicationId` — every id not listed here falls back to the same
-// catch-all glyph the real app uses, never a blank space or a text initial.
-const REGISTRY: Record<string, IconComponent> = {
-  vscode: CodeGlyph,
-  chrome: BrowserGlyph,
-  claude: AssistantGlyph,
-  spotify: MusicGlyph,
-  github: BranchGlyph,
-  terminal: TerminalGlyph,
-}
+import RealAppIcon from './AppIcon'
+import { appProfiles } from '../../data/appProfiles'
 
 interface DemoAppIconProps {
   appId?: string | null
@@ -107,16 +29,45 @@ interface DemoAppIconProps {
   /** `'bare'`: just the mark. `'tile'`: wrapped in a rounded-square
    *  container — matches the real `AppIcon.tsx`'s two variants exactly. */
   variant?: 'bare' | 'tile'
+  /** `'bare'` only: renders the mark at ~92% of `size` instead of the
+   *  default ~60%, and drops the small inset background — matches the real
+   *  app's `AppIcon.tsx` `fill` prop, for a caller (`DemoWorkflowChain`'s
+   *  icon chip) that already wraps this in its own sized container and
+   *  wants the icon to actually fill it. */
+  fill?: boolean
 }
 
-/** The website-preview equivalent of the real app's `components/AppIcon.tsx` —
- *  same two variants, same fallback-to-catch-all behavior, re-themed onto
- *  this project's base tokens instead of the app's neutral/white ones. */
-export default function DemoAppIcon({ appId, name, size = 20, className = '', variant = 'bare' }: DemoAppIconProps) {
-  const Glyph = (appId && REGISTRY[appId]) || AppGlyph
-  const dim = { width: size, height: size }
-  const tileDim = { width: Math.round(size * 1.6), height: Math.round(size * 1.6) }
-  const glyph = <Glyph className="h-[58%] w-[58%]" />
+/** The one generic catch-all, for the rare step with no resolved
+ *  application at all (never a blank space or a bare text initial) — same
+ *  role the real app's own `AppGlyphIcon` fallback plays. */
+function GenericGlyph({ className }: { className?: string }): ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
+export default function DemoAppIcon({ appId, name, size = 20, className = '', variant = 'bare', fill = false }: DemoAppIconProps) {
+  const color = appId ? appProfiles[appId]?.color : undefined
+  // The letterform-badge fallback inside `RealAppIcon` (e.g. "Pr", "SW" for
+  // an app `simple-icons` doesn't carry) has no font-size of its own — it
+  // inherits. Folding `fontSize` into the same style object as the
+  // container's own explicit pixel size (rather than a separate wrapping
+  // element) matters here: an extra flex child with no definite height
+  // would break the real icon's percentage sizing, which only resolves
+  // correctly against a direct, definitely-sized parent — exactly what
+  // this container already is.
+  const fontScale = fill ? 0.56 : 0.4
+  const dim = { width: size, height: size, fontSize: Math.round(size * fontScale) }
+  const tileDim = { width: Math.round(size * 1.6), height: Math.round(size * 1.6), fontSize: Math.round(size * fontScale) }
+  const insetClass = fill ? 'h-[92%] w-[92%]' : 'h-[62%] w-[62%]'
+  const icon = appId ? (
+    <RealAppIcon id={appId} color={color} className={insetClass} />
+  ) : (
+    <GenericGlyph className={fill ? 'h-[80%] w-[80%]' : 'h-[58%] w-[58%]'} />
+  )
 
   return variant === 'tile' ? (
     <span
@@ -125,16 +76,16 @@ export default function DemoAppIcon({ appId, name, size = 20, className = '', va
       style={tileDim}
       className={`flex shrink-0 items-center justify-center rounded-lg border border-base-600/60 bg-base-100/[0.04] text-base-300 ${className}`}
     >
-      {glyph}
+      {icon}
     </span>
   ) : (
     <span
       role="img"
       aria-label={name}
       style={dim}
-      className={`flex shrink-0 items-center justify-center rounded-md bg-base-100/[0.06] text-base-300 ${className}`}
+      className={`flex shrink-0 items-center justify-center text-base-300 ${fill ? '' : 'rounded-md bg-base-100/[0.06]'} ${className}`}
     >
-      {glyph}
+      {icon}
     </span>
   )
 }

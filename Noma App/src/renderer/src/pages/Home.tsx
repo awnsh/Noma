@@ -71,16 +71,7 @@ export function Home() {
               {greeting().replace('.', '')}
             </p>
             <h1 className="mt-1.5 font-display text-3xl font-semibold leading-tight text-neutral-100">
-              {monitoringEnabled ? (
-                <>
-                  Noma is learning{' '}
-                  <span className="bg-gradient-to-r from-neutral-100 via-accent to-violet bg-clip-text text-transparent">
-                    your workflow.
-                  </span>
-                </>
-              ) : (
-                "Noma isn't learning yet."
-              )}
+              {monitoringEnabled ? 'Noma is learning your workflow.' : "Noma isn't learning yet."}
             </h1>
             <p className="mt-2.5 max-w-md text-sm text-neutral-600">
               The more you use your computer, the more useful your Noma becomes.

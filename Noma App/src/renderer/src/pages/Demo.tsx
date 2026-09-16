@@ -4,7 +4,7 @@ import { useSuggestionsStore } from '../stores/suggestionsStore'
 import { ControlTile } from '../components/ControlTile'
 import { NomaMoment } from '../components/NomaMoment'
 import { AppIcon } from '../components/AppIcon'
-import { GLASS_CARD } from '../lib/surfaces'
+import { CARD } from '../lib/surfaces'
 
 /**
  * Demo Mode — "the Noma Moment". A polished, deterministic, repeatable
@@ -191,7 +191,7 @@ export function Demo() {
       </div>
 
       {/* Live device state — the same signal Dashboard/Virtual Keyboard show */}
-      <div className={`mb-8 p-6 ${GLASS_CARD}`}>
+      <div className={`mb-8 p-6 ${CARD}`}>
         <div className="text-xs text-neutral-600">Current application</div>
         <div className="mt-2 flex items-center gap-3">
           {context.application && (
@@ -210,7 +210,7 @@ export function Demo() {
       </div>
 
       {/* Narration + primary action for the current phase */}
-      <div className={`p-6 ${GLASS_CARD}`}>
+      <div className={`p-6 ${CARD}`}>
         {phase === 'intro' && (
           <>
             <p className="mb-4 text-sm text-neutral-400">

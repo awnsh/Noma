@@ -19,11 +19,14 @@ interface ControlTileProps {
  * does this button do" view. Deliberately tactile rather than a dashboard
  * tile: a small, bordered rectangle referencing the real hardware key, the
  * control's name as the one confident statement on it, and its real
- * shortcut (never an invented description) set in mono underneath. A
- * filled control lifts slightly on hover (a real physical control invites
- * a press) — an empty slot stays flat, since there's nothing to press yet
- * — see VirtualControlButton for the interactive twin used on the Virtual
- * Keyboard page.
+ * shortcut (never an invented description) set in mono underneath. Solid
+ * graphite material (Card fill + a real border), not translucent glass —
+ * an earlier version had a colored blue glow on hover, which read as an
+ * "AI-related" decoration rather than a physical control; the hover
+ * feedback now is exactly what a real keycap gives: it lifts slightly, its
+ * edge brightens a touch, nothing more. An empty slot stays flat, since
+ * there's nothing to press yet — see VirtualControlButton for the
+ * interactive twin used on the Virtual Keyboard page.
  */
 export function ControlTile({ slot, control, application }: ControlTileProps) {
   const caption = actionCaption(control?.action)
@@ -31,9 +34,9 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
 
   return (
     <div
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-white/[0.09] bg-white/[0.04] p-4 backdrop-blur-xl transition-all duration-150 ${KEYCAP_SHADOW} ${
+      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-base-700 bg-base-850 p-4 transition-all duration-150 ${KEYCAP_SHADOW} ${
         control
-          ? 'hover:-translate-y-0.5 hover:border-accent/40 hover:bg-white/[0.06] hover:shadow-[0_10px_28px_-10px_rgba(0,0,0,0.6),0_0_20px_-6px_rgba(99,124,255,0.35),inset_0_1px_0_0_rgba(255,255,255,0.08)] active:translate-y-0 active:scale-[0.98]'
+          ? 'hover:-translate-y-0.5 hover:border-base-600 active:translate-y-0 active:scale-[0.98]'
           : ''
       }`}
     >

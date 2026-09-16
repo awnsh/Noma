@@ -15,7 +15,7 @@ export function StatusIndicator({ active, label }: { active: boolean; label: str
         )}
         <span
           className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
-            active ? 'bg-accent shadow-[0_0_6px_1px_rgba(99,124,255,0.65)]' : 'bg-neutral-500'
+            active ? 'bg-accent shadow-[0_0_6px_1px_rgba(91,111,245,0.65)]' : 'bg-neutral-500'
           }`}
         />
       </span>

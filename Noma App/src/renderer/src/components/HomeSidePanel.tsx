@@ -5,7 +5,7 @@ import { useHardwareStore } from '../stores/hardwareStore'
 import { useUiStore } from '../stores/uiStore'
 import { HardwareStatusPill } from './HardwareStatusPill'
 import { AppIcon } from './AppIcon'
-import { GLASS_CARD } from '../lib/surfaces'
+import { CARD, DEVICE_GLASS_CARD } from '../lib/surfaces'
 
 /**
  * Home's right-hand column — product/device context, not more workspace.
@@ -41,7 +41,7 @@ export function HomeSidePanel({
 
   return (
     <aside className="w-72 shrink-0 space-y-4">
-      <div className={`${GLASS_CARD} p-5`}>
+      <div className={`${DEVICE_GLASS_CARD} p-5`}>
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">Noma Device</span>
           <HardwareStatusPill />
@@ -86,7 +86,7 @@ export function HomeSidePanel({
         )}
       </div>
 
-      <div className={`${GLASS_CARD} p-5`}>
+      <div className={`${CARD} p-5`}>
         <p className="font-display text-lg font-semibold leading-snug text-neutral-100">A smarter way to work.</p>
         <p className="mt-1.5 text-xs leading-relaxed text-neutral-600">
           Noma adapts to how you work — on your laptop or with your device.

@@ -6,11 +6,13 @@
 //
 // The suggestion card is a simplified port of the real app's `NomaMoment`
 // component (src/renderer/src/components), `variant="hero"` — same shape
-// (a hero glass card with a signature-blue left edge, the occurrence
-// sentence, a `WorkflowChain`, then "Turn this into one action?" with a
-// gradient Create-action button), updated 2026-09-16 alongside the real
-// app's liquid-glass visual system. Not attempting the real component's
-// full "More / Why Noma suggested this" disclosure — this demo keeps the
+// (the occurrence sentence, a `WorkflowChain`, then "Turn this into one
+// action?" with a solid Create-action button). Updated 2026-09-17 for the
+// real component's v4 restrained-graphite pass: no colored left-edge bar,
+// no gradient button — the real workflow inside the card (large real
+// application icons) is what's supposed to provide the visual interest,
+// not the card's own decoration. Not attempting the real component's full
+// "More / Why Noma suggested this" disclosure — this demo keeps the
 // primary two-choice moment and drops the optional explain affordance to
 // stay legible at the size a marketing page can give it.
 
@@ -97,7 +99,6 @@ export default function DashboardDemo() {
           real app's Home. */}
       {showSuggestion && (
         <section className={`relative mb-8 p-6 ${DEMO_HERO_CARD}`}>
-          <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />
           <p className="text-[11px] font-semibold uppercase tracking-widest text-base-500">Noma noticed</p>
           <p className="mt-2 font-display text-xl font-semibold leading-snug text-base-100 sm:text-2xl">
             You&rsquo;ve repeated this workflow {OCCURRENCE_COUNT} times in Visual Studio Code.
@@ -114,7 +115,7 @@ export default function DashboardDemo() {
                 <button
                   type="button"
                   onClick={() => setStatus('picking')}
-                  className="rounded-md bg-gradient-to-b from-accent-bright to-accent px-4 py-2 text-sm font-medium text-base-950 shadow-[0_4px_16px_-4px_rgba(76,126,255,0.55)] transition-shadow duration-150 hover:shadow-[0_6px_20px_-4px_rgba(76,126,255,0.7)] active:opacity-90"
+                  className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-base-950 shadow-[0_2px_8px_-2px_rgba(76,126,255,0.35)] transition-colors duration-150 hover:bg-accent-bright active:opacity-90"
                 >
                   Create action
                 </button>

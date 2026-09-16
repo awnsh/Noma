@@ -6,7 +6,7 @@ import { InsightCard } from '../components/InsightCard'
 import { EmptyState } from '../components/EmptyState'
 import { workflowStepPlainText } from '../lib/insights'
 import { patternChainSteps } from '../lib/workflowChain'
-import { GLASS_CARD } from '../lib/surfaces'
+import { CARD } from '../lib/surfaces'
 
 /**
  * Learning — "what Noma is learning": a plain-language read of the
@@ -79,7 +79,7 @@ export function Learning() {
             hint="Once you repeat a workflow, Noma will describe what it noticed here."
           />
         ) : (
-          <div className={`${GLASS_CARD} px-5`}>
+          <div className={`${CARD} px-5`}>
             {crossAppInsights.map((pattern) => {
               const patternApplicationId =
                 pattern.kind === 'multiStepWorkflow' ? pattern.contextApplicationId : (pattern.applicationIds[0] ?? null)
@@ -114,7 +114,7 @@ export function Learning() {
         {!stats ? (
           <p className="text-sm text-neutral-600">Loading…</p>
         ) : (
-          <div className={`${GLASS_CARD} px-5`}>
+          <div className={`${CARD} px-5`}>
             {stats.kinds.map((kind) => {
               const total = kind.accepted + kind.rejected
               return (

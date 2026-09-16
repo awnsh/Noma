@@ -10,33 +10,6 @@
         "reason": "tailwind.config.js token definition itself (holo.border) for the 2026-09-16 dark/OLED palette redesign — this file IS the design system source of truth, DESIGN.md is stale from a prior redesign pass and hasn't been regenerated yet"
       },
       {
-        "rule": "design-system-color",
-        "value": "#637cff",
-        "createdAt": "2026-09-16T03:46:49.865Z",
-        "reason": "matches tailwind.config.js accent.DEFAULT exactly - used as an inline radial-gradient stop in AppShell's ambient light layer, which Tailwind utility classes can't express directly"
-      },
-      {
-        "rule": "design-system-color",
-        "value": "#8b6cff",
-        "createdAt": "2026-09-16T03:46:49.957Z",
-        "reason": "matches tailwind.config.js violet.DEFAULT exactly - used as an inline radial-gradient stop in AppShell's ambient light layer, which Tailwind utility classes can't express directly"
-      },
-      {
-        "rule": "gradient-text",
-        "value": "bg-gradient-to-r from-neutral-100 via-accent to-violet bg-clip-text text-transparent",
-        "createdAt": "2026-09-16T03:47:20.022Z",
-        "reason": "user confirmed: explicit brief Part 6 asked for exactly a white to blue/lavender gradient on 'your workflow.' only, not a rainbow, not applied elsewhere"
-      },
-      {
-        "rule": "gradient-text",
-        "value": "*",
-        "files": [
-          "src/renderer/src/pages/Home.tsx"
-        ],
-        "createdAt": "2026-09-16T18:43:13.028Z",
-        "reason": "user confirmed: explicit spec request for a blue/violet gradient on the 'your workflow.' headline word only"
-      },
-      {
         "rule": "broken-image",
         "value": "*",
         "files": [
@@ -44,6 +17,12 @@
         ],
         "createdAt": "2026-09-16T18:44:19.857Z",
         "reason": "false positive: test file asserting no broken/missing <img> renders, not shipping a placeholder image"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#5b6ff5",
+        "createdAt": "2026-09-16T21:09:44.058Z",
+        "reason": "matches tailwind.config.js accent.DEFAULT exactly (updated this session to the new restrained-palette Noma Blue) - used as an inline radial-gradient stop in AppShell's ambient light layer, which Tailwind utility classes can't express directly"
       }
     ]
   }
