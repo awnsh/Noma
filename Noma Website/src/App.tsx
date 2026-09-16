@@ -6,30 +6,29 @@ import Hero from './components/sections/Hero'
 import Problem from './components/sections/Problem'
 import AdaptiveIntelligence from './components/sections/AdaptiveIntelligence'
 import ProductDemo from './components/sections/ProductDemo'
-import NomaLoop from './components/sections/NomaLoop'
-import Difference from './components/sections/Difference'
 import Holo from './components/sections/Holo'
 import Hardware from './components/sections/Hardware'
-import SoftwareHardwareSplit from './components/sections/SoftwareHardwareSplit'
 import Applications from './components/sections/Applications'
 import Privacy from './components/sections/Privacy'
 import BuildingInPublic from './components/sections/BuildingInPublic'
 import CTA from './components/sections/CTA'
 
-// The full-redesign page order (2026-09-16): Hero opens on the product, not
-// a dashboard. Problem sets up "too many workflows" with real app icons.
-// AdaptiveIntelligence (id="watch") and ProductDemo (id="adapt") are the two
-// flagship pinned-scroll demonstrations — Watch+Learn, then Adapt — each
-// already thoroughly tested; a third, overlapping click-driven demo
-// (`HowNomaWorks.tsx`) and the standalone `FAQ.tsx` were retired rather than
-// kept as a fourth/fifth voice repeating the same "Noma notices patterns"
-// idea (still on disk in git history if ever wanted back). NomaLoop is a
-// compact recap, not a new explanation. Difference sets up why any of this
-// matters before Holo (the free software product, embedding the real
-// interactive `AppPreview` mockup as its own proof, and closing on the
-// Holo → Device bridge) hands off to Hardware (id="device", the physical
-// product page) → SoftwareHardwareSplit (the hardware isn't the product,
-// the intelligence is) → Applications (real app coverage) → Privacy →
+// The full-redesign page order (2026-09-16, trimmed same day): Hero opens on
+// the product, not a dashboard. Problem sets up "too many workflows" with
+// real app icons. AdaptiveIntelligence (id="watch") and ProductDemo
+// (id="adapt") are the two flagship pinned-scroll demonstrations — Watch+
+// Learn, then Adapt — each already thoroughly tested; a third, overlapping
+// click-driven demo (`HowNomaWorks.tsx`) and the standalone `FAQ.tsx` were
+// retired earlier for the same reason `NomaLoop.tsx`, `Difference.tsx`, and
+// `SoftwareHardwareSplit.tsx` were just removed: each was a thin diagram
+// restating "Noma learns/adapts" (or, for the split, the software↔hardware
+// duality Holo's own closing bridge already states) a section or two after
+// the flagship demos had already shown it — voices repeating one idea rather
+// than adding a new one (all still on disk in git history if ever wanted
+// back). Holo (the free software product, embedding the real interactive
+// `AppPreview` mockup as its own proof, and closing on the Holo → Device
+// bridge) now hands off straight to Hardware (id="device", the physical
+// product page) → Applications (real app coverage) → Privacy →
 // BuildingInPublic (id="about") → CTA.
 export default function App() {
   // Reduced-motion users get plain native scroll rather than Lenis's eased
@@ -45,11 +44,8 @@ export default function App() {
         <Problem />
         <AdaptiveIntelligence />
         <ProductDemo />
-        <NomaLoop />
-        <Difference />
         <Holo />
         <Hardware />
-        <SoftwareHardwareSplit />
         <Applications />
         <Privacy />
         <BuildingInPublic />

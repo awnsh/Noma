@@ -5,10 +5,9 @@ import nomaWordmark from '../../assets/noma-wordmark.png'
 
 const links = [
   { label: 'Product', href: '#adapt' },
-  { label: 'How it works', href: '#loop' },
+  { label: 'Learning', href: '#watch' },
   { label: 'Holo', href: '#holo' },
   { label: 'Device', href: '#device' },
-  { label: 'Learning', href: '#watch' },
 ]
 
 // Shared by the pill and its mobile dropdown so the glass reads as one
