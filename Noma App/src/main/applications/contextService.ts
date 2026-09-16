@@ -1,6 +1,7 @@
 import type { Application, ApplicationContext } from '@shared/types'
 import type { OSAdapter } from '../os/types'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { upsertApplication } from '../database/repositories/applicationsRepository'
 
 /**
  * Combines the OS layer's raw active-application signal with the profile
@@ -83,6 +84,15 @@ export class ApplicationContextService {
   }
 
   private updateContext(application: Application | null): void {
+    // Durably records *every* detected application, not just ones with a
+    // profile — this is what makes real OS-icon lookup (iconService.ts)
+    // work for "arbitrary installed applications" later, e.g. from the
+    // Learning Center's history, after the app itself has closed and its
+    // live executablePath is no longer available from anywhere else.
+    // upsertApplication's COALESCE backfill (applicationsRepository.ts)
+    // means this is always safe to call, even for an app that already has
+    // a seeded/user-chosen row.
+    if (application) upsertApplication(application)
     const profile = application ? getProfileForApplicationId(application.id) : null
     this.current = { application, profile }
     for (const listener of this.listeners) {

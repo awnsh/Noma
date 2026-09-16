@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { useUiStore, type Page } from '../stores/uiStore'
+import { useApplicationsStore } from '../stores/applicationsStore'
 import logo from '../assets/logo.png'
 import wordmark from '../assets/noma-wordmark.png'
 import {
@@ -56,9 +57,9 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
+      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-all duration-150 ${
         isActive
-          ? 'border border-accent/20 bg-accent/[0.12] font-medium text-accent'
+          ? 'border border-accent/25 bg-accent/[0.12] font-medium text-accent shadow-[0_0_16px_-4px_rgba(99,124,255,0.45)]'
           : 'border border-transparent text-neutral-400 hover:text-neutral-100'
       }`}
     >
@@ -89,6 +90,18 @@ function NavGroupLabel({ children }: { children: ReactNode }) {
 export function AppShell({ children }: { children: ReactNode }) {
   const activePage = useUiStore((state) => state.activePage)
   const setActivePage = useUiStore((state) => state.setActivePage)
+  const refreshApplications = useApplicationsStore((state) => state.refresh)
+  const subscribeApplications = useApplicationsStore((state) => state.subscribe)
+
+  // Loaded once, app-wide — every `AppIcon` anywhere in the tree resolves
+  // its executable path from this store (see applicationsStore.ts), not a
+  // per-page fetch, since a workflow chain or Learning Center entry can
+  // reference an application that isn't the one currently focused.
+  useEffect(() => {
+    refreshApplications()
+    return subscribeApplications()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden bg-base-950 text-neutral-100">
@@ -102,12 +115,26 @@ export function AppShell({ children }: { children: ReactNode }) {
           className="absolute -right-1/4 -top-1/3 h-[900px] w-[900px] rounded-full opacity-[0.16] blur-[160px]"
           style={{ background: 'radial-gradient(circle, #637cff 0%, #8b6cff 45%, transparent 70%)' }}
         />
+        {/* A second, dimmer light low on the opposite corner — "light
+            reflecting across black glass" needs two sources catching
+            different surfaces, not one big glow doing all the work. Kept
+            well under the primary source's opacity so it reads as
+            ambience, not a second focal point. */}
+        <div
+          className="absolute -bottom-1/3 -left-1/4 h-[700px] w-[700px] rounded-full opacity-[0.09] blur-[170px]"
+          style={{ background: 'radial-gradient(circle, #8b6cff 0%, #637cff 50%, transparent 70%)' }}
+        />
       </div>
 
-      <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.03] px-4 py-6 backdrop-blur-2xl">
-        <div className="mb-8 flex items-center gap-2 px-1">
-          <img src={logo} alt="" className="h-6 w-9" />
-          <img src={wordmark} alt="Noma" className="h-3.5 w-auto" />
+      <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.04] px-4 py-6 backdrop-blur-2xl">
+        <div className="relative mb-8 flex items-center gap-2 px-1">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -left-2 h-9 w-9 rounded-full opacity-40 blur-lg"
+            style={{ background: 'radial-gradient(circle, #637cff 0%, transparent 70%)' }}
+          />
+          <img src={logo} alt="" className="relative h-7 w-10" />
+          <img src={wordmark} alt="Noma" className="relative h-4 w-auto" />
         </div>
 
         <nav className="flex flex-col gap-0.5">

@@ -214,7 +214,7 @@ export function Home() {
         )}
       </div>
 
-      <HomeSidePanel profile={profile} />
+      <HomeSidePanel profile={profile} application={application} />
     </div>
   )
 }

@@ -41,6 +41,7 @@ import {
 import { getLearningStats } from '../ai/learningStats'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
 import { getAllApplications } from '../database/repositories/applicationsRepository'
+import { getApplicationIcon } from '../applications/iconService'
 import {
   createMacro,
   deleteMacro,
@@ -200,6 +201,10 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_MACROS, () => getAllMacros())
 
   ipcMain.handle(IPC_CHANNELS.GET_ALL_APPLICATIONS, () => getAllApplications())
+
+  ipcMain.handle(IPC_CHANNELS.GET_APPLICATION_ICON, (_event, executablePath: string) =>
+    getApplicationIcon(executablePath)
+  )
 
   ipcMain.handle(
     IPC_CHANNELS.CREATE_MACRO,

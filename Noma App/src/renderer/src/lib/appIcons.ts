@@ -18,14 +18,14 @@ import {
  * `chrome`, `claude`, `spotify`, plus the common Windows-shell processes a
  * real workflow chain will actually contain.
  *
- * Every entry is one of this app's own hand-drawn glyphs (see
- * `components/icons.tsx`) — never a real logo, never an OS-extracted
- * icon. An earlier version of this feature tried both; showing four
- * different brands' actual artwork next to this app's restrained line-icon
- * language looked like noise, not "alive," so this trades brand
- * recognition for visual evenness. `resolveAppIcon` always returns a
- * component — `AppGlyphIcon` is the deliberate catch-all for anything not
- * listed here, so no application ever falls back to a bare text initial.
+ * Tier 2 of `AppIcon`'s three-tier resolution (see that component's own
+ * doc comment) — every entry here is one of this app's own hand-drawn
+ * glyphs (see `components/icons.tsx`), used only once the real OS icon
+ * (tier 1, `iconService.ts` via `useOsIcon`) is confirmed unavailable for
+ * that application, not as the primary identity. `resolveAppIcon` always
+ * returns a component — `AppGlyphIcon` is the deliberate catch-all (tier 3)
+ * for anything not listed here, so no application ever falls back to a
+ * bare text initial even before/without a real OS icon.
  */
 const APP_ICON_REGISTRY: Record<string, IconComponent> = {
   code: CodeGlyphIcon,

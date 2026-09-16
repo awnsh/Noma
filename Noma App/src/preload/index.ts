@@ -90,6 +90,8 @@ const flowApi: FlowApi = {
   testControlAction: (action) => ipcRenderer.invoke(IPC_CHANNELS.TEST_CONTROL_ACTION, action),
   getMacros: () => ipcRenderer.invoke(IPC_CHANNELS.GET_MACROS),
   getAllApplications: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_APPLICATIONS),
+  getApplicationIcon: (executablePath) =>
+    ipcRenderer.invoke(IPC_CHANNELS.GET_APPLICATION_ICON, executablePath),
 
   createMacro: (name, actions, applicationId) =>
     ipcRenderer.invoke(IPC_CHANNELS.CREATE_MACRO, name, actions, applicationId),

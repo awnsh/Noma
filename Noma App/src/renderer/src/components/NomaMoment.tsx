@@ -7,7 +7,7 @@ import { workflowChainSteps } from '../lib/workflowChain'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 import { WorkflowChain } from './WorkflowChain'
 import { AppIcon } from './AppIcon'
-import { HERO_CARD } from '../lib/surfaces'
+import { HERO_CARD, HERO_CARD_GLOW } from '../lib/surfaces'
 
 /**
  * The Noma Moment — the single most important component in the app: "Noma
@@ -107,7 +107,7 @@ export function NomaMoment({
         className={isHero ? `${HERO_CARD} p-8` : ''}
         style={{ animation: 'noma-settle 350ms ease-out' }}
       >
-        {isHero && <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />}
+        {isHero && <div aria-hidden className={HERO_CARD_GLOW} />}
         <p className="text-xs text-neutral-600">Action created</p>
         <p className={`mt-1.5 font-display font-semibold text-neutral-100 ${isHero ? 'text-2xl' : 'text-lg'}`}>
           {createdLabel === 'Noted' ? 'Noted' : createdLabel}
@@ -123,7 +123,7 @@ export function NomaMoment({
 
   return (
     <div className={isHero ? `${HERO_CARD} p-8` : ''}>
-      {isHero && <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />}
+      {isHero && <div aria-hidden className={HERO_CARD_GLOW} />}
       <div className="flex items-start justify-between gap-4">
         <p
           className={

@@ -127,7 +127,12 @@ function toApplication(raw: RawForegroundWindowEvent): Application {
   return {
     id,
     name: raw.processName,
-    processName: fileName
+    processName: fileName,
+    // The full path, when PowerShell actually resolved one (see the poll
+    // script's own comment on $proc.Path coming back empty for some
+    // processes) — this is the one field real OS-icon extraction needs
+    // (iconService.ts). Absent, not a guessed path, when raw.path is null.
+    executablePath: raw.path ?? undefined
   }
 }
 

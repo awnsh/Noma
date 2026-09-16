@@ -33,7 +33,7 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
     <div
       className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border border-white/[0.09] bg-white/[0.04] p-4 backdrop-blur-xl transition-all duration-150 ${KEYCAP_SHADOW} ${
         control
-          ? 'hover:-translate-y-0.5 hover:border-accent/40 hover:bg-white/[0.06] hover:shadow-[0_10px_28px_-10px_rgba(0,0,0,0.6),0_0_20px_-6px_rgba(99,124,255,0.35),inset_0_1px_0_0_rgba(255,255,255,0.08)]'
+          ? 'hover:-translate-y-0.5 hover:border-accent/40 hover:bg-white/[0.06] hover:shadow-[0_10px_28px_-10px_rgba(0,0,0,0.6),0_0_20px_-6px_rgba(99,124,255,0.35),inset_0_1px_0_0_rgba(255,255,255,0.08)] active:translate-y-0 active:scale-[0.98]'
           : ''
       }`}
     >

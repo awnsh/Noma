@@ -27,6 +27,7 @@ export const IPC_CHANNELS = {
   TEST_CONTROL_ACTION: 'flow:test-control-action',
   GET_MACROS: 'flow:get-macros',
   GET_ALL_APPLICATIONS: 'flow:get-all-applications',
+  GET_APPLICATION_ICON: 'flow:get-application-icon',
   CREATE_MACRO: 'flow:create-macro',
   UPDATE_MACRO: 'flow:update-macro',
   DELETE_MACRO: 'flow:delete-macro',

@@ -45,4 +45,18 @@ export const KEYCAP_SHADOW =
  * should — while staying the same glass material as everything else.
  */
 export const HERO_CARD =
-  'relative overflow-hidden rounded-3xl border border-white/[0.12] bg-white/[0.065] backdrop-blur-[28px] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.65),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
+  'relative overflow-hidden rounded-3xl border border-white/[0.12] bg-white/[0.065] backdrop-blur-[28px] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.65),0_0_60px_-24px_rgba(99,124,255,0.35),inset_0_1px_0_0_rgba(255,255,255,0.07)]'
+
+/**
+ * The hero card's own ambient light, layered *inside* it (a sibling `<div
+ * aria-hidden>` right after the card's opening tag, before its real
+ * content) — a blue glow bleeding in from the left edge (where the old flat
+ * `bg-accent` bar used to sit) and a much dimmer violet wash from the
+ * opposite corner, both soft radial gradients rather than hard shapes, so
+ * the card reads as lit from within rather than decorated with a stripe.
+ * Deliberately not a second `bg-gradient-to-*` on the card element itself —
+ * that would fight the card's own translucent glass fill; a separate
+ * absolutely-positioned layer stays additive on top of it instead.
+ */
+export const HERO_CARD_GLOW =
+  'pointer-events-none absolute inset-0 opacity-90 [background:radial-gradient(120%_100%_at_0%_0%,rgba(99,124,255,0.16)_0%,transparent_45%),radial-gradient(80%_80%_at_100%_100%,rgba(139,108,255,0.09)_0%,transparent_55%)]'

@@ -2,9 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!--
+      img-src explicitly adds `data:` on top of the `default-src 'self'`
+      baseline — real OS-extracted application icons (see
+      main/applications/iconService.ts) arrive in the renderer as
+      `data:image/png;base64,...` strings, which `'self'` alone does NOT
+      cover (a `data:` URI has no origin, so it never matches `'self'`).
+      Without this, every `<img src="data:...">` in AppIcon.tsx is silently
+      blocked by CSP — no console-visible broken-image icon, no error
+      surfaced to the component, just a real icon that never paints.
+      Confirmed by hand: removing this reproduces exactly that silent
+      failure in a running build.
+    -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Noma</title>

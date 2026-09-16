@@ -1,23 +1,34 @@
 import { useEffect } from 'react'
-import type { ApplicationProfile } from '@shared/types'
+import type { Application, ApplicationProfile } from '@shared/types'
 import { HOLO_ZONE_ORDER } from '@shared/constants'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useUiStore } from '../stores/uiStore'
 import { HardwareStatusPill } from './HardwareStatusPill'
+import { AppIcon } from './AppIcon'
 import { GLASS_CARD } from '../lib/surfaces'
 
 /**
  * Home's right-hand column — product/device context, not more workspace.
  * Three real things, never invented: the actual hardware connection state
  * (`HardwareStatusPill`, already honest about "virtual" vs. real), the
- * product's own three-step loop in its own words, and a live Holo preview
- * built from whatever the currently-focused application's profile actually
- * contains (falls back to the zone name when a slot is empty — never a
- * placeholder brand like "Search"/"Claude"/"Git"). Clicking the Holo
- * preview navigates there, the same way "See all controls" does on the
- * center column.
+ * product's own four-step loop (Observe/Learn/Adapt/Execute) in its own
+ * words, and a live Holo preview built from whatever the currently-focused
+ * application's profile actually contains (falls back to the zone name when
+ * a slot is empty — never a placeholder brand like "Search"/"Claude"/"Git"),
+ * with that same application's real `AppIcon` next to the "Holo" label so
+ * the preview reads as "this is what Noma built for what you're doing
+ * right now," not a generic device mockup. Clicking the Holo preview
+ * navigates there, the same way "See all controls" does on the center
+ * column.
  */
-export function HomeSidePanel({ profile }: { profile: ApplicationProfile | null }) {
+const LOOP_STAGES = ['Observe', 'Learn', 'Adapt', 'Execute'] as const
+export function HomeSidePanel({
+  profile,
+  application
+}: {
+  profile: ApplicationProfile | null
+  application: Application | null
+}) {
   const status = useHardwareStore((state) => state.status)
   const refresh = useHardwareStore((state) => state.refresh)
   const subscribe = useHardwareStore((state) => state.subscribe)
@@ -80,17 +91,30 @@ export function HomeSidePanel({ profile }: { profile: ApplicationProfile | null 
         <p className="mt-1.5 text-xs leading-relaxed text-neutral-600">
           Noma adapts to how you work — on your laptop or with your device.
         </p>
-        <div className="mt-4 space-y-3">
-          <SidePanelStep name="Learn" detail="Detects your patterns" />
-          <SidePanelStep name="Adapt" detail="Builds your interface" />
-          <SidePanelStep name="Execute" detail="Gets out of your way" />
+        <div className="mt-4 flex items-center gap-1.5">
+          {LOOP_STAGES.map((stage, index) => (
+            <div key={stage} className="flex flex-1 items-center gap-1.5 last:flex-none">
+              <div className="flex flex-col items-center gap-1.5">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-accent/30 bg-accent/[0.08] font-mono text-[10px] text-accent">
+                  {index + 1}
+                </span>
+                <span className="text-[10px] font-medium text-neutral-400">{stage}</span>
+              </div>
+              {index < LOOP_STAGES.length - 1 && (
+                <span aria-hidden className="h-px flex-1 bg-white/[0.08]" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
       <button type="button" onClick={() => setActivePage('holo')} className="block w-full text-left">
         <div className="rounded-2xl bg-holo-bg p-5 transition-transform duration-150 hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-widest text-holo-muted">Holo · Free</span>
+            <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-holo-muted">
+              {application && <AppIcon applicationId={application.id} name={application.name} size={14} />}
+              Holo · Free
+            </span>
             <span aria-hidden className="text-holo-muted">
               →
             </span>
@@ -112,14 +136,5 @@ export function HomeSidePanel({ profile }: { profile: ApplicationProfile | null 
         </div>
       </button>
     </aside>
-  )
-}
-
-function SidePanelStep({ name, detail }: { name: string; detail: string }) {
-  return (
-    <div className="flex items-baseline gap-2.5">
-      <span className="w-12 shrink-0 text-xs font-medium text-accent">{name}</span>
-      <span className="text-xs text-neutral-600">{detail}</span>
-    </div>
   )
 }

@@ -11,6 +11,14 @@ export interface Application {
   id: string
   name: string
   processName: string
+  /** Full path to the executable (e.g. `C:\...\chrome.exe`) when known —
+   *  what real OS-icon extraction needs (see main/applications/iconService.ts).
+   *  Populated for live-detected applications (windowsAdapter.ts); absent
+   *  for seeded/demo applications that don't correspond to a real installed
+   *  path until the real one is actually detected running (see
+   *  applicationsRepository.ts's upsertApplication, which backfills this
+   *  field in place without touching a seeded display name). */
+  executablePath?: string
   icon?: string
 }
 
@@ -632,6 +640,17 @@ export interface FlowApi {
   getMacros(): Promise<Macro[]>
   /** All known applications, for the Macro Studio's "assign to control" and launch-application pickers. */
   getAllApplications(): Promise<Application[]>
+  /**
+   * The real OS-extracted icon for an application's executable, as a
+   * renderer-safe PNG data URL (`data:image/png;base64,...`) — Electron's
+   * `app.getFileIcon` under the hood, cached in the main process by
+   * normalized path (see iconService.ts). Works for *any* installed
+   * application, not just ones in this app's own hand-drawn icon registry
+   * (`lib/appIcons.ts`) — that registry is only a fallback for when this
+   * returns null (unknown path, or Windows couldn't resolve an icon for
+   * it). Never throws.
+   */
+  getApplicationIcon(executablePath: string): Promise<string | null>
 
   /** Personalized Application Profiles (Product Development Phase 2).
    *  Every known application, and whether it has a profile yet — the

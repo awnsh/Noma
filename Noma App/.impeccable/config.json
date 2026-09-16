@@ -26,6 +26,24 @@
         "value": "bg-gradient-to-r from-neutral-100 via-accent to-violet bg-clip-text text-transparent",
         "createdAt": "2026-09-16T03:47:20.022Z",
         "reason": "user confirmed: explicit brief Part 6 asked for exactly a white to blue/lavender gradient on 'your workflow.' only, not a rainbow, not applied elsewhere"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/renderer/src/pages/Home.tsx"
+        ],
+        "createdAt": "2026-09-16T18:43:13.028Z",
+        "reason": "user confirmed: explicit spec request for a blue/violet gradient on the 'your workflow.' headline word only"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "src/renderer/src/components/AppIcon.test.tsx"
+        ],
+        "createdAt": "2026-09-16T18:44:19.857Z",
+        "reason": "false positive: test file asserting no broken/missing <img> renders, not shipping a placeholder image"
       }
     ]
   }

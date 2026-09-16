@@ -16,7 +16,8 @@ describe('upsertApplication', () => {
       id: 'notepad',
       name: 'Notepad',
       processName: 'notepad.exe',
-      icon: undefined
+      icon: undefined,
+      executablePath: undefined
     })
   })
 
@@ -26,6 +27,36 @@ describe('upsertApplication', () => {
     // not clobber the nicer display name already on file.
     upsertApplication({ id: 'chrome', name: 'chrome', processName: 'chrome.exe' })
     expect(getApplicationById('chrome')?.name).toBe('Google Chrome')
+  })
+
+  it('backfills a missing executable path on conflict, without touching the name', () => {
+    // Mirrors seed.ts's SEED_APPLICATIONS: a pre-seeded row with no real
+    // path, then the real process is detected running for the first time.
+    upsertApplication({ id: 'code', name: 'Visual Studio Code', processName: 'Code.exe' })
+    upsertApplication({
+      id: 'code',
+      name: 'code',
+      processName: 'Code.exe',
+      executablePath: 'C:\\Users\\test\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe'
+    })
+    const application = getApplicationById('code')
+    expect(application?.name).toBe('Visual Studio Code')
+    expect(application?.executablePath).toBe(
+      'C:\\Users\\test\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe'
+    )
+  })
+
+  it('never clobbers an already-known executable path with a later null', () => {
+    upsertApplication({
+      id: 'chrome',
+      name: 'Google Chrome',
+      processName: 'chrome.exe',
+      executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    })
+    upsertApplication({ id: 'chrome', name: 'chrome', processName: 'chrome.exe' })
+    expect(getApplicationById('chrome')?.executablePath).toBe(
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    )
   })
 })
 
