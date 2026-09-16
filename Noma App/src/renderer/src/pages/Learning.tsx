@@ -5,6 +5,7 @@ import { useUiStore } from '../stores/uiStore'
 import { InsightCard } from '../components/InsightCard'
 import { EmptyState } from '../components/EmptyState'
 import { workflowStepPlainText } from '../lib/insights'
+import { patternChainSteps } from '../lib/workflowChain'
 import { GLASS_CARD } from '../lib/surfaces'
 
 /**
@@ -88,6 +89,7 @@ export function Learning() {
                   text={workflowStepPlainText(pattern, appNames)}
                   applicationId={patternApplicationId}
                   applicationName={patternApplicationId ? appNames[patternApplicationId] : null}
+                  chain={patternChainSteps(pattern, appNames)}
                 />
               )
             })}

@@ -42,7 +42,7 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
         {glyph && <span className="text-sm text-neutral-500">{glyph}</span>}
       </div>
       {application && (
-        <AppIcon applicationId={application.id} name={application.name} size={22} variant="tile" />
+        <AppIcon applicationId={application.id} name={application.name} size={32} variant="tile" />
       )}
       <div>
         <div className="truncate text-sm font-medium tracking-wide text-neutral-100">

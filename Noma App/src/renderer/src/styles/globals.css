@@ -26,11 +26,29 @@ body {
     'ss01';
 }
 
-/* A single, purposeful entrance — used only for the moment a workflow
-   actually becomes an action (NomaMoment's success state). Physical and
-   precise (a small rise + fade), never a flashy/AI-style reveal, and used
-   nowhere else in the app. */
+/* A single, purposeful entrance — used for the moment a workflow actually
+   becomes an action (NomaMoment's success state). Physical and precise (a
+   small rise + fade), never a flashy/AI-style reveal. */
 @keyframes noma-settle {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The same physical fade + rise as noma-settle, structurally, but shorter
+   and meant to be applied per-element with an increasing `animation-delay`
+   (see WorkflowChain.tsx) — a workflow's icon nodes reveal themselves in
+   order, "a system being revealed," not everything dumped on screen at
+   once. Kept as its own keyframe (identical values would be fine to share,
+   but the two are conceptually different animations — one whole-card
+   settle vs. one per-node stagger — and coupling them would make changing
+   either one's timing independently a landmine later). */
+@keyframes noma-node-in {
   from {
     opacity: 0;
     transform: translateY(4px);

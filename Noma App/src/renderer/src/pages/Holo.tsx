@@ -100,11 +100,13 @@ export function Holo() {
           `base`/`neutral`, so it stays dark regardless of the app theme. */}
       <div className="rounded-2xl bg-holo-bg p-6">
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-holo-muted">
+          <div className="flex items-center gap-2.5">
             {context.application && (
-              <AppIcon applicationId={context.application.id} name={context.application.name} size={16} />
+              <AppIcon applicationId={context.application.id} name={context.application.name} size={26} variant="tile" />
             )}
-            {context.application ? context.application.name : 'No application detected'}
+            <span className="text-sm text-holo-text">
+              {context.application ? context.application.name : 'No application detected'}
+            </span>
           </div>
           <div className="flex gap-2">
             <button

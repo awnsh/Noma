@@ -1,4 +1,4 @@
-import type { MacroStep, Suggestion, WorkflowStep } from '@shared/types'
+import type { DetectedPattern, MacroStep, Suggestion, WorkflowStep } from '@shared/types'
 import { formatShortcutCaption } from './describeAction'
 
 /**
@@ -72,6 +72,23 @@ export function workflowChainSteps(suggestion: Suggestion): WorkflowChainStep[] 
     case 'assignShortcutToControl':
       return [{ label: shortcutStepLabel(action.comboKeys), kind: 'shortcut' }]
   }
+}
+
+/**
+ * The same visual chain, derived directly from a `DetectedPattern` instead
+ * of a `Suggestion` — the Learning page's own "what Noma is learning" list
+ * (`InsightCard`) shows patterns before they've necessarily become a
+ * suggestion with a resolved `action`, so `workflowChainSteps` (which reads
+ * `Suggestion.action`) doesn't apply there. Only the two multi-step pattern
+ * kinds carry a visualizable `steps` sequence; every other kind returns
+ * null, same "no chain to show" convention as `workflowChainSteps`.
+ */
+export function patternChainSteps(
+  pattern: DetectedPattern,
+  names: Record<string, string | null>
+): WorkflowChainStep[] | null {
+  if (pattern.kind !== 'crossAppWorkflow' && pattern.kind !== 'multiStepWorkflow') return null
+  return pattern.steps.map((step) => workflowStep(step, names))
 }
 
 /**

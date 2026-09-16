@@ -147,7 +147,7 @@ export function NomaMoment({
         }`}
       >
         {isHero && (!chain || chain.length <= 1) && suggestion.applicationId && (
-          <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={22} variant="tile" className="mt-0.5" />
+          <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={28} variant="tile" className="mt-0.5" />
         )}
         <p className={isHero ? 'font-display text-2xl font-semibold leading-snug' : 'text-sm text-neutral-600'}>
           {occurrenceSentence(suggestion)}
@@ -155,7 +155,7 @@ export function NomaMoment({
       </div>
 
       {chain && chain.length > 1 && (
-        <div className={isHero ? 'mt-5' : 'mt-3'}>
+        <div className={isHero ? 'mt-6' : 'mt-3'}>
           <WorkflowChain steps={chain} size={isHero ? 'lg' : 'md'} />
         </div>
       )}

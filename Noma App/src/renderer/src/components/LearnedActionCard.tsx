@@ -30,7 +30,7 @@ export function LearnedActionCard({ name, chain, usageCount, applicationId, appl
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           {!showsOwnChain && applicationId && (
-            <AppIcon applicationId={applicationId} name={applicationName ?? name} size={22} variant="tile" />
+            <AppIcon applicationId={applicationId} name={applicationName ?? name} size={32} variant="tile" />
           )}
           <div className="min-w-0">
             <div className="text-sm font-medium text-neutral-100">{name}</div>
