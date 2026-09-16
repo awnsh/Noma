@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MODULE_CATALOG } from '@shared/constants'
 import type { ControlAction } from '@shared/types'
 import { useHardwareStore } from '../stores/hardwareStore'
@@ -42,7 +42,7 @@ function DevToolButton({
       disabled={disabled}
       onClick={onClick}
       title={title}
-      className="rounded-md border border-black/10 px-2.5 py-1 text-[11px] text-neutral-300 hover:border-accent-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
+      className="rounded-md border border-white/10 px-2.5 py-1 text-[11px] text-neutral-300 hover:border-accent-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-30"
     >
       {children}
     </button>
@@ -59,7 +59,7 @@ function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; o
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${
-        ok ? 'border-accent-muted text-accent' : 'border-black/10 text-neutral-500'
+        ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-500'
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${ok ? 'bg-accent' : 'bg-neutral-700'}`} />
@@ -110,13 +110,13 @@ export function Developer() {
       </div>
 
       <div className="mb-8 grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-black/10 bg-base-900 px-4 py-3">
+        <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">
             Hardware Connection
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <HardwareStatusPill />
-            <span className="rounded-full border border-black/10 px-2 py-0.5 text-[11px] text-neutral-500">
+            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
               {status.deviceType} · v{status.protocolVersion}
             </span>
           </div>
@@ -126,7 +126,7 @@ export function Developer() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-black/10 bg-base-900 px-4 py-3">
+        <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">
             Workflow Monitoring
           </div>
@@ -135,7 +135,7 @@ export function Developer() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-black/10 bg-base-900 px-4 py-3">
+        <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
           <div className="text-[10px] uppercase tracking-widest text-neutral-600">
             Keystroke Execution
           </div>
@@ -154,7 +154,7 @@ export function Developer() {
         </div>
       </div>
 
-      <div className="mb-8 rounded-xl border border-black/10 bg-base-900 px-4 py-4">
+      <div className="mb-8 rounded-xl border border-white/10 bg-base-900 px-4 py-4">
         <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
           Hardware Bring-Up Tools
         </div>
@@ -181,7 +181,7 @@ export function Developer() {
             value={selectedControlId}
             onChange={(event) => setSelectedControlId(event.target.value)}
             disabled={controls.length === 0}
-            className="rounded-md border border-black/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300 disabled:opacity-40"
+            className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300 disabled:opacity-40"
           >
             <option value="" disabled>
               {controls.length === 0 ? 'No controls' : 'Choose a control…'}
@@ -214,7 +214,7 @@ export function Developer() {
           <select
             value={selectedModuleType}
             onChange={(event) => setSelectedModuleType(event.target.value)}
-            className="rounded-md border border-black/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300"
+            className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-[11px] text-neutral-300"
           >
             {MODULE_CATALOG.map((entry) => (
               <option key={entry.type} value={entry.type}>
@@ -232,7 +232,7 @@ export function Developer() {
         <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
           Current Control Mappings
         </div>
-        <div className="overflow-hidden rounded-xl border border-black/10 bg-base-900">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-base-900">
           {controls.length === 0 ? (
             <div className="px-4 py-3 text-sm text-neutral-600">
               {context.application
@@ -246,7 +246,7 @@ export function Developer() {
               .map((control) => (
                 <div
                   key={control.id}
-                  className="flex items-center gap-4 border-b border-black/5 px-4 py-2 text-sm last:border-b-0"
+                  className="flex items-center gap-4 border-b border-white/5 px-4 py-2 text-sm last:border-b-0"
                 >
                   <span className="w-16 shrink-0 text-[10px] uppercase tracking-widest text-neutral-600">
                     Slot {control.slot}
@@ -274,7 +274,7 @@ export function Developer() {
             {status.modules.map((module) => (
               <span
                 key={module.id}
-                className="rounded-full border border-black/10 bg-base-900 px-3 py-1 text-xs text-neutral-400"
+                className="rounded-full border border-white/10 bg-base-900 px-3 py-1 text-xs text-neutral-400"
               >
                 {module.name}
               </span>
@@ -287,7 +287,7 @@ export function Developer() {
         <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
           HOST ↔ DEVICE Log
         </div>
-        <div className="max-h-96 overflow-y-auto rounded-xl border border-black/10 bg-base-900">
+        <div className="max-h-96 overflow-y-auto rounded-xl border border-white/10 bg-base-900">
           {reversedLog.length === 0 ? (
             <div className="px-4 py-3 text-sm text-neutral-600">
               No events yet — switch applications or press a control.

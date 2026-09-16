@@ -1,4 +1,4 @@
-﻿import { OnboardingButton, ONBOARDING_FOCUS_RING } from './OnboardingButton'
+import { OnboardingButton, ONBOARDING_FOCUS_RING } from './OnboardingButton'
 
 const USE_CASES = ['Development', 'Design', 'Video', 'Writing', 'Productivity', 'Other']
 
@@ -31,7 +31,7 @@ export function OnboardingUseCasesScreen({ selected, onToggle, onContinue }: Onb
               className={`rounded-xl border px-4 py-4 text-left text-sm font-medium transition-colors duration-150 ${ONBOARDING_FOCUS_RING} ${
                 isSelected
                   ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-black/10 text-neutral-300 hover:border-black/25'
+                  : 'border-white/10 text-neutral-300 hover:border-white/25'
               }`}
             >
               {useCase}

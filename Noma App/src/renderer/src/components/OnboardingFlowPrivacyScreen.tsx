@@ -1,4 +1,4 @@
-﻿import { OnboardingButton } from './OnboardingButton'
+import { OnboardingButton } from './OnboardingButton'
 
 const SEQUENCE = [
   { label: 'You repeat a shortcut', detail: 'The same combo, in the same app, a few times' },
@@ -37,7 +37,7 @@ export function OnboardingFlowPrivacyScreen({ onEnable, onSkip }: OnboardingFlow
       <div className="mt-8 flex w-full items-stretch justify-center gap-2 sm:gap-3">
         {SEQUENCE.map((step, index) => (
           <div key={step.label} className="flex items-center gap-2 sm:gap-3">
-            <div className="w-32 rounded-xl border border-black/10 bg-base-900 px-3 py-4 sm:w-36">
+            <div className="w-32 rounded-xl border border-white/10 bg-base-900 px-3 py-4 sm:w-36">
               <div className="text-sm font-medium text-neutral-200">{step.label}</div>
               <div className="mt-1 text-[11px] text-neutral-600">{step.detail}</div>
             </div>
@@ -50,7 +50,7 @@ export function OnboardingFlowPrivacyScreen({ onEnable, onSkip }: OnboardingFlow
         ))}
       </div>
 
-      <div className="mt-10 w-full max-w-sm rounded-xl border border-black/10 bg-base-900 px-5 py-4 text-left">
+      <div className="mt-10 w-full max-w-sm rounded-xl border border-white/10 bg-base-900 px-5 py-4 text-left">
         <div className="text-sm font-medium text-neutral-100">Your data stays on your computer.</div>
         <p className="mt-1.5 text-xs text-neutral-500">
           Flow processes your workflow locally. You can pause Flow or clear learned data anytime in

@@ -1,21 +1,13 @@
 import { useEffect, useState } from 'react'
-import type { Application, Control, ControlUsageStat, Macro } from '@shared/types'
+import type { Control } from '@shared/types'
 import { useFlowStore } from '../stores/flowStore'
 import { ControlTile } from '../components/ControlTile'
 import { ControlEditorModal } from '../components/ControlEditorModal'
 import { LearnedActionCard } from '../components/LearnedActionCard'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { EmptyState } from '../components/EmptyState'
-import { AppLogo } from '../components/AppLogo'
-import { macroChainSteps, type WorkflowChainStep } from '../lib/workflowChain'
-
-interface LearnedAction {
-  macro: Macro
-  chain: WorkflowChainStep[]
-  usageCount: number
-  applicationId: string | null
-  applicationName: string | null
-}
+import { AppIcon } from '../components/AppIcon'
+import { useLearnedActions } from '../lib/useLearnedActions'
 
 /**
  * Controls — the fuller view of "your interface": the live 4-control grid
@@ -29,50 +21,13 @@ interface LearnedAction {
 export function Controls() {
   const { context, refresh, subscribeToContext } = useFlowStore()
   const [editingSlot, setEditingSlot] = useState<number | null>(null)
-  const [learnedActions, setLearnedActions] = useState<LearnedAction[] | null>(null)
+  const learnedActions = useLearnedActions()
 
   useEffect(() => {
     refresh()
     const unsubscribe = subscribeToContext()
     return unsubscribe
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const loadLearnedActions = async (): Promise<void> => {
-    const [macros, applications, usageStats] = await Promise.all([
-      window.flow.getMacros(),
-      window.flow.getAllApplications(),
-      window.flow.getControlUsageStats()
-    ])
-
-    const applicationNames = Object.fromEntries(applications.map((app: Application) => [app.id, app.name]))
-    const usageByControlId = new Map<string, ControlUsageStat>(usageStats.map((stat) => [stat.controlId, stat]))
-
-    const learned = macros.filter((macro) => macro.trigger === 'flow-control')
-    const withContext = await Promise.all(
-      learned.map(async (macro): Promise<LearnedAction> => {
-        const referencing = await window.flow.getControlsReferencingMacro(macro.id)
-        const usageCount = referencing.reduce(
-          (sum, ref) => sum + (usageByControlId.get(ref.controlId)?.count ?? 0),
-          0
-        )
-        return {
-          macro,
-          chain: macroChainSteps(macro.actions, applicationNames),
-          usageCount,
-          applicationId: referencing[0]?.applicationId ?? null,
-          applicationName: referencing[0]?.applicationName ?? null
-        }
-      })
-    )
-
-    setLearnedActions(withContext)
-  }
-
-  useEffect(() => {
-    void loadLearnedActions()
-    const unsubscribe = window.flow.onSuggestionsChanged(() => void loadLearnedActions())
-    return unsubscribe
   }, [])
 
   const { application, profile } = context
@@ -89,12 +44,13 @@ export function Controls() {
 
       <section className="mb-14">
         <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Active controls</h2>
-        <p className="mb-5 flex items-center gap-1.5 text-sm text-neutral-600">
+        <p className="mb-5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-neutral-600">
           {application ? (
             <>
-              For
-              <AppLogo applicationId={application.id} name={application.name} className="h-4 w-4" />
-              <span className="text-neutral-100">{application.name}</span>. Click a control to change it.
+              <span>For</span>
+              <AppIcon applicationId={application.id} name={application.name} size={16} />
+              <span className="font-medium text-neutral-100">{application.name}.</span>
+              <span>Click a control to change it.</span>
             </>
           ) : (
             'Open an application Noma knows to see its controls.'
@@ -106,7 +62,7 @@ export function Controls() {
               const control = controls.find((item) => item.slot === slot)
               return (
                 <button key={slot} type="button" onClick={() => setEditingSlot(slot)} className="text-left">
-                  <ControlTile slot={slot} control={control} />
+                  <ControlTile slot={slot} control={control} application={application} />
                 </button>
               )
             })}
@@ -124,10 +80,7 @@ export function Controls() {
             slot={editingSlot}
             control={controls.find((control) => control.slot === editingSlot)}
             onClose={() => setEditingSlot(null)}
-            onSaved={() => {
-              refresh()
-              void loadLearnedActions()
-            }}
+            onSaved={() => refresh()}
           />
         )}
       </section>

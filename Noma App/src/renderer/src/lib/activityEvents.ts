@@ -30,7 +30,9 @@ export function activityEventsFromSuggestions(suggestions: Suggestion[]): Activi
     events.push({
       id: `${suggestion.id}:detected`,
       timestamp: suggestion.createdAt,
-      description: detectionDescription(suggestion)
+      description: detectionDescription(suggestion),
+      applicationId: suggestion.applicationId,
+      applicationName: suggestion.applicationName
     })
 
     if (suggestion.status === 'accepted' && suggestion.resolvedAt) {
@@ -39,7 +41,9 @@ export function activityEventsFromSuggestions(suggestions: Suggestion[]): Activi
         timestamp: suggestion.resolvedAt,
         description: suggestion.applicationName
           ? `You turned it into an action for ${suggestion.applicationName}.`
-          : 'You turned it into an action.'
+          : 'You turned it into an action.',
+        applicationId: suggestion.applicationId,
+        applicationName: suggestion.applicationName
       })
     }
   }

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import type { DailyActivityCount } from '@shared/types'
 
 /**
@@ -14,7 +14,7 @@ export function DailyActivityChart({ data }: { data: DailyActivityCount[] }) {
   const max = Math.max(1, ...data.map((day) => day.count))
 
   return (
-    <div className="rounded-xl border border-black/10 bg-base-900 p-4">
+    <div className="rounded-xl border border-white/10 bg-base-900 p-4">
       <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
         Shortcut activity, last {data.length} days
       </div>
@@ -32,7 +32,7 @@ export function DailyActivityChart({ data }: { data: DailyActivityCount[] }) {
               onPointerLeave={() => setHoveredIndex(null)}
             >
               {isHovered && (
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg border border-black/10 bg-base-800 px-2 py-1 text-[11px] text-neutral-100 shadow-lg shadow-black/40">
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-base-800 px-2 py-1 text-[11px] text-neutral-100 shadow-lg shadow-black/40">
                   <span className="text-neutral-400">{formatChartDate(day.date)}</span>{' '}
                   <span className="font-medium">
                     {day.count} {day.count === 1 ? 'use' : 'uses'}

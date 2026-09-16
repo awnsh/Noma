@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Application, Macro, MacroStep } from '@shared/types'
 import { MacroStepRow, defaultStepForType } from './MacroStepRow'
 
@@ -157,7 +157,7 @@ export function MacroEditor({
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            className="w-full max-w-sm rounded-md border border-black/10 bg-base-900 px-3 py-2 text-lg font-medium text-neutral-100"
+            className="w-full max-w-sm rounded-md border border-white/10 bg-base-900 px-3 py-2 text-lg font-medium text-neutral-100"
           />
         </div>
         <label className="mt-6 flex items-center gap-2 text-xs text-neutral-400">
@@ -175,7 +175,7 @@ export function MacroEditor({
         <div className="mb-3 text-[10px] uppercase tracking-widest text-neutral-500">Steps</div>
 
         {actions.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-black/10 px-4 py-6 text-center text-sm text-neutral-600">
+          <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-neutral-600">
             No steps yet — add one below.
           </p>
         ) : (
@@ -203,7 +203,7 @@ export function MacroEditor({
               key={type}
               type="button"
               onClick={() => addStep(type)}
-              className="rounded-full border border-black/10 px-3 py-1.5 text-xs text-neutral-400 hover:border-accent-muted hover:text-accent"
+              className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-neutral-400 hover:border-accent-muted hover:text-accent"
             >
               {NEW_STEP_LABELS[type]}
             </button>
@@ -214,7 +214,7 @@ export function MacroEditor({
       {testResult && (
         <div
           className={`mb-4 rounded-md border px-3 py-2 text-xs ${
-            testResult.ok ? 'border-accent-muted text-accent' : 'border-black/10 text-neutral-400'
+            testResult.ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-400'
           }`}
         >
           {testResult.ok ? '✓ Executed' : `✗ ${testResult.reason ?? 'Failed'}`}
@@ -226,7 +226,7 @@ export function MacroEditor({
           type="button"
           onClick={handleTest}
           disabled={isTesting || actions.length === 0}
-          className="rounded-md border border-black/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted disabled:cursor-not-allowed disabled:opacity-40"
+          className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isTesting ? 'Testing…' : 'Test'}
         </button>
@@ -242,7 +242,7 @@ export function MacroEditor({
           <button
             type="button"
             onClick={handleDuplicate}
-            className="rounded-md border border-black/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-black/30"
+            className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-white/30"
           >
             Duplicate
           </button>
@@ -288,7 +288,7 @@ export function MacroEditor({
       </div>
 
       {macro && (
-        <div className="rounded-xl border border-black/10 bg-base-900 p-4">
+        <div className="rounded-xl border border-white/10 bg-base-900 p-4">
           <div className="mb-3 text-[10px] uppercase tracking-widest text-neutral-500">
             Assigned controls
           </div>
@@ -308,7 +308,7 @@ export function MacroEditor({
             <select
               value={assignAppId}
               onChange={(event) => setAssignAppId(event.target.value)}
-              className="rounded-md border border-black/10 bg-base-950 px-2 py-1.5 text-xs text-neutral-200"
+              className="rounded-md border border-white/10 bg-base-950 px-2 py-1.5 text-xs text-neutral-200"
             >
               <option value="" disabled>
                 Application…
@@ -322,7 +322,7 @@ export function MacroEditor({
             <select
               value={assignSlot}
               onChange={(event) => setAssignSlot(Number(event.target.value))}
-              className="rounded-md border border-black/10 bg-base-950 px-2 py-1.5 text-xs text-neutral-200"
+              className="rounded-md border border-white/10 bg-base-950 px-2 py-1.5 text-xs text-neutral-200"
             >
               {[1, 2, 3, 4].map((slot) => (
                 <option key={slot} value={slot}>
@@ -334,7 +334,7 @@ export function MacroEditor({
               type="button"
               onClick={handleAssign}
               disabled={!assignAppId}
-              className="rounded-md border border-black/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted disabled:cursor-not-allowed disabled:opacity-40"
             >
               Assign
             </button>

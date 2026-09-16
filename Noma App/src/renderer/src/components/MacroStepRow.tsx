@@ -1,4 +1,4 @@
-﻿import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
+import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { Macro, MacroStep } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
 
@@ -60,7 +60,7 @@ interface MacroStepRowProps {
 }
 
 const selectClass =
-  'w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100'
+  'w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100'
 
 export function MacroStepRow({
   step,
@@ -83,12 +83,12 @@ export function MacroStepRow({
         {!isLast && <div className="mt-1 w-px flex-1 bg-black/10" />}
       </div>
 
-      <div className="flex-1 rounded-xl border border-black/10 bg-base-900 p-3">
+      <div className="flex-1 rounded-xl border border-white/10 bg-base-900 p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <select
             value={step.type}
             onChange={(event) => onChange(defaultStepForType(event.target.value as SelectableStepType))}
-            className="rounded-md border border-black/10 bg-base-950 px-2 py-1 text-xs text-neutral-200"
+            className="rounded-md border border-white/10 bg-base-950 px-2 py-1 text-xs text-neutral-200"
           >
             {(Object.keys(STEP_TYPE_LABELS) as SelectableStepType[]).map((type) => (
               <option key={type} value={type}>
@@ -140,7 +140,7 @@ export function MacroStepRow({
               onChange={(event) =>
                 onChange({ type: 'delay', ms: Math.max(0, Number(event.target.value) || 0) })
               }
-              className="w-28 rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+              className="w-28 rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
             />
             <span className="text-xs text-neutral-500">milliseconds</span>
           </div>
@@ -177,7 +177,7 @@ export function MacroStepRow({
         {step.type === 'macro' && (
           <>
             {otherMacros.length === 0 ? (
-              <p className="rounded-md border border-dashed border-black/10 px-3 py-2 text-xs text-neutral-600">
+              <p className="rounded-md border border-dashed border-white/10 px-3 py-2 text-xs text-neutral-600">
                 No other macros yet to reference.
               </p>
             ) : (

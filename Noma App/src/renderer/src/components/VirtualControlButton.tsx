@@ -41,17 +41,17 @@ export function VirtualControlButton({
       type="button"
       disabled={!editMode && !control}
       onClick={handleClick}
-      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border p-4 text-left transition-all duration-150 ${
+      className={`flex aspect-[4/3] flex-col justify-between rounded-2xl border p-4 text-left backdrop-blur-xl transition-all duration-150 ${
         editMode
-          ? 'border-dashed border-accent-muted/60 bg-base-900 hover:border-accent'
+          ? 'border-dashed border-accent/40 bg-white/[0.03] hover:border-accent'
           : control
-            ? `border-black/[0.08] bg-gradient-to-b from-base-800 to-base-900 ${KEYCAP_SHADOW} hover:border-accent-muted active:scale-95`
-            : 'cursor-default border-black/5 bg-base-900/50'
+            ? `border-white/[0.09] bg-white/[0.04] ${KEYCAP_SHADOW} hover:border-accent/40 active:scale-95`
+            : 'cursor-default border-white/[0.05] bg-white/[0.02]'
       } ${
         // A real press flashes the signature brand blue — this used to be
         // the app's original pre-rebrand teal (rgb(125,211,192), see
         // [[noma-app-colors]]), left behind when the palette migrated.
-        isPressed ? 'border-accent/60 shadow-[0_4px_20px_-4px_rgba(76,126,255,0.5)]' : ''
+        isPressed ? 'border-accent/60 shadow-[0_4px_20px_-4px_rgba(99,124,255,0.5)]' : ''
       }`}
     >
       <div className="flex items-center justify-between">

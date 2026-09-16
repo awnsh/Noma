@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useUiStore, type Page } from '../stores/uiStore'
-import logo from '../assets/logo-black.png'
+import logo from '../assets/logo.png'
 import {
   HomeIcon,
   DemoIcon,
@@ -56,7 +56,9 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
       type="button"
       onClick={onClick}
       className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
-        isActive ? 'bg-accent/[0.08] font-medium text-accent' : 'text-neutral-400 hover:text-neutral-100'
+        isActive
+          ? 'border border-accent/20 bg-accent/[0.12] font-medium text-accent'
+          : 'border border-transparent text-neutral-400 hover:text-neutral-100'
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -66,26 +68,42 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
 }
 
 function NavDivider() {
-  return <div className="my-3 h-px bg-base-700" />
+  return <div className="my-3 h-px bg-white/[0.08]" />
 }
 
 function NavGroupLabel({ children }: { children: ReactNode }) {
-  return <div className="mb-1.5 px-2.5 text-[11px] text-neutral-600">{children}</div>
+  return <div className="mb-1.5 px-2.5 text-[11px] tracking-wide text-neutral-600">{children}</div>
 }
 
 /**
- * The app's one persistent chrome element, deliberately quiet: a fixed,
- * unstyled-feeling left column, plain text labels (small icons alongside
- * them, never icon-only), no card, no shadow, no glass. Its whole job is
- * to stay out of the way of the content pane.
+ * The app's one persistent chrome element, deliberately quiet: a fixed
+ * left column of smoked glass floating over the ambient-lit page behind
+ * it — plain text labels (small icons alongside them, never icon-only),
+ * no card-within-a-card, no second glass recipe (see `GLASS_CARD` in
+ * `lib/surfaces.ts` — this uses a lighter hand-rolled variant since it's
+ * full-height chrome, not a content card). Its whole job is to stay out
+ * of the way of the content pane, just with real material this time
+ * instead of a flat panel.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const activePage = useUiStore((state) => state.activePage)
   const setActivePage = useUiStore((state) => state.setActivePage)
 
   return (
-    <div className="flex h-screen w-screen bg-base-950 text-neutral-100">
-      <aside className="flex w-56 shrink-0 flex-col border-r border-base-700 px-4 py-6">
+    <div className="relative flex h-screen w-screen overflow-hidden bg-base-950 text-neutral-100">
+      {/* The ambient light source behind the whole interface — large, soft,
+          low-opacity, blurred; meant to almost disappear once you stop
+          looking for it. A fixed background layer, never re-created per
+          page, so it never competes with (or gets clipped by) page
+          content — see product brief Part 3. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          className="absolute -right-1/4 -top-1/3 h-[900px] w-[900px] rounded-full opacity-[0.16] blur-[160px]"
+          style={{ background: 'radial-gradient(circle, #637cff 0%, #8b6cff 45%, transparent 70%)' }}
+        />
+      </div>
+
+      <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-white/[0.08] bg-white/[0.03] px-4 py-6 backdrop-blur-2xl">
         <div className="mb-8 flex items-center gap-2 px-1">
           <img src={logo} alt="" className="h-6 w-9" />
           <span className="font-display text-sm font-semibold text-neutral-100">Noma</span>
@@ -134,7 +152,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           ))}
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="relative z-10 flex-1 overflow-y-auto">{children}</main>
     </div>
   )
 }

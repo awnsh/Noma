@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useFlowStore } from '../stores/flowStore'
 import { KeyboardLayout } from '../components/KeyboardLayout'
@@ -8,6 +8,7 @@ import { AddModuleMenu } from '../components/AddModuleMenu'
 import { SuggestionsPanel } from '../components/SuggestionsPanel'
 import { ControlEditorModal } from '../components/ControlEditorModal'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
+import { AppIcon } from '../components/AppIcon'
 import { GLASS_PANEL } from '../lib/surfaces'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
@@ -101,13 +102,16 @@ export function VirtualKeyboard() {
         <KeyboardLayout flashingKeys={flashingKeys} />
 
         {/* Display strip */}
-        <div className="mb-6 rounded-xl border border-black/10 bg-black px-4 py-3 font-mono text-sm text-accent">
+        <div className="mb-6 rounded-xl border border-white/10 bg-black px-4 py-3 font-mono text-sm text-accent">
           {statusDisplay}
         </div>
 
         {/* Contextual controls */}
         <div className="mb-2 flex items-center justify-between">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-neutral-600">
+            {application && (
+              <AppIcon applicationId={application.id} name={application.name} size={14} />
+            )}
             {application ? application.name : 'No application detected'}
           </div>
           <button
@@ -116,7 +120,7 @@ export function VirtualKeyboard() {
             className={`rounded-full border px-3 py-1 text-[11px] ${
               isEditMode
                 ? 'border-accent-muted bg-accent/10 text-accent'
-                : 'border-black/10 text-neutral-400 hover:border-black/30 hover:text-neutral-200'
+                : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'
             }`}
           >
             {isEditMode ? 'Done editing' : 'Edit Controls'}
@@ -138,7 +142,7 @@ export function VirtualKeyboard() {
         {/* Last device event + whether the action actually executed */}
         <div
           className={`mb-6 rounded-lg border px-3 py-2 text-xs transition-colors ${
-            flashEvent ? 'border-accent-muted text-accent' : 'border-black/5 text-neutral-600'
+            flashEvent ? 'border-accent-muted text-accent' : 'border-white/5 text-neutral-600'
           }`}
         >
           {lastEvent ? describeEvent(lastEvent) : 'No device events yet — press a control above.'}

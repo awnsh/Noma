@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useHoloStore, type CalibrationProgress } from '../stores/holoStore'
 import { useFlowStore } from '../stores/flowStore'
 import { HoloZoneTile } from '../components/HoloZoneTile'
+import { AppIcon } from '../components/AppIcon'
 import { HOLO_ZONE_LABELS, HOLO_ZONE_ORDER } from '@shared/constants'
 import type { HoloZone } from '@shared/types'
 
@@ -99,7 +100,10 @@ export function Holo() {
           `base`/`neutral`, so it stays dark regardless of the app theme. */}
       <div className="rounded-2xl bg-holo-bg p-6">
         <div className="mb-3 flex items-center justify-between">
-          <div className="text-xs text-holo-muted">
+          <div className="flex items-center gap-1.5 text-xs text-holo-muted">
+            {context.application && (
+              <AppIcon applicationId={context.application.id} name={context.application.name} size={16} />
+            )}
             {context.application ? context.application.name : 'No application detected'}
           </div>
           <div className="flex gap-2">

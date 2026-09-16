@@ -3,7 +3,7 @@ import { useFlowStore } from '../stores/flowStore'
 import { useSuggestionsStore } from '../stores/suggestionsStore'
 import { ControlTile } from '../components/ControlTile'
 import { NomaMoment } from '../components/NomaMoment'
-import { AppLogo } from '../components/AppLogo'
+import { AppIcon } from '../components/AppIcon'
 import { GLASS_CARD } from '../lib/surfaces'
 
 /**
@@ -193,20 +193,18 @@ export function Demo() {
       {/* Live device state — the same signal Dashboard/Virtual Keyboard show */}
       <div className={`mb-8 p-6 ${GLASS_CARD}`}>
         <div className="text-xs text-neutral-600">Current application</div>
-        <div className="mt-1 flex items-center gap-2 text-lg font-medium text-neutral-100">
-          {context.application ? (
-            <>
-              <AppLogo applicationId={context.application.id} name={context.application.name} className="h-5 w-5" />
-              {context.application.name}
-            </>
-          ) : (
-            'None yet — press Start below'
+        <div className="mt-2 flex items-center gap-3">
+          {context.application && (
+            <AppIcon applicationId={context.application.id} name={context.application.name} size={32} variant="tile" />
           )}
+          <div className="text-lg font-medium text-neutral-100">
+            {context.application?.name ?? 'None yet — press Start below'}
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((slot) => {
             const control = controls.find((c) => c.slot === slot)
-            return <ControlTile key={slot} slot={slot} control={control} />
+            return <ControlTile key={slot} slot={slot} control={control} application={context.application} />
           })}
         </div>
       </div>

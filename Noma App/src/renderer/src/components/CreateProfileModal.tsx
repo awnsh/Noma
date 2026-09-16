@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import type { Application, ApplicationProfile } from '@shared/types'
 import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
 
@@ -77,7 +77,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
                 value={id}
                 onChange={(event) => setId(event.target.value)}
                 placeholder="e.g. notepad"
-                className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
+                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
               />
               <p className="mt-1 text-[11px] text-neutral-600">
                 Must match the .exe filename (lowercase, no extension) so a real detection finds it —
@@ -93,7 +93,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
                 placeholder="e.g. Notepad"
-                className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
               />
             </div>
             <div className="mb-3">
@@ -105,7 +105,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
                 value={processName}
                 onChange={(event) => setProcessName(event.target.value)}
                 placeholder="e.g. notepad.exe"
-                className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
+                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
               />
             </div>
           </>
@@ -120,12 +120,12 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
             value={profileName}
             onChange={(event) => setProfileName(event.target.value)}
             placeholder="e.g. Writing"
-            className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+            className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
           />
         </div>
 
         {error && (
-          <div className="mb-4 rounded-md border border-black/10 px-3 py-2 text-xs text-neutral-400">
+          <div className="mb-4 rounded-md border border-white/10 px-3 py-2 text-xs text-neutral-400">
             {error}
           </div>
         )}

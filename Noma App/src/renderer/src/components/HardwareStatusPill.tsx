@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useHardwareStore } from '../stores/hardwareStore'
 
 interface HardwareStatusPillProps {
@@ -36,7 +36,7 @@ export function HardwareStatusPill({ className = '' }: HardwareStatusPillProps) 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
-        isPhysical ? 'border-gold-muted text-gold' : 'border-black/10 text-neutral-500'
+        isPhysical ? 'border-gold-muted text-gold' : 'border-white/10 text-neutral-500'
       } ${className}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${isPhysical ? 'bg-gold' : 'bg-neutral-700'}`} />

@@ -1,0 +1,32 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "rgba(255,255,255,0.1)",
+        "createdAt": "2026-09-16T03:44:56.008Z",
+        "reason": "tailwind.config.js token definition itself (holo.border) for the 2026-09-16 dark/OLED palette redesign — this file IS the design system source of truth, DESIGN.md is stale from a prior redesign pass and hasn't been regenerated yet"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#637cff",
+        "createdAt": "2026-09-16T03:46:49.865Z",
+        "reason": "matches tailwind.config.js accent.DEFAULT exactly - used as an inline radial-gradient stop in AppShell's ambient light layer, which Tailwind utility classes can't express directly"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#8b6cff",
+        "createdAt": "2026-09-16T03:46:49.957Z",
+        "reason": "matches tailwind.config.js violet.DEFAULT exactly - used as an inline radial-gradient stop in AppShell's ambient light layer, which Tailwind utility classes can't express directly"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "bg-gradient-to-r from-neutral-100 via-accent to-violet bg-clip-text text-transparent",
+        "createdAt": "2026-09-16T03:47:20.022Z",
+        "reason": "user confirmed: explicit brief Part 6 asked for exactly a white to blue/lavender gradient on 'your workflow.' only, not a rainbow, not applied elsewhere"
+      }
+    ]
+  }
+}

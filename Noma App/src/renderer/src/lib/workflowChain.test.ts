@@ -41,7 +41,7 @@ describe('workflowChainSteps', () => {
     ])
   })
 
-  it('falls back to the raw application id when no name was resolved, but still carries the real id for logo lookup', () => {
+  it('falls back to the raw application id when no name was resolved', () => {
     const steps = workflowChainSteps(
       baseSuggestion({
         action: {

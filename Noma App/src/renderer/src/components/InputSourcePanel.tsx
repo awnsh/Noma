@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useHoloStore } from '../stores/holoStore'
 import type { InputSource } from '@shared/types'
 
@@ -26,7 +26,7 @@ function OptionButton<T extends string>({
       className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
         isActive
           ? 'border-accent-muted bg-accent/10 text-accent'
-          : 'border-black/10 text-neutral-300 hover:border-black/30 hover:text-neutral-100'
+          : 'border-white/10 text-neutral-300 hover:border-white/30 hover:text-neutral-100'
       }`}
     >
       {label}
@@ -52,7 +52,7 @@ export function InputSourcePanel() {
   }, [refresh])
 
   return (
-    <section className="mb-8 rounded-xl border border-black/10 bg-base-900 px-5 py-4">
+    <section className="mb-8 rounded-xl border border-white/10 bg-base-900 px-5 py-4">
       <div className="text-xs uppercase tracking-widest text-neutral-500">Input Source</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
         Not everyone wants to buy the physical keyboard — Holo is a free, no-hardware way to use

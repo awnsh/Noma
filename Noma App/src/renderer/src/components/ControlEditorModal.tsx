@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { Control, ControlAction, Macro } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
@@ -132,7 +132,7 @@ export function ControlEditorModal({
             onChange={(event) => setLabel(event.target.value.slice(0, 12))}
             placeholder="e.g. RUN"
             maxLength={12}
-            className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+            className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
           />
           <p className="mt-1 text-[11px] text-neutral-600">
             Max 12 characters — this has to fit on a small physical display.
@@ -146,7 +146,7 @@ export function ControlEditorModal({
           <select
             value={action.type}
             onChange={(event) => handleActionTypeChange(event.target.value as SelectableActionType)}
-            className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+            className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
           >
             {(Object.keys(ACTION_TYPE_LABELS) as SelectableActionType[]).map((type) => (
               <option key={type} value={type}>
@@ -166,7 +166,7 @@ export function ControlEditorModal({
 
           {action.type === 'macro' &&
             (macros.length === 0 ? (
-              <p className="rounded-md border border-dashed border-black/10 px-3 py-2 text-xs text-neutral-600">
+              <p className="rounded-md border border-dashed border-white/10 px-3 py-2 text-xs text-neutral-600">
                 No macros yet — build one in Macro Studio, or accept a repeated-sequence suggestion
                 on the Dashboard.
               </p>
@@ -174,7 +174,7 @@ export function ControlEditorModal({
               <select
                 value={action.macroId}
                 onChange={(event) => setAction({ type: 'macro', macroId: event.target.value })}
-                className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
               >
                 <option value="" disabled>
                   Choose a macro…
@@ -191,7 +191,7 @@ export function ControlEditorModal({
             <select
               value={action.command}
               onChange={(event) => setAction({ type: 'systemCommand', command: event.target.value })}
-              className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+              className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
             >
               {SYSTEM_COMMAND_CATALOG.map((command) => (
                 <option key={command} value={command}>
@@ -205,7 +205,7 @@ export function ControlEditorModal({
             <select
               value={action.action}
               onChange={(event) => setAction({ type: 'flowAction', action: event.target.value })}
-              className="w-full rounded-md border border-black/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
+              className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
             >
               {FLOW_ACTION_CATALOG.map((flowAction) => (
                 <option key={flowAction} value={flowAction}>
@@ -219,7 +219,7 @@ export function ControlEditorModal({
         {testResult && (
           <div
             className={`mb-4 rounded-md border px-3 py-2 text-xs ${
-              testResult.ok ? 'border-accent-muted text-accent' : 'border-black/10 text-neutral-400'
+              testResult.ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-400'
             }`}
           >
             {testResult.ok ? '✓ Executed' : `✗ ${testResult.reason ?? 'Failed'}`}
@@ -227,7 +227,7 @@ export function ControlEditorModal({
         )}
 
         {saveError && (
-          <div className="mb-4 rounded-md border border-black/10 px-3 py-2 text-xs text-neutral-400">
+          <div className="mb-4 rounded-md border border-white/10 px-3 py-2 text-xs text-neutral-400">
             {saveError}
           </div>
         )}
@@ -246,7 +246,7 @@ export function ControlEditorModal({
               type="button"
               onClick={handleTest}
               disabled={isTesting}
-              className="rounded-md border border-black/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted"
+              className="rounded-md border border-white/10 px-3 py-1.5 text-xs text-neutral-300 hover:border-accent-muted"
             >
               {isTesting ? 'Testing…' : 'Test'}
             </button>

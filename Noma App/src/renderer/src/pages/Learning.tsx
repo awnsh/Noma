@@ -78,9 +78,18 @@ export function Learning() {
           />
         ) : (
           <div>
-            {crossAppInsights.map((pattern) => (
-              <InsightCard key={pattern.id} text={workflowStepPlainText(pattern, appNames)} />
-            ))}
+            {crossAppInsights.map((pattern) => {
+              const patternApplicationId =
+                pattern.kind === 'multiStepWorkflow' ? pattern.contextApplicationId : (pattern.applicationIds[0] ?? null)
+              return (
+                <InsightCard
+                  key={pattern.id}
+                  text={workflowStepPlainText(pattern, appNames)}
+                  applicationId={patternApplicationId}
+                  applicationName={patternApplicationId ? appNames[patternApplicationId] : null}
+                />
+              )
+            })}
             {underused && (
               <InsightCard
                 text={`You rarely use ${underused.label}.`}

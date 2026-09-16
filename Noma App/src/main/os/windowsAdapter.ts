@@ -58,6 +58,29 @@ public class FlowWin32 {
 }
 "@
 
+# $proc.Path (.NET's Process.MainModule under the hood) comes back empty
+# for some processes (explorer.exe reliably, occasionally others) without
+# throwing — a real, observed gap, not a hypothetical one, and path is
+# what toApplication() below falls back to a plain processName-plus-
+# ".exe" guess from when it's missing. Get-CimInstance against Win32_Process is
+# the safe fallback: a managed WMI query, not a raw native call, so a
+# resolution failure here is an empty/null property or a normal catchable
+# exception, never a memory-corrupting native crash. (An earlier version
+# of this function used raw OpenProcess + QueryFullProcessImageName
+# P/Invoke calls for this — that approach was reverted after it produced
+# an uncatchable AccessViolationException that killed this entire poller
+# process outright. Do not reintroduce raw native calls here without very
+# deliberate, isolated testing — a crash here silently kills ALL
+# foreground-application detection.)
+function Get-ExecutablePathFallback([uint32]$procId) {
+  try {
+    $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$procId" -ErrorAction Stop
+    return $cim.ExecutablePath
+  } catch {
+    return $null
+  }
+}
+
 $flowProcessId = ${process.pid}
 $lastProcessId = -1
 while ($true) {
@@ -71,11 +94,13 @@ while ($true) {
           $proc = Get-Process -Id $procId -ErrorAction Stop
           $sb = New-Object System.Text.StringBuilder 256
           [FlowWin32]::GetWindowText($hwnd, $sb, 256) | Out-Null
+          $path = $proc.Path
+          if (-not $path) { $path = Get-ExecutablePathFallback $procId }
           $result = [PSCustomObject]@{
             processId = $procId
             processName = $proc.ProcessName
             windowTitle = $sb.ToString()
-            path = $proc.Path
+            path = $path
             hwnd = [int64]$hwnd
           }
           Write-Output ($result | ConvertTo-Json -Compress)

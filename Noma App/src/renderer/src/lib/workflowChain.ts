@@ -5,18 +5,18 @@ import { formatShortcutCaption } from './describeAction'
  * One step in a visualized workflow chain — "Screenshot → Claude Code →
  * Paste" — shared by every place that shows a workflow visually
  * (`WorkflowChain`, the Noma Moment's hero, Activity rows). `kind`
- * distinguishes an application step (gets a small monogram — real computer
+ * distinguishes an application step (gets an `AppIcon` — real computer
  * behavior, not a generic tag) from a shortcut step (set in mono, no
- * monogram). Pure and derived entirely from data the suggestion already
- * carries (`action` + `chainApplicationNames`); never invents a step,
- * never hardcodes an application name or fabricates an icon.
+ * icon). `applicationId` rides along on an `app` step purely so `AppIcon`
+ * can resolve a real logo when one exists (see `lib/appIcons.ts`) — it's
+ * `undefined` for a `shortcut` step and for an `app` step Flow never
+ * resolved an id for. Pure and derived entirely from data the suggestion
+ * already carries (`action` + `chainApplicationNames`); never invents a
+ * step, never hardcodes an application name or fabricates an icon.
  */
 export interface WorkflowChainStep {
   label: string
   kind: 'app' | 'shortcut'
-  /** Only present for `kind: 'app'` — the real application id, so the
-   *  renderer can look up a real logo (see `lib/appLogos.ts`) if one is
-   *  known. Falls back to a plain monogram when it isn't. */
   applicationId?: string
 }
 

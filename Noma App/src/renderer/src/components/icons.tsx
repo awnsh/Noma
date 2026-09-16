@@ -159,3 +159,100 @@ export function HoloIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+/**
+ * The application icon set — one consistent, hand-drawn glyph per known
+ * application *category* (a code editor, a browser, an AI assistant, a
+ * terminal...), all in this file's shared stroke language, deliberately
+ * replacing an earlier attempt at showing each app's own real logo/OS
+ * icon. Real logos are different weights, different fills, different
+ * silhouette complexity from four different brand systems side by side —
+ * next to this app's restrained line-icon language they read as visual
+ * noise, not "alive." This set trades brand recognition for evenness:
+ * every application Noma shows gets a same-weight, same-style glyph, so a
+ * workflow chain or a control grid reads as one considered object instead
+ * of a logo soup. `AppGlyphIcon` is the deliberate catch-all — every
+ * application has *some* icon here, never a bare monogram letter — see
+ * `lib/appIcons.ts`'s registry for the applicationId -> icon mapping.
+ */
+export function TerminalGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="m7 9 3 3-3 3M12 15h5" />
+    </svg>
+  )
+}
+
+export function FolderGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M3 7a1 1 0 0 1 1-1h4.5l2 2H20a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z" />
+    </svg>
+  )
+}
+
+/** A code editor (VS Code and friends) — the classic "code" bracket pair. */
+export function CodeGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M16 6l6 6-6 6M8 6l-6 6 6 6" />
+    </svg>
+  )
+}
+
+/** A browser (Chrome and friends) — a globe: a circle, an equator, and one
+ *  meridian, the universal "the web" pictogram. */
+export function BrowserGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.8 2.5 2.8 15.5 0 18M12 3c-2.8 2.5-2.8 15.5 0 18" />
+    </svg>
+  )
+}
+
+/** A conversational AI assistant (Claude and friends) — a speech bubble,
+ *  never a sparkle (see `SparkleIcon`'s own doc comment on why sparkles
+ *  are reserved elsewhere, not a generic "this is AI" marker). */
+export function AssistantGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5Z" />
+    </svg>
+  )
+}
+
+/** A music app (Spotify and friends) — a paired eighth note. */
+export function MusicGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="2.7" />
+      <circle cx="17" cy="16" r="2.7" />
+    </svg>
+  )
+}
+
+/** Source-code hosting (GitHub and friends) — a branch/fork glyph. */
+export function BranchGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <circle cx="6" cy="5" r="2" />
+      <circle cx="6" cy="19" r="2" />
+      <circle cx="18" cy="8" r="2" />
+      <path d="M6 7v10M18 10a8 8 0 0 1-8 8" />
+    </svg>
+  )
+}
+
+/** The catch-all for any application Noma doesn't recognize a category
+ *  for — a plain, neutral window, never blank and never a text initial. */
+export function AppGlyphIcon({ className }: IconProps) {
+  return (
+    <svg {...BASE_PROPS} className={className}>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}

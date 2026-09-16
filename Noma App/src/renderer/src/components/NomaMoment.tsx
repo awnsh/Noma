@@ -6,6 +6,8 @@ import { confidenceLabel } from '../lib/confidenceLabel'
 import { workflowChainSteps } from '../lib/workflowChain'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 import { WorkflowChain } from './WorkflowChain'
+import { AppIcon } from './AppIcon'
+import { HERO_CARD } from '../lib/surfaces'
 
 /**
  * The Noma Moment — the single most important component in the app: "Noma
@@ -13,10 +15,15 @@ import { WorkflowChain } from './WorkflowChain'
  * learned-workflow suggestion, wherever it needs to appear (Home's hero
  * slot, the Controls page's suggestion list, Demo Mode).
  *
- * Deliberately undecorated: no card, no glow, no icon marking it as "AI" —
- * the emphasis comes entirely from typography and spacing, and the
- * workflow sequence itself is the one visually interesting element (see
- * `WorkflowChain`). The primary row is a confident, two-choice moment
+ * `variant="hero"` gets the app's one hero-tier surface (`HERO_CARD`,
+ * see `lib/surfaces.ts`) with a signature-blue left edge — Home's single
+ * most important moment, deliberately outranking the cards around it.
+ * `compact` stays undecorated (it already sits inside a list container of
+ * its own, e.g. `SuggestionsPanel`'s divided rows) — no card, no glow, no
+ * icon marking it as "AI." Either way the emphasis comes from typography
+ * and spacing, and the workflow sequence itself is the one visually
+ * interesting element (see `WorkflowChain`). The primary row is a
+ * confident, two-choice moment
  * (Create action / Not now); the feedback/explain affordances a person
  * only wants occasionally ("Why?", "Not useful") sit behind a single quiet
  * "More" toggle rather than crowding the main decision — see product
@@ -96,7 +103,11 @@ export function NomaMoment({
   // speculatively.
   if (createdLabel) {
     return (
-      <div style={{ animation: 'noma-settle 350ms ease-out' }}>
+      <div
+        className={isHero ? `${HERO_CARD} p-8` : ''}
+        style={{ animation: 'noma-settle 350ms ease-out' }}
+      >
+        {isHero && <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />}
         <p className="text-xs text-neutral-600">Action created</p>
         <p className={`mt-1.5 font-display font-semibold text-neutral-100 ${isHero ? 'text-2xl' : 'text-lg'}`}>
           {createdLabel === 'Noted' ? 'Noted' : createdLabel}
@@ -111,14 +122,37 @@ export function NomaMoment({
   }
 
   return (
-    <div>
-      <p className={`font-display font-semibold text-neutral-100 ${isHero ? 'text-2xl' : 'text-base'}`}>
-        Noma noticed
-      </p>
+    <div className={isHero ? `${HERO_CARD} p-8` : ''}>
+      {isHero && <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-accent" />}
+      <div className="flex items-start justify-between gap-4">
+        <p
+          className={
+            isHero
+              ? 'text-[11px] font-semibold uppercase tracking-widest text-neutral-500'
+              : 'font-display text-base font-semibold text-neutral-100'
+          }
+        >
+          Noma noticed
+        </p>
+        {isHero && (
+          <span className="shrink-0 text-xs text-neutral-500" title={formatAbsoluteTime(suggestion.createdAt)}>
+            {formatRelativeTime(suggestion.createdAt)}
+          </span>
+        )}
+      </div>
 
-      <p className={`text-neutral-600 ${isHero ? 'mt-2 text-base leading-relaxed' : 'mt-1 text-sm'}`}>
-        {occurrenceSentence(suggestion)}
-      </p>
+      <div
+        className={`flex items-start gap-2.5 text-neutral-100 ${
+          isHero ? 'mt-2' : 'mt-1'
+        }`}
+      >
+        {isHero && (!chain || chain.length <= 1) && suggestion.applicationId && (
+          <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={22} variant="tile" className="mt-0.5" />
+        )}
+        <p className={isHero ? 'font-display text-2xl font-semibold leading-snug' : 'text-sm text-neutral-600'}>
+          {occurrenceSentence(suggestion)}
+        </p>
+      </div>
 
       {chain && chain.length > 1 && (
         <div className={isHero ? 'mt-5' : 'mt-3'}>
@@ -135,7 +169,7 @@ export function NomaMoment({
             <button
               type="button"
               onClick={() => void startPicking()}
-              className={`rounded-md bg-accent font-medium text-white transition-opacity duration-150 hover:opacity-90 active:opacity-80 ${
+              className={`rounded-md bg-gradient-to-b from-[#7188ff] to-accent font-medium text-white shadow-[0_4px_16px_-4px_rgba(99,124,255,0.55)] transition-all duration-150 hover:shadow-[0_6px_20px_-4px_rgba(99,124,255,0.7)] active:opacity-90 ${
                 isHero ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
               }`}
             >
@@ -187,7 +221,7 @@ export function NomaMoment({
               <button
                 type="button"
                 onClick={() => void handleAcceptInformational()}
-                className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+                className="shrink-0 rounded-md bg-gradient-to-b from-[#7188ff] to-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_4px_16px_-4px_rgba(99,124,255,0.55)] hover:shadow-[0_6px_20px_-4px_rgba(99,124,255,0.7)]"
               >
                 Accept
               </button>

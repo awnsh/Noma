@@ -1,8 +1,9 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ApplicationProfile, ApplicationProfileSummary } from '@shared/types'
 import { VirtualControlButton } from '../components/VirtualControlButton'
 import { ControlEditorModal } from '../components/ControlEditorModal'
 import { CreateProfileModal } from '../components/CreateProfileModal'
+import { AppIcon } from '../components/AppIcon'
 
 export function Profiles() {
   const [summaries, setSummaries] = useState<ApplicationProfileSummary[]>([])
@@ -60,7 +61,7 @@ export function Profiles() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-black/10 p-6">
+      <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 p-6">
         <div className="mb-1 font-display text-xl font-semibold text-neutral-100">Profiles</div>
         <p className="mb-5 text-xs text-neutral-500">
           Every application Flow knows about, and whether it's been personalized yet.
@@ -96,7 +97,10 @@ export function Profiles() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate">{summary.application.name}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <AppIcon applicationId={summary.application.id} name={summary.application.name} size={16} />
+                      <span className="truncate">{summary.application.name}</span>
+                    </span>
                     {!summary.hasProfile && (
                       <span className="text-[10px] uppercase tracking-widest text-neutral-700">
                         Unconfigured
@@ -127,7 +131,8 @@ export function Profiles() {
           <>
             {!selectedSummary.hasProfile ? (
               <div>
-                <h2 className="mb-4 text-lg font-medium text-neutral-100">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-medium text-neutral-100">
+                  <AppIcon applicationId={selectedSummary.application.id} name={selectedSummary.application.name} size={22} />
                   {selectedSummary.application.name}
                 </h2>
                 <p className="mb-4 text-sm text-neutral-500">
@@ -152,7 +157,7 @@ export function Profiles() {
                           type="text"
                           value={renameValue}
                           onChange={(event) => setRenameValue(event.target.value)}
-                          className="rounded-md border border-black/10 bg-base-900 px-3 py-1.5 text-lg font-medium text-neutral-100"
+                          className="rounded-md border border-white/10 bg-base-900 px-3 py-1.5 text-lg font-medium text-neutral-100"
                           autoFocus
                         />
                         <button
@@ -172,6 +177,7 @@ export function Profiles() {
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
+                        <AppIcon applicationId={selectedSummary.application.id} name={selectedSummary.application.name} size={20} />
                         <h2 className="text-lg font-medium text-neutral-100">{selectedProfile.name}</h2>
                         <button
                           type="button"
