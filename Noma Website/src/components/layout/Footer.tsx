@@ -1,5 +1,6 @@
 import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
+import SiteLink from './SiteLink'
 
 const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -12,18 +13,23 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   },
   {
     title: 'Company',
-    links: [{ label: 'Contact', href: 'mailto:hello@noma.build' }],
+    links: [{ label: 'Contact', href: '/contact' }],
   },
   {
     title: 'Resources',
     links: [
       { label: 'GitHub', href: '#' },
-      { label: 'Privacy', href: '#' },
-      { label: 'Terms', href: '#' },
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Terms', href: '/terms' },
     ],
   },
 ]
 
+/** Every href now goes through `SiteLink` (see that file), so the
+ *  homepage-anchor links here keep working from `/contact`, `/privacy`,
+ *  and `/terms` — not just from the page they were written for — and the
+ *  `Privacy`/`Terms`/`Contact` links are now real routed pages instead of
+ *  `#` placeholders or a bare `mailto:`. */
 export default function Footer() {
   return (
     <footer className="overflow-hidden border-t border-base-800">
@@ -42,9 +48,9 @@ export default function Footer() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-sm text-base-300 transition-colors hover:text-base-50">
+                  <SiteLink href={l.href} className="text-sm text-base-300 transition-colors hover:text-base-50">
                     {l.label}
-                  </a>
+                  </SiteLink>
                 </li>
               ))}
             </ul>
