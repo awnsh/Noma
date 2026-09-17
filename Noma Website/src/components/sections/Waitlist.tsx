@@ -17,7 +17,7 @@ export default function Waitlist() {
     <section id="waitlist" className="relative overflow-hidden border-t border-base-800 bg-base-950 py-24 sm:py-32">
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[60vh] hero-glow" />
 
-      <div className="relative mx-auto max-w-lg px-6 sm:px-8">
+      <div className="relative mx-auto max-w-3xl px-6 sm:px-8">
         <Reveal>
           <div className={`rounded-3xl px-8 py-14 text-center sm:px-14 sm:py-16 ${GLASS}`}>
             <h2 className="text-balance font-display text-[clamp(1.9rem,4.5vw,3rem)] font-semibold leading-[1.1] tracking-tight text-base-50">
