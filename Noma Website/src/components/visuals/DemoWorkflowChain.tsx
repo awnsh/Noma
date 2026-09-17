@@ -49,11 +49,18 @@ function groupIntoNodes(steps: DemoChainStep[]): WorkflowNode[] {
 
 // `icon` sits a couple px under `box` — `DemoAppIcon`'s `fill` prop (see
 // that file) is what makes the icon actually reach that close to `box`
-// without overflowing it, by dropping the default ~60% inset. Matches the
-// real app's `WorkflowChain.tsx`.
+// without overflowing it, by dropping the default ~60% inset. `lg` matches
+// the real app's `WorkflowChain.tsx` size-for-size — that file's own
+// comment explains why 58/50, not 72/68: the real app's OS-extracted icons
+// are a 48x48 raster (a real ceiling, not a style choice), and displaying
+// one any larger upscales it into visible pixelation. This preview's own
+// icons are vector (real brand marks / letterform badges — see
+// `appGlyphIcons.tsx`) and wouldn't actually pixelate at 72/68, but it
+// stays sized identically to the app on purpose: this component's whole
+// job is looking like the real thing, not just avoiding its bugs.
 const SIZES = {
   md: { box: 52, icon: 48, name: 'text-sm', action: 'text-[11px]', gap: 'gap-x-3' },
-  lg: { box: 72, icon: 68, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
+  lg: { box: 58, icon: 50, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
 } as const
 
 const ICON_BOX = 'flex shrink-0 items-center justify-center rounded-2xl border border-base-600 bg-base-850 shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]'

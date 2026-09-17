@@ -74,9 +74,21 @@ function groupIntoNodes(steps: WorkflowChainStep[]): WorkflowNode[] {
 // (`size` large enough to compensate). `fill` removes that inset (and the
 // small inner background that came with it) so `icon` can sit almost flush
 // with `box`.
+//
+// `lg`'s numbers are capped by a real ceiling, not a design choice: a real
+// OS icon (`iconService.ts`'s `app.getFileIcon(path, { size: 'large' })`)
+// comes back as a 48x48 raster on this machine — confirmed by hand, not
+// assumed — regardless of how large the source .exe's own icon resource
+// is; Electron's `FileIconOptions` only goes up to `'large'`, there's no
+// bigger tier to ask for. `lg` previously rendered its icon at ~63px
+// (0.92 * 68), well past that 48px ceiling, so every real icon was being
+// upscaled ~1.3x and came out visibly soft/blocky — "tacky," and rightly
+// so. 50 keeps the rendered icon (`0.92 * icon`) at 46px, just under the
+// real ceiling, so it's shown at its native resolution or smaller, never
+// stretched past it. `md` was already safe (44px rendered) and is untouched.
 const SIZES = {
   md: { box: 52, icon: 48, name: 'text-sm', action: 'text-[11px]', gap: 'gap-x-3' },
-  lg: { box: 72, icon: 68, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
+  lg: { box: 58, icon: 50, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
 } as const
 
 /** Solid graphite chip, same material as the app's shared `CARD` recipe
