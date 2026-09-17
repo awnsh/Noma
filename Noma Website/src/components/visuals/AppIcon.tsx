@@ -1,4 +1,4 @@
-import { SiGooglechrome, SiGithub, SiFigma, SiBlender, SiDiscord, SiSpotify, SiNotion, SiClaude } from 'react-icons/si'
+import { SiGooglechrome, SiGithub, SiFigma, SiBlender, SiDiscord, SiSpotify, SiNotion, SiClaude, SiYoutube } from 'react-icons/si'
 import type { IconType } from 'react-icons'
 
 // Real brand marks, where the simple-icons set this project pulls from still
@@ -14,6 +14,7 @@ const REAL_ICONS: Record<string, IconType> = {
   spotify: SiSpotify,
   notion: SiNotion,
   claude: SiClaude,
+  youtube: SiYoutube,
 }
 
 // For everything else: a short letterform badge, not a traced logo — reads as
@@ -24,6 +25,7 @@ const BADGE_LABELS: Record<string, string> = {
   vscode: '</>',
   photoshop: 'Ps',
   premiere: 'Pr',
+  aftereffects: 'Ae',
   slack: '#',
   solidworks: 'SW',
   terminal: '>_',

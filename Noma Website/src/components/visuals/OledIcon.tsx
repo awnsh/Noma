@@ -119,6 +119,74 @@ const paths: Record<string, ReactElement> = {
       <line x1="15" y1="9" x2="19.5" y2="13.5" />
     </>
   ),
+  commit: (
+    <>
+      <line x1="12" y1="3" x2="12" y2="8" />
+      <line x1="12" y1="16" x2="12" y2="21" />
+      <circle cx="12" cy="12" r="4" />
+    </>
+  ),
+  push: <path d="M12 20V6M6 11l6-6 6 6" />,
+  pull: <path d="M12 4v14M6 13l6 6 6-6" />,
+  issues: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <line x1="12" y1="8" x2="12" y2="13" />
+      <circle cx="12" cy="16.2" r="0.9" fill="currentColor" stroke="none" />
+    </>
+  ),
+  open: <path d="M9 5H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-4M13 4h7v7M20 4l-9 9" />,
+  merge: (
+    <>
+      <circle cx="6" cy="6" r="2.2" />
+      <circle cx="6" cy="18" r="2.2" />
+      <circle cx="18" cy="18" r="2.2" />
+      <path d="M6 8.2V15M6 15c0-3.5 3-5 8-5h2.2" />
+    </>
+  ),
+  screenshot: (
+    <>
+      <path d="M4 8V6a1.5 1.5 0 0 1 1.5-1.5H7M20 8V6a1.5 1.5 0 0 0-1.5-1.5H17M4 16v2A1.5 1.5 0 0 0 5.5 19.5H7M20 16v2a1.5 1.5 0 0 1-1.5 1.5H17" />
+      <circle cx="12" cy="12" r="3.2" />
+    </>
+  ),
+  prompt: (
+    <>
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5Z" />
+    </>
+  ),
+  paste: (
+    <>
+      <rect x="7" y="5" width="10" height="15" rx="1.3" />
+      <rect x="9.5" y="3" width="5" height="3" rx="0.8" />
+    </>
+  ),
+  'new chat': (
+    <>
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H10l-4 3.5V16H6.5A2.5 2.5 0 0 1 4 13.5Z" />
+      <line x1="9" y1="8.7" x2="15" y2="8.7" />
+      <line x1="9" y1="11.5" x2="13" y2="11.5" />
+    </>
+  ),
+  send: <path d="M4.5 12l15-7.5-6 15-2.5-6-6.5-1.5z" />,
+  frame: (
+    <>
+      <path d="M7 3v14M17 7v14M3 7h14M7 17h14" />
+    </>
+  ),
+  component: (
+    <>
+      <path d="M12 3l4 4-4 4-4-4z" />
+      <path d="M4 12l4-4v8z" />
+      <path d="M20 12l-4-4v8z" />
+      <path d="M12 21l-4-4h8z" />
+    </>
+  ),
+  comment: (
+    <>
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5 4z" />
+    </>
+  ),
 }
 
 const fallback = <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />

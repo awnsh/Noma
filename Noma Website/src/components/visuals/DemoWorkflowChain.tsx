@@ -110,11 +110,11 @@ export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoC
                     `truncate`d, narrower-than-content box clips from both
                     edges, silently dropping the string's own first letter
                     with no ellipsis marking it. */}
-                <p className={`mt-2 truncate text-left font-medium text-base-100 ${dim.name}`} style={{ maxWidth: dim.box + 8 }}>
+                <p className={`mt-2 truncate text-left font-medium text-base-100 ${dim.name}`} style={{ maxWidth: dim.box + 28 }}>
                   {node.label}
                 </p>
                 {node.action && (
-                  <p className={`mt-0.5 truncate text-left font-mono text-base-500 ${dim.action}`} style={{ maxWidth: dim.box + 8 }}>
+                  <p className={`mt-0.5 truncate text-left font-mono text-base-500 ${dim.action}`} style={{ maxWidth: dim.box + 28 }}>
                     {node.action}
                   </p>
                 )}

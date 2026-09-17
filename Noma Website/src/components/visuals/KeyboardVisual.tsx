@@ -30,6 +30,14 @@ interface KeyboardVisualProps {
    *  controls already on screen, rather than a controls list. Never used to
    *  swap which controls are shown, only to call out ones already there. */
   emphasizedLabels?: string[]
+  /** Hides the magnetic pin-connector strips on the chassis edges — default
+   *  `true` (existing behavior) for callers still describing the modular
+   *  concept; the 2026 ground-up redesign explicitly doesn't mention or
+   *  imply modular add-ons anywhere, so every section built for it passes
+   *  `false` here. Kept as a prop rather than deleted the strips outright:
+   *  the modular story may come back as its own section later, and the
+   *  illustration already knows how to draw it. */
+  showPinConnectors?: boolean
   /**
    * A 0-1 scroll-progress `MotionValue` (e.g. Hero.tsx's own `scrollYProgress`)
    * that makes a random key flash "pressed" as the visitor scrolls down past
@@ -222,6 +230,7 @@ export default function KeyboardVisual({
   oledOnly = false,
   emphasizedLabels,
   typingProgress,
+  showPinConnectors = true,
 }: KeyboardVisualProps) {
   const reduceMotion = useReducedMotion()
   const uid = useId()
@@ -483,7 +492,7 @@ export default function KeyboardVisual({
             {appName.toUpperCase()}
           </text>
 
-          {!oledOnly && (
+          {!oledOnly && showPinConnectors && (
             <>
               {/* pin-connector docking strips */}
               <PinStrip

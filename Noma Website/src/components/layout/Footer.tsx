@@ -5,16 +5,16 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: 'Product',
     links: [
-      { label: 'Holo', href: '#holo' },
-      { label: 'Noma Device', href: '#device' },
-      { label: 'How it works', href: '#watch' },
+      { label: 'How it works', href: '#how-it-knows' },
+      { label: 'Software', href: '#software' },
+      { label: 'Under the hood', href: '#under-the-hood' },
     ],
   },
   {
     title: 'Company',
     links: [
-      { label: 'About', href: '#about' },
-      { label: 'Build in Public', href: '#about' },
+      { label: 'The story', href: '#story' },
+      { label: 'Follow the build', href: '#prototype' },
       { label: 'Contact', href: 'mailto:hello@noma.build' },
     ],
   },
@@ -37,7 +37,7 @@ export default function Footer() {
             <img src={nomaMark} alt="" className="h-6 w-auto" />
             <img src={nomaWordmark} alt="Noma" className="h-3.5 w-auto" />
           </div>
-          <p className="max-w-[26ch] text-sm text-base-500">A computer interface that learns how you work.</p>
+          <p className="max-w-[26ch] text-sm text-base-500">A keyboard that understands what you&rsquo;re doing.</p>
         </div>
 
         {columns.map((col) => (

@@ -151,11 +151,11 @@ export function WorkflowChain({ steps, size = 'md' }: { steps: WorkflowChainStep
                     visual indication anything was cut from the start.
                     Left-aligned text only ever overflows (and correctly
                     ellipsizes) on the one edge `truncate` actually handles. */}
-                <p className={`mt-2 truncate text-left font-medium text-neutral-100 ${dim.name}`} style={{ maxWidth: dim.box + 8 }}>
+                <p className={`mt-2 truncate text-left font-medium text-neutral-100 ${dim.name}`} style={{ maxWidth: dim.box + 28 }}>
                   {node.label}
                 </p>
                 {node.action && (
-                  <p className={`mt-0.5 truncate text-left font-mono text-neutral-500 ${dim.action}`} style={{ maxWidth: dim.box + 8 }}>
+                  <p className={`mt-0.5 truncate text-left font-mono text-neutral-500 ${dim.action}`} style={{ maxWidth: dim.box + 28 }}>
                     {node.action}
                   </p>
                 )}

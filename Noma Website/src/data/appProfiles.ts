@@ -115,6 +115,20 @@ export const appProfiles: Record<string, AppProfile> = {
     controls: ['Run', 'Clear', 'History', 'Kill'],
     color: '#98989f',
   },
+  aftereffects: {
+    id: 'aftereffects',
+    name: 'After Effects',
+    shortName: 'After Effects',
+    controls: ['Keyframe', 'Preview', 'Render', 'Export'],
+    color: '#9999ff',
+  },
+  youtube: {
+    id: 'youtube',
+    name: 'YouTube Studio',
+    shortName: 'YouTube',
+    controls: ['Publish', 'Trim', 'Thumbnail', 'Analytics'],
+    color: '#ff0000',
+  },
 }
 
 // Short forms for the OLED strip, which only has ~60px per cell.
