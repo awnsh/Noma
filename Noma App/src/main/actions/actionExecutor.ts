@@ -61,7 +61,7 @@ export interface ExecutionResult {
  */
 const KEYSTROKE_EXECUTION_ENABLED = true
 const KEYSTROKE_EXECUTION_DISABLED_REASON =
-  'Keystroke execution is temporarily disabled — see docs/architecture.md'
+  'Keystroke execution is temporarily disabled. See docs/architecture.md'
 
 /** Surfaced in Developer Mode so the current state is never a silent surprise. */
 export function isKeystrokeExecutionEnabled(): boolean {
@@ -157,7 +157,7 @@ function sendShortcut(comboKeys: string[]): ExecutionResult {
   if (isBlockedShortcut(comboKeys)) {
     return {
       ok: false,
-      reason: `Refused: ${comboKeys.join('+')} can close a window or quit an application — window-closing shortcuts are never auto-executed`
+      reason: `Refused: ${comboKeys.join('+')} can close a window or quit an application. Window-closing shortcuts are never auto-executed`
     }
   }
 
@@ -190,14 +190,14 @@ function sleep(ms: number): Promise<void> {
 async function focusApplicationById(applicationId: string): Promise<ExecutionResult> {
   const application = getApplicationById(applicationId)
   if (!application) {
-    return { ok: false, reason: 'Unknown application — nothing to focus' }
+    return { ok: false, reason: 'Unknown application, nothing to focus' }
   }
 
   const hwnd = await findMainWindowHandleForProcess(application.processName)
   if (hwnd === null) {
     return {
       ok: false,
-      reason: `${application.name} isn't currently running — Noma focuses existing windows, it doesn't launch applications`
+      reason: `${application.name} isn't currently running. Noma focuses existing windows; it doesn't launch applications`
     }
   }
 
@@ -217,7 +217,7 @@ function focusThenSend(comboKeys: string[], targetHwnd: number | null): Executio
   if (targetHwnd !== null) {
     const focused = focusWindowAndVerify(targetHwnd)
     if (!focused) {
-      return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
+      return { ok: false, reason: 'Could not confirm focus on the target window, refused to send' }
     }
   }
   return sendShortcut(comboKeys)
@@ -360,7 +360,7 @@ export async function executeControlAction(
       if (!macro.enabled) return { ok: false, reason: 'Macro is disabled' }
 
       if (targetHwnd !== null && !focusWindowAndVerify(targetHwnd)) {
-        return { ok: false, reason: 'Could not confirm focus on the target window — refused to send' }
+        return { ok: false, reason: 'Could not confirm focus on the target window, refused to send' }
       }
 
       return executeMacroSteps(macro.actions, targetHwnd, new Set([action.macroId]))

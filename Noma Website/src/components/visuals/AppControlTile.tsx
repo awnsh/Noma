@@ -34,7 +34,7 @@ export default function AppControlTile({ slot, label, caption, appId, appName }:
       </div>
       {appId && appName && <DemoAppIcon appId={appId} name={appName} size={32} variant="tile" />}
       <div>
-        <div className="truncate text-sm font-medium tracking-wide text-base-100">{label ?? <span className="text-base-600">—</span>}</div>
+        <div className="truncate text-sm font-medium tracking-wide text-base-100">{label ?? <span className="text-base-600">–</span>}</div>
         {caption && <div className="mt-1 truncate font-mono text-xs text-base-500">{caption}</div>}
       </div>
     </div>

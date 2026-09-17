@@ -12,11 +12,7 @@ const columns: { title: string; links: { label: string; href: string }[] }[] = [
   },
   {
     title: 'Company',
-    links: [
-      { label: 'The story', href: '#story' },
-      { label: 'Follow the build', href: '#prototype' },
-      { label: 'Contact', href: 'mailto:hello@noma.build' },
-    ],
+    links: [{ label: 'Contact', href: 'mailto:hello@noma.build' }],
   },
   {
     title: 'Resources',

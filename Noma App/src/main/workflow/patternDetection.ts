@@ -407,7 +407,7 @@ function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
     const closingStep = findClosingStep(group.occurrences, steps)
     const chain = group.steps.map(describeStep).join(' → ')
     const description = closingStep
-      ? `${chain} repeated ${count} times — usually followed by ${describeStep(closingStep)}`
+      ? `${chain} repeated ${count} times, usually followed by ${describeStep(closingStep)}`
       : `${chain} repeated ${count} times`
 
     patterns.push({

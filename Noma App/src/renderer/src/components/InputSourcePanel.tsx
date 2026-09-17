@@ -4,7 +4,7 @@ import type { InputSource } from '@shared/types'
 
 const SOURCE_OPTIONS: Array<{ value: InputSource; label: string; description: string }> = [
   { value: 'keyboard', label: 'Keyboard', description: 'The physical module, or the Virtual Keyboard page.' },
-  { value: 'holo', label: 'Holo (tap desk)', description: 'No hardware — tap the desk around your laptop.' }
+  { value: 'holo', label: 'Holo (tap desk)', description: 'No hardware. Tap the desk around your laptop.' }
 ]
 
 function OptionButton<T extends string>({
@@ -55,7 +55,7 @@ export function InputSourcePanel() {
     <section className="mb-8 rounded-xl border border-white/10 bg-base-900 px-5 py-4">
       <div className="text-xs uppercase tracking-widest text-neutral-500">Input Source</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
-        Not everyone wants to buy the physical keyboard — Holo is a free, no-hardware way to use
+        Not everyone wants to buy the physical keyboard. Holo is a free, no-hardware way to use
         Noma from a laptop alone. Both drive the exact same 4 controls per application.
       </p>
       <div className="mt-4 grid grid-cols-2 gap-2">

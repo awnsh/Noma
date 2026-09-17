@@ -3,6 +3,7 @@ import { useInView } from 'framer-motion'
 import { useRef } from 'react'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 import Reveal from '../ui/Reveal'
+import { GLASS_ACCENT } from '../../lib/glass'
 import nomaMark from '../../assets/noma-mark.png'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 
@@ -64,10 +65,7 @@ export default function FinalShot() {
           </Reveal>
 
           <Reveal delay={0.24} className="mt-10">
-            <a
-              href="#waitlist"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-medium text-base-950 transition-colors hover:bg-accent-bright"
-            >
+            <a href="#waitlist" className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium ${GLASS_ACCENT}`}>
               Join the Waitlist <span aria-hidden>&rarr;</span>
             </a>
           </Reveal>

@@ -18,7 +18,7 @@ export function WorkflowMonitoringPanel() {
           </div>
           <p className="mt-2 max-w-md text-sm text-neutral-400">
             When enabled, Flow watches for keyboard shortcuts that hold down Control, Alt, or the
-            Windows key — never single keys, never what you type. Nothing leaves this device. See{' '}
+            Windows key, never single keys, never what you type. Nothing leaves this device. See{' '}
             <span className="text-neutral-300">docs/privacy-and-legal.md</span> for the full policy.
           </p>
         </div>
@@ -35,7 +35,7 @@ export function WorkflowMonitoringPanel() {
           </div>
           {patterns.length === 0 ? (
             <p className="text-sm text-neutral-600">
-              Nothing yet — patterns need repeated use (the same shortcut a handful of times) before
+              Nothing yet. Patterns need repeated use (the same shortcut a handful of times) before
               Flow surfaces them here.
             </p>
           ) : (

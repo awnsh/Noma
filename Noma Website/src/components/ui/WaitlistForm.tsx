@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { WAITLIST_ENDPOINT } from '../../data/config'
+import { GLASS_ACCENT } from '../../lib/glass'
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
@@ -26,7 +27,7 @@ export default function WaitlistForm({ submitLabel = 'Join the Waitlist' }: { su
 
     if (!WAITLIST_ENDPOINT) {
       setStatus('error')
-      setMessage('Waitlist isn’t connected yet — check back soon.')
+      setMessage('Waitlist isn’t connected yet. Check back soon.')
       return
     }
 
@@ -42,11 +43,11 @@ export default function WaitlistForm({ submitLabel = 'Join the Waitlist' }: { su
       } else {
         const data = await res.json().catch(() => null)
         setStatus('error')
-        setMessage(data?.errors?.[0]?.message ?? 'Something went wrong — try again in a moment.')
+        setMessage(data?.errors?.[0]?.message ?? 'Something went wrong. Try again in a moment.')
       }
     } catch {
       setStatus('error')
-      setMessage('Something went wrong — try again in a moment.')
+      setMessage('Something went wrong. Try again in a moment.')
     }
   }
 
@@ -56,7 +57,7 @@ export default function WaitlistForm({ submitLabel = 'Join the Waitlist' }: { su
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="mx-auto flex max-w-md items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/[0.06] px-6 py-3.5 text-sm text-base-100"
+        className="mx-auto flex max-w-md items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/[0.1] px-6 py-3.5 text-sm text-base-50"
       >
         <span className="h-1.5 w-1.5 rounded-full bg-accent" />
         You&rsquo;re on the list. Flow will let you know when there&rsquo;s something to try.
@@ -92,16 +93,16 @@ export default function WaitlistForm({ submitLabel = 'Join the Waitlist' }: { su
             setEmail(e.target.value)
             if (status === 'error') setStatus('idle')
           }}
-          className={`w-full rounded-lg border bg-base-900 px-4 py-3 text-sm text-base-50 placeholder:text-base-500 outline-none transition-colors focus:border-accent ${
-            status === 'error' ? 'border-error/60' : 'border-base-600'
+          className={`w-full rounded-lg border bg-white/5 px-4 py-3 text-sm text-base-50 placeholder:text-base-500 outline-none transition-colors focus:border-accent ${
+            status === 'error' ? 'border-error/60' : 'border-white/15'
           }`}
         />
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-medium text-base-950 transition-colors hover:bg-accent-bright disabled:opacity-60"
+          className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-medium disabled:opacity-60 ${GLASS_ACCENT}`}
         >
-          {status === 'loading' && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-base-950" />}
+          {status === 'loading' && <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-base-50" />}
           {status === 'loading' ? 'Joining…' : submitLabel}
         </button>
       </form>
@@ -122,7 +123,7 @@ export default function WaitlistForm({ submitLabel = 'Join the Waitlist' }: { su
       </AnimatePresence>
 
       <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">
-        No spam &mdash; just real updates as the hardware comes together.
+        No spam. Just real updates as the hardware comes together.
       </p>
     </div>
   )

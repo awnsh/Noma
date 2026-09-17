@@ -52,7 +52,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
     if (profile) {
       onCreated(profile)
     } else {
-      setError(`${target.name} already has a profile — refresh and edit it instead of creating a new one.`)
+      setError(`${target.name} already has a profile. Refresh and edit it instead of creating a new one.`)
     }
   }
 
@@ -63,7 +63,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
           {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
         </h2>
         <p className="mb-5 text-xs text-neutral-500">
-          Starts with 4 empty controls — configure them afterward with the Control Mapping Editor.
+          Starts with 4 empty controls. Configure them afterward with the Control Mapping Editor.
         </p>
 
         {!application && (
@@ -80,8 +80,8 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
                 className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
               />
               <p className="mt-1 text-[11px] text-neutral-600">
-                Must match the .exe filename (lowercase, no extension) so a real detection finds it —
-                normalized to <span className="font-mono">{normalizedId || '—'}</span>.
+                Must match the .exe filename (lowercase, no extension) so a real detection finds it,
+                normalized to <span className="font-mono">{normalizedId || '–'}</span>.
               </p>
             </div>
             <div className="mb-3">

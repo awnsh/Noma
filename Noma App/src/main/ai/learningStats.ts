@@ -48,14 +48,14 @@ const ACTIONABLE_KIND_INFO: Array<{
     kind: 'crossAppWorkflow',
     label: 'Cross-app workflows',
     description:
-      'A short step spanning two applications — switching into one, then what happens right after — repeated across your work.',
+      'A short step spanning two applications (switching into one, then what happens right after), repeated across your work.',
     threshold: CROSS_APP_WORKFLOW_THRESHOLD
   },
   {
     kind: 'multiStepWorkflow',
     label: 'Learned workflows',
     description:
-      'A longer, multi-step sequence — like taking a screenshot, switching apps, and pasting it — that Noma recognized even when it didn’t happen exactly the same way every time.',
+      'A longer, multi-step sequence (like taking a screenshot, switching apps, and pasting it) that Noma recognized even when it didn’t happen exactly the same way every time.',
     threshold: MULTI_STEP_WORKFLOW_THRESHOLD
   }
 ]

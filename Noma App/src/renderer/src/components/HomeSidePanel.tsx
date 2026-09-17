@@ -89,7 +89,7 @@ export function HomeSidePanel({
       <div className={`${CARD} p-5`}>
         <p className="font-display text-lg font-semibold leading-snug text-neutral-100">A smarter way to work.</p>
         <p className="mt-1.5 text-xs leading-relaxed text-neutral-600">
-          Noma adapts to how you work — on your laptop or with your device.
+          Noma adapts to how you work, on your laptop or with your device.
         </p>
         <div className="mt-4 flex items-center gap-1.5">
           {LOOP_STAGES.map((stage, index) => (
@@ -131,7 +131,7 @@ export function HomeSidePanel({
             })}
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-holo-muted">
-            No hardware needed — tap your desk to press a control.
+            No hardware needed. Tap your desk to press a control.
           </p>
         </div>
       </button>

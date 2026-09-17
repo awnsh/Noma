@@ -14,7 +14,7 @@ interface Stage {
 
 const STAGES: Stage[] = [
   { appId: 'vscode', lines: ['const workflow = detect(app)', 'noma.adapt(workflow)', '// controls update in real time'] },
-  { appId: 'claude', lines: ['Paste the error above.', 'Here’s the fix — try running it again.', 'Got it, thanks.'] },
+  { appId: 'claude', lines: ['Paste the error above.', 'Here’s the fix. Try running it again.', 'Got it, thanks.'] },
   { appId: 'chrome', lines: ['github.com/pull/482', 'Review changes · 3 files', 'Approve and merge'] },
 ]
 
@@ -106,7 +106,7 @@ export default function EditorialContrast() {
     return (
       <section id="how-it-knows" className="relative bg-base-50 py-24 sm:py-32">
         <div className="mx-auto grid max-w-6xl items-center gap-20 px-6 sm:px-8 lg:grid-cols-2">
-          {Copy}
+          <Copy />
           <div className="pb-12 pr-6 sm:pb-16">
             <Desktop stage={last} lines={STAGES[last].lines} />
           </div>
@@ -126,7 +126,7 @@ export default function EditorialContrast() {
           className="mx-auto grid w-full max-w-6xl items-center gap-16 px-6 sm:px-8 lg:grid-cols-2 lg:gap-20"
           style={{ transform: `scale(${contentScale})`, transformOrigin: '50% 50%' }}
         >
-          {Copy}
+          <Copy />
           <div className="pb-12 pr-6 sm:pb-16">
             <Desktop stage={stage} lines={STAGES[stage].lines} />
           </div>

@@ -70,10 +70,15 @@
   --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
 
   --animate-marquee: marquee 32s linear infinite;
+  --animate-marquee-reverse: marquee-reverse 32s linear infinite;
 
   @keyframes marquee {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
+  }
+  @keyframes marquee-reverse {
+    from { transform: translateX(-50%); }
+    to { transform: translateX(0); }
   }
 
   /* The Problem section's AppOrbit — plain CSS (not framer-motion) on

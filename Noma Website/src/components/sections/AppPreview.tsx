@@ -90,7 +90,7 @@ export default function AppPreview() {
       <div className="overflow-hidden rounded-2xl border border-base-700 bg-base-850/60 shadow-2xl shadow-black/40">
         <div className="flex items-center gap-2 border-b border-base-700 bg-base-900/60 px-4 py-3">
           <WindowDots />
-          <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">Holo &mdash; {active.label}</span>
+          <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.15em] text-base-500">Holo: {active.label}</span>
         </div>
 
         <div className="relative min-h-[26rem] w-full bg-base-950">

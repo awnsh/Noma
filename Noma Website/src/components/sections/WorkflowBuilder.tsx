@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 import DemoWorkflowChain, { type DemoChainStep } from '../visuals/DemoWorkflowChain'
 import Reveal from '../ui/Reveal'
+import { GLASS_TOGGLE, GLASS_TOGGLE_ACTIVE } from '../../lib/glass'
 
 interface Category {
   id: string
@@ -90,9 +91,7 @@ export default function WorkflowBuilder() {
                 key={c.id}
                 type="button"
                 onClick={() => setActiveId(c.id)}
-                className={`rounded-full border px-5 py-2.5 text-sm font-medium transition-all duration-150 active:scale-95 ${
-                  activeId === c.id ? 'border-accent/40 bg-accent/[0.08] text-accent-bright' : 'border-base-700 text-base-400 hover:text-base-100'
-                }`}
+                className={`rounded-full px-5 py-2.5 text-sm font-medium ${activeId === c.id ? GLASS_TOGGLE_ACTIVE : GLASS_TOGGLE}`}
               >
                 {c.label}
               </button>

@@ -30,7 +30,7 @@ export function Settings() {
       <section className={`mb-8 px-5 py-4 ${CARD}`}>
         <div className="text-xs uppercase tracking-widest text-neutral-500">Flow Learning</div>
         <p className="mt-2 max-w-md text-sm text-neutral-400">
-          Flow learns from interaction metadata to identify repetitive workflows — never from what
+          Flow learns from interaction metadata to identify repetitive workflows, never from what
           you actually type or see.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-4">

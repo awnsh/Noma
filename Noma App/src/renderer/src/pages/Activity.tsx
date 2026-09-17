@@ -50,7 +50,7 @@ export function Activity() {
 
       <p className="max-w-md text-xs leading-relaxed text-neutral-500">
         Noma records workflow patterns needed to personalize your interface, not the content you
-        type. It never captures a single keystroke or what's on your screen — only which command
+        type. It never captures a single keystroke or what's on your screen, only which command
         shortcuts and applications you use, and when.
       </p>
     </div>

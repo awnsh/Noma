@@ -38,7 +38,7 @@ export class STM32HardwareDevice implements HardwareDevice {
     // loudly (never silently reporting connected) is the deliberate
     // behavior until that transport exists — see the class doc comment.
     throw new Error(
-      'No physical Noma device found. STM32HardwareDevice has no transport implemented yet — see src/main/hardware/stm32Device.ts.'
+      'No physical Noma device found. STM32HardwareDevice has no transport implemented yet. See src/main/hardware/stm32Device.ts.'
     )
   }
 

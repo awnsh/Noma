@@ -64,7 +64,7 @@ export default function DashboardDemo() {
     activeId === 'vscode'
       ? status === 'resolved'
         ? 'Flow is noticing patterns.'
-        : 'Flow noticed something — see below.'
+        : 'Flow noticed something, see below.'
       : flowStatusByApp[activeId]
 
   return (
@@ -126,7 +126,7 @@ export default function DashboardDemo() {
             </>
           ) : (
             <div className="mt-5 border-t border-base-700 pt-4">
-              <p className="mb-2 text-xs text-base-500">Which control should this replace? You choose — Noma never picks for you.</p>
+              <p className="mb-2 text-xs text-base-500">Which control should this replace? You choose: Noma never picks for you.</p>
               <div className="grid grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((slot) => (
                   <button
@@ -136,7 +136,7 @@ export default function DashboardDemo() {
                     className="rounded-md border border-base-700 px-2 py-2 text-center text-xs text-base-400 transition-colors hover:border-accent hover:text-base-100"
                   >
                     <div className="text-[10px] text-base-600">{slot}</div>
-                    <div className="mt-0.5 truncate text-base-100">{controls[slot - 1] ?? '—'}</div>
+                    <div className="mt-0.5 truncate text-base-100">{controls[slot - 1] ?? '–'}</div>
                   </button>
                 ))}
               </div>

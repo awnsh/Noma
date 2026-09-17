@@ -87,7 +87,7 @@ export function VirtualKeyboard() {
         <div>
           <h1 className="font-display text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            A digital twin of the eventual physical device. Every control here really executes —
+            A digital twin of the eventual physical device. Every control here really executes:
             shortcuts are sent for real, MUTE really changes volume, CLOSE WINDOW posts the same
             graceful close a title bar's X button sends. See "Real execution" in
             docs/architecture.md.
@@ -145,7 +145,7 @@ export function VirtualKeyboard() {
             flashEvent ? 'border-accent-muted text-accent' : 'border-white/5 text-neutral-600'
           }`}
         >
-          {lastEvent ? describeEvent(lastEvent) : 'No device events yet — press a control above.'}
+          {lastEvent ? describeEvent(lastEvent) : 'No device events yet. Press a control above.'}
           {lastExecution && (
             <span className={lastExecution.ok ? 'ml-2 text-accent' : 'ml-2 text-red-400'}>
               {lastExecution.ok ? '✓ executed' : `✗ ${lastExecution.reason ?? 'failed'}`}

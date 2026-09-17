@@ -70,7 +70,7 @@ export function Controls() {
         ) : (
           <EmptyState
             title="Noma will build your interface as it learns."
-            hint="Keep working normally — controls appear here once Noma has something to put on them."
+            hint="Keep working normally. Controls appear here once Noma has something to put on them."
           />
         )}
         {editingSlot !== null && application && (

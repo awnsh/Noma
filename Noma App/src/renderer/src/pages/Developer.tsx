@@ -105,7 +105,7 @@ export function Developer() {
         <h1 className="font-display text-xl font-semibold text-neutral-100">Developer</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Hardware connection status, current mappings, and a live HOST↔DEVICE log using the exact
-          message names the future STM32 protocol uses — see docs/hardware-protocol.md.
+          message names the future STM32 protocol uses. See docs/hardware-protocol.md.
         </p>
       </div>
 
@@ -121,7 +121,7 @@ export function Developer() {
             </span>
           </div>
           <div className="mt-2 text-[10px] text-neutral-700">
-            Future: Noma Prototype (STM32) — not yet connected, no physical hardware exists yet. See{' '}
+            Future: Noma Prototype (STM32), not yet connected. No physical hardware exists yet. See{' '}
             src/main/hardware/stm32Device.ts.
           </div>
         </div>
@@ -148,7 +148,7 @@ export function Developer() {
           </div>
           {!developer.executionStatus?.keystrokeExecutionEnabled && (
             <p className="mt-1.5 text-[11px] leading-snug text-neutral-600">
-              Off after real crashes during testing — see docs/architecture.md.
+              Off after real crashes during testing. See docs/architecture.md.
             </p>
           )}
         </div>
@@ -159,8 +159,8 @@ export function Developer() {
           Hardware Bring-Up Tools
         </div>
         <p className="mb-3 text-[11px] text-neutral-600">
-          Every button below calls the real VirtualHardwareDevice — the same object real usage
-          drives — never a separate fake path. Useful today for exercising the event pipeline;
+          Every button below calls the real VirtualHardwareDevice (the same object real usage
+          drives), never a separate fake path. Useful today for exercising the event pipeline;
           this is exactly the toolset a real STM32 bring-up will need.
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -267,7 +267,7 @@ export function Developer() {
         </div>
         {status.modules.length === 0 ? (
           <p className="text-sm text-neutral-600">
-            None connected — add one from the Virtual Keyboard page.
+            None connected. Add one from the Virtual Keyboard page.
           </p>
         ) : (
           <div className="flex flex-wrap gap-2">
@@ -290,7 +290,7 @@ export function Developer() {
         <div className="max-h-96 overflow-y-auto rounded-xl border border-white/10 bg-base-900">
           {reversedLog.length === 0 ? (
             <div className="px-4 py-3 text-sm text-neutral-600">
-              No events yet — switch applications or press a control.
+              No events yet. Switch applications or press a control.
             </div>
           ) : (
             reversedLog.map((entry, index) => (

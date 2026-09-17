@@ -62,7 +62,7 @@ export function VirtualControlButton({
       </div>
       <div>
         <div className="text-lg font-medium text-neutral-100">
-          {control?.label ?? <span className="text-neutral-600">—</span>}
+          {control?.label ?? <span className="text-neutral-600">–</span>}
         </div>
         {!editMode && caption && (
           <div className="mt-0.5 font-mono text-[11px] text-neutral-500">{caption}</div>

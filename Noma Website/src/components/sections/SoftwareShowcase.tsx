@@ -20,7 +20,7 @@ export default function SoftwareShowcase() {
             One brain. Every workflow.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-balance text-base text-base-400">
-            The desktop app that watches, learns, and builds your keyboard&rsquo;s interface &mdash; real screens,
+            The desktop app that watches, learns, and builds your keyboard&rsquo;s interface. Real screens,
             not a mockup.
           </p>
         </Reveal>

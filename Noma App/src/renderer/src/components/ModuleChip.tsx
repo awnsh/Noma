@@ -113,7 +113,7 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
           </button>
         </div>
       ) : (
-        <div className="mt-2 text-[10px] text-neutral-600">Attached — no functions to assign yet</div>
+        <div className="mt-2 text-[10px] text-neutral-600">Attached, no functions to assign yet</div>
       )}
 
       {isConfiguring && functions && (

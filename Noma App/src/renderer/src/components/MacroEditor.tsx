@@ -140,7 +140,7 @@ export function MacroEditor({
       macroId: macro.id
     })
     if (!profile) {
-      setAssignError('No profile configured for that application yet — nothing to assign this into.')
+      setAssignError('No profile configured for that application yet. Nothing to assign this into.')
       return
     }
     setAssignments(await window.flow.getControlsReferencingMacro(macro.id))
@@ -176,7 +176,7 @@ export function MacroEditor({
 
         {actions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-neutral-600">
-            No steps yet — add one below.
+            No steps yet. Add one below.
           </p>
         ) : (
           <div>
@@ -270,7 +270,7 @@ export function MacroEditor({
           <div className="flex items-center gap-2 text-xs">
             <span className="text-neutral-400">
               {assignments.length > 0
-                ? `Used by ${assignments.length} control${assignments.length === 1 ? '' : 's'} — delete anyway?`
+                ? `Used by ${assignments.length} control${assignments.length === 1 ? '' : 's'}. Delete anyway?`
                 : 'Delete this macro?'}
             </span>
             <button type="button" onClick={handleDelete} className="text-red-400 hover:text-red-300">

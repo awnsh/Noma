@@ -66,7 +66,7 @@ export function Learning() {
       <div className="mb-12">
         <h1 className="font-display text-2xl font-semibold text-neutral-100">What Noma is learning</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          Real patterns, counted from real activity — never a guess.
+          Real patterns, counted from real activity. Never a guess.
         </p>
       </div>
 
@@ -96,7 +96,7 @@ export function Learning() {
             {underused && (
               <InsightCard
                 text={`You rarely use ${underused.label}.`}
-                hint={`${underused.count} use${underused.count === 1 ? '' : 's'} — far less than your other controls. Noma may eventually recommend replacing it.`}
+                hint={`${underused.count} use${underused.count === 1 ? '' : 's'}, far less than your other controls. Noma may eventually recommend replacing it.`}
                 action={{ label: 'Review', onClick: () => setActivePage('controls') }}
               />
             )}
@@ -109,7 +109,7 @@ export function Learning() {
       <section>
         <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">How Noma decides</h2>
         <p className="mb-5 text-sm text-neutral-600">
-          Noma only suggests something once it's genuinely repeated — never automatic.
+          Noma only suggests something once it's genuinely repeated. Never automatic.
         </p>
         {!stats ? (
           <p className="text-sm text-neutral-600">Loading…</p>

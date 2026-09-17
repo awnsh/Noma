@@ -5,7 +5,7 @@ const PIPELINE = ['Desktop', 'Context Detection', 'Workflow Engine', 'Noma Keybo
 const DETAILS = [
   { label: 'Context detection', body: 'Watches which application has focus and what you repeat within it.' },
   { label: 'Workflow learning', body: 'Recognizes a sequence once it repeats, not on the first try.' },
-  { label: 'Local processing', body: 'Runs on your machine — nothing about how you work leaves your desktop.' },
+  { label: 'Local processing', body: 'Runs on your machine. Nothing about how you work leaves your desktop.' },
   { label: 'Profiles', body: 'One control set per application, built automatically as it learns.' },
   { label: 'Integrations', body: 'Reads application context and window state, not your keystrokes or screen contents.' },
 ]

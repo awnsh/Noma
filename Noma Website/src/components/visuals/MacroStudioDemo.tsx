@@ -144,7 +144,7 @@ export default function MacroStudioDemo() {
             <div className="mb-3 font-mono text-[10px] uppercase tracking-widest text-base-500">Steps</div>
             {actions.length === 0 ? (
               <p className="rounded-xl border border-dashed border-base-700 px-4 py-6 text-center text-sm text-base-600">
-                No steps yet — add one below.
+                No steps yet. Add one below.
               </p>
             ) : (
               <div>

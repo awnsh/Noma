@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import KeyboardVisual from '../visuals/KeyboardVisual'
+import { GLASS_ACCENT } from '../../lib/glass'
 
 /**
  * 2026 ground-up redesign — the opening cinematic moment, not a hero packed
@@ -65,7 +66,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="mt-6 max-w-xl text-balance text-base text-base-300 sm:text-lg"
         >
-          Noma adapts to the apps, workflows, and tasks you&rsquo;re working on &mdash; giving you the right controls
+          Noma adapts to the apps, workflows, and tasks you&rsquo;re working on, giving you the right controls
           when you need them.
         </motion.p>
 
@@ -75,10 +76,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="mt-9"
         >
-          <a
-            href="#waitlist"
-            className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-medium text-base-950 transition-colors hover:bg-accent-bright"
-          >
+          <a href="#waitlist" className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-medium ${GLASS_ACCENT}`}>
             Join the Waitlist <span aria-hidden>&rarr;</span>
           </a>
         </motion.div>

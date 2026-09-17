@@ -20,9 +20,9 @@ export function explainConfidence(breakdown: ConfidenceBreakdown): string {
   const biasPercent = Math.round(breakdown.historyBias * 100)
   const historySentence =
     priorTotal === 0
-      ? "Flow hasn't learned a preference for suggestions like this yet — no bias applied."
+      ? "Flow hasn't learned a preference for suggestions like this yet. No bias applied."
       : biasPercent === 0
-        ? `Flow remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted — roughly balanced, so no meaningful nudge either way.`
+        ? `Flow remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted, roughly balanced, so no meaningful nudge either way.`
         : `Flow also remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted, ${
             biasPercent > 0 ? 'adding' : 'subtracting'
           } ${Math.abs(biasPercent)}%.`

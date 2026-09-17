@@ -95,7 +95,7 @@ export function ControlEditorModal({
       onSaved()
       onClose()
     } else {
-      setSaveError(`No profile configured for ${applicationName} yet — nothing to save this into.`)
+      setSaveError(`No profile configured for ${applicationName} yet. Nothing to save this into.`)
     }
   }
 
@@ -135,7 +135,7 @@ export function ControlEditorModal({
             className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
           />
           <p className="mt-1 text-[11px] text-neutral-600">
-            Max 12 characters — this has to fit on a small physical display.
+            Max 12 characters: this has to fit on a small physical display.
           </p>
         </div>
 
@@ -167,7 +167,7 @@ export function ControlEditorModal({
           {action.type === 'macro' &&
             (macros.length === 0 ? (
               <p className="rounded-md border border-dashed border-white/10 px-3 py-2 text-xs text-neutral-600">
-                No macros yet — build one in Macro Studio, or accept a repeated-sequence suggestion
+                No macros yet. Build one in Macro Studio, or accept a repeated-sequence suggestion
                 on the Dashboard.
               </p>
             ) : (

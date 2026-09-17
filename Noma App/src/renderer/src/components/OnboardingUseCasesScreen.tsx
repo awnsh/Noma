@@ -41,7 +41,7 @@ export function OnboardingUseCasesScreen({ selected, onToggle, onContinue }: Onb
       </div>
 
       <div className="mt-10 flex items-center justify-between">
-        <span className="text-xs text-neutral-600">Optional — pick as many as apply.</span>
+        <span className="text-xs text-neutral-600">Optional: pick as many as apply.</span>
         <OnboardingButton onClick={onContinue}>Continue</OnboardingButton>
       </div>
     </div>

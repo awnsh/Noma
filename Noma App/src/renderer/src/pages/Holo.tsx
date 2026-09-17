@@ -80,7 +80,7 @@ export function Holo() {
       <div className="mb-8">
         <h1 className="font-display text-xl font-semibold text-neutral-100">Holo</h1>
         <p className="mt-1 max-w-xl text-sm text-neutral-600">
-          No physical keyboard needed — tap the desk around your laptop in one of four zones and
+          No physical keyboard needed. Tap the desk around your laptop in one of four zones and
           Noma presses the matching control, exactly as if a real button were pressed. Free, and
           listens only while this is your chosen input (Settings) or you're testing it here.
         </p>
@@ -88,7 +88,7 @@ export function Holo() {
 
       {inputSource !== 'holo' && (
         <div className="mb-6 rounded-lg border border-base-700 bg-base-900 px-4 py-3 text-xs text-neutral-600">
-          Input Source is currently <span className="text-neutral-100">Keyboard</span> — Holo still
+          Input Source is currently <span className="text-neutral-100">Keyboard</span>. Holo still
           works here for testing, but won't fire outside this page until you switch Input Source to
           Holo in Settings.
         </div>
@@ -157,13 +157,13 @@ export function Holo() {
 
         {wizard.status === 'running' && wizard.phase === 'zone' && (
           <div className="mb-4 rounded-lg border border-accent/30 bg-accent/[0.08] px-4 py-3 text-sm text-holo-text">
-            Zone {wizard.zoneIndex + 1} of {wizard.totalZones} — {HOLO_ZONE_LABELS[wizard.zone]}: tap it now
+            Zone {wizard.zoneIndex + 1} of {wizard.totalZones}: {HOLO_ZONE_LABELS[wizard.zone]}, tap it now
             (tap {wizard.tapIndex + 1} of {TAPS_PER_ZONE})
           </div>
         )}
         {wizard.status === 'running' && wizard.phase === 'reject' && (
           <div className="mb-4 rounded-lg border border-accent/30 bg-accent/[0.08] px-4 py-3 text-sm text-holo-text">
-            Almost done — now type on your keyboard, click your mouse, or make other normal sounds so
+            Almost done. Now type on your keyboard, click your mouse, or make other normal sounds so
             Holo learns to ignore them (sample {wizard.sampleIndex + 1} of {wizard.totalSamples})
           </div>
         )}
@@ -177,7 +177,7 @@ export function Holo() {
         )}
 
         <p className="text-xs text-holo-muted">
-          Holo only ever processes audio in memory to recognize a tap's zone — nothing is recorded
+          Holo only ever processes audio in memory to recognize a tap's zone, nothing is recorded
           or saved. Calibration (including the reject step, so Holo learns to ignore keyboard/mouse
           sounds) stores a small set of numbers describing each sound, never audio itself. See
           docs/privacy-and-legal.md.

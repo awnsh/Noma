@@ -135,8 +135,8 @@ export default function WorkflowLearning() {
         </div>
 
         <p className="sr-only">
-          Illustration: Noma watches a repeated sequence &mdash; screenshot, switch to Claude, paste the fix, run it,
-          push to GitHub &mdash; and after a few repeats turns the whole sequence into four controls on the physical
+          Illustration: Noma watches a repeated sequence (screenshot, switch to Claude, paste the fix, run it,
+          push to GitHub) and after a few repeats turns the whole sequence into four controls on the physical
           keyboard.
         </p>
       </div>

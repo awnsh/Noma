@@ -54,7 +54,7 @@ export function UsageStats() {
       <div className="mb-8">
         <h1 className="font-display text-xl font-semibold text-neutral-100">Usage Stats</h1>
         <p className="mt-1 text-sm text-neutral-500">
-          Every keyboard shortcut Flow has recorded — how often you reach for it and when you used
+          Every keyboard shortcut Flow has recorded: how often you reach for it and when you used
           it last, across all of your captured activity, not just today.
         </p>
       </div>
@@ -63,7 +63,7 @@ export function UsageStats() {
         <p className="text-sm text-neutral-600">Loading…</p>
       ) : stats.length === 0 ? (
         <p className="text-sm text-neutral-600">
-          No shortcuts recorded yet — enable workflow monitoring in Settings and Flow will start
+          No shortcuts recorded yet. Enable workflow monitoring in Settings and Flow will start
           building this list from what you actually use.
         </p>
       ) : (

@@ -70,7 +70,7 @@ function AppSequence({ stage }: { stage: number }) {
  * sequence above changes and the exact same physical keyboard relabels
  * itself for it. No dashboard, no code-editor mockup — the app icons and
  * the keyboard are the only UI, same restraint as the flagship demo
- * further down this page (`AdaptsContinuous.tsx`, the old `ProductDemo`).
+ * further down this page (`WorkflowLearning.tsx`, the old `ProductDemo`).
  */
 export default function AppAwareness() {
   const { reduceMotion, wrapRef, panelRef, contentRef, phase, progress, contentScale, panelPositionClass } = usePinnedScroll({ scrollVh: SCROLL_VH })
@@ -140,7 +140,7 @@ export default function AppAwareness() {
         <p className="sr-only">
           Illustration: the same physical Noma keyboard relabels its controls as the visitor moves between VS Code
           (Run, Terminal, Commit, Screenshot), Claude (Screenshot, Prompt, Paste, Run), a browser (Back, New Tab,
-          Search, Save), and GitHub (Commit, Pull, Issues, Open) — one keyboard, controls that follow the app in
+          Search, Save), and GitHub (Commit, Pull, Issues, Open): one keyboard, controls that follow the app in
           focus.
         </p>
       </div>

@@ -81,7 +81,7 @@ export function Profiles() {
           <p className="text-xs text-neutral-600">Loading…</p>
         ) : summaries.length === 0 ? (
           <p className="text-xs text-neutral-600">
-            No applications known yet — open one Flow can detect, or add one by hand.
+            No applications known yet. Open one Flow can detect, or add one by hand.
           </p>
         ) : (
           <ul className="flex-1 space-y-1 overflow-y-auto">
@@ -227,7 +227,7 @@ export function Profiles() {
                 </div>
 
                 <div className="mb-2 text-[10px] uppercase tracking-widest text-neutral-600">
-                  Controls — click a tile to configure it
+                  Controls: click a tile to configure it
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {[1, 2, 3, 4].map((slot) => (

@@ -117,7 +117,7 @@ export function NomaMoment({
         </p>
         <p className="mt-1.5 text-sm text-neutral-500">
           {createdLabel === 'Noted'
-            ? "Noma will keep this in mind — it'll factor into what it suggests next."
+            ? "Noma will keep this in mind. It'll factor into what it suggests next."
             : 'Added to your interface.'}
         </p>
       </div>
@@ -218,7 +218,7 @@ export function NomaMoment({
           {profile === null && (
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-neutral-600">
-                Noma doesn't have a control to put this on yet — accepting just remembers this is useful.
+                Noma doesn't have a control to put this on yet. Accepting just remembers this is useful.
               </p>
               <button
                 type="button"
@@ -233,7 +233,7 @@ export function NomaMoment({
           {profile && (
             <>
               <p className="mb-2 text-xs text-neutral-600">
-                Which control should this replace? You choose — Noma never picks for you.
+                Which control should this replace? You choose: Noma never picks for you.
               </p>
               <div className="grid grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((slot) => {
@@ -246,7 +246,7 @@ export function NomaMoment({
                       className="rounded-md border border-base-700 px-2 py-2 text-center text-xs text-neutral-600 transition-colors hover:border-accent hover:text-neutral-100"
                     >
                       <div className="text-[10px] text-neutral-500">{slot}</div>
-                      <div className="mt-0.5 truncate text-neutral-100">{control?.label ?? '—'}</div>
+                      <div className="mt-0.5 truncate text-neutral-100">{control?.label ?? '–'}</div>
                     </button>
                   )
                 })}

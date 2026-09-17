@@ -2,6 +2,7 @@ import { useState } from 'react'
 import KeyboardVisual from '../visuals/KeyboardVisual'
 import Reveal from '../ui/Reveal'
 import { appProfiles } from '../../data/appProfiles'
+import { GLASS_TOGGLE, GLASS_TOGGLE_ACTIVE } from '../../lib/glass'
 
 const PRESETS = ['vscode', 'claude', 'spotify'] as const
 
@@ -32,7 +33,7 @@ export default function KeyboardCloseup() {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="relative mx-auto mt-14 max-w-md">
+          <div className="relative mx-auto mt-14 max-w-[220px]">
             <KeyboardVisual appName={profile.name} controls={profile.controls} oledOnly glow float={false} />
           </div>
         </Reveal>
@@ -47,9 +48,7 @@ export default function KeyboardCloseup() {
                   key={id}
                   type="button"
                   onClick={() => setActive(id)}
-                  className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-95 ${
-                    active === id ? 'border-accent/40 bg-accent/[0.08] text-accent-bright' : 'border-base-700 text-base-400 hover:text-base-100'
-                  }`}
+                  className={`rounded-full px-4 py-2 text-sm font-medium ${active === id ? GLASS_TOGGLE_ACTIVE : GLASS_TOGGLE}`}
                 >
                   {p.shortName}
                 </button>

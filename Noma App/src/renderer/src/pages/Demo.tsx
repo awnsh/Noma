@@ -162,7 +162,7 @@ export function Demo() {
         <div>
           <h1 className="font-display text-xl font-semibold text-neutral-100">Demo</h1>
           <p className="mt-1 text-sm text-neutral-500">
-            The Noma Moment — a deterministic, repeatable walkthrough of the core idea. Your
+            The Noma Moment: a deterministic, repeatable walkthrough of the core idea. Your
             computer changes. Your interface should too.
           </p>
         </div>
@@ -198,7 +198,7 @@ export function Demo() {
             <AppIcon applicationId={context.application.id} name={context.application.name} size={32} variant="tile" />
           )}
           <div className="text-lg font-medium text-neutral-100">
-            {context.application?.name ?? 'None yet — press Start below'}
+            {context.application?.name ?? 'None yet. Press Start below'}
           </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-3">
@@ -215,7 +215,7 @@ export function Demo() {
           <>
             <p className="mb-4 text-sm text-neutral-400">
               This walks through: opening VS Code, switching to Chrome, repeating a workflow,
-              Flow noticing it, and turning it into one control — end to end, on real data from
+              Flow noticing it, and turning it into one control, end to end, on real data from
               this session.
             </p>
             <button
@@ -232,7 +232,7 @@ export function Demo() {
           <>
             <p className="mb-1 text-sm font-medium text-neutral-200">VS Code is active.</p>
             <p className="mb-4 text-sm text-neutral-400">
-              Noma loaded VS Code's profile — RUN, DEBUG, TERMINAL, SEARCH — the same real
+              Noma loaded VS Code's profile (RUN, DEBUG, TERMINAL, SEARCH), the same real
               controls the Dashboard and Virtual Keyboard show for VS Code today.
             </p>
             <button
@@ -248,7 +248,7 @@ export function Demo() {
         {phase === 'chrome' && (
           <>
             <p className="mb-1 text-sm font-medium text-neutral-200">
-              Chrome is active — the interface changed.
+              Chrome is active. The interface changed.
             </p>
             <p className="mb-4 text-sm text-neutral-400">
               Same 4 physical controls, a completely different set of functions: NEW TAB, CLOSE
@@ -264,7 +264,7 @@ export function Demo() {
             </button>
             <p className="mt-2 text-[11px] text-neutral-600">
               This inserts backdated workflow metadata through the same pipeline real capture
-              uses — not real keystrokes. See the "Why?" panel in the next step for the exact
+              uses, not real keystrokes. See the "Why?" panel in the next step for the exact
               numbers.
             </p>
           </>
@@ -286,7 +286,7 @@ export function Demo() {
               />
             ) : (
               <p className="text-sm text-neutral-500">
-                No suggestion yet — if you've already run this demo once, press Reset below and
+                No suggestion yet. If you've already run this demo once, press Reset below and
                 try again.
               </p>
             )}
@@ -297,7 +297,7 @@ export function Demo() {
           <>
             <p className="mb-1 text-sm font-medium text-neutral-200">That really updated Chrome's controls.</p>
             <p className="mb-4 text-sm text-neutral-400">
-              Whichever control you just picked is the real Copy → Paste macro now — the same write
+              Whichever control you just picked is the real Copy → Paste macro now, the same write
               path a person accepting a suggestion in the Suggestions panel uses. Noma never picks
               the slot; you did.
             </p>
@@ -306,7 +306,7 @@ export function Demo() {
               onClick={() => setPhase('multiStepIntro')}
               className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 active:opacity-80"
             >
-              Continue — the bigger idea
+              Continue: the bigger idea
             </button>
           </>
         )}
@@ -318,9 +318,9 @@ export function Demo() {
             </p>
             <p className="mb-4 text-sm text-neutral-400">
               A Stream Deck or a macro pad can run a shortcut you configured by hand. Noma learns
-              workflows you never configured at all — even multi-step ones that cross applications,
+              workflows you never configured at all, even multi-step ones that cross applications,
               even when they don't happen exactly the same way twice. Watch: you're back in VS
-              Code. You take a screenshot, switch to Claude Code, paste it, and switch back — and
+              Code. You take a screenshot, switch to Claude Code, paste it, and switch back, and
               you do that a few times while you're debugging.
             </p>
             <button
@@ -334,7 +334,7 @@ export function Demo() {
                 : 'Simulate repeated workflow (Screenshot → Claude Code → Paste)'}
             </button>
             <p className="mt-2 text-[11px] text-neutral-600">
-              Same as before — backdated workflow metadata through the real capture pipeline, not
+              Same as before: backdated workflow metadata through the real capture pipeline, not
               real keystrokes. Noma never records the screenshot's contents or what you typed into
               Claude Code, only that these steps happened, in this order, repeatedly.
             </p>
@@ -357,7 +357,7 @@ export function Demo() {
               />
             ) : (
               <p className="text-sm text-neutral-500">
-                No suggestion yet — if you've already run this demo once, press Reset below and
+                No suggestion yet. If you've already run this demo once, press Reset below and
                 try again.
               </p>
             )}
@@ -371,7 +371,7 @@ export function Demo() {
             </p>
             <p className="mb-4 text-sm text-neutral-400">
               Whichever control you just picked is now the whole workflow: screenshot, switch to
-              Claude Code, paste, submit — one press instead of four separate steps, on a control
+              Claude Code, paste, submit: one press instead of four separate steps, on a control
               that exists because Noma learned you actually do this.
             </p>
             <button
@@ -392,7 +392,7 @@ export function Demo() {
             </p>
             <p className="mb-4 text-sm text-neutral-400">
               Pressing this control actually sent the screenshot shortcut, tried to focus Claude
-              Code, and sent Paste then Enter — the same real execution path (actionExecutor.ts)
+              Code, and sent Paste then Enter, the same real execution path (actionExecutor.ts)
               any control uses, no separate demo-only path.
             </p>
             {!isWorking && executionResult && (
@@ -405,7 +405,7 @@ export function Demo() {
               >
                 {executionResult.ok
                   ? '✓ Executed the full workflow.'
-                  : `Focus step stopped here: ${executionResult.reason ?? 'unknown reason'}. That's expected if Claude Code isn't actually running on this machine — Noma only focuses a real, already-running window, it never launches one.`}
+                  : `Focus step stopped here: ${executionResult.reason ?? 'unknown reason'}. That's expected if Claude Code isn't actually running on this machine. Noma only focuses a real, already-running window; it never launches one.`}
               </div>
             )}
           </>
@@ -415,7 +415,7 @@ export function Demo() {
       <div className="mt-6 flex items-center justify-between">
         <p className="text-[11px] text-neutral-600">
           Resetting restores VS Code/Chrome to their default controls and clears simulated
-          workflow data — safe to re-run as many times as you like.
+          workflow data. Safe to re-run as many times as you like.
         </p>
         <button
           type="button"

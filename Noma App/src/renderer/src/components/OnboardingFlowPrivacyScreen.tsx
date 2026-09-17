@@ -3,7 +3,7 @@ import { OnboardingButton } from './OnboardingButton'
 const SEQUENCE = [
   { label: 'You repeat a shortcut', detail: 'The same combo, in the same app, a few times' },
   { label: 'Flow notices the pattern', detail: 'Deterministic pattern detection, not a guess' },
-  { label: 'Flow suggests a control', detail: 'One click assigns it — Flow never assigns it itself' }
+  { label: 'Flow suggests a control', detail: 'One click assigns it, Flow never assigns it itself' }
 ]
 
 interface OnboardingFlowPrivacyScreenProps {

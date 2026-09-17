@@ -25,7 +25,7 @@ export function formatShortcutCaption(keys: string[]): string {
 /** One glyph representing what kind of thing this control does — the
  *  physical-identity marker in the corner of a control tile. */
 export function actionGlyph(action: ControlAction | undefined): string {
-  if (!action) return '—'
+  if (!action) return '–'
   switch (action.type) {
     case 'shortcut':
       return '⌨'

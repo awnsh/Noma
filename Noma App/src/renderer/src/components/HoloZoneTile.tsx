@@ -42,7 +42,7 @@ export function HoloZoneTile({ zone, slot, control, isCalibrated, isFlashing }: 
       </div>
       <div>
         <div className="text-lg font-medium text-holo-text">
-          {control?.label ?? <span className="text-holo-muted">—</span>}
+          {control?.label ?? <span className="text-holo-muted">–</span>}
         </div>
         {!isCalibrated && <div className="mt-0.5 text-[11px] text-holo-muted">Not calibrated yet</div>}
       </div>

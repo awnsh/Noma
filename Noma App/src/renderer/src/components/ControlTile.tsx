@@ -49,7 +49,7 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
       )}
       <div>
         <div className="truncate text-sm font-medium tracking-wide text-neutral-100">
-          {control?.label ?? <span className="text-neutral-500">—</span>}
+          {control?.label ?? <span className="text-neutral-500">–</span>}
         </div>
         {caption && <div className="mt-1 truncate font-mono text-xs text-neutral-500">{caption}</div>}
       </div>

@@ -125,12 +125,12 @@ export function Home() {
               'Detecting the active application…'
             ) : application ? (
               <>
-                <span>Adapts to how you work — right now, for</span>
+                <span>Adapts to how you work, right now, for</span>
                 <AppIcon applicationId={application.id} name={application.name} size={16} />
                 <span className="font-medium text-neutral-100">{application.name}.</span>
               </>
             ) : (
-              'Adapts to how you work — open an application Noma knows to see it in action.'
+              'Adapts to how you work. Open an application Noma knows to see it in action.'
             )}
           </p>
 
@@ -164,7 +164,7 @@ export function Home() {
           ) : (
             <EmptyState
               title="Noma will build your interface as it learns."
-              hint="Keep working normally — controls appear here once Noma has something to put on them."
+              hint="Keep working normally. Controls appear here once Noma has something to put on them."
             />
           )}
         </section>

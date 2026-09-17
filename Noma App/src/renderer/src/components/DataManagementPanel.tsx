@@ -51,7 +51,7 @@ export function DataManagementPanel() {
           <span>
             {lastAction === 'clearedLearningData'
               ? 'Learning data cleared.'
-              : 'All data deleted — Noma is back to its default state.'}
+              : 'All data deleted. Noma is back to its default state.'}
           </span>
           <button type="button" onClick={dismiss} className="text-accent/70 hover:text-accent">
             Dismiss
@@ -62,7 +62,7 @@ export function DataManagementPanel() {
       <div className="mt-4 flex flex-wrap gap-2">
         <ActionButton
           label="Pause Learning"
-          description="Turns off workflow monitoring — same as the toggle above."
+          description="Turns off workflow monitoring, same as the toggle above."
           onClick={() => window.flow.setWorkflowMonitoringEnabled(false).then(refreshWorkflow)}
         />
 
