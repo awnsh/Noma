@@ -30,6 +30,13 @@ interface KeyboardVisualProps {
    *  controls already on screen, rather than a controls list. Never used to
    *  swap which controls are shown, only to call out ones already there. */
   emphasizedLabels?: string[]
+  /** Makes each screen cell a real clickable control instead of a display
+   *  label — for callers where each of the four cells is its own whole
+   *  workflow (one press, the whole thing runs), and clicking one is the
+   *  point rather than a swap-the-whole-screen toggle living outside the
+   *  board. Omit (the default) everywhere else, where the cells are pure
+   *  illustration. */
+  onControlClick?: (label: string) => void
   /** Hides the magnetic pin-connector strips on the chassis edges — default
    *  `true` (existing behavior) for callers still describing the modular
    *  concept; the 2026 ground-up redesign explicitly doesn't mention or
@@ -229,6 +236,7 @@ export default function KeyboardVisual({
   className = '',
   oledOnly = false,
   emphasizedLabels,
+  onControlClick,
   typingProgress,
   showPinConnectors = true,
 }: KeyboardVisualProps) {
@@ -439,6 +447,7 @@ export default function KeyboardVisual({
                           {i > 0 && <line x1={SCR_X + 8} y1={cell.y} x2={SCR_X + SCR_W - 8} y2={cell.y} stroke="#1c1c21" strokeWidth="1" />}
                           <foreignObject x={SCR_X} y={cell.y} width={SCR_W} height={cell.h}>
                             <div
+                              onClick={onControlClick ? () => onControlClick(label) : undefined}
                               style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -447,6 +456,7 @@ export default function KeyboardVisual({
                                 gap: 3,
                                 height: '100%',
                                 color: isEmphasized ? '#c4aee0' : '#8babff',
+                                cursor: onControlClick ? 'pointer' : undefined,
                               }}
                             >
                               <OledIcon label={label} className="h-4 w-4" />
