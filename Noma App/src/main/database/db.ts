@@ -132,6 +132,9 @@ export function runMigrations(database: Database.Database): void {
   ensureColumn(database, 'suggestions', 'action_payload', 'action_payload TEXT')
   ensureColumn(database, 'suggestions', 'confidence_breakdown', 'confidence_breakdown TEXT')
   ensureColumn(database, 'suggestions', 'chain_application_names', 'chain_application_names TEXT')
+  ensureColumn(database, 'workflow_events', 'click_target', 'click_target TEXT')
+  ensureColumn(database, 'suggestions', 'pattern_fingerprint', 'pattern_fingerprint TEXT')
+  ensureColumn(database, 'suggestions', 'pattern_features', 'pattern_features TEXT')
   ensureColumn(database, 'applications', 'executable_path', 'executable_path TEXT')
 }
 

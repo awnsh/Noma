@@ -1,5 +1,7 @@
 import type { ConfidenceBreakdown, PatternKind, Suggestion, SuggestionAction, SuggestionStatus } from '@shared/types'
 import { getDatabase } from '../db'
+import { trainModel, type PatternFeatures } from '../../ai/workflowQuality'
+import { loadQualityModel, saveQualityModel } from './qualityModelRepository'
 
 interface SuggestionRow {
   id: string
@@ -83,17 +85,29 @@ export function getSuggestionById(id: string): Suggestion | null {
  * that's already pending isn't duplicated, and one the user already
  * accepted/rejected/dismissed is never resurrected.
  */
-export function insertSuggestionIfNew(suggestion: Suggestion): void {
+/** What the quality model needs remembered about the pattern behind a
+ *  suggestion: its dedupe fingerprint, and the features to train on when the
+ *  user later accepts/rejects it. Internal — never sent to the renderer. */
+export interface SuggestionPatternMeta {
+  fingerprint: string[]
+  features: PatternFeatures
+}
+
+export function insertSuggestionIfNew(suggestion: Suggestion, meta?: SuggestionPatternMeta): void {
   const db = getDatabase()
   db.prepare(
     `INSERT INTO suggestions
        (id, title, explanation, confidence, status, created_at, resolved_at,
-        application_id, action_kind, action_payload, confidence_breakdown, chain_application_names)
+        application_id, action_kind, action_payload, confidence_breakdown, chain_application_names,
+        pattern_fingerprint, pattern_features)
      VALUES
        (@id, @title, @explanation, @confidence, @status, @createdAt, @resolvedAt,
-        @applicationId, @actionKind, @actionPayload, @confidenceBreakdown, @chainApplicationNames)
+        @applicationId, @actionKind, @actionPayload, @confidenceBreakdown, @chainApplicationNames,
+        @patternFingerprint, @patternFeatures)
      ON CONFLICT(id) DO NOTHING`
   ).run({
+    patternFingerprint: meta ? JSON.stringify(meta.fingerprint) : null,
+    patternFeatures: meta ? JSON.stringify(meta.features) : null,
     id: suggestion.id,
     title: suggestion.title,
     explanation: suggestion.explanation,
@@ -113,14 +127,68 @@ export function insertSuggestionIfNew(suggestion: Suggestion): void {
   })
 }
 
+/** A suggestion's stored dedupe fingerprint, `null` for rows from before
+ *  fingerprints existed. */
+export interface StoredSuggestionFingerprint {
+  id: string
+  status: SuggestionStatus
+  fingerprint: string[] | null
+  confidence: number
+}
+
+export function getStoredFingerprints(): StoredSuggestionFingerprint[] {
+  const db = getDatabase()
+  const rows = db
+    .prepare('SELECT id, status, confidence, pattern_fingerprint FROM suggestions')
+    .all() as Array<{ id: string; status: SuggestionStatus; confidence: number; pattern_fingerprint: string | null }>
+  return rows.map((row) => ({
+    id: row.id,
+    status: row.status,
+    confidence: row.confidence,
+    fingerprint: row.pattern_fingerprint ? (JSON.parse(row.pattern_fingerprint) as string[]) : null
+  }))
+}
+
+/** Backfills a pre-fingerprint row once its pattern is seen again. */
+export function setSuggestionPatternMeta(id: string, meta: SuggestionPatternMeta): void {
+  const db = getDatabase()
+  db.prepare(
+    `UPDATE suggestions SET pattern_fingerprint = @fingerprint, pattern_features = @features
+     WHERE id = @id AND pattern_fingerprint IS NULL`
+  ).run({ id, fingerprint: JSON.stringify(meta.fingerprint), features: JSON.stringify(meta.features) })
+}
+
+/** Removes a still-pending suggestion that a fuller/duplicate one replaced.
+ *  Never touches resolved rows — those are the user's decisions. */
+export function deletePendingSuggestion(id: string): void {
+  const db = getDatabase()
+  db.prepare(`DELETE FROM suggestions WHERE id = ? AND status = 'pending'`).run(id)
+}
+
 export function resolveSuggestion(
   id: string,
   status: 'accepted' | 'rejected' | 'dismissed'
 ): Suggestion | null {
   const db = getDatabase()
+  const previous = db
+    .prepare('SELECT status, pattern_features FROM suggestions WHERE id = ?')
+    .get(id) as { status: SuggestionStatus; pattern_features: string | null } | undefined
+
   db.prepare(`UPDATE suggestions SET status = @status, resolved_at = @resolvedAt WHERE id = @id`).run(
     { id, status, resolvedAt: Date.now() }
   )
+
+  // The user's verdict is the training signal for the workflow-quality
+  // model. Only the first resolution of a pending suggestion counts, so a
+  // repeated call can't train on the same answer twice.
+  if (previous?.status === 'pending' && previous.pattern_features) {
+    try {
+      const features = JSON.parse(previous.pattern_features) as PatternFeatures
+      saveQualityModel(trainModel(loadQualityModel(), features, status))
+    } catch {
+      // A malformed stored value must never block resolving a suggestion.
+    }
+  }
   return getSuggestionById(id)
 }
 

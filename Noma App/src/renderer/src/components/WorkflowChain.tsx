@@ -96,7 +96,7 @@ const SIZES = {
  *  aren't interactive, so a hover glow here would be decoration with
  *  nothing behind it to justify it. The real application icon inside is
  *  what's supposed to earn the eye's attention, not the chip around it. */
-const ICON_BOX = 'flex shrink-0 items-center justify-center rounded-2xl border border-base-700 bg-base-850 shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]'
+const ICON_BOX = 'flex shrink-0 items-center justify-center'
 
 export function WorkflowChain({ steps, size = 'md' }: { steps: WorkflowChainStep[]; size?: 'md' | 'lg' }) {
   const reduceMotion = usePrefersReducedMotion()

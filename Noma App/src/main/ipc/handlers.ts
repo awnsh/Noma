@@ -14,10 +14,13 @@ import { getDatabase } from '../database/db'
 import { getDefaultHardwareDevice } from '../hardware/virtualDevice'
 import type { ApplicationContextService } from '../applications/contextService'
 import type { CaptureService } from '../workflow/captureService'
+import type { ClickCaptureService } from '../workflow/clickCaptureService'
 import type { SuggestionEngine } from '../ai/suggestionEngine'
 import {
   getInputSource,
+  getClickCaptureEnabled,
   getWorkflowMonitoringEnabled,
+  setClickCaptureEnabled,
   setInputSource,
   setWorkflowMonitoringEnabled
 } from '../database/repositories/settingsRepository'
@@ -78,6 +81,7 @@ import { getOnboardingState, saveOnboardingState } from '../database/repositorie
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
   captureService: CaptureService,
+  clickCaptureService: ClickCaptureService,
   suggestionEngine: SuggestionEngine,
   /** Called with the affected application's id after a control is
    *  reassigned, so the caller can push a live update if it's the one
@@ -139,10 +143,22 @@ export function registerIpcHandlers(
     setWorkflowMonitoringEnabled(enabled)
     if (enabled) {
       captureService.start()
+      if (getClickCaptureEnabled()) clickCaptureService.start()
     } else {
       captureService.stop()
+      clickCaptureService.stop()
     }
     return getWorkflowMonitoringEnabled()
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GET_CLICK_CAPTURE_ENABLED, () => getClickCaptureEnabled())
+
+  ipcMain.handle(IPC_CHANNELS.SET_CLICK_CAPTURE_ENABLED, (_event, enabled: boolean) => {
+    setClickCaptureEnabled(enabled)
+    // Click capture only ever runs while workflow monitoring is also on.
+    if (enabled && getWorkflowMonitoringEnabled()) clickCaptureService.start()
+    else clickCaptureService.stop()
+    return getClickCaptureEnabled()
   })
 
   ipcMain.handle(IPC_CHANNELS.GET_DETECTED_PATTERNS, () =>
@@ -314,6 +330,7 @@ export function registerIpcHandlers(
     // "enabled" setting row no longer exists) — stop it explicitly rather
     // than leaving it running against a settings table that now says off.
     captureService.stop()
+    clickCaptureService.stop()
     deleteAllData()
     const currentApplicationId = contextService.getContext().application?.id
     if (currentApplicationId) contextService.refreshIfCurrentApplication(currentApplicationId)

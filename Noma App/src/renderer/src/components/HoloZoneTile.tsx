@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { Control, HoloZone } from '@shared/types'
-import { HOLO_ZONE_LABELS } from '@shared/constants'
+import { getHoloZoneLabel, type HoloZoneCount } from '@shared/constants'
 
 interface HoloZoneTileProps {
   zone: HoloZone
   slot: number
+  zoneCount: HoloZoneCount
   control: Control | undefined
   isCalibrated: boolean
   /** True on the tap right after Flow classifies a tap as *this* zone —
@@ -13,7 +14,7 @@ interface HoloZoneTileProps {
   isFlashing: boolean
 }
 
-export function HoloZoneTile({ zone, slot, control, isCalibrated, isFlashing }: HoloZoneTileProps) {
+export function HoloZoneTile({ zone, slot, zoneCount, control, isCalibrated, isFlashing }: HoloZoneTileProps) {
   // A brief local flash independent of the parent's own timer, so rapid
   // repeat taps on the same zone each visibly re-trigger it rather than
   // only the first one showing (a re-set of the same `isFlashing=true`
@@ -33,7 +34,7 @@ export function HoloZoneTile({ zone, slot, control, isCalibrated, isFlashing }: 
     >
       <div className="flex items-center justify-between">
         <span className="text-[10px] text-holo-muted">
-          {HOLO_ZONE_LABELS[zone]} · Slot {slot}
+          {getHoloZoneLabel(zone, zoneCount)} · Slot {slot}
         </span>
         <span
           className={`h-1.5 w-1.5 rounded-full ${isCalibrated ? 'bg-accent' : 'bg-holo-border'}`}

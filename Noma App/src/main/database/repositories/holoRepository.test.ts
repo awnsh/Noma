@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../db'
 import { clearHoloCalibration, getHoloCalibration, saveHoloCalibration } from './holoRepository'
-import type { HoloCalibration } from '@shared/types'
+import { HOLO_CALIBRATION_VERSION, type HoloCalibration } from '@shared/types'
 
 beforeEach(() => {
   const db = new Database(':memory:')
@@ -11,6 +11,10 @@ beforeEach(() => {
 })
 
 const FULL_CALIBRATION: HoloCalibration = {
+  version: HOLO_CALIBRATION_VERSION,
+  scale: [0.3, 0.3, 0.3],
+  layout: '1',
+  accuracy: 0.95,
   zones: [
     { zone: 'frontLeft', features: [1, 0, 0], sampleCount: 6 },
     { zone: 'frontRight', features: [0, 1, 0], sampleCount: 6 },
@@ -29,6 +33,11 @@ describe('getHoloCalibration', () => {
     getDatabase()
       .prepare("INSERT INTO settings (key, value) VALUES ('holoCalibration', 'not json')")
       .run()
+    expect(getHoloCalibration()).toBeNull()
+  })
+
+  it('treats a calibration from an older pipeline as not calibrated', () => {
+    saveHoloCalibration({ ...FULL_CALIBRATION, version: HOLO_CALIBRATION_VERSION - 1 })
     expect(getHoloCalibration()).toBeNull()
   })
 })

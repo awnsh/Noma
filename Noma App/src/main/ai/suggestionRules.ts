@@ -6,6 +6,8 @@ import {
   SEQUENCE_THRESHOLD,
   shortcutDisplayLabel
 } from '../workflow/patternDetection'
+import { inAppLabel, matchRealisticWorkflow } from '../workflow/appKnowledge'
+import { describeClickTarget } from '../workflow/clickTarget'
 
 /**
  * Turns one detected pattern into one suggestion — the deterministic
@@ -46,7 +48,10 @@ export function suggestionForPattern(
 
   switch (pattern.kind) {
     case 'repeatedShortcut': {
-      const combo = pattern.comboKeys.join('+')
+      const rawCombo = pattern.comboKeys.join('+')
+      // "Blade (Control+B)" when the app's own name for it is known.
+      const label = shortcutDisplayLabel(pattern.comboKeys, pattern.applicationId)
+      const combo = label === rawCombo ? rawCombo : `${label} (${rawCombo})`
       const threshold = REPEATED_SHORTCUT_THRESHOLD
       const base = baseConfidence(pattern.count, threshold)
       return {
@@ -70,7 +75,10 @@ export function suggestionForPattern(
     }
 
     case 'repeatedSequence': {
-      const [first, second] = pattern.sequence
+      // Only an app-specific name ("Blade") replaces the raw combo here.
+      const [first, second] = pattern.sequence.map(
+        (combo) => inAppLabel(pattern.applicationId, combo.split('+')) ?? combo
+      )
       const threshold = SEQUENCE_THRESHOLD
       const base = baseConfidence(pattern.count, threshold)
       return {
@@ -97,6 +105,7 @@ export function suggestionForPattern(
       const threshold = CROSS_APP_WORKFLOW_THRESHOLD
       const base = baseConfidence(pattern.count, threshold)
       const chain = describeChain(pattern.steps, pattern.closingStep, chainApplicationNames)
+      const knownChain = matchRealisticWorkflow(pattern.steps.map((step) => step.applicationId))
       return {
         id: `suggestion:${pattern.id}`,
         // No `applicationId` (and so no `action`) on purpose: this pattern
@@ -106,7 +115,9 @@ export function suggestionForPattern(
         // an informational-only accept path for exactly this case (no
         // profile to pick a slot from) — reused here rather than building a
         // second one.
-        title: 'Flow noticed a workflow across apps',
+        title: knownChain
+          ? `Flow noticed a workflow across apps: ${knownChain.name}`
+          : 'Flow noticed a workflow across apps',
         explanation: `You've repeated ${chain} ${pattern.count} times today. Flow watches for patterns like this across every app, not just within one.`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
@@ -133,9 +144,41 @@ export function suggestionForPattern(
       // every time.
       const base = baseConfidence(pattern.count, threshold) * (0.85 + 0.15 * pattern.consistency)
       const chain = pattern.steps.map((step) => describeWorkflowStep(step, chainApplicationNames)).join(' → ')
+      // A recognized real-world workflow ("Run and preview") is named in the
+      // title, so the card says what Noma understood, not just what it saw.
+      const known = matchRealisticWorkflow(pattern.steps.map((step) => step.applicationId))
+
+      // A chain that includes clicking an on-screen control can't be replayed
+      // (the macro vocabulary has no "click this control" step), so — like
+      // crossAppWorkflow — it's informational: Noma names what it noticed,
+      // and accepting just remembers it. No `applicationId`/`action` reuses
+      // NomaMoment's existing no-profile accept path.
+      if (pattern.steps.some((step) => step.type === 'click')) {
+        const appName = pattern.contextApplicationId ? chainApplicationNames[pattern.contextApplicationId] : null
+        const where = appName ?? pattern.contextApplicationId
+        return {
+          id: `suggestion:${pattern.id}`,
+          title: where ? `Noma noticed a workflow in ${where}` : 'Noma noticed a workflow',
+          explanation: `You keep doing this: ${chain}. Detected ${pattern.count} times recently. Noma will remember it as one of your workflows.`,
+          confidence: clampConfidence(base + confidenceBias),
+          status: 'pending',
+          createdAt: now,
+          applicationId: null,
+          chainApplicationNames,
+          confidenceBreakdown: {
+            occurrenceCount: pattern.count,
+            threshold,
+            baseConfidence: base,
+            historyBias: confidenceBias,
+            priorAccepted: priorHistory.accepted,
+            priorRejected: priorHistory.rejected
+          }
+        }
+      }
+
       return {
         id: `suggestion:${pattern.id}`,
-        title: 'Noma noticed a workflow',
+        title: known ? `Noma noticed a workflow: ${known.name}` : 'Noma noticed a workflow',
         explanation: `You frequently do this: ${chain}. Detected ${pattern.count} times recently. Turn it into one action?`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
@@ -170,7 +213,8 @@ export function suggestionForPattern(
  *  A shortcut step prefers its human label ("Paste") over the raw combo —
  *  see shortcutDisplayLabel. */
 function describeWorkflowStep(step: WorkflowStep, names: Record<string, string | null>): string {
-  if (step.type === 'shortcut') return shortcutDisplayLabel(step.comboKeys)
+  if (step.type === 'shortcut') return shortcutDisplayLabel(step.comboKeys, step.applicationId)
+  if (step.type === 'click') return `Click ${describeClickTarget(step.target)}`
   if (!step.applicationId) return 'another app'
   return names[step.applicationId] ?? step.applicationId
 }

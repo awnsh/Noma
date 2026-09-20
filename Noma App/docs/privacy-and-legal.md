@@ -169,29 +169,31 @@ reasoning:
 - **What's actually kept, and for how long:** a rolling in-memory buffer
   (Web Audio API's `AnalyserNode`) that the app reads every ~20ms to check
   loudness, and — only in the brief instant an onset is detected — one
-  frequency-domain snapshot, immediately collapsed to a 16-number
-  "spectral shape" vector (`extractFeatures` in `classifier.ts`) that
-  discards timing/phase/content entirely. That derived vector, never the
-  audio itself, is the only thing that can be persisted (as part of a
-  calibration profile), and only when the user explicitly runs the
-  calibration wizard. The wizard's last step deliberately captures a
-  reference for "not a desk tap" too — the user is asked to type/click
-  normally so Holo learns to reject those sounds instead of misfiring on
-  them (`HoloCalibration.reject`, `classifyZone`'s `rejectFeatures` param)
-  — this is still just a handful of derived numbers, captured, averaged,
-  and stored by the exact same mechanism and exact same explicit action as
-  every zone's own profile, not a special or broader capture. **No raw
-  audio buffer, recording, or waveform is ever written to disk or sent
-  anywhere** — there is no code path in this feature that does either.
+  short window (~20 ms) of every microphone channel, immediately collapsed
+  to a small numeric feature vector (band levels, spectral centroid,
+  decay, and — with several mics — relative level and arrival delay;
+  `extractTapFeatures` in `classifier.ts`) that discards content
+  entirely. That derived vector, never the audio itself, is the only thing
+  that can be persisted (as part of a calibration profile), and only when
+  the user explicitly runs the calibration wizard. **No raw audio buffer,
+  recording, or waveform is ever written to disk or sent anywhere** —
+  there is no code path in this feature that does either. Browser audio
+  processing (echo cancellation, noise suppression, auto gain) is turned
+  off so taps aren't filtered away; this changes the audio's quality, not
+  where it goes.
+- **Keyboard/mouse timing gate.** While Holo is listening or calibrating,
+  main installs the OS input hook (shared, reference-counted, with
+  workflow capture — `sharedHook.ts`) purely to forward the *timestamp* of
+  each key/mouse-button/wheel event (`inputActivityService.ts`). Never
+  which key, never a position, never persisted; it lets Holo switch the
+  mic track off (silence, not filtering) the instant you type or click and
+  back on 300 ms after you stop, so typing sounds are never captured at all. The hook is removed when listening stops.
 - **Off by default, explicit action required every time.** `getUserMedia`
   is called only from two explicit user actions on the Holo page —
   clicking "Calibrate" or "Start Listening" — never automatically on app
-  launch, never merely because `inputSource` is set to `'holo'` in
-  Settings. (Auto-starting Holo's listening loop in the background when
-  it's the chosen input source, the way the physical keyboard's capture
-  hook auto-starts with workflow monitoring, is a documented future step —
-  see docs/architecture.md — not implemented yet; today the mic is only
-  ever live while the Holo page's own controls have been used.)
+  launch. Once started, listening continues in the background if Holo is
+  the chosen Input Source (so taps work while you're in other apps), and
+  stops when Input Source is switched back or listening is stopped. (Auto-starting at app launch is still a deliberate non-feature.)
 - **The OS's own mic indicator still applies.** Electron surfaces the
   standard browser mic-permission prompt and Windows' own "microphone in
   use" privacy indicator whenever the stream is actually open — Holo adds
@@ -207,6 +209,45 @@ reasoning:
   `classifier.ts`'s doc comment), not Holo's own trained model — it's a
   convenience/ergonomics feature, not something to rely on as an access
   control. Don't market it as more precise or more secure than it is.
+
+## On-screen button clicks (opt-in, off by default)
+
+Added 2026-09-19 so Flow can recognize workflows *inside* an app ("Cut, then
+Delete" in a video editor) — not only key combos and app switches.
+
+This is a **separate, second opt-in** (Settings -> Workflow Monitoring ->
+"Learn from on-screen buttons"), off by default, and it only ever runs while
+workflow monitoring itself is on. It is a new class of capture, so its limits
+are stated explicitly and enforced in one pure, unit-tested place
+(`src/main/workflow/clickTarget.ts`), before anything is stored or logged:
+
+- **What is stored:** for each left-click, only the *target* — either
+  `label:<button name>` or `zone:<col>x<row>` — plus the application and a
+  timestamp. Raw coordinates and raw control names are used transiently to
+  compute the target and are never persisted.
+- **Labels** come from Windows UI Automation and are kept only for command
+  controls (buttons, menu items, check/radio boxes), and only when the name is
+  label-shaped: one to three plain words, no digits, no path/URL/e-mail
+  punctuation.
+- **Never recorded at all** — not even as a position: text fields, documents,
+  text, list/tree/table rows, links, images, combo boxes, title bars. Tabs are
+  not treated as labeled commands either (a browser tab is named after its
+  page).
+- **Zones** (a 16x10 grid laid over the window) are used only where an app
+  exposes nothing meaningful at the click point (custom-drawn UIs). A known
+  command control whose name failed the label filter records nothing, so the
+  zone fallback is not a way around it.
+- **Excluded apps:** browsers, chat apps, meeting apps and AI chat apps are
+  skipped entirely — their buttons routinely carry people's names or page
+  content, which a name filter cannot reliably tell apart from a label.
+- **Flow's own window** is never recorded. Right/middle clicks are ignored.
+- A click is never recorded together with what was typed, and nothing leaves
+  the device.
+
+Limits worth knowing: UI Automation only sees what an app chooses to expose,
+so accuracy varies by app; and a captured click chain is *informational* —
+Flow cannot replay a click (there is no "click this control" macro step), so
+these suggestions name the workflow rather than offering to automate it.
 
 ## Disclaimer
 

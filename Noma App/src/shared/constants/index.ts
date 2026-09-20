@@ -10,6 +10,8 @@ export const IPC_CHANNELS = {
   PRESS_CONTROL: 'flow:press-control',
   ADD_MODULE: 'flow:add-module',
   REMOVE_MODULE: 'flow:remove-module',
+  GET_CLICK_CAPTURE_ENABLED: 'flow:get-click-capture-enabled',
+  SET_CLICK_CAPTURE_ENABLED: 'flow:set-click-capture-enabled',
   GET_WORKFLOW_MONITORING_ENABLED: 'flow:get-workflow-monitoring-enabled',
   SET_WORKFLOW_MONITORING_ENABLED: 'flow:set-workflow-monitoring-enabled',
   GET_DETECTED_PATTERNS: 'flow:get-detected-patterns',
@@ -61,7 +63,10 @@ export const IPC_CHANNELS = {
   SET_INPUT_SOURCE: 'flow:set-input-source',
   GET_HOLO_CALIBRATION: 'flow:get-holo-calibration',
   SAVE_HOLO_CALIBRATION: 'flow:save-holo-calibration',
-  CLEAR_HOLO_CALIBRATION: 'flow:clear-holo-calibration'
+  CLEAR_HOLO_CALIBRATION: 'flow:clear-holo-calibration',
+  GET_LAPTOP_INFO: 'flow:get-laptop-info',
+  HOLO_SET_INPUT_GATE: 'flow:holo-set-input-gate',
+  HOLO_INPUT_ACTIVITY: 'flow:holo-input-activity'
 } as const
 
 /** Version of the (future) host<->device protocol. See docs/architecture.md. */
@@ -117,6 +122,72 @@ export const FLOW_ACTION_CATALOG: string[] = ['closeWindow']
  * "which slot does this zone control" can never drift between files.
  */
 export const HOLO_ZONE_ORDER: HoloZone[] = ['frontLeft', 'frontRight', 'rearLeft', 'rearRight']
+
+/** Zone counts Holo supports. Fewer zones on hardware that can't tell more apart. */
+export type HoloZoneCount = 2 | 4
+
+/** Which side of the laptop the (single) microphone is on. */
+export type HoloMicSide = 'left' | 'right'
+
+/**
+ * The zones used at a given count. With 4 it's all of them. With 2 (a
+ * one-mic laptop) both zones sit on the *microphone's* side — the one
+ * place taps are heard clearly — split front/back: mic on the left gives
+ * bottom-left + top-left. The list order is slot order (index 0 = slot 1).
+ */
+export function getHoloZones(count: HoloZoneCount, micSide: HoloMicSide = 'left'): HoloZone[] {
+  if (count === 4) return HOLO_ZONE_ORDER
+  return micSide === 'left' ? ['frontLeft', 'rearLeft'] : ['frontRight', 'rearRight']
+}
+
+/** Tile/wizard label. In 2-zone mode both are on one side, so Top/Bottom says it plainly. */
+export function getHoloZoneLabel(zone: HoloZone, count: HoloZoneCount): string {
+  if (count === 4) return HOLO_ZONE_LABELS[zone]
+  const side = zone === 'frontLeft' || zone === 'rearLeft' ? 'left' : 'right'
+  return `${zone === 'rearLeft' || zone === 'rearRight' ? 'Top' : 'Bottom'} ${side}`
+}
+
+/**
+ * Known laptops whose microphone side has been confirmed. Deliberately tiny
+ * and only holds verified entries: public sources are vague or inconsistent
+ * about mic placement (some list the G14's mics along the top edge of the
+ * screen), so anything not here is *measured* during calibration instead
+ * (tap far left / far right, see which is louder) rather than guessed.
+ */
+const KNOWN_MIC_SIDES: Array<{ pattern: RegExp; side: HoloMicSide }> = [
+  // ASUS ROG Zephyrus G14 — confirmed by the developer's own unit.
+  { pattern: /zephyrus g14|GA40[1-3]/i, side: 'left' }
+]
+
+/** Mic side from the laptop model alone; null when the model isn't known. */
+export function lookupHoloMicSide(laptop: { manufacturer: string; model: string } | null): HoloMicSide | null {
+  if (!laptop) return null
+  const name = `${laptop.manufacturer} ${laptop.model}`
+  return KNOWN_MIC_SIDES.find((entry) => entry.pattern.test(name))?.side ?? null
+}
+
+export interface HoloZoneRecommendation {
+  count: HoloZoneCount
+  reason: string
+}
+
+/**
+ * How many zones this computer can realistically tell apart, decided from
+ * the detected laptop. Zones are told apart by *where the mic is*: a
+ * MacBook's multi-mic array can triangulate four; a typical Windows laptop
+ * (e.g. ROG Zephyrus G14) has one mic on one side, which can only support
+ * two. Holo always listens on the built-in mic only (see micKind.ts), so
+ * unknown hardware gets the conservative 2 — a reliable 2 beats a flaky 4.
+ */
+export function recommendHoloZoneCount(
+  laptop: { platform: string; manufacturer: string; model: string } | null
+): HoloZoneRecommendation {
+  const name = laptop ? `${laptop.manufacturer} ${laptop.model}`.trim() : ''
+  if (laptop && (laptop.platform === 'darwin' || /apple|macbook/i.test(name))) {
+    return { count: 4, reason: `${name || 'MacBook'} has a multi-microphone array` }
+  }
+  return { count: 2, reason: `${name || 'This computer'} has one built-in microphone, enough for two zones` }
+}
 
 export const HOLO_ZONE_LABELS: Record<HoloZone, string> = {
   frontLeft: 'Front Left',

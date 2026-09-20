@@ -52,6 +52,8 @@ const flowApi: FlowApi = {
   addModule: (moduleType) => ipcRenderer.invoke(IPC_CHANNELS.ADD_MODULE, moduleType),
   removeModule: (moduleId) => ipcRenderer.invoke(IPC_CHANNELS.REMOVE_MODULE, moduleId),
 
+  getClickCaptureEnabled: () => ipcRenderer.invoke(IPC_CHANNELS.GET_CLICK_CAPTURE_ENABLED),
+  setClickCaptureEnabled: (enabled) => ipcRenderer.invoke(IPC_CHANNELS.SET_CLICK_CAPTURE_ENABLED, enabled),
   getWorkflowMonitoringEnabled: () => ipcRenderer.invoke(IPC_CHANNELS.GET_WORKFLOW_MONITORING_ENABLED),
   setWorkflowMonitoringEnabled: (enabled) =>
     ipcRenderer.invoke(IPC_CHANNELS.SET_WORKFLOW_MONITORING_ENABLED, enabled),
@@ -152,7 +154,16 @@ const flowApi: FlowApi = {
   getHoloCalibration: () => ipcRenderer.invoke(IPC_CHANNELS.GET_HOLO_CALIBRATION),
   saveHoloCalibration: (calibration) =>
     ipcRenderer.invoke(IPC_CHANNELS.SAVE_HOLO_CALIBRATION, calibration),
-  clearHoloCalibration: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HOLO_CALIBRATION)
+  clearHoloCalibration: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HOLO_CALIBRATION),
+  getLaptopInfo: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LAPTOP_INFO),
+  setHoloInputGate: (enabled) => ipcRenderer.invoke(IPC_CHANNELS.HOLO_SET_INPUT_GATE, enabled),
+  onHoloInputActivity: (callback) => {
+    const listener = (_event: IpcRendererEvent, timestamp: number): void => callback(timestamp)
+    ipcRenderer.on(IPC_CHANNELS.HOLO_INPUT_ACTIVITY, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.HOLO_INPUT_ACTIVITY, listener)
+    }
+  }
 }
 
 if (process.contextIsolated) {

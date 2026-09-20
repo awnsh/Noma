@@ -332,14 +332,27 @@ only ever decides *which UI/engine is allowed to originate that call* —
 nothing about the control model itself changes based on it.
 
 **Split the same way keyboard capture is split.** `classifier.ts` is pure,
-DOM-free math (feature extraction, nearest-centroid classification, onset
-thresholding) — unit tested the same way `patternDetection.ts` is.
-`holoCapture.ts` owns the actual `getUserMedia`/`AudioContext`/
-`AnalyserNode` plumbing and is *not* unit tested, for the same reason
-`windowsAdapter.ts`'s real PowerShell process isn't: jsdom (this project's
-DOM test environment) has no Web Audio implementation to test against.
-Every piece of logic that doesn't strictly require real audio hardware
-lives in the tested half on purpose.
+DOM-free math — FFT feature extraction (log-spaced band levels, centroid,
+decay; relative level + arrival delay across mic channels), standardized
+nearest-centroid classification with an absolute "resembles a calibrated
+tap" gate, leave-one-out calibration accuracy, block-energy onset
+detection — unit tested with synthetic taps. `holoCapture.ts` owns the Web
+Audio plumbing and is *not* unit tested (jsdom has no Web Audio). It is
+hardware-agnostic in the sense of running on any laptop, but it listens on
+**the built-in mic only** (`micKind.ts` classifies device labels; the
+system default input is only a permission probe and is replaced if it's a
+headset/USB/webcam mic) with echo cancellation / noise suppression /
+auto-gain **off**. External mics would break calibration because taps are
+located relative to the laptop's own mic; they're used only if the user
+opts in and no built-in mic exists. Calibration records its
+mic `layout` (label + channel count); a different mic means "recalibrate." A tap coinciding with
+a real key/mouse event (timestamps from `main/holo/inputActivityService.ts`
+over the shared `sharedHook.ts`) is discarded as typing/clicking. The
+main window sets `backgroundThrottling: false` so taps aren't delayed when
+it's hidden. Live outcomes (pressed / ignored / unrecognized / no control)
+are shown on the Holo page. The classifier's thresholds
+(`MAX_TRUSTED_DISTANCE`, `SENSITIVITY_MULTIPLIER`) are first-pass values
+validated against synthetic audio only — tune with real recordings.
 
 **No paywall exists — all 4 zones are free, by explicit request.** A
 `SubscriptionTier`/`getMaxHoloZones` zone-count gate (free: 2 zones, pro:

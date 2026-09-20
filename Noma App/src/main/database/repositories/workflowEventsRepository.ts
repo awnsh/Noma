@@ -14,6 +14,7 @@ interface WorkflowEventRow {
   event_type: WorkflowEventType
   combo_keys: string | null
   control_id: string | null
+  click_target: string | null
   timestamp: number
 }
 
@@ -22,17 +23,19 @@ export function insertWorkflowEvent(event: {
   eventType: WorkflowEventType
   comboKeys?: string[]
   controlId?: string
+  clickTarget?: string
   timestamp: number
 }): void {
   const db = getDatabase()
   db.prepare(
-    `INSERT INTO workflow_events (application_id, event_type, combo_keys, control_id, timestamp)
-     VALUES (@applicationId, @eventType, @comboKeys, @controlId, @timestamp)`
+    `INSERT INTO workflow_events (application_id, event_type, combo_keys, control_id, click_target, timestamp)
+     VALUES (@applicationId, @eventType, @comboKeys, @controlId, @clickTarget, @timestamp)`
   ).run({
     applicationId: event.applicationId,
     eventType: event.eventType,
     comboKeys: event.comboKeys ? JSON.stringify(event.comboKeys) : null,
     controlId: event.controlId ?? null,
+    clickTarget: event.clickTarget ?? null,
     timestamp: event.timestamp
   })
 }
@@ -41,7 +44,7 @@ export function getWorkflowEventsSince(sinceTimestamp: number): WorkflowEvent[] 
   const db = getDatabase()
   const rows = db
     .prepare(
-      `SELECT id, application_id, event_type, combo_keys, control_id, timestamp
+      `SELECT id, application_id, event_type, combo_keys, control_id, click_target, timestamp
        FROM workflow_events
        WHERE timestamp >= ?
        ORDER BY timestamp ASC`
@@ -54,6 +57,7 @@ export function getWorkflowEventsSince(sinceTimestamp: number): WorkflowEvent[] 
     eventType: row.event_type,
     comboKeys: row.combo_keys ? (JSON.parse(row.combo_keys) as string[]) : undefined,
     controlId: row.control_id ?? undefined,
+    clickTarget: row.click_target ?? undefined,
     timestamp: row.timestamp
   }))
 }

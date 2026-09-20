@@ -1,4 +1,6 @@
 import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types'
+import { inAppLabel, isAmbientApp } from './appKnowledge'
+import { describeClickTarget } from './clickTarget'
 
 /**
  * Deterministic/statistical pattern detection (brainstorm.md sections
@@ -107,8 +109,29 @@ function countSpacedOccurrences(timestamps: number[]): number {
   return count
 }
 
+/** Two counted occurrences further apart than this belong to different
+ *  "sittings" — see DetectedPatternBase.sessionCount. */
+const SESSION_GAP_MS = 5 * 60_000
+
+/** Number of separate sittings the given occurrence timestamps fall into. */
+function countSessions(timestamps: number[]): number {
+  if (timestamps.length === 0) return 0
+  const sorted = [...timestamps].sort((a, b) => a - b)
+  let sessions = 1
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] - sorted[i - 1] > SESSION_GAP_MS) sessions += 1
+  }
+  return sessions
+}
+
 export function detectPatterns(events: WorkflowEvent[]): DetectedPattern[] {
-  const multiStepWorkflows = detectMultiStepWorkflows(events)
+  const longMultiStepWorkflows = detectMultiStepWorkflows(events)
+  // An in-app click pair (Cut -> Delete) is the 2-step case of the same
+  // shape; it's dropped in favor of any longer chain that already contains it.
+  const clickPairs = detectInAppClickPairs(events).filter(
+    (pair) => !isSubsumedByMultiStepWorkflow(pair, longMultiStepWorkflows)
+  )
+  const multiStepWorkflows = [...longMultiStepWorkflows, ...clickPairs]
   const crossAppWorkflows = detectCrossAppWorkflows(events).filter(
     (pattern) => !isSubsumedByMultiStepWorkflow(pattern, multiStepWorkflows)
   )
@@ -133,10 +156,10 @@ export function detectPatterns(events: WorkflowEvent[]): DetectedPattern[] {
  * favor of the multi-step suggestion, rather than shown twice.
  */
 function isSubsumedByMultiStepWorkflow(pair: DetectedPattern, multiStepWorkflows: DetectedPattern[]): boolean {
-  if (pair.kind !== 'crossAppWorkflow') return false
+  if (pair.kind !== 'crossAppWorkflow' && pair.kind !== 'multiStepWorkflow') return false
   const pairSignature = pair.steps.map(stepSignature)
   return multiStepWorkflows.some((workflow) => {
-    if (workflow.kind !== 'multiStepWorkflow') return false
+    if (workflow.kind !== 'multiStepWorkflow' || workflow.steps.length <= pair.steps.length) return false
     return isContiguousSubarray(pairSignature, workflow.steps.map(stepSignature))
   })
 }
@@ -185,6 +208,7 @@ function detectRepeatedShortcuts(events: WorkflowEvent[]): DetectedPattern[] {
       applicationId: value.applicationId,
       description: `${value.comboKeys.join('+')} used ${count} times`,
       count,
+      sessionCount: countSessions(value.timestamps),
       comboKeys: value.comboKeys
     })
   }
@@ -222,6 +246,7 @@ function detectFrequentControls(events: WorkflowEvent[]): DetectedPattern[] {
       applicationId: value.applicationId,
       description: `Control "${value.controlId}" activated ${count} times`,
       count,
+      sessionCount: countSessions(value.timestamps),
       controlId: value.controlId
     })
   }
@@ -276,6 +301,7 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
       applicationId: value.applicationId,
       description: `${value.sequence.join(' → ')} repeated ${count} times`,
       count,
+      sessionCount: countSessions(value.timestamps),
       sequence: value.sequence
     })
   }
@@ -289,10 +315,15 @@ interface WorkflowStepEvent {
 
 /** A short, stable, human-readable label for one step — used both for
  *  descriptions and as the per-step piece of a group's signature key. */
-function stepSignature(step: WorkflowStep): string {
-  return step.type === 'appSwitch'
-    ? `app:${step.applicationId ?? 'unknown'}`
-    : `key:${step.applicationId ?? 'unknown'}:${step.comboKeys.join('+')}`
+export function stepSignature(step: WorkflowStep): string {
+  switch (step.type) {
+    case 'appSwitch':
+      return `app:${step.applicationId ?? 'unknown'}`
+    case 'click':
+      return `click:${step.applicationId ?? 'unknown'}:${step.target}`
+    case 'shortcut':
+      return `key:${step.applicationId ?? 'unknown'}:${step.comboKeys.join('+')}`
+  }
 }
 
 /**
@@ -311,14 +342,23 @@ const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Control+X': 'Cut'
 }
 
-/** e.g. ['Control', 'V'] -> "Paste", ['Control', 'K'] -> "Control+K". */
-export function shortcutDisplayLabel(comboKeys: string[]): string {
+/** e.g. ['Control', 'V'] -> "Paste", ['Control', 'K'] -> "Control+K". When
+ *  the application is known, an app-specific name wins ("Blade" for Ctrl+B
+ *  in DaVinci Resolve) — see appKnowledge.ts. */
+export function shortcutDisplayLabel(comboKeys: string[], applicationId: string | null = null): string {
   const combo = comboKeys.join('+')
-  return SHORTCUT_DISPLAY_LABELS[combo] ?? combo
+  return inAppLabel(applicationId, comboKeys) ?? SHORTCUT_DISPLAY_LABELS[combo] ?? combo
 }
 
 export function describeStep(step: WorkflowStep): string {
-  return step.type === 'appSwitch' ? (step.applicationId ?? 'another app') : shortcutDisplayLabel(step.comboKeys)
+  switch (step.type) {
+    case 'appSwitch':
+      return step.applicationId ?? 'another app'
+    case 'click':
+      return `Click ${describeClickTarget(step.target)}`
+    case 'shortcut':
+      return shortcutDisplayLabel(step.comboKeys, step.applicationId)
+  }
 }
 
 /**
@@ -332,8 +372,14 @@ export function describeStep(step: WorkflowStep): string {
  * a genuine switch) shouldn't count as a second one.
  */
 function buildWorkflowSteps(events: WorkflowEvent[]): WorkflowStepEvent[] {
+  // Ambient apps (a music player) are dropped entirely: glancing at Spotify
+  // between two real steps isn't part of the workflow, so Editor → Spotify →
+  // Terminal is the same Editor → Terminal workflow as without the detour.
   const relevant = events
-    .filter((event) => event.eventType === 'shortcut' || event.eventType === 'appSwitch')
+    .filter(
+      (event) => event.eventType === 'shortcut' || event.eventType === 'appSwitch' || event.eventType === 'click'
+    )
+    .filter((event) => !isAmbientApp(event.applicationId))
     .sort((a, b) => a.timestamp - b.timestamp)
 
   const steps: WorkflowStepEvent[] = []
@@ -342,6 +388,13 @@ function buildWorkflowSteps(events: WorkflowEvent[]): WorkflowStepEvent[] {
       const last = steps[steps.length - 1]
       if (last?.step.type === 'appSwitch' && last.step.applicationId === event.applicationId) continue
       steps.push({ timestamp: event.timestamp, step: { type: 'appSwitch', applicationId: event.applicationId } })
+    } else if (event.eventType === 'click') {
+      if (event.clickTarget) {
+        steps.push({
+          timestamp: event.timestamp,
+          step: { type: 'click', applicationId: event.applicationId, target: event.clickTarget }
+        })
+      }
     } else if (event.comboKeys) {
       steps.push({
         timestamp: event.timestamp,
@@ -418,6 +471,7 @@ function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
       steps: group.steps,
       description,
       count,
+      sessionCount: countSessions(group.occurrences.map((occurrence) => occurrence.timestamp)),
       ...(closingStep ? { closingStep } : {})
     })
   }
@@ -461,6 +515,72 @@ function findClosingStep(occurrences: WorkflowOccurrence[], steps: WorkflowStepE
     if (!best || candidate.count > best.count) best = candidate
   }
   return best && best.count >= CLOSING_STEP_MIN_RUNS ? best.step : undefined
+}
+
+export const IN_APP_CLICK_THRESHOLD = 3
+
+/**
+ * In-app workflows that involve clicking on-screen controls — "Cut, then
+ * Delete" inside a video editor, "Duplicate, then Merge" in an image editor.
+ * The click-aware sibling of detectRepeatedSequences: two adjacent, different
+ * steps in the SAME application, at least one of them a click (a pair of two
+ * shortcuts stays repeatedSequence's job, so nothing is double-reported).
+ * Same time window (SEQUENCE_WINDOW_MS) and spam guard as every other
+ * sequence-shaped detector.
+ *
+ * Reported as a two-step `multiStepWorkflow`: suggestionRules.ts makes any
+ * chain containing a click informational-only, because there's no "click
+ * this control" step in the macro vocabulary to replay it with.
+ */
+function detectInAppClickPairs(events: WorkflowEvent[]): DetectedPattern[] {
+  const steps = buildWorkflowSteps(events)
+
+  const groups = new Map<string, { steps: [WorkflowStep, WorkflowStep]; timestamps: number[] }>()
+  for (let i = 0; i < steps.length - 1; i++) {
+    const first = steps[i]
+    const second = steps[i + 1]
+    if (first.step.type === 'appSwitch' || second.step.type === 'appSwitch') continue
+    if (first.step.type !== 'click' && second.step.type !== 'click') continue
+    if (first.step.applicationId !== second.step.applicationId) continue
+    if (second.timestamp - first.timestamp > SEQUENCE_WINDOW_MS) continue
+    // Moving the mouse from one control to another takes longer than this;
+    // two "different" clicks closer together than MIN_REPEAT_GAP_MS are
+    // button-mashing, not a two-step workflow (the pair-completion spam guard
+    // alone lets an alternating burst through, since its completions land
+    // every other click).
+    if (second.timestamp - first.timestamp < MIN_REPEAT_GAP_MS) continue
+
+    const firstSignature = stepSignature(first.step)
+    const secondSignature = stepSignature(second.step)
+    // Two identical clicks in a row are a repeated click, not a workflow.
+    if (firstSignature === secondSignature) continue
+
+    const key = `${firstSignature}->${secondSignature}`
+    const existing = groups.get(key)
+    if (existing) existing.timestamps.push(second.timestamp)
+    else groups.set(key, { steps: [first.step, second.step], timestamps: [second.timestamp] })
+  }
+
+  const patterns: DetectedPattern[] = []
+  for (const [key, group] of groups) {
+    const count = countSpacedOccurrences(group.timestamps)
+    if (count < IN_APP_CLICK_THRESHOLD) continue
+
+    const applicationId = group.steps[0].applicationId
+    patterns.push({
+      id: `multistep:${key}`,
+      kind: 'multiStepWorkflow',
+      applicationId,
+      applicationIds: [applicationId],
+      contextApplicationId: applicationId,
+      steps: group.steps,
+      description: `${group.steps.map(describeStep).join(' → ')} repeated ${count} times`,
+      count,
+      sessionCount: countSessions(group.timestamps),
+      consistency: 1
+    })
+  }
+  return patterns
 }
 
 // ---------------------------------------------------------------------------
@@ -507,7 +627,13 @@ function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
 
       let continuous = true
       for (let i = 1; i < slice.length; i++) {
-        if (slice[i].timestamp - slice[i - 1].timestamp > WORKFLOW_STEP_WINDOW_MS) {
+        const gap = slice[i].timestamp - slice[i - 1].timestamp
+        // Too far apart to be one continuous chain — or, where a click is
+        // involved, too close together to be two deliberate clicks (see
+        // detectInAppClickPairs).
+        const mashed =
+          gap < MIN_REPEAT_GAP_MS && (slice[i].step.type === 'click' || slice[i - 1].step.type === 'click')
+        if (gap > WORKFLOW_STEP_WINDOW_MS || mashed) {
           continuous = false
           break
         }
@@ -532,7 +658,10 @@ function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
       // moving between contexts) or enough distinct steps to be a rich,
       // clearly-not-random same-app chain — mirrors the same reasoning
       // detectCrossAppWorkflows uses for its own 2-step case, generalized.
-      const hasAppSwitch = slice.some((s) => s.step.type === 'appSwitch')
+      // A click on a real on-screen control is a meaningful step in its own
+      // right (Cut, then Delete), so a chain containing one is a candidate
+      // even inside a single app.
+      const hasAppSwitch = slice.some((s) => s.step.type === 'appSwitch' || s.step.type === 'click')
       if (!hasAppSwitch && distinctCount < 3) continue
 
       windows.push({
@@ -652,6 +781,7 @@ export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPatte
     representative: WorkflowWindow
     count: number
     consistency: number
+    timestamps: number[]
   }> = []
 
   for (const cluster of clusters) {
@@ -664,7 +794,12 @@ export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPatte
     ).length
     const consistency = exactMatches / cluster.occurrences.length
 
-    candidates.push({ representative, count, consistency })
+    candidates.push({
+      representative,
+      count,
+      consistency,
+      timestamps: cluster.occurrences.map((occurrence) => occurrence.completedAt)
+    })
   }
 
   // Keep only the longest chain among any that are contiguous subsets of a
@@ -698,6 +833,7 @@ export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPatte
       steps: representative.steps,
       description: `${chain} repeated ${count} times`,
       count,
+      sessionCount: countSessions(candidate.timestamps),
       consistency
     })
   }

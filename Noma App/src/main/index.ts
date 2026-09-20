@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -10,8 +10,12 @@ import { ApplicationContextService } from './applications/contextService'
 import { getDefaultHardwareDevice } from './hardware/virtualDevice'
 import { DeviceTransportServer } from './hardware/deviceTransportServer'
 import { CaptureService } from './workflow/captureService'
+import { ClickCaptureService } from './workflow/clickCaptureService'
+import { UiaClickInspector } from './workflow/uiaInspector'
+import { InputActivityService } from './holo/inputActivityService'
+import { getLaptopInfo } from './holo/laptopInfo'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
-import { getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
+import { getClickCaptureEnabled, getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
 import { getSuggestionHistoryForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
 import { getApplicationById } from './database/repositories/applicationsRepository'
 import { LocalRuleBasedProvider } from './ai/localProvider'
@@ -26,6 +30,12 @@ let mainWindow: BrowserWindow | null = null
  *  refresh, Demo Mode handing control back to the real OS adapter). Lets
  *  that listener record one row per genuine switch, not one per emission. */
 let lastRecordedApplicationId: string | null = null
+
+/** Feeds Holo the timestamps (only) of real key/mouse activity so it can
+ *  ignore the sound of typing and clicking. Engaged only while Holo asks. */
+const inputActivityService = new InputActivityService((timestamp) => {
+  mainWindow?.webContents.send(IPC_CHANNELS.HOLO_INPUT_ACTIVITY, timestamp)
+})
 
 const osAdapter = new WindowsOSAdapter()
 const contextService = new ApplicationContextService(osAdapter)
@@ -60,6 +70,20 @@ const captureService = new CaptureService((event) => {
   mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, event.comboKeys)
 })
 
+/** Opt-in (settingsRepository's clickCaptureEnabled, off by default) and only
+ *  ever engaged alongside workflow monitoring: records which on-screen
+ *  control was clicked, sanitized to a label or a coarse window zone — see
+ *  workflow/clickTarget.ts and docs/privacy-and-legal.md. */
+const clickCaptureService = new ClickCaptureService((event) => {
+  insertWorkflowEvent({
+    applicationId: event.applicationId,
+    eventType: 'click',
+    clickTarget: event.clickTarget,
+    timestamp: event.timestamp
+  })
+  void refreshSuggestions()
+}, new UiaClickInspector())
+
 function createMainWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -81,7 +105,11 @@ function createMainWindow(): void {
       // OS-level sandbox enabled. See docs/security-review.md.
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      // Holo listens for taps while the user works in *other* apps, with
+      // this window minimized or hidden. Chromium otherwise throttles
+      // timers in a hidden window to ~1/s, which would drop or delay taps.
+      backgroundThrottling: false
     }
   })
 
@@ -113,9 +141,15 @@ app.whenReady().then(() => {
   })
 
   initDatabase()
+  ipcMain.handle(IPC_CHANNELS.GET_LAPTOP_INFO, () => getLaptopInfo())
+  ipcMain.handle(IPC_CHANNELS.HOLO_SET_INPUT_GATE, (_event, enabled: boolean) => {
+    if (enabled) inputActivityService.start()
+    else inputActivityService.stop()
+  })
   registerIpcHandlers(
     contextService,
     captureService,
+    clickCaptureService,
     suggestionEngine,
     (applicationId) => {
       // A control was just reassigned (e.g. accepting a suggestion, or
@@ -138,6 +172,7 @@ app.whenReady().then(() => {
     void hardwareDevice.setControls(context.profile?.controls ?? [])
     void hardwareDevice.updateDisplay('status', context.application?.name ?? 'Idle')
     captureService.setCurrentApplicationId(context.application?.id ?? null)
+    clickCaptureService.setCurrentApplicationId(context.application?.id ?? null)
 
     // Which app the user just moved into is workflow metadata like any
     // other captured event — Flow needs it to recognize workflows that
@@ -235,6 +270,7 @@ app.whenReady().then(() => {
   // Only re-engage the global hook here if the user previously opted in.
   if (getWorkflowMonitoringEnabled()) {
     captureService.start()
+    if (getClickCaptureEnabled()) clickCaptureService.start()
   }
 
   createMainWindow()
@@ -246,6 +282,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   captureService.stop()
+  clickCaptureService.stop()
   contextService.stop()
   deviceTransportServer.stop()
   osAdapter.dispose()

@@ -75,7 +75,7 @@ export function AppIcon({ applicationId, name, size = 20, className = '', varian
       role="img"
       aria-label={name}
       style={tileDim}
-      className={`flex shrink-0 items-center justify-center rounded-lg border border-white/[0.09] bg-white/[0.04] text-neutral-300 ${className}`}
+      className={`flex shrink-0 items-center justify-center text-neutral-300 ${className}`}
     >
       {content}
     </span>
@@ -84,7 +84,7 @@ export function AppIcon({ applicationId, name, size = 20, className = '', varian
       role="img"
       aria-label={name}
       style={dim}
-      className={`flex shrink-0 items-center justify-center text-neutral-300 ${fill ? '' : 'rounded-md bg-white/[0.06]'} ${className}`}
+      className={`flex shrink-0 items-center justify-center text-neutral-300 ${className}`}
     >
       {content}
     </span>

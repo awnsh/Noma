@@ -73,7 +73,7 @@ export interface ApplicationProfileSummary {
   profileName?: string
 }
 
-export type WorkflowEventType = 'shortcut' | 'sequence' | 'controlActivation' | 'appSwitch'
+export type WorkflowEventType = 'shortcut' | 'sequence' | 'controlActivation' | 'appSwitch' | 'click'
 
 export interface WorkflowEvent {
   id?: number
@@ -85,6 +85,12 @@ export interface WorkflowEvent {
   /** Command-modifier key combo only — never raw typed content. See captureFilter.ts. */
   comboKeys?: string[]
   controlId?: string
+  /** For 'click': what was clicked inside the application — either
+   *  `label:<button name>` (a sanitized UI Automation name for a button/
+   *  menu item/tab, never text content) or `zone:<col>x<row>` (a coarse
+   *  window-relative grid cell, for apps that don't expose their controls).
+   *  See workflow/clickTarget.ts and docs/privacy-and-legal.md. */
+  clickTarget?: string
   timestamp: number
 }
 
@@ -368,27 +374,31 @@ export interface HoloZoneProfile {
   sampleCount: number
 }
 
-/**
- * The "not a desk tap at all" reference — typing, mouse clicks, whatever
- * ambient sound the user demonstrated during calibration's reject step
- * (see holoStore.ts's `calibrate`). Same shape as a zone profile minus the
- * zone id, since it isn't one; kept as a distinct type rather than
- * shoehorning it into `HoloZoneProfile` with a fake zone value, so a caller
- * can never accidentally treat it as a pressable zone.
- */
-export interface HoloRejectProfile {
-  features: number[]
-  sampleCount: number
+/** What the OS reports about this computer (see main/holo/laptopInfo.ts). */
+export interface LaptopInfo {
+  platform: string
+  manufacturer: string
+  model: string
 }
 
-/** A completed calibration — one profile per zone the user calibrated
- *  (all 4 today; there's no paywall/tier gate on Holo), plus an optional
- *  reject reference. `zones`/`reject` can be a partial set if calibration
- *  was interrupted; `reject` is also absent for calibrations saved before
- *  that field existed. */
+/** Bumped whenever the feature vector's meaning changes, so a calibration
+ *  saved by an older pipeline is recognized as unusable (its numbers
+ *  describe a different thing) instead of silently misclassifying. */
+export const HOLO_CALIBRATION_VERSION = 2
+
+/** A completed calibration — one profile per zone (all 4; there's no
+ *  paywall/tier gate on Holo). */
 export interface HoloCalibration {
+  version: number
   zones: HoloZoneProfile[]
-  reject?: HoloRejectProfile
+  /** Per-dimension spread the classifier divides distances by. */
+  scale: number[]
+  /** The microphone layout this was calibrated on (see holoCapture.ts's
+   *  `layout`). A different layout means different feature dimensions. */
+  layout: string
+  /** Leave-one-out accuracy (0..1) over the calibration taps — how
+   *  separable the zones were on this setup. */
+  accuracy: number
   calibratedAt: number
 }
 
@@ -401,6 +411,9 @@ export interface HoloCalibration {
 export type WorkflowStep =
   | { type: 'appSwitch'; applicationId: string | null }
   | { type: 'shortcut'; applicationId: string | null; comboKeys: string[] }
+  /** A click on an on-screen control inside the application — `target` is
+   *  `label:<name>` or `zone:<col>x<row>` (WorkflowEvent.clickTarget). */
+  | { type: 'click'; applicationId: string | null; target: string }
 
 /**
  * A repeated-behavior pattern found by the deterministic pattern-detection
@@ -424,6 +437,12 @@ interface DetectedPatternBase {
   applicationId: string | null
   description: string
   count: number
+  /** How many separate sittings (occurrences more than 5 minutes apart) the
+   *  pattern's counted repeats fall into. A pattern whose every repeat is
+   *  inside one burst is much more likely a one-off than a habit — a
+   *  self-derived quality signal (main/ai/workflowQuality.ts) needing no
+   *  user feedback. */
+  sessionCount?: number
 }
 
 export type DetectedPattern =
@@ -572,6 +591,10 @@ export interface FlowApi {
   addModule(moduleType: string): Promise<void>
   removeModule(moduleId: string): Promise<void>
   /** Whether Flow is currently watching for command-modifier shortcuts. Off by default. */
+  /** Opt-in, separate from workflow monitoring: also learn from which
+   *  on-screen buttons you click inside apps. Off by default. */
+  getClickCaptureEnabled(): Promise<boolean>
+  setClickCaptureEnabled(enabled: boolean): Promise<boolean>
   getWorkflowMonitoringEnabled(): Promise<boolean>
   /** Enables/disables workflow monitoring, engaging or releasing the OS-level hook. Returns the new state. */
   setWorkflowMonitoringEnabled(enabled: boolean): Promise<boolean>
@@ -793,4 +816,14 @@ export interface FlowApi {
   saveHoloCalibration(calibration: HoloCalibration): Promise<HoloCalibration>
   /** Erases calibration entirely — the "recalibrate from scratch" action. */
   clearHoloCalibration(): Promise<void>
+  /**
+   * Holo: while enabled, main forwards the *timestamp only* of every
+   * physical key/mouse-button/wheel event (never which key) so Holo can
+   * ignore the sound of the user typing or clicking. The OS hook exists
+   * only while enabled.
+   */
+  /** Maker/model of this computer, read once; empty strings if unknown. */
+  getLaptopInfo(): Promise<LaptopInfo>
+  setHoloInputGate(enabled: boolean): Promise<void>
+  onHoloInputActivity(callback: (timestamp: number) => void): () => void
 }

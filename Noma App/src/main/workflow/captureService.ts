@@ -1,4 +1,5 @@
 import { uIOhook, type UiohookKeyboardEvent } from 'uiohook-napi'
+import { acquireHook, releaseHook } from './sharedHook'
 import { shouldCaptureKeyCombo } from './captureFilter'
 import { MODIFIER_KEYCODES, keyNameForCode, type CommandModifierName } from './keyNames'
 import type { CapturedKeyEvent } from './types'
@@ -64,13 +65,13 @@ export class CaptureService {
   start(): void {
     if (this.isRunning) return
     uIOhook.on('keydown', this.handleKeydown)
-    uIOhook.start()
+    acquireHook()
     this.isRunning = true
   }
 
   stop(): void {
     if (!this.isRunning) return
-    uIOhook.stop()
+    releaseHook()
     uIOhook.off('keydown', this.handleKeydown)
     this.isRunning = false
   }

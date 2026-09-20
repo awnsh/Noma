@@ -1,19 +1,132 @@
 import { create } from 'zustand'
-import type { HoloCalibration, HoloZone, InputSource } from '@shared/types'
-import { HOLO_ZONE_ORDER } from '@shared/constants'
-import { HoloCaptureEngine } from '../lib/holo/holoCapture'
-import { averageFeatureVectors } from '../lib/holo/classifier'
-import { useFlowStore } from './flowStore'
+import {
+  HOLO_CALIBRATION_VERSION,
+  type HoloCalibration,
+  type HoloZone,
+  type InputSource,
+  type LaptopInfo
+} from '@shared/types'
+import {
+  getHoloZones,
+  lookupHoloMicSide,
+  recommendHoloZoneCount,
+  type HoloMicSide,
+  type HoloZoneCount
+} from '@shared/constants'
+import { HoloCaptureEngine, type MicInfo } from '../lib/holo/holoCapture'
+import type { MicCandidate } from '../lib/holo/micKind'
+import { buildModel, detectMicSide, evaluateCalibration, type HoloSensitivity } from '../lib/holo/classifier'
 
 /**
  * One capture engine for the whole app's lifetime (not per-page) — Holo is
  * meant to work "in the background" while the user is in some other real
- * application, the entire point of a no-hardware input method, so it can't
- * be torn down just because the Holo page itself isn't the one currently
- * showing. Same singleton-module pattern main/index.ts uses for
- * captureService.
+ * application, so it can't be torn down just because the Holo page isn't
+ * the one currently showing. Same singleton-module pattern main/index.ts
+ * uses for captureService.
  */
 const engine = new HoloCaptureEngine()
+
+const SENSITIVITY_KEY = 'noma.holo.sensitivity'
+const ALLOW_EXTERNAL_KEY = 'noma.holo.allowExternalMic'
+const ZONE_OVERRIDE_KEY = 'noma.holo.zoneOverride'
+export type ZoneOverride = 'auto' | HoloZoneCount
+export type SideOverride = 'auto' | HoloMicSide
+
+const SIDE_OVERRIDE_KEY = 'noma.holo.micSideOverride'
+/** The side found by the last calibration's edge-tap test on this computer. */
+const MEASURED_SIDE_KEY = 'noma.holo.measuredMicSide'
+
+interface SetupInputs {
+  laptop: LaptopInfo | null
+  zoneOverride: ZoneOverride
+  sideOverride: SideOverride
+  measuredSide: HoloMicSide | null
+}
+
+/** Everything derived from "what computer is this": zone count, which side
+ *  the mic is on (manual > measured by tapping > model lookup > assumed
+ *  left), and the resulting ordered zone list. */
+function resolveSetup(inputs: SetupInputs): {
+  zoneCount: HoloZoneCount
+  zoneReason: string
+  micSide: HoloMicSide
+  micSideReason: string
+  activeZones: HoloZone[]
+} {
+  let zoneCount: HoloZoneCount
+  let zoneReason: string
+  if (inputs.zoneOverride !== 'auto') {
+    zoneCount = inputs.zoneOverride
+    zoneReason = 'Set manually'
+  } else {
+    const recommended = recommendHoloZoneCount(inputs.laptop)
+    zoneCount = recommended.count
+    zoneReason = recommended.reason
+  }
+
+  const looked = lookupHoloMicSide(inputs.laptop)
+  let micSide: HoloMicSide
+  let micSideReason: string
+  if (inputs.sideOverride !== 'auto') {
+    micSide = inputs.sideOverride
+    micSideReason = 'set manually'
+  } else if (inputs.measuredSide) {
+    micSide = inputs.measuredSide
+    micSideReason = 'measured by your calibration taps'
+  } else if (looked) {
+    micSide = looked
+    micSideReason = 'known for this laptop model'
+  } else {
+    micSide = 'left'
+    micSideReason = 'assumed until measured; calibrating will find it'
+  }
+  return { zoneCount, zoneReason, micSide, micSideReason, activeZones: getHoloZones(zoneCount, micSide) }
+}
+
+function currentSetup(state: SetupInputs): ReturnType<typeof resolveSetup> {
+  return resolveSetup(state)
+}
+
+function readStored<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? (JSON.parse(raw) as T) : fallback
+  } catch {
+    return fallback
+  }
+}
+
+function writeStored(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // Storage blocked: the preference just doesn't persist.
+  }
+}
+
+/** What happened to the most recent sound Holo heard — shown live on the
+ *  Holo page so "nothing happens" is never a mystery. */
+export type TapOutcome =
+  | 'pressed'
+  | 'no-control'
+  | 'ignored-input'
+  | 'unrecognized'
+  | 'ambiguous'
+  | 'layout-changed'
+
+interface LastTap {
+  zone: HoloZone | null
+  confidence: number
+  outcome: TapOutcome
+  at: number
+}
+
+/** Taps per edge in the mic-side test — few, since it only needs a level comparison. */
+const SIDE_TEST_TAPS = 4
+
+export type CalibrationProgress =
+  | { phase: 'side'; edge: HoloMicSide; tapIndex: number; totalTaps: number }
+  | { phase: 'zone'; zone: HoloZone; zoneIndex: number; totalZones: number; tapIndex: number }
 
 interface HoloStoreState {
   inputSource: InputSource
@@ -21,37 +134,57 @@ interface HoloStoreState {
   isLoading: boolean
   isListening: boolean
   isCalibrating: boolean
-  /** Set on a failed start()/calibrate() (mic permission denied, no input
-   *  device, etc.) — a real error to show, not silently pretending Holo is
-   *  listening when it isn't. */
+  /** Set on a failed start()/calibrate() — a real error to show, not
+   *  silently pretending Holo is listening when it isn't. */
   micError: string | null
-  /** The most recent classified tap, for the zone grid's live flash —
-   *  `zone: null` still updates this (a tap was heard but not confidently
-   *  matched), which is itself useful feedback during calibration testing. */
-  lastTap: { zone: HoloZone | null; confidence: number } | null
+  lastTap: LastTap | null
+  /** Microphones in use while listening (auto-detected — none configured). */
+  mics: MicInfo[]
+  /** Every usable microphone on this computer, for the on/off list. */
+  availableMics: MicCandidate[]
+  /** Off by default: an external mic is used only if the user allows it AND no built-in mic exists. */
+  allowExternalMic: boolean
+  sensitivity: HoloSensitivity
+  /** Live input level as a multiple of the trigger threshold (1 = triggers). */
+  level: number
+  /** True while the mic is switched off because the user is typing/clicking. */
+  pausedForTyping: boolean
+  /** True when the mic setup differs from what was calibrated. */
+  layoutMismatch: boolean
+  laptop: LaptopInfo | null
+  zoneOverride: ZoneOverride
+  /** How many zones this computer uses (auto-detected unless overridden). */
+  zoneCount: HoloZoneCount
+  zoneReason: string
+  setZoneOverride: (override: ZoneOverride) => void
+  /** Which side the mic is on (2-zone mode puts both zones on this side). */
+  micSide: HoloMicSide
+  micSideReason: string
+  sideOverride: SideOverride
+  measuredSide: HoloMicSide | null
+  setSideOverride: (override: SideOverride) => void
+  /** Zones in slot order for the current setup. */
+  activeZones: HoloZone[]
 
   refresh: () => Promise<void>
   setInputSource: (source: InputSource) => Promise<void>
   startListening: () => Promise<void>
   stopListening: () => void
+  setSensitivity: (sensitivity: HoloSensitivity) => void
+  setAllowExternalMic: (allow: boolean) => Promise<void>
+  refreshAvailableMics: () => Promise<void>
   /**
-   * Walks the calibration wizard through all 4 zones (no paywall/tier gate
-   * — every zone is available to everyone), `tapsPerZone` taps each, then
-   * a final "reject" step — the user makes ordinary keyboard/typing/
-   * ambient sounds so the classifier learns what *isn't* a desk tap (see
-   * classifyZone's `rejectFeatures` param) — the direct fix for Holo
-   * misfiring on keyboard clacks or other non-tap sounds. Reports progress
-   * via `onProgress` so the UI can show "Zone 2 of 4 — tap 3 of 6" or "Now
-   * type normally — sample 4 of 6." Saves the result and refreshes
-   * `calibration` on success.
+   * Walks through all 4 zones, `tapsPerZone` taps each; reports progress
+   * via `onProgress`. Computes the model + a leave-one-out accuracy and
+   * saves it. Stray sounds (typing, clicks) are ignored automatically by
+   * the input gate — there's no separate "teach it to ignore typing" step.
    */
   calibrate: (tapsPerZone: number, onProgress: (update: CalibrationProgress) => void) => Promise<void>
   clearCalibration: () => Promise<void>
 }
 
-export type CalibrationProgress =
-  | { phase: 'zone'; zone: HoloZone; zoneIndex: number; totalZones: number; tapIndex: number }
-  | { phase: 'reject'; sampleIndex: number; totalSamples: number }
+engine.setSensitivity(readStored<HoloSensitivity>(SENSITIVITY_KEY, 'medium'))
+engine.setAllowExternalMic(readStored<boolean>(ALLOW_EXTERNAL_KEY, false))
 
 export const useHoloStore = create<HoloStoreState>((set, get) => ({
   inputSource: 'keyboard',
@@ -61,15 +194,51 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
   isCalibrating: false,
   micError: null,
   lastTap: null,
+  mics: [],
+  availableMics: [],
+  allowExternalMic: readStored<boolean>(ALLOW_EXTERNAL_KEY, false),
+  sensitivity: readStored<HoloSensitivity>(SENSITIVITY_KEY, 'medium'),
+  level: 0,
+  pausedForTyping: false,
+  layoutMismatch: false,
+  laptop: null,
+  zoneOverride: readStored<ZoneOverride>(ZONE_OVERRIDE_KEY, 'auto'),
+  sideOverride: readStored<SideOverride>(SIDE_OVERRIDE_KEY, 'auto'),
+  measuredSide: readStored<HoloMicSide | null>(MEASURED_SIDE_KEY, null),
+  ...resolveSetup({
+    laptop: null,
+    zoneOverride: readStored<ZoneOverride>(ZONE_OVERRIDE_KEY, 'auto'),
+    sideOverride: readStored<SideOverride>(SIDE_OVERRIDE_KEY, 'auto'),
+    measuredSide: readStored<HoloMicSide | null>(MEASURED_SIDE_KEY, null)
+  }),
+
+  setZoneOverride: (override) => {
+    writeStored(ZONE_OVERRIDE_KEY, override)
+    set({ zoneOverride: override })
+    set(currentSetup(get()))
+  },
+
+  setSideOverride: (override) => {
+    writeStored(SIDE_OVERRIDE_KEY, override)
+    set({ sideOverride: override })
+    set(currentSetup(get()))
+  },
 
   refresh: async () => {
     set({ isLoading: true })
-    const [inputSource, calibration] = await Promise.all([
+    const [inputSource, calibration, laptop] = await Promise.all([
       window.flow.getInputSource(),
-      window.flow.getHoloCalibration()
+      window.flow.getHoloCalibration(),
+      window.flow.getLaptopInfo().catch(() => null)
     ])
     engine.setCalibration(calibration)
-    set({ inputSource, calibration, isLoading: false })
+    set({
+      inputSource,
+      calibration,
+      isLoading: false,
+      laptop
+    })
+    set(currentSetup(get()))
   },
 
   setInputSource: async (source) => {
@@ -88,7 +257,14 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
     set({ micError: null })
     try {
       await engine.start()
-      set({ isListening: true })
+      await window.flow.setHoloInputGate(true)
+      const { calibration } = get()
+      set({
+        isListening: true,
+        mics: engine.mics,
+        layoutMismatch: calibration !== null && calibration.layout !== engine.layout
+      })
+      void get().refreshAvailableMics()
     } catch (error) {
       set({ micError: error instanceof Error ? error.message : 'Microphone access failed' })
     }
@@ -96,44 +272,89 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
 
   stopListening: () => {
     engine.stop()
-    set({ isListening: false, lastTap: null })
+    void window.flow.setHoloInputGate(false)
+    set({ isListening: false, lastTap: null, mics: [], level: 0, pausedForTyping: false })
+  },
+
+  setSensitivity: (sensitivity) => {
+    engine.setSensitivity(sensitivity)
+    writeStored(SENSITIVITY_KEY, sensitivity)
+    set({ sensitivity })
+  },
+
+  refreshAvailableMics: async () => {
+    try {
+      set({ availableMics: await HoloCaptureEngine.listInputDevices() })
+    } catch {
+      set({ availableMics: [] })
+    }
+  },
+
+  setAllowExternalMic: async (allow) => {
+    writeStored(ALLOW_EXTERNAL_KEY, allow)
+    engine.setAllowExternalMic(allow)
+    set({ allowExternalMic: allow, micError: null })
+    // Reopen so the change takes effect immediately.
+    if (engine.isRunning) {
+      get().stopListening()
+      await get().startListening()
+    }
   },
 
   calibrate: async (tapsPerZone, onProgress) => {
-    const zones = HOLO_ZONE_ORDER
-    const totalZones = zones.length
     set({ isCalibrating: true, micError: null })
 
     try {
-      if (!engine.isRunning) await engine.start()
-      set({ isListening: true })
+      if (!engine.isRunning) {
+        await engine.start()
+        await window.flow.setHoloInputGate(true)
+      }
+      set({ isListening: true, mics: engine.mics })
 
-      const profiles: HoloCalibration['zones'] = []
+      // One-mic laptops: find which side the mic is on by tapping the far
+      // left and far right of the desk (the near side is louder), so the 2
+      // zones can sit where taps are actually heard. Skipped when the side
+      // was set by hand or the setup uses 4 zones.
+      if (get().zoneCount === 2 && get().sideOverride === 'auto') {
+        const levels: Record<HoloMicSide, number[]> = { left: [], right: [] }
+        for (const edge of ['left', 'right'] as const) {
+          for (let tapIndex = 0; tapIndex < SIDE_TEST_TAPS; tapIndex++) {
+            onProgress({ phase: 'side', edge, tapIndex, totalTaps: SIDE_TEST_TAPS })
+            await engine.captureNextTap()
+            levels[edge].push(engine.lastTapPeakDb)
+          }
+        }
+        const measured = detectMicSide(levels.left, levels.right)
+        if (measured) writeStored(MEASURED_SIDE_KEY, measured)
+        set({ measuredSide: measured ?? get().measuredSide })
+        set(currentSetup(get()))
+      }
+
+      // Zones are fixed for the rest of this run.
+      const zones = get().activeZones
+
+      const tapsByZone: Array<{ zone: HoloZone; taps: number[][] }> = []
       for (let zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
         const zone = zones[zoneIndex]
         const taps: number[][] = []
         for (let tapIndex = 0; tapIndex < tapsPerZone; tapIndex++) {
-          onProgress({ phase: 'zone', zone, zoneIndex, totalZones, tapIndex })
+          onProgress({ phase: 'zone', zone, zoneIndex, totalZones: zones.length, tapIndex })
           taps.push(await engine.captureNextTap())
         }
-        profiles.push({ zone, features: averageFeatureVectors(taps), sampleCount: taps.length })
+        tapsByZone.push({ zone, taps })
       }
 
-      // The reject step: same capture mechanism, pointed at whatever the
-      // user makes happen instead of a desk tap (typing, a mouse click) —
-      // reusing captureNextTap means no new detection logic is needed, it's
-      // the exact same onset detector, just labeled as "not a zone" rather
-      // than "zone N" once averaged.
-      const rejectSamples: number[][] = []
-      for (let sampleIndex = 0; sampleIndex < tapsPerZone; sampleIndex++) {
-        onProgress({ phase: 'reject', sampleIndex, totalSamples: tapsPerZone })
-        rejectSamples.push(await engine.captureNextTap())
-      }
-      const reject = { features: averageFeatureVectors(rejectSamples), sampleCount: rejectSamples.length }
-
-      const saved = await window.flow.saveHoloCalibration({ zones: profiles, reject, calibratedAt: Date.now() })
+      const { zones: profiles, scale } = buildModel(tapsByZone)
+      const saved = await window.flow.saveHoloCalibration({
+        version: HOLO_CALIBRATION_VERSION,
+        zones: profiles,
+        scale,
+        layout: engine.layout,
+        accuracy: evaluateCalibration(tapsByZone, scale),
+        calibratedAt: Date.now()
+      })
       engine.setCalibration(saved)
-      set({ calibration: saved })
+      set({ calibration: saved, layoutMismatch: false })
     } catch (error) {
       set({ micError: error instanceof Error ? error.message : 'Calibration failed' })
     } finally {
@@ -144,25 +365,45 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
   clearCalibration: async () => {
     await window.flow.clearHoloCalibration()
     engine.setCalibration(null)
-    set({ calibration: null })
+    set({ calibration: null, layoutMismatch: false })
   }
 }))
 
-// Wired once, for the engine's entire lifetime — not per start()/stop()
-// cycle, so toggling listening on and off repeatedly can never accumulate
-// duplicate listeners (and therefore duplicate presses per tap). See
-// HoloCaptureEngine's own doc comment: it only ever emits onTap while
-// genuinely listening, so this is a safe no-op the rest of the time.
-engine.onTap(({ zone, confidence }) => {
-  useHoloStore.setState({ lastTap: { zone, confidence } })
-  if (!zone || confidence <= 0) return
+// Wired once for the engine's whole lifetime, so toggling listening on and
+// off can never accumulate duplicate listeners (and duplicate presses).
+if (typeof window !== 'undefined' && window.flow) {
+  window.flow.onHoloInputActivity((timestamp) => engine.noteInputActivity(timestamp))
+}
+
+engine.onStatus(({ level, muted }) => {
+  // Cheap guard: this fires ~16x/s; only re-render on a visible change.
+  const current = useHoloStore.getState()
+  if (current.pausedForTyping !== muted) useHoloStore.setState({ pausedForTyping: muted })
+  if (Math.abs(current.level - level) > 0.05) useHoloStore.setState({ level })
+})
+
+engine.onTap((event) => {
+  const { zone, confidence, reason, ignoredByInput } = event
+  const publish = (outcome: TapOutcome): void =>
+    useHoloStore.setState({ lastTap: { zone, confidence, outcome, at: Date.now() } })
+
+  if (ignoredByInput) return publish('ignored-input')
+  if (reason === 'no-calibration') {
+    useHoloStore.setState({ layoutMismatch: true })
+    return publish('layout-changed')
+  }
+  if (!zone) return publish(reason === 'ambiguous' ? 'ambiguous' : 'unrecognized')
 
   // Which control this zone maps to depends on whichever application is
-  // currently focused — the exact same 4 slots the physical/virtual
-  // keyboard already uses, read live from flowStore rather than duplicated
-  // here, so Holo and the keyboard can never disagree about "what's in
-  // slot N right now."
-  const slot = HOLO_ZONE_ORDER.indexOf(zone) + 1
-  const control = useFlowStore.getState().context.profile?.controls.find((item) => item.slot === slot)
-  if (control) void window.flow.pressControl(control.id)
+  // focused *right now* — the same 4 slots the physical/virtual keyboard
+  // uses. Read fresh from main on every tap: the shared flowStore only
+  // receives context pushes while a page that subscribes to it is mounted,
+  // so it goes stale exactly when Holo matters most (user in another app).
+  const slot = useHoloStore.getState().activeZones.indexOf(zone) + 1
+  void window.flow.getActiveContext().then((context) => {
+    const control = context.profile?.controls.find((item) => item.slot === slot)
+    if (!control) return publish('no-control')
+    void window.flow.pressControl(control.id)
+    publish('pressed')
+  })
 })

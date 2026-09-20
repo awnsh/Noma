@@ -286,7 +286,8 @@ describe('suggestionForPattern', () => {
       })
       expect(suggestion).not.toBeNull()
       expect(suggestion?.status).toBe('pending')
-      expect(suggestion?.title).toBe('Noma noticed a workflow')
+      // code <-> claude is a recognized real-world workflow, so it's named.
+      expect(suggestion?.title).toMatch(/^Noma noticed a workflow: /)
       expect(suggestion?.explanation).toContain('Screenshot')
       expect(suggestion?.explanation).toContain('Claude Code')
       expect(suggestion?.explanation).toContain('Paste')

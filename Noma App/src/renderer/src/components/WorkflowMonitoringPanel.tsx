@@ -3,7 +3,7 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { ToggleSwitch } from './ToggleSwitch'
 
 export function WorkflowMonitoringPanel() {
-  const { enabled, patterns, refresh, setEnabled } = useWorkflowStore()
+  const { enabled, clickCaptureEnabled, patterns, refresh, setEnabled, setClickCaptureEnabled } = useWorkflowStore()
 
   useEffect(() => {
     refresh()
@@ -27,6 +27,31 @@ export function WorkflowMonitoringPanel() {
           <ToggleSwitch checked={enabled} onChange={setEnabled} label="Workflow monitoring" />
         </div>
       </div>
+
+      {enabled && (
+        <div className="mt-4 flex items-start justify-between gap-4 border-t border-white/5 pt-4">
+          <div>
+            <div className="text-xs uppercase tracking-widest text-neutral-500">
+              Learn from on-screen buttons
+            </div>
+            <p className="mt-2 max-w-md text-sm text-neutral-400">
+              Off by default. Lets Flow notice workflows inside an app, like Cut then Delete, by
+              recording <span className="text-neutral-300">which button</span> you clicked. Only
+              short button and menu labels are kept, or a rough position in the window for apps
+              that don't expose their buttons. Never text fields, documents, file names, or what
+              you type.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-xs text-neutral-500">{clickCaptureEnabled ? 'Enabled' : 'Disabled'}</span>
+            <ToggleSwitch
+              checked={clickCaptureEnabled}
+              onChange={setClickCaptureEnabled}
+              label="Learn from on-screen buttons"
+            />
+          </div>
+        </div>
+      )}
 
       {enabled && (
         <div className="mt-4 border-t border-white/5 pt-4">

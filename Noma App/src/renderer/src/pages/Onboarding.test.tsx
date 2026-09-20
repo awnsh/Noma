@@ -35,6 +35,7 @@ function mockFlow(overrides: Partial<FlowApi> = {}): FlowApi {
     saveOnboardingState: vi.fn(async (update: Partial<OnboardingState>) => ({ ...DEFAULT_STATE, ...update })),
     setWorkflowMonitoringEnabled: vi.fn().mockResolvedValue(true),
     getWorkflowMonitoringEnabled: vi.fn().mockResolvedValue(false),
+    getClickCaptureEnabled: vi.fn().mockResolvedValue(false),
     getDetectedPatterns: vi.fn().mockResolvedValue([]),
     getHardwareStatus: vi.fn().mockResolvedValue(VIRTUAL_STATUS),
     onHardwareStatusChanged: vi.fn(() => () => {}),

@@ -40,3 +40,25 @@ export function setInputSource(source: InputSource): void {
      ON CONFLICT(key) DO UPDATE SET value = excluded.value`
   ).run({ key: INPUT_SOURCE_KEY, value: source })
 }
+
+const CLICK_CAPTURE_KEY = 'clickCaptureEnabled'
+
+/** Off by default and separate from workflowMonitoringEnabled: watching
+ *  which on-screen buttons you click is a distinct kind of capture from key
+ *  combos and app switches, so it needs its own explicit opt-in. Only ever
+ *  acts while workflow monitoring is also on. */
+export function getClickCaptureEnabled(): boolean {
+  const db = getDatabase()
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(CLICK_CAPTURE_KEY) as
+    | { value: string }
+    | undefined
+  return row?.value === '1'
+}
+
+export function setClickCaptureEnabled(enabled: boolean): void {
+  const db = getDatabase()
+  db.prepare(
+    `INSERT INTO settings (key, value) VALUES (@key, @value)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+  ).run({ key: CLICK_CAPTURE_KEY, value: enabled ? '1' : '0' })
+}

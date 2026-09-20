@@ -45,7 +45,17 @@ function appStepLabel(applicationId: string | null, names: Record<string, string
   return names?.[applicationId] ?? applicationId
 }
 
+/** Renderer-local mirror of main/workflow/clickTarget.ts's
+ *  describeClickTarget — same reasoning as SHORTCUT_STEP_LABELS above. */
+function clickStepLabel(target: string): string {
+  if (target.startsWith('label:')) return `Click “${target.slice('label:'.length)}”`
+  return 'Click on screen'
+}
+
 function workflowStep(step: WorkflowStep, names: Record<string, string | null> | undefined): WorkflowChainStep {
+  // A click is drawn like a shortcut step (mono label, no app icon) — it's an
+  // action inside an app, not a switch to one.
+  if (step.type === 'click') return { label: clickStepLabel(step.target), kind: 'shortcut' }
   return step.type === 'shortcut'
     ? { label: shortcutStepLabel(step.comboKeys), kind: 'shortcut' }
     : { label: appStepLabel(step.applicationId, names), kind: 'app', applicationId: step.applicationId ?? undefined }

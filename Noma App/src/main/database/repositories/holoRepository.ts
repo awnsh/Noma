@@ -1,4 +1,4 @@
-import type { HoloCalibration } from '@shared/types'
+import { HOLO_CALIBRATION_VERSION, type HoloCalibration } from '@shared/types'
 import { getDatabase } from '../db'
 
 const HOLO_CALIBRATION_KEY = 'holoCalibration'
@@ -19,7 +19,11 @@ export function getHoloCalibration(): HoloCalibration | null {
   if (!row) return null
 
   try {
-    return JSON.parse(row.value) as HoloCalibration
+    const parsed = JSON.parse(row.value) as HoloCalibration
+    // Saved by an older pipeline whose feature vectors mean something
+    // different — unusable, so it reads as "not calibrated" and the user
+    // recalibrates rather than getting silent misclassification.
+    return parsed.version === HOLO_CALIBRATION_VERSION ? parsed : null
   } catch {
     // A corrupted/unparseable row should read as "not calibrated" rather
     // than crash the Holo page — the user just recalibrates.
