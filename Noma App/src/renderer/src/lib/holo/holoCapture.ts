@@ -5,7 +5,9 @@ import {
   classifyZone,
   createOnsetDetectorState,
   detectOnset,
+  detectVoice,
   extractTapFeatures,
+  isVoiceLike,
   tapPeakDb,
   onsetThreshold,
   type ClassificationResult,
@@ -33,12 +35,13 @@ import {
 const MAX_CHANNELS = 2
 const BLOCK_FRAMES = 512
 const RING_FRAMES = 8192
-/** Audio kept for feature extraction (~85 ms at 48 kHz): wide enough that
+/** Audio kept for feature extraction (~128 ms at 48 kHz): wide enough that
  *  timer jitter in the finalize delay can't push the tap's start out of it. */
-const TAP_WINDOW_FRAMES = 4096
-/** After an onset, wait this long so the whole ~21 ms resonance is in the
- *  ring buffer before extracting features. */
-const FINALIZE_DELAY_MS = 50
+const TAP_WINDOW_FRAMES = 6144
+/** After an onset, wait this long so the whole knock (resonance plus the
+ *  ~100 ms tail/bounce check that separates it from a set-down object) is in
+ *  the ring buffer before extracting features. */
+const FINALIZE_DELAY_MS = 110
 /** A real tap's own ringing can wobble back over the threshold — without
  *  this one physical tap could register several times. */
 const TAP_REFRACTORY_MS = 220
@@ -402,6 +405,18 @@ export class HoloCaptureEngine {
       return
     }
 
+    // Speech is the other thing loud and abrupt enough to get this far, and
+    // unlike typing it has no key event to give it away — so it is told apart
+    // by how the sound itself behaves (see classifier.ts's voice rejection).
+    // Checked ahead of the calibration capture below on purpose: a word
+    // spoken during the wizard must never become part of a zone's profile.
+    const voice = detectVoice(channels, context.sampleRate)
+    if (voice && isVoiceLike(voice)) {
+      const spoken: HoloTapEvent = { zone: null, confidence: 0, reason: 'voice', features, ignoredByInput: false }
+      for (const listener of this.tapListeners) listener(spoken)
+      return
+    }
+
     if (this.pendingCapture) {
       const { resolve } = this.pendingCapture
       this.pendingCapture = null
@@ -416,7 +431,10 @@ export class HoloCaptureEngine {
       for (const listener of this.tapListeners) listener(mismatch)
       return
     }
-    const result = classifyZone(features, calibration.zones, calibration.scale)
+    const result = classifyZone(features, calibration.zones, calibration.scale, {
+      peakDb: this.lastTapPeakDb,
+      range: calibration.levelRange
+    })
     for (const listener of this.tapListeners) listener({ ...result, features, ignoredByInput: false })
   }
 }

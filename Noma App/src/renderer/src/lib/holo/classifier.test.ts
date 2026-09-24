@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   FEATURES_PER_CHANNEL,
+  VOICE_BREADTH,
+  VOICE_PERIODICITY,
+  VOICE_SUSTAIN_DB,
   blockEnergy,
   buildModel,
   classifyZone,
   createOnsetDetectorState,
   detectMicSide,
   detectOnset,
+  detectVoice,
   estimateDelay,
   evaluateCalibration,
   extractTapFeatures,
+  isVoiceLike,
   localizeOnset,
   powerSpectrum,
   scaledDistance
@@ -17,7 +22,7 @@ import {
 import type { HoloZone } from '@shared/types'
 
 const SAMPLE_RATE = 48000
-const WINDOW = 3072
+const WINDOW = 6144
 
 /** Deterministic pseudo-random noise so tests never flake. */
 function makeRng(seed: number): () => number {
@@ -210,5 +215,132 @@ describe('detectMicSide', () => {
   it('refuses to guess when the sides are too close', () => {
     expect(detectMicSide([-15, -14], [-15, -15])).toBeNull()
     expect(detectMicSide([], [-10])).toBeNull()
+  })
+})
+
+describe('rejecting non-taps (objects set down)', () => {
+  const zones = Object.keys(ZONE_SOUNDS) as HoloZone[]
+  const training = zones.map((zone, index) => ({ zone, taps: zoneTaps(zone, 8, 100 + index * 50) }))
+  const { zones: profiles, scale } = buildModel(training)
+
+  /** Same tone as a real zone, but with a slow rise, a long ring, and a bounce. */
+  function setDown(seed: number): Float32Array {
+    const rng = makeRng(seed)
+    const out = new Float32Array(WINDOW)
+    const onset = 1000
+    for (let i = 0; i < WINDOW; i++) {
+      const t = i - onset
+      const rise = t < 0 ? 0 : Math.min(1, t / 700)
+      const main = t >= 0 ? rise * Math.exp(-t / 3500) : 0
+      const bounce = t > 2200 ? 0.7 * Math.exp(-(t - 2200) / 1500) : 0
+      out[i] = 0.4 * (main + bounce) * Math.sin((2 * Math.PI * 400 * i) / SAMPLE_RATE) + rng() * 0.002
+    }
+    return out
+  }
+
+  it('rejects a slow, ringing, bouncing sound even when its tone matches a zone', () => {
+    const features = extractTapFeatures([setDown(1)], [0], SAMPLE_RATE)!
+    expect(classifyZone(features, profiles, scale).zone).toBeNull()
+  })
+
+  it('still accepts a real tap with the same gates active', () => {
+    const [tap] = zoneTaps('frontLeft', 1, 7777)
+    expect(classifyZone(tap, profiles, scale).zone).toBe('frontLeft')
+  })
+
+  it('rejects a sound far louder or softer than the calibration taps', () => {
+    const [tap] = zoneTaps('frontLeft', 1, 7778)
+    const range = { minDb: -20, maxDb: -10 }
+    expect(classifyZone(tap, profiles, scale, { peakDb: -15, range }).zone).toBe('frontLeft')
+    expect(classifyZone(tap, profiles, scale, { peakDb: 2, range }).reason).toBe('wrong-level')
+    expect(classifyZone(tap, profiles, scale, { peakDb: -45, range }).reason).toBe('wrong-level')
+  })
+})
+
+describe('rejecting voices', () => {
+  /** Roughly where a vocal tract puts its resonances. */
+  const FORMANTS = [500, 1500, 2600]
+  function formantGain(hz: number): number {
+    let gain = 0.05
+    for (const formant of FORMANTS) gain += 1 / (1 + Math.pow((hz - formant) / 200, 2))
+    return gain
+  }
+
+  /** A spoken syllable: harmonics of f0 shaped by formants, still sounding
+   *  well past the 105 ms the voice gate looks at. */
+  function vowel(f0: number, seed: number): Float32Array {
+    const rng = makeRng(seed)
+    const out = new Float32Array(WINDOW)
+    const onset = 1000
+    for (let i = 0; i < WINDOW; i++) {
+      const t = i - onset
+      if (t < 0) {
+        out[i] = rng() * 0.002
+        continue
+      }
+      let sample = 0
+      for (let h = 1; h * f0 < 4500; h++) {
+        sample += (formantGain(h * f0) / Math.sqrt(h)) * Math.sin((2 * Math.PI * h * f0 * t) / SAMPLE_RATE + h * 1.7)
+      }
+      out[i] = 0.12 * Math.min(1, t / 400) * sample + rng() * 0.003
+    }
+    return out
+  }
+
+  /** A real tap in a live room: its tail is still audible at 50 ms and is
+   *  broadband — but reverb, unlike a voice, has no pitch. */
+  function reverbTap(seed: number): Float32Array {
+    const rng = makeRng(seed)
+    const out = new Float32Array(WINDOW)
+    const onset = 1000
+    for (let i = 0; i < WINDOW; i++) {
+      const t = i - onset
+      if (t < 0) {
+        out[i] = rng() * 0.002
+        continue
+      }
+      const direct = Math.sin((2 * Math.PI * 900 * t) / SAMPLE_RATE) * Math.exp(-t / 300)
+      out[i] = 0.4 * (direct + rng() * Math.exp(-t / 2600))
+    }
+    return out
+  }
+
+  it('flags speech across the pitch range people actually talk at', () => {
+    for (const f0 of [110, 200, 300]) {
+      const check = detectVoice([vowel(f0, f0)], SAMPLE_RATE)!
+      expect(isVoiceLike(check)).toBe(true)
+    }
+  })
+
+  it('does not flag any calibrated zone tap', () => {
+    for (const [zone, sound] of Object.entries(ZONE_SOUNDS)) {
+      const check = detectVoice([synthTap({ ...sound, seed: 4200 })], SAMPLE_RATE)!
+      expect(isVoiceLike(check), zone).toBe(false)
+    }
+  })
+
+  it('does not flag a tap in a reverberant room, whose tail is sustained but unpitched', () => {
+    const check = detectVoice([reverbTap(11)], SAMPLE_RATE)!
+    expect(check.sustainDb).toBeGreaterThan(VOICE_SUSTAIN_DB) // sustained…
+    expect(check.breadth).toBeGreaterThan(VOICE_BREADTH) // …and broadband…
+    expect(isVoiceLike(check)).toBe(false) // …but not pitched, so not a voice.
+  })
+
+  it('does not call a long single ringing mode a voice (the distance gates own that case)', () => {
+    const ring = synthTap({ freq: 400, decay: 4000, seed: 12 })
+    const check = detectVoice([ring], SAMPLE_RATE)!
+    expect(check.periodicity).toBeGreaterThan(VOICE_PERIODICITY) // pitched…
+    expect(isVoiceLike(check)).toBe(false) // …but one narrow mode, not a vocal tract.
+  })
+
+  it('only calls a sound a voice when every channel agrees', () => {
+    const speech = vowel(150, 13)
+    const tap = synthTap({ ...ZONE_SOUNDS.frontRight, seed: 14 })
+    expect(isVoiceLike(detectVoice([speech, speech], SAMPLE_RATE)!)).toBe(true)
+    expect(isVoiceLike(detectVoice([speech, tap], SAMPLE_RATE)!)).toBe(false)
+  })
+
+  it('returns null when no channel has a usable onset', () => {
+    expect(detectVoice([new Float32Array(WINDOW)], SAMPLE_RATE)).toBeNull()
   })
 })

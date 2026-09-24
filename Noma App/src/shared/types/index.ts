@@ -384,7 +384,7 @@ export interface LaptopInfo {
 /** Bumped whenever the feature vector's meaning changes, so a calibration
  *  saved by an older pipeline is recognized as unusable (its numbers
  *  describe a different thing) instead of silently misclassifying. */
-export const HOLO_CALIBRATION_VERSION = 2
+export const HOLO_CALIBRATION_VERSION = 3
 
 /** A completed calibration — one profile per zone (all 4; there's no
  *  paywall/tier gate on Holo). */
@@ -396,6 +396,9 @@ export interface HoloCalibration {
   /** The microphone layout this was calibrated on (see holoCapture.ts's
    *  `layout`). A different layout means different feature dimensions. */
   layout: string
+  /** Peak loudness range (dB) of the calibration taps, used to reject sounds
+   *  far louder or softer than the user's real taps (e.g. a dropped object). */
+  levelRange: { minDb: number; maxDb: number }
   /** Leave-one-out accuracy (0..1) over the calibration taps — how
    *  separable the zones were on this setup. */
   accuracy: number

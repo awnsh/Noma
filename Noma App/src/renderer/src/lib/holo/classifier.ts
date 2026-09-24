@@ -17,6 +17,8 @@ import type { HoloZone, HoloZoneProfile } from '@shared/types'
  *        plus spectral centroid and decay shape
  *     -> with >1 channel: relative level between channels, and (for
  *        channels of the same physical device) inter-channel arrival delay
+ *     -> a voice gate on the raw samples (sustained + pitched + broadband),
+ *        applied before calibration as well as before classification
  *     -> standardized nearest-centroid classification with an absolute
  *        "does this even resemble a calibrated tap" gate
  *
@@ -90,8 +92,12 @@ export function powerSpectrum(segment: ArrayLike<number>): Float64Array {
 
 /** Log-spaced frequency bands per channel. */
 export const TAP_BAND_COUNT = 20
-/** Per channel: the bands, then spectral centroid, then two decay ratios. */
-export const FEATURES_PER_CHANNEL = TAP_BAND_COUNT + 3
+/** Per channel: the bands, spectral centroid, two decay ratios, then three
+ *  "is this a knock at all" shape features: tail energy 50-100 ms later,
+ *  re-excitation (a bounce / second hit), and rise time to the peak. Being
+ *  ordinary features, they're standardized by the user's own calibration
+ *  taps, so what counts as "knock-like" is learned per person and desk. */
+export const FEATURES_PER_CHANNEL = TAP_BAND_COUNT + 6
 /** FFT length for a tap (~21 ms at 48 kHz — the impact's resonance). */
 export const TAP_FFT_SIZE = 1024
 /** How much audio to keep before the localized onset so the attack is inside the window. */
@@ -149,15 +155,59 @@ interface ChannelAnalysis {
   onset: number
 }
 
-function analyzeChannel(samples: ArrayLike<number>, sampleRate: number): ChannelAnalysis | null {
-  const onset = localizeOnset(samples)
-  if (onset < 0) return null
-  const start = Math.max(0, onset - PRE_ONSET_FRAMES)
-  const segment = new Float64Array(TAP_FFT_SIZE)
-  for (let i = 0; i < TAP_FFT_SIZE && start + i < samples.length; i++) segment[i] = samples[start + i]
+/** Mean energy of `samples[from..to)`, clamped to the array. */
+function meanSquare(samples: ArrayLike<number>, from: number, to: number): number {
+  let sum = 0
+  let n = 0
+  for (let i = Math.max(0, from); i < to && i < samples.length; i++) {
+    sum += samples[i] * samples[i]
+    n++
+  }
+  return n > 0 ? sum / n : 0
+}
 
-  const power = powerSpectrum(segment)
-  const binHz = sampleRate / TAP_FFT_SIZE
+/**
+ * How a sound evolves over ~100 ms: what separates a knuckle tap (instant
+ * peak, fast clean decay, one hit) from an object set down (slower rise,
+ * long tail, bounces or scrapes). Values are scaled to roughly unit range.
+ */
+function envelopeFeatures(samples: ArrayLike<number>, onset: number, sampleRate: number): number[] {
+  const frames = (ms: number): number => Math.round((sampleRate * ms) / 1000)
+  const measure = (from: number, to: number): number => meanSquare(samples, from, to)
+
+  const head = measure(onset, onset + frames(5))
+  const tail = measure(onset + frames(50), onset + frames(100))
+  const tailDb = clamp(toDb(tail) - toDb(head), -60, 0) / 20
+
+  // Largest jump in energy between consecutive 8 ms blocks after the initial
+  // hit: a clean tap only ever falls; a bounce or second impact rises again.
+  const block = frames(8)
+  let previous = measure(onset + frames(5), onset + frames(5) + block)
+  let bounceDb = 0
+  for (let from = onset + frames(5) + block; from < onset + frames(100); from += block) {
+    const energy = measure(from, from + block)
+    if (energy > head * 1e-3 && previous > 0) bounceDb = Math.max(bounceDb, toDb(energy) - toDb(previous))
+    previous = energy
+  }
+
+  let peakIndex = onset
+  let peak = 0
+  for (let i = onset; i < onset + frames(10) && i < samples.length; i++) {
+    if (Math.abs(samples[i]) > peak) {
+      peak = Math.abs(samples[i])
+      peakIndex = i
+    }
+  }
+  const riseMs = ((peakIndex - onset) / sampleRate) * 1000
+
+  return [tailDb, clamp(bounceDb, 0, 30) / 10, Math.log2(1 + riseMs) / 3]
+}
+
+/** Level (dB) in each of TAP_BAND_COUNT log-spaced bands from MIN_BAND_HZ to
+ *  the mic's usable top. Shared by the per-tap spectral shape and the
+ *  voice gate's "is this late sound broadband" measure. */
+function logBandLevelsDb(power: Float64Array, sampleRate: number, fftSize: number): number[] {
+  const binHz = sampleRate / fftSize
   const maxHz = Math.min(MAX_BAND_HZ, (sampleRate / 2) * 0.95)
   const ratio = maxHz / MIN_BAND_HZ
 
@@ -171,6 +221,185 @@ function analyzeChannel(samples: ArrayLike<number>, sampleRate: number): Channel
     for (let bin = loBin; bin < hiBin && bin < power.length; bin++) sum += power[bin]
     bandDb.push(toDb(sum / (hiBin - loBin)))
   }
+  return bandDb
+}
+
+// ------------------------------------------------------------ voice rejection
+
+/**
+ * Speech is the one everyday sound that genuinely resembles a tap to the
+ * onset detector: a syllable starts abruptly and, from a foot away, is as
+ * loud as a knuckle on a desk. What it cannot fake is what happens next.
+ * An impact is over within a few tens of milliseconds — all its energy came
+ * from one collision and nothing replaces it. A voice is driven continuously
+ * by the lungs, so 45-105 ms in it is still sounding, still repeating at the
+ * speaker's pitch, and still spread across the spectrum by the vocal tract.
+ *
+ * All three are measured on raw samples rather than on the standardized
+ * feature vector, on purpose: this is a "was that even a tap" question, which
+ * has to hold before any calibration exists. That also keeps a spoken word
+ * out of the calibration wizard, where it would otherwise be averaged
+ * straight into a zone's profile and quietly poison it.
+ */
+export interface VoiceCheck {
+  /** Late-window energy relative to the attack, in dB. A knock is tens of dB
+   *  down by then; a held vowel is barely down at all. */
+  sustainDb: number
+  /** Strongest normalized autocorrelation at a speech pitch in the late
+   *  window (0..1). Voiced speech repeats; room reverb and noise do not. */
+  periodicity: number
+  /** Fraction of the log bands within VOICE_BREADTH_DB of the loudest one.
+   *  A vowel fills much of the spectrum; a ringing desk mode is one peak. */
+  breadth: number
+}
+
+/** The late window, measured from the onset: long after a knock has stopped,
+ *  still comfortably inside one syllable. */
+const VOICE_FROM_MS = 45
+const VOICE_TO_MS = 105
+/** Speech's fundamental. Deliberately not wider — the higher the ceiling,
+ *  the more of a desk's own resonant modes fall inside it. */
+const VOICE_MIN_F0_HZ = 70
+const VOICE_MAX_F0_HZ = 330
+/** f0 is far below 1 kHz, so averaging groups of 4 samples before the lag
+ *  search costs nothing and makes it ~16x cheaper. */
+const VOICE_DECIMATION = 4
+/** How far below the loudest band still counts as "there is sound here". */
+const VOICE_BREADTH_DB = 25
+
+/** Still this close to its own attack 45-105 ms later. No impact is. */
+export const VOICE_SUSTAIN_DB = -20
+export const VOICE_PERIODICITY = 0.45
+export const VOICE_BREADTH = 0.35
+
+/**
+ * All three conditions have to hold, and each one is carrying a specific
+ * sound that must NOT be called a voice:
+ *   - sustain alone would reject a real tap in a reverberant room, whose
+ *     tail is genuinely still audible at 50 ms;
+ *   - periodicity alone would reject a resonant desk, since a single ringing
+ *     mode correlates with itself perfectly;
+ *   - breadth alone would reject that same reverberant tail, which is
+ *     broadband by definition.
+ * Together they describe a sound that is still going, pitched, and shaped by
+ * a vocal tract — which a knuckle on a desk never is. Unvoiced speech ("shh",
+ * a whisper) fails the periodicity test and is left to the ordinary distance
+ * gates, which is the right trade: it is far quieter than a tap and rarely
+ * crosses the onset threshold in the first place.
+ */
+export function isVoiceLike(check: VoiceCheck): boolean {
+  return check.sustainDb > VOICE_SUSTAIN_DB && check.periodicity > VOICE_PERIODICITY && check.breadth > VOICE_BREADTH
+}
+
+/** Mean-removed, `factor`x-decimated copy of `samples[from..to)`. */
+function decimate(samples: ArrayLike<number>, from: number, to: number, factor: number): Float64Array {
+  const length = Math.max(0, Math.floor((to - from) / factor))
+  const out = new Float64Array(length)
+  let mean = 0
+  for (let i = 0; i < length; i++) {
+    let sum = 0
+    for (let j = 0; j < factor; j++) sum += samples[from + i * factor + j]
+    out[i] = sum / factor
+    mean += out[i]
+  }
+  mean /= length || 1
+  for (let i = 0; i < length; i++) out[i] -= mean
+  return out
+}
+
+/** Best normalized self-similarity at a speech pitch. Every lag is scored
+ *  over the same number of samples, so a long lag cannot win simply by
+ *  comparing a shorter, more self-similar stretch. */
+function latePeriodicity(samples: ArrayLike<number>, from: number, to: number, sampleRate: number): number {
+  const decimated = decimate(samples, from, to, VOICE_DECIMATION)
+  const rate = sampleRate / VOICE_DECIMATION
+  const minLag = Math.max(2, Math.floor(rate / VOICE_MAX_F0_HZ))
+  const maxLag = Math.ceil(rate / VOICE_MIN_F0_HZ)
+  const span = decimated.length - maxLag
+  if (span < minLag * 2) return 0
+
+  let best = 0
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let dot = 0
+    let energyA = 0
+    let energyB = 0
+    for (let i = 0; i < span; i++) {
+      const a = decimated[i]
+      const b = decimated[i + lag]
+      dot += a * b
+      energyA += a * a
+      energyB += b * b
+    }
+    const denominator = Math.sqrt(energyA * energyB)
+    if (denominator > EPS) best = Math.max(best, dot / denominator)
+  }
+  return best
+}
+
+/** How much of the spectrum the late window actually occupies. */
+function lateBreadth(samples: ArrayLike<number>, from: number, to: number, sampleRate: number): number {
+  let size = 256
+  while (size * 2 <= to - from) size *= 2
+  const segment = new Float64Array(size)
+  for (let i = 0; i < size && from + i < samples.length; i++) segment[i] = samples[from + i]
+
+  const bands = logBandLevelsDb(powerSpectrum(segment), sampleRate, size)
+  const peak = Math.max(...bands)
+  return bands.filter((db) => db >= peak - VOICE_BREADTH_DB).length / bands.length
+}
+
+/** The three voice measures for one channel's window. */
+export function measureVoice(samples: ArrayLike<number>, onset: number, sampleRate: number): VoiceCheck {
+  const frames = (ms: number): number => Math.round((sampleRate * ms) / 1000)
+  const from = onset + frames(VOICE_FROM_MS)
+  const to = Math.min(samples.length, onset + frames(VOICE_TO_MS))
+
+  const head = meanSquare(samples, onset, onset + frames(5))
+  const sustainDb = clamp(toDb(meanSquare(samples, from, to)) - toDb(head), -80, 40)
+  // Too little audio left in the window to say anything about pitch or shape.
+  // The sustain figure alone is still meaningful and is reported as measured.
+  if (to - from < frames(20)) return { sustainDb, periodicity: 0, breadth: 0 }
+
+  return {
+    sustainDb,
+    periodicity: latePeriodicity(samples, from, to, sampleRate),
+    breadth: lateBreadth(samples, from, to, sampleRate)
+  }
+}
+
+/**
+ * The most conservative reading across every channel: the minimum of each
+ * measure, so a sound is only treated as a voice when *all* channels agree
+ * it is sustained, pitched and broadband. Channels of one mic hear nearly
+ * the same thing, so this costs almost nothing in detection — and it means a
+ * single odd channel can never suppress a real tap. Null when no channel
+ * contains a usable onset (the same condition that makes a tap unreadable).
+ */
+export function detectVoice(channels: ArrayLike<number>[], sampleRate: number): VoiceCheck | null {
+  const checks: VoiceCheck[] = []
+  for (const samples of channels) {
+    const onset = localizeOnset(samples)
+    if (onset >= 0) checks.push(measureVoice(samples, onset, sampleRate))
+  }
+  if (checks.length === 0) return null
+  return {
+    sustainDb: Math.min(...checks.map((check) => check.sustainDb)),
+    periodicity: Math.min(...checks.map((check) => check.periodicity)),
+    breadth: Math.min(...checks.map((check) => check.breadth))
+  }
+}
+
+function analyzeChannel(samples: ArrayLike<number>, sampleRate: number): ChannelAnalysis | null {
+  const onset = localizeOnset(samples)
+  if (onset < 0) return null
+  const start = Math.max(0, onset - PRE_ONSET_FRAMES)
+  const segment = new Float64Array(TAP_FFT_SIZE)
+  for (let i = 0; i < TAP_FFT_SIZE && start + i < samples.length; i++) segment[i] = samples[start + i]
+
+  const power = powerSpectrum(segment)
+  const binHz = sampleRate / TAP_FFT_SIZE
+
+  const bandDb = logBandLevelsDb(power, sampleRate, TAP_FFT_SIZE)
   const meanDb = bandDb.reduce((a, b) => a + b, 0) / bandDb.length
   // Shape only (loudness varies with tap force); /10 keeps values near unit scale.
   const shape = bandDb.map((db) => (db - meanDb) / 10)
@@ -195,7 +424,9 @@ function analyzeChannel(samples: ArrayLike<number>, sampleRate: number): Channel
   let rmsSum = 0
   for (let i = 0; i < segment.length; i++) rmsSum += segment[i] * segment[i]
 
-  return { features: [...shape, centroid, decay1, decay2], levelDb: toDb(rmsSum / segment.length), onset }
+  const envelope = envelopeFeatures(samples, onset, sampleRate)
+
+  return { features: [...shape, centroid, decay1, decay2, ...envelope], levelDb: toDb(rmsSum / segment.length), onset }
 }
 
 /** Lag (in frames) at which `b` best matches `a` — positive means `b`
@@ -325,7 +556,7 @@ export function scaledDistance(a: number[], b: number[], scale: number[]): numbe
   return Math.sqrt(sum / length)
 }
 
-export type ClassificationReason = 'ok' | 'unrecognized' | 'ambiguous' | 'no-calibration'
+export type ClassificationReason = 'ok' | 'unrecognized' | 'ambiguous' | 'wrong-level' | 'voice' | 'no-calibration'
 
 export interface ClassificationResult {
   zone: HoloZone | null
@@ -334,21 +565,60 @@ export interface ClassificationResult {
   reason: ClassificationReason
 }
 
-/** A same-zone repeat scores ~1; a different sound (typing, a clap, a
- *  cup set down) scores well beyond this. First-pass value — see docs. */
-export const MAX_TRUSTED_DISTANCE = 3.2
+/** Overall (RMS) z-distance a tap may be from its nearest zone profile. A
+ *  same-zone repeat scores ~1. */
+export const MAX_TRUSTED_DISTANCE = 2.8
+/** ...and no *single* feature may be wildly off. RMS alone lets a sound that
+ *  matches a tap's tone but not its shape (a long ring, a bounce) average
+ *  its way through; this catches exactly those. */
+export const MAX_SINGLE_FEATURE_Z = 8
 /** Best must beat the runner-up by this fraction, else "ambiguous". */
 export const MIN_CONFIDENCE_MARGIN = 0.06
+/** A sound this much louder than the loudest calibration tap, or this much
+ *  quieter than the quietest, isn't the user's tap (a dropped object, a
+ *  far-off noise). Generous so normal force variation still passes. */
+export const LEVEL_ABOVE_MARGIN_DB = 9
+export const LEVEL_BELOW_MARGIN_DB = 16
 
-export function classifyZone(features: number[], profiles: HoloZoneProfile[], scale: number[]): ClassificationResult {
+export interface LevelCheck {
+  peakDb: number
+  range: { minDb: number; maxDb: number }
+}
+
+function maxAbsZ(a: number[], b: number[], scale: number[]): number {
+  let max = 0
+  const length = Math.min(a.length, b.length, scale.length)
+  for (let i = 0; i < length; i++) max = Math.max(max, Math.abs((a[i] - b[i]) / scale[i]))
+  return max
+}
+
+export function classifyZone(
+  features: number[],
+  profiles: HoloZoneProfile[],
+  scale: number[],
+  level?: LevelCheck
+): ClassificationResult {
   if (profiles.length === 0) return { zone: null, confidence: 0, reason: 'no-calibration' }
 
+  if (
+    level &&
+    (level.peakDb > level.range.maxDb + LEVEL_ABOVE_MARGIN_DB || level.peakDb < level.range.minDb - LEVEL_BELOW_MARGIN_DB)
+  ) {
+    return { zone: null, confidence: 0, reason: 'wrong-level' }
+  }
+
   const ranked = profiles
-    .map((profile) => ({ zone: profile.zone, distance: scaledDistance(features, profile.features, scale) }))
+    .map((profile) => ({
+      zone: profile.zone,
+      distance: scaledDistance(features, profile.features, scale),
+      worst: maxAbsZ(features, profile.features, scale)
+    }))
     .sort((a, b) => a.distance - b.distance)
   const [best, runnerUp] = ranked
 
-  if (!(best.distance <= MAX_TRUSTED_DISTANCE)) return { zone: null, confidence: 0, reason: 'unrecognized' }
+  if (!(best.distance <= MAX_TRUSTED_DISTANCE) || best.worst > MAX_SINGLE_FEATURE_Z) {
+    return { zone: null, confidence: 0, reason: 'unrecognized' }
+  }
   if (!runnerUp) return { zone: best.zone, confidence: 1, reason: 'ok' }
 
   const margin = runnerUp.distance === 0 ? 0 : 1 - best.distance / runnerUp.distance

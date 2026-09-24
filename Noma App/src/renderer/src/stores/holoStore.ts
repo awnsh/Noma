@@ -112,6 +112,8 @@ export type TapOutcome =
   | 'ignored-input'
   | 'unrecognized'
   | 'ambiguous'
+  | 'wrong-level'
+  | 'voice'
   | 'layout-changed'
 
 interface LastTap {
@@ -334,12 +336,14 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
       const zones = get().activeZones
 
       const tapsByZone: Array<{ zone: HoloZone; taps: number[][] }> = []
+      const peakLevels: number[] = []
       for (let zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
         const zone = zones[zoneIndex]
         const taps: number[][] = []
         for (let tapIndex = 0; tapIndex < tapsPerZone; tapIndex++) {
           onProgress({ phase: 'zone', zone, zoneIndex, totalZones: zones.length, tapIndex })
           taps.push(await engine.captureNextTap())
+          peakLevels.push(engine.lastTapPeakDb)
         }
         tapsByZone.push({ zone, taps })
       }
@@ -350,6 +354,7 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
         zones: profiles,
         scale,
         layout: engine.layout,
+        levelRange: { minDb: Math.min(...peakLevels), maxDb: Math.max(...peakLevels) },
         accuracy: evaluateCalibration(tapsByZone, scale),
         calibratedAt: Date.now()
       })
@@ -392,7 +397,12 @@ engine.onTap((event) => {
     useHoloStore.setState({ layoutMismatch: true })
     return publish('layout-changed')
   }
-  if (!zone) return publish(reason === 'ambiguous' ? 'ambiguous' : 'unrecognized')
+  if (!zone) {
+    // Reasons the user gets told apart by name, because each one has its own
+    // fix; anything else just reads as "that didn't match a zone".
+    const named: TapOutcome[] = ['ambiguous', 'wrong-level', 'voice']
+    return publish(named.find((outcome) => outcome === reason) ?? 'unrecognized')
+  }
 
   // Which control this zone maps to depends on whichever application is
   // focused *right now* — the same 4 slots the physical/virtual keyboard

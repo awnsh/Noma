@@ -14,6 +14,7 @@ const FULL_CALIBRATION: HoloCalibration = {
   version: HOLO_CALIBRATION_VERSION,
   scale: [0.3, 0.3, 0.3],
   layout: '1',
+  levelRange: { minDb: -30, maxDb: -12 },
   accuracy: 0.95,
   zones: [
     { zone: 'frontLeft', features: [1, 0, 0], sampleCount: 6 },

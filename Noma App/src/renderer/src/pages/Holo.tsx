@@ -22,6 +22,8 @@ const OUTCOME_MESSAGES: Record<TapOutcome, string> = {
   'no-control': 'Recognized, but this zone has no control assigned in the current app.',
   'ignored-input': 'Ignored: that sound came with a key press or mouse click.',
   unrecognized: "Heard a sound that didn't match any zone. Tap with a knuckle on the desk, or recalibrate.",
+  'wrong-level': 'Ignored: much louder or softer than your calibration taps, so probably not a tap.',
+  voice: 'Ignored: that sounded like a voice, not a tap.',
   ambiguous: 'Heard a tap between two zones. Tap closer to the middle of a zone, or recalibrate.',
   'layout-changed': 'Your microphone setup changed since calibration. Recalibrate to continue.'
 }
