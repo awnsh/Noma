@@ -368,6 +368,12 @@ export type HoloZone = 'frontLeft' | 'frontRight' | 'rearLeft' | 'rearRight'
 export interface HoloZoneProfile {
   zone: HoloZone
   features: number[]
+  /** The individual taps behind `features`, kept rather than discarded so
+   *  the classifier can see the *spread* of taps on this spot and not just
+   *  their average — a tap at the edge of its own zone's spread is exactly
+   *  the one that otherwise lands on a neighbour. Still derived numbers,
+   *  never audio (see classifier.ts). */
+  taps: number[][]
   /** How many taps were averaged into `features` — shown in the UI so a
    *  thin (e.g. interrupted) calibration is visibly distinguishable from a
    *  full one, even though both produce a usable profile. */
@@ -381,10 +387,37 @@ export interface LaptopInfo {
   model: string
 }
 
+/**
+ * Every "is this a real tap of yours" bound, all of them measured from the
+ * user's own calibration rather than picked in advance.
+ *
+ * The constants these replaced were tuned on synthetic audio, and each one
+ * was wrong in a way the user felt: too tight and a genuine tap needs two or
+ * three tries, too loose and a cough or a hand resting on the desk fires a
+ * macro. There is no single number that is right for a hollow desk and a
+ * solid one, a quiet room and a loud one — but there is a right number for
+ * *this* desk, and calibration already collects exactly the taps needed to
+ * measure it.
+ */
+export interface HoloGates {
+  /** Furthest a tap may sit from its zone. */
+  maxDistance: number
+  /** ...and no single feature may be wildly off, which RMS alone can hide. */
+  maxSingleFeatureZ: number
+  /** How far the winner must beat the runner-up, as a fraction. */
+  minMargin: number
+  minPeakDb: number
+  maxPeakDb: number
+  /** Loudest a sound may still be at 45-105 ms, and at 110-180 ms, before it
+   *  stops looking like something that was struck. See `isImpactLike`. */
+  maxSustainDb: number
+  maxDrivenDb: number
+}
+
 /** Bumped whenever the feature vector's meaning changes, so a calibration
  *  saved by an older pipeline is recognized as unusable (its numbers
  *  describe a different thing) instead of silently misclassifying. */
-export const HOLO_CALIBRATION_VERSION = 3
+export const HOLO_CALIBRATION_VERSION = 4
 
 /** A completed calibration — one profile per zone (all 4; there's no
  *  paywall/tier gate on Holo). */
@@ -393,12 +426,21 @@ export interface HoloCalibration {
   zones: HoloZoneProfile[]
   /** Per-dimension spread the classifier divides distances by. */
   scale: number[]
+  /** Per-dimension emphasis: how much each dimension actually separates the
+   *  zones, so dimensions that carry no location information stop dragging
+   *  taps onto the wrong zone (classifier.ts's `buildModel`). */
+  weights: number[]
   /** The microphone layout this was calibrated on (see holoCapture.ts's
    *  `layout`). A different layout means different feature dimensions. */
   layout: string
   /** Peak loudness range (dB) of the calibration taps, used to reject sounds
    *  far louder or softer than the user's real taps (e.g. a dropped object). */
   levelRange: { minDb: number; maxDb: number }
+  /** Every accept/reject bound, measured from these calibration taps rather
+   *  than fixed in advance — see classifier.ts's `HoloGates`/`deriveGates`.
+   *  Optional so a calibration written before they were measured still
+   *  loads; the classifier falls back to DEFAULT_GATES. */
+  gates?: HoloGates
   /** Leave-one-out accuracy (0..1) over the calibration taps — how
    *  separable the zones were on this setup. */
   accuracy: number

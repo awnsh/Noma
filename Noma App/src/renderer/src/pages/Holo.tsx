@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useHoloStore, type CalibrationProgress, type TapOutcome } from '../stores/holoStore'
+import {
+  HOLO_COOLDOWN_MS,
+  useHoloStore,
+  type CalibrationProgress,
+  type HoloPace,
+  type TapOutcome
+} from '../stores/holoStore'
 import { useFlowStore } from '../stores/flowStore'
 import { HoloZoneTile } from '../components/HoloZoneTile'
 import { AppIcon } from '../components/AppIcon'
@@ -24,9 +30,16 @@ const OUTCOME_MESSAGES: Record<TapOutcome, string> = {
   unrecognized: "Heard a sound that didn't match any zone. Tap with a knuckle on the desk, or recalibrate.",
   'wrong-level': 'Ignored: much louder or softer than your calibration taps, so probably not a tap.',
   voice: 'Ignored: that sounded like a voice, not a tap.',
+  'not-a-tap': "Ignored: that kept going instead of dying away like a tap — a cough, a scrape, or something moving.",
   ambiguous: 'Heard a tap between two zones. Tap closer to the middle of a zone, or recalibrate.',
   'layout-changed': 'Your microphone setup changed since calibration. Recalibrate to continue.'
 }
+
+const PACE_OPTIONS: Array<{ value: HoloPace; label: string }> = [
+  { value: 'rapid', label: 'Rapid' },
+  { value: 'normal', label: 'Normal' },
+  { value: 'deliberate', label: 'Deliberate' }
+]
 
 const SENSITIVITY_OPTIONS: Array<{ value: HoloSensitivity; label: string }> = [
   { value: 'low', label: 'Firm taps' },
@@ -46,6 +59,8 @@ export function Holo() {
     availableMics,
     allowExternalMic,
     sensitivity,
+    pace,
+    coolingDown,
     level,
     pausedForTyping,
     layoutMismatch,
@@ -60,6 +75,7 @@ export function Holo() {
     setSideOverride,
     activeZones,
     setSensitivity,
+    setPace,
     setAllowExternalMic,
     refreshAvailableMics,
     refresh,
@@ -71,6 +87,7 @@ export function Holo() {
   const { context, refresh: refreshContext, subscribeToContext } = useFlowStore()
   const [wizard, setWizard] = useState<WizardState>({ status: 'idle' })
   const [flashingZone, setFlashingZone] = useState<HoloZone | null>(null)
+  const [showTapDetail, setShowTapDetail] = useState(false)
 
   useEffect(() => {
     refresh()
@@ -208,8 +225,8 @@ export function Holo() {
         {wizard.status === 'running' && wizard.phase === 'zone' && (
           <div className="mb-4 rounded-lg border border-accent/30 bg-accent/[0.08] px-4 py-3 text-sm text-holo-text">
             Zone {wizard.zoneIndex + 1} of {wizard.totalZones}: {getHoloZoneLabel(wizard.zone, zoneCount)}, tap it now
-            (tap {wizard.tapIndex + 1} of {TAPS_PER_ZONE}). Vary your force and spot a little within the zone,
-            so Holo learns how much your taps naturally differ.
+            (tap {wizard.tapIndex + 1} of {TAPS_PER_ZONE}). Tap the way you actually will in use, varying your
+            force and spot a little within the zone — everything Holo accepts later is measured from these taps.
           </div>
         )}
         {(wizard.status === 'error' || micError) && (
@@ -236,6 +253,8 @@ export function Holo() {
             <div>
               {pausedForTyping ? (
                 <span className="text-holo-text">Mic paused while you type or click. </span>
+              ) : coolingDown ? (
+                <>Just fired — waiting a moment before the next tap. </>
               ) : (
                 <>Mic on. It switches off while you type or click so those sounds are never heard. </>
               )}
@@ -247,7 +266,31 @@ export function Holo() {
             </div>
             {lastTap && (
               <div className={lastTap.outcome === 'pressed' ? 'text-accent' : ''}>
-                {OUTCOME_MESSAGES[lastTap.outcome]}
+                {OUTCOME_MESSAGES[lastTap.outcome]}{' '}
+                <button
+                  type="button"
+                  onClick={() => setShowTapDetail((shown) => !shown)}
+                  className="text-holo-muted underline decoration-dotted underline-offset-2 hover:text-holo-text"
+                >
+                  {showTapDetail ? 'Hide details' : 'Details'}
+                </button>
+                {showTapDetail && (
+                  <div className="mt-1 font-mono text-[11px] text-holo-muted">
+                    {/* The numbers the gates are compared against, so a
+                        misfire is reportable instead of just felt. */}
+                    peak {lastTap.peakDb.toFixed(1)} dB
+                    {calibration && (
+                      <> (taps: {calibration.levelRange.minDb.toFixed(1)} to {calibration.levelRange.maxDb.toFixed(1)})</>
+                    )}
+                    {lastTap.impact && (
+                      <>
+                        {' · '}still ringing {lastTap.impact.sustainDb.toFixed(1)} dB
+                        {' · '}still going {lastTap.impact.drivenDb.toFixed(1)} dB
+                      </>
+                    )}
+                    {lastTap.zone && <> · margin {Math.round(lastTap.confidence * 100)}%</>}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -352,6 +395,30 @@ export function Holo() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-holo-muted">
+          <span>Pace</span>
+          <div className="flex gap-1.5">
+            {PACE_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setPace(option.value)}
+                className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+                  pace === option.value
+                    ? 'border-accent/50 bg-accent/10 text-accent'
+                    : 'border-holo-border hover:border-holo-text/30 hover:text-holo-text'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-[11px]">
+            After a control fires, Holo waits {(HOLO_COOLDOWN_MS[pace] / 1000).toFixed(1)}s before listening for
+            the next tap, so one tap can't fire a macro twice.
+          </span>
         </div>
 
         <div className="mb-4 text-xs text-holo-muted">

@@ -15,7 +15,14 @@ import {
 } from '@shared/constants'
 import { HoloCaptureEngine, type MicInfo } from '../lib/holo/holoCapture'
 import type { MicCandidate } from '../lib/holo/micKind'
-import { buildModel, detectMicSide, evaluateCalibration, type HoloSensitivity } from '../lib/holo/classifier'
+import {
+  buildModel,
+  deriveGates,
+  detectMicSide,
+  evaluateCalibration,
+  type HoloSensitivity,
+  type ImpactCheck
+} from '../lib/holo/classifier'
 
 /**
  * One capture engine for the whole app's lifetime (not per-page) — Holo is
@@ -27,6 +34,7 @@ import { buildModel, detectMicSide, evaluateCalibration, type HoloSensitivity } 
 const engine = new HoloCaptureEngine()
 
 const SENSITIVITY_KEY = 'noma.holo.sensitivity'
+const COOLDOWN_KEY = 'noma.holo.cooldown'
 const ALLOW_EXTERNAL_KEY = 'noma.holo.allowExternalMic'
 const ZONE_OVERRIDE_KEY = 'noma.holo.zoneOverride'
 export type ZoneOverride = 'auto' | HoloZoneCount
@@ -114,6 +122,7 @@ export type TapOutcome =
   | 'ambiguous'
   | 'wrong-level'
   | 'voice'
+  | 'not-a-tap'
   | 'layout-changed'
 
 interface LastTap {
@@ -121,7 +130,23 @@ interface LastTap {
   confidence: number
   outcome: TapOutcome
   at: number
+  /** The raw measurements behind the outcome (Holo page > Details). */
+  peakDb: number
+  impact: ImpactCheck | null
 }
+
+/**
+ * How long Holo stays deaf after a control fires.
+ *
+ * The default assumes what a macro actually is: the end of a decision, not a
+ * key held down. Someone who has just fired one is reading the result of it,
+ * not queueing another — so a second tap a beat later is far more likely to
+ * be the same one made again by a person who wasn't sure it landed than a
+ * genuine second action. "Rapid" is for the case that assumption is wrong,
+ * a zone mapped to something like volume that really is pressed in a burst.
+ */
+export type HoloPace = 'rapid' | 'normal' | 'deliberate'
+export const HOLO_COOLDOWN_MS: Record<HoloPace, number> = { rapid: 300, normal: 900, deliberate: 2000 }
 
 /** Taps per edge in the mic-side test — few, since it only needs a level comparison. */
 const SIDE_TEST_TAPS = 4
@@ -147,10 +172,14 @@ interface HoloStoreState {
   /** Off by default: an external mic is used only if the user allows it AND no built-in mic exists. */
   allowExternalMic: boolean
   sensitivity: HoloSensitivity
+  /** How long taps are ignored after a control fires (see HOLO_COOLDOWN_MS). */
+  pace: HoloPace
   /** Live input level as a multiple of the trigger threshold (1 = triggers). */
   level: number
   /** True while the mic is switched off because the user is typing/clicking. */
   pausedForTyping: boolean
+  /** True while taps are being ignored because a control just fired. */
+  coolingDown: boolean
   /** True when the mic setup differs from what was calibrated. */
   layoutMismatch: boolean
   laptop: LaptopInfo | null
@@ -173,6 +202,7 @@ interface HoloStoreState {
   startListening: () => Promise<void>
   stopListening: () => void
   setSensitivity: (sensitivity: HoloSensitivity) => void
+  setPace: (pace: HoloPace) => void
   setAllowExternalMic: (allow: boolean) => Promise<void>
   refreshAvailableMics: () => Promise<void>
   /**
@@ -200,6 +230,8 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
   availableMics: [],
   allowExternalMic: readStored<boolean>(ALLOW_EXTERNAL_KEY, false),
   sensitivity: readStored<HoloSensitivity>(SENSITIVITY_KEY, 'medium'),
+  pace: readStored<HoloPace>(COOLDOWN_KEY, 'normal'),
+  coolingDown: false,
   level: 0,
   pausedForTyping: false,
   layoutMismatch: false,
@@ -278,6 +310,11 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
     set({ isListening: false, lastTap: null, mics: [], level: 0, pausedForTyping: false })
   },
 
+  setPace: (pace) => {
+    writeStored(COOLDOWN_KEY, pace)
+    set({ pace })
+  },
+
   setSensitivity: (sensitivity) => {
     engine.setSensitivity(sensitivity)
     writeStored(SENSITIVITY_KEY, sensitivity)
@@ -335,8 +372,15 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
       // Zones are fixed for the rest of this run.
       const zones = get().activeZones
 
+      // Each tap is recorded three ways: the feature vector the classifier
+      // compares, how loud it was, and how it decayed. The last two are what
+      // turn every accept/reject bound into a measurement of this desk
+      // instead of a constant guessed in advance (classifier.ts's
+      // `deriveGates`) — which is the whole reason they're collected here
+      // rather than only during listening.
       const tapsByZone: Array<{ zone: HoloZone; taps: number[][] }> = []
       const peakLevels: number[] = []
+      const impacts: ImpactCheck[] = []
       for (let zoneIndex = 0; zoneIndex < zones.length; zoneIndex++) {
         const zone = zones[zoneIndex]
         const taps: number[][] = []
@@ -344,18 +388,22 @@ export const useHoloStore = create<HoloStoreState>((set, get) => ({
           onProgress({ phase: 'zone', zone, zoneIndex, totalZones: zones.length, tapIndex })
           taps.push(await engine.captureNextTap())
           peakLevels.push(engine.lastTapPeakDb)
+          if (engine.lastTapImpact) impacts.push(engine.lastTapImpact)
         }
         tapsByZone.push({ zone, taps })
       }
 
-      const { zones: profiles, scale } = buildModel(tapsByZone)
+      const { zones: profiles, scale, weights } = buildModel(tapsByZone)
+      const { accuracy, distances } = evaluateCalibration(tapsByZone, scale, weights)
       const saved = await window.flow.saveHoloCalibration({
         version: HOLO_CALIBRATION_VERSION,
         zones: profiles,
         scale,
+        weights,
         layout: engine.layout,
         levelRange: { minDb: Math.min(...peakLevels), maxDb: Math.max(...peakLevels) },
-        accuracy: evaluateCalibration(tapsByZone, scale),
+        gates: deriveGates(distances, peakLevels, impacts),
+        accuracy,
         calibratedAt: Date.now()
       })
       engine.setCalibration(saved)
@@ -380,17 +428,18 @@ if (typeof window !== 'undefined' && window.flow) {
   window.flow.onHoloInputActivity((timestamp) => engine.noteInputActivity(timestamp))
 }
 
-engine.onStatus(({ level, muted }) => {
+engine.onStatus(({ level, muted, coolingDown }) => {
   // Cheap guard: this fires ~16x/s; only re-render on a visible change.
   const current = useHoloStore.getState()
   if (current.pausedForTyping !== muted) useHoloStore.setState({ pausedForTyping: muted })
+  if (current.coolingDown !== coolingDown) useHoloStore.setState({ coolingDown })
   if (Math.abs(current.level - level) > 0.05) useHoloStore.setState({ level })
 })
 
 engine.onTap((event) => {
-  const { zone, confidence, reason, ignoredByInput } = event
+  const { zone, confidence, reason, ignoredByInput, peakDb, impact } = event
   const publish = (outcome: TapOutcome): void =>
-    useHoloStore.setState({ lastTap: { zone, confidence, outcome, at: Date.now() } })
+    useHoloStore.setState({ lastTap: { zone, confidence, outcome, at: Date.now(), peakDb, impact } })
 
   if (ignoredByInput) return publish('ignored-input')
   if (reason === 'no-calibration') {
@@ -400,7 +449,7 @@ engine.onTap((event) => {
   if (!zone) {
     // Reasons the user gets told apart by name, because each one has its own
     // fix; anything else just reads as "that didn't match a zone".
-    const named: TapOutcome[] = ['ambiguous', 'wrong-level', 'voice']
+    const named: TapOutcome[] = ['ambiguous', 'wrong-level', 'voice', 'not-a-tap']
     return publish(named.find((outcome) => outcome === reason) ?? 'unrecognized')
   }
 
@@ -414,6 +463,9 @@ engine.onTap((event) => {
     const control = context.profile?.controls.find((item) => item.slot === slot)
     if (!control) return publish('no-control')
     void window.flow.pressControl(control.id)
+    // Only now — a recognized tap on an unassigned zone fired nothing, so it
+    // shouldn't cost the user a second of deafness.
+    engine.beginCooldown(HOLO_COOLDOWN_MS[useHoloStore.getState().pace])
     publish('pressed')
   })
 })

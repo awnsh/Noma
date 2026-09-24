@@ -1,4 +1,4 @@
-import type { HoloZone, HoloZoneProfile } from '@shared/types'
+import type { HoloGates, HoloZone, HoloZoneProfile } from '@shared/types'
 
 /**
  * Holo's DSP — pure, framework/DOM-free math so it's unit-testable without
@@ -17,10 +17,11 @@ import type { HoloZone, HoloZoneProfile } from '@shared/types'
  *        plus spectral centroid and decay shape
  *     -> with >1 channel: relative level between channels, and (for
  *        channels of the same physical device) inter-channel arrival delay
- *     -> a voice gate on the raw samples (sustained + pitched + broadband),
- *        applied before calibration as well as before classification
- *     -> standardized nearest-centroid classification with an absolute
- *        "does this even resemble a calibrated tap" gate
+ *     -> an impact gate on the raw samples (did it decay like something
+ *        struck, or keep going like a voice or a cough), applied before
+ *        calibration as well as before classification
+ *     -> separability-weighted centroid + nearest-neighbour classification,
+ *        against bounds measured from the user's own calibration taps
  *
  * With one mic the zones are told apart purely by how the desk rings
  * (tone + decay); every additional mic channel adds real spatial
@@ -224,71 +225,63 @@ function logBandLevelsDb(power: Float64Array, sampleRate: number, fftSize: numbe
   return bandDb
 }
 
-// ------------------------------------------------------------ voice rejection
+// ----------------------------------------------------------- the impact gate
 
 /**
- * Speech is the one everyday sound that genuinely resembles a tap to the
- * onset detector: a syllable starts abruptly and, from a foot away, is as
- * loud as a knuckle on a desk. What it cannot fake is what happens next.
- * An impact is over within a few tens of milliseconds — all its energy came
- * from one collision and nothing replaces it. A voice is driven continuously
- * by the lungs, so 45-105 ms in it is still sounding, still repeating at the
- * speaker's pitch, and still spread across the spectrum by the vocal tract.
+ * "Was that an impact at all?", asked before any zone is considered.
  *
- * All three are measured on raw samples rather than on the standardized
- * feature vector, on purpose: this is a "was that even a tap" question, which
- * has to hold before any calibration exists. That also keeps a spoken word
- * out of the calibration wizard, where it would otherwise be averaged
- * straight into a zone's profile and quietly poison it.
+ * Everything that has falsely triggered Holo in real use — a voice, a cough,
+ * a sleeve dragging, a hand shifting on the desk — is a sound a person
+ * *makes over time*. A knuckle on a desk is not: all of its energy arrives
+ * in one collision and nothing replaces it, so from that instant it only
+ * ever gets quieter. That is the difference this measures, and it is a
+ * difference of physics rather than of timbre, which is why it holds for
+ * sounds nobody thought to calibrate against.
+ *
+ * Two numbers, both ratios (so neither depends on how hard the tap was):
+ * how much is left at 45-105 ms, and whether what is left is still falling
+ * at 110-180 ms. A cough is loud in both. A tap in a live room can be loud
+ * in the first — that is the room ringing, not the person — but never in the
+ * second, because a room's tail decays too. Both thresholds come from the
+ * user's own calibration taps (see `deriveGates`), so a lively desk in a
+ * tiled kitchen sets its own bar rather than being held to a constant that
+ * was picked on someone else's furniture.
  */
-export interface VoiceCheck {
-  /** Late-window energy relative to the attack, in dB. A knock is tens of dB
-   *  down by then; a held vowel is barely down at all. */
+export interface ImpactCheck {
+  /** Energy at 45-105 ms relative to the attack, in dB. */
   sustainDb: number
+  /** Energy at 110-180 ms relative to 45-105 ms, in dB. A decaying impact
+   *  keeps falling; a driven sound holds roughly level. */
+  drivenDb: number
   /** Strongest normalized autocorrelation at a speech pitch in the late
-   *  window (0..1). Voiced speech repeats; room reverb and noise do not. */
+   *  window (0..1). Not part of the accept/reject decision — it only picks
+   *  the wording, so "a voice" is never claimed about a cough or a scrape. */
   periodicity: number
-  /** Fraction of the log bands within VOICE_BREADTH_DB of the loudest one.
-   *  A vowel fills much of the spectrum; a ringing desk mode is one peak. */
-  breadth: number
 }
 
-/** The late window, measured from the onset: long after a knock has stopped,
- *  still comfortably inside one syllable. */
-const VOICE_FROM_MS = 45
-const VOICE_TO_MS = 105
-/** Speech's fundamental. Deliberately not wider — the higher the ceiling,
- *  the more of a desk's own resonant modes fall inside it. */
+/** Windows measured from the onset. The first is late enough that a knock is
+ *  over; the second is far enough past it to tell a decay from a hold. */
+const IMPACT_LATE_FROM_MS = 45
+const IMPACT_LATE_TO_MS = 105
+const IMPACT_TAIL_FROM_MS = 110
+const IMPACT_TAIL_TO_MS = 180
+/** Speech's fundamental. Only used for the wording of a rejection. */
 const VOICE_MIN_F0_HZ = 70
 const VOICE_MAX_F0_HZ = 330
 /** f0 is far below 1 kHz, so averaging groups of 4 samples before the lag
  *  search costs nothing and makes it ~16x cheaper. */
 const VOICE_DECIMATION = 4
-/** How far below the loudest band still counts as "there is sound here". */
-const VOICE_BREADTH_DB = 25
-
-/** Still this close to its own attack 45-105 ms later. No impact is. */
-export const VOICE_SUSTAIN_DB = -20
+/** Above this, a rejected sound is described to the user as a voice. */
 export const VOICE_PERIODICITY = 0.45
-export const VOICE_BREADTH = 0.35
 
 /**
- * All three conditions have to hold, and each one is carrying a specific
- * sound that must NOT be called a voice:
- *   - sustain alone would reject a real tap in a reverberant room, whose
- *     tail is genuinely still audible at 50 ms;
- *   - periodicity alone would reject a resonant desk, since a single ringing
- *     mode correlates with itself perfectly;
- *   - breadth alone would reject that same reverberant tail, which is
- *     broadband by definition.
- * Together they describe a sound that is still going, pitched, and shaped by
- * a vocal tract — which a knuckle on a desk never is. Unvoiced speech ("shh",
- * a whisper) fails the periodicity test and is left to the ordinary distance
- * gates, which is the right trade: it is far quieter than a tap and rarely
- * crosses the onset threshold in the first place.
+ * Rejected only when a sound is loud in *both* windows. Either one alone
+ * would throw away real taps: a live room keeps the first one up, and a dead
+ * room with a short window can flatter the second. Requiring both is what
+ * lets the gate be strict about coughs without being strict about desks.
  */
-export function isVoiceLike(check: VoiceCheck): boolean {
-  return check.sustainDb > VOICE_SUSTAIN_DB && check.periodicity > VOICE_PERIODICITY && check.breadth > VOICE_BREADTH
+export function isImpactLike(check: ImpactCheck, gates: HoloGates): boolean {
+  return check.sustainDb <= gates.maxSustainDb || check.drivenDb <= gates.maxDrivenDb
 }
 
 /** Mean-removed, `factor`x-decimated copy of `samples[from..to)`. */
@@ -336,56 +329,46 @@ function latePeriodicity(samples: ArrayLike<number>, from: number, to: number, s
   return best
 }
 
-/** How much of the spectrum the late window actually occupies. */
-function lateBreadth(samples: ArrayLike<number>, from: number, to: number, sampleRate: number): number {
-  let size = 256
-  while (size * 2 <= to - from) size *= 2
-  const segment = new Float64Array(size)
-  for (let i = 0; i < size && from + i < samples.length; i++) segment[i] = samples[from + i]
-
-  const bands = logBandLevelsDb(powerSpectrum(segment), sampleRate, size)
-  const peak = Math.max(...bands)
-  return bands.filter((db) => db >= peak - VOICE_BREADTH_DB).length / bands.length
-}
-
-/** The three voice measures for one channel's window. */
-export function measureVoice(samples: ArrayLike<number>, onset: number, sampleRate: number): VoiceCheck {
+/** The impact measures for one channel's window. */
+export function measureImpact(samples: ArrayLike<number>, onset: number, sampleRate: number): ImpactCheck {
   const frames = (ms: number): number => Math.round((sampleRate * ms) / 1000)
-  const from = onset + frames(VOICE_FROM_MS)
-  const to = Math.min(samples.length, onset + frames(VOICE_TO_MS))
+  const lateFrom = onset + frames(IMPACT_LATE_FROM_MS)
+  const lateTo = Math.min(samples.length, onset + frames(IMPACT_LATE_TO_MS))
+  const tailFrom = onset + frames(IMPACT_TAIL_FROM_MS)
+  const tailTo = Math.min(samples.length, onset + frames(IMPACT_TAIL_TO_MS))
 
   const head = meanSquare(samples, onset, onset + frames(5))
-  const sustainDb = clamp(toDb(meanSquare(samples, from, to)) - toDb(head), -80, 40)
-  // Too little audio left in the window to say anything about pitch or shape.
-  // The sustain figure alone is still meaningful and is reported as measured.
-  if (to - from < frames(20)) return { sustainDb, periodicity: 0, breadth: 0 }
+  const late = meanSquare(samples, lateFrom, lateTo)
+  const sustainDb = clamp(toDb(late) - toDb(head), -80, 40)
 
-  return {
-    sustainDb,
-    periodicity: latePeriodicity(samples, from, to, sampleRate),
-    breadth: lateBreadth(samples, from, to, sampleRate)
-  }
+  // Too little audio past the onset to judge the decay. Reported as "already
+  // decayed", which is the safe direction: the gate then never rejects on a
+  // measurement it could not actually make.
+  const tailShort = tailTo - tailFrom < frames(25)
+  const drivenDb = tailShort ? -80 : clamp(toDb(meanSquare(samples, tailFrom, tailTo)) - toDb(late), -80, 40)
+  const periodicity = lateTo - lateFrom < frames(20) ? 0 : latePeriodicity(samples, lateFrom, lateTo, sampleRate)
+
+  return { sustainDb, drivenDb, periodicity }
 }
 
 /**
- * The most conservative reading across every channel: the minimum of each
- * measure, so a sound is only treated as a voice when *all* channels agree
- * it is sustained, pitched and broadband. Channels of one mic hear nearly
- * the same thing, so this costs almost nothing in detection — and it means a
- * single odd channel can never suppress a real tap. Null when no channel
- * contains a usable onset (the same condition that makes a tap unreadable).
+ * The most conservative reading across every channel: a sound only counts as
+ * sustained/driven when *all* channels say so. Channels of one mic hear
+ * nearly the same thing, so this costs almost nothing in rejection power —
+ * and it means one odd channel can never suppress a real tap. Null when no
+ * channel contains a usable onset.
  */
-export function detectVoice(channels: ArrayLike<number>[], sampleRate: number): VoiceCheck | null {
-  const checks: VoiceCheck[] = []
+export function detectImpact(channels: ArrayLike<number>[], sampleRate: number): ImpactCheck | null {
+  const checks: ImpactCheck[] = []
   for (const samples of channels) {
     const onset = localizeOnset(samples)
-    if (onset >= 0) checks.push(measureVoice(samples, onset, sampleRate))
+    if (onset >= 0) checks.push(measureImpact(samples, onset, sampleRate))
   }
   if (checks.length === 0) return null
   return {
     sustainDb: Math.min(...checks.map((check) => check.sustainDb)),
-    periodicity: Math.min(...checks.map((check) => check.periodicity)),
-    breadth: Math.min(...checks.map((check) => check.breadth))
+    drivenDb: Math.min(...checks.map((check) => check.drivenDb)),
+    periodicity: Math.min(...checks.map((check) => check.periodicity))
   }
 }
 
@@ -508,22 +491,42 @@ export function averageFeatureVectors(vectors: number[][]): number[] {
  *  to be identical across a few calibration taps from becoming infinitely
  *  strict about tiny natural variation. */
 const MIN_SCALE = 0.18
+/** How far a dimension's weight may be pushed either way. A dimension that
+ *  separates zones well is worth more than one that doesn't, but never so
+ *  much that the decision rests on a single number. */
+const MIN_WEIGHT = 0.3
+const MAX_WEIGHT = 3
 
-/**
- * Builds zone profiles plus a shared per-dimension `scale` (pooled
- * within-zone standard deviation, blended with its own average so a
- * dimension that looked artificially steady across ~6 taps isn't trusted
- * beyond reason). Scaling is what makes distances comparable across
- * feature types (dB shape, delay, level) and lets one absolute threshold
- * mean the same thing for any mic setup.
- */
-export function buildModel(tapsByZone: Array<{ zone: HoloZone; taps: number[][] }>): {
+export interface HoloModel {
   zones: HoloZoneProfile[]
   scale: number[]
-} {
+  weights: number[]
+}
+
+/**
+ * Builds zone profiles plus two per-dimension vectors.
+ *
+ * `scale` (pooled within-zone standard deviation, blended with its own
+ * average so a dimension that looked artificially steady across a handful of
+ * taps isn't trusted beyond reason) makes distances comparable across
+ * feature types — dB shape, delay, level — so one threshold means the same
+ * thing on any mic setup.
+ *
+ * `weights` then asks a second, different question: of those standardized
+ * dimensions, which ones actually tell the zones *apart*? A band that varies
+ * just as much between two taps on the same spot as it does between spots
+ * carries no location information, and averaging it into the distance only
+ * adds noise — which is exactly how a tap lands on the wrong zone. Each
+ * weight is the spread of the zone means in that dimension divided by the
+ * within-zone spread (a Fisher ratio, in already-standardized units),
+ * normalized so the average weight is 1 and the overall distance scale is
+ * unchanged.
+ */
+export function buildModel(tapsByZone: Array<{ zone: HoloZone; taps: number[][] }>): HoloModel {
   const zones: HoloZoneProfile[] = tapsByZone.map(({ zone, taps }) => ({
     zone,
     features: averageFeatureVectors(taps),
+    taps,
     sampleCount: taps.length
   }))
   const dimension = zones[0]?.features.length ?? 0
@@ -541,22 +544,78 @@ export function buildModel(tapsByZone: Array<{ zone: HoloZone; taps: number[][] 
   const std = pooled.map((sum) => Math.sqrt(sum / Math.max(1, degrees)))
   const avgStd = std.reduce((a, b) => a + b, 0) / (std.length || 1)
   const scale = std.map((value) => Math.max(MIN_SCALE, Math.sqrt(0.5 * value * value + 0.5 * avgStd * avgStd)))
-  return { zones, scale }
+
+  // Spread of the zone means, in units of `scale` — how much of this
+  // dimension's variation is between zones rather than within one.
+  const separability = new Array(dimension).fill(0)
+  for (let d = 0; d < dimension; d++) {
+    const means = zones.map((profile) => profile.features[d] ?? 0)
+    const mean = means.reduce((a, b) => a + b, 0) / (means.length || 1)
+    const variance = means.reduce((sum, value) => sum + (value - mean) * (value - mean), 0) / (means.length || 1)
+    separability[d] = Math.sqrt(variance) / scale[d]
+  }
+  const avgSeparability = separability.reduce((a, b) => a + b, 0) / (separability.length || 1)
+  const weights =
+    avgSeparability > EPS
+      ? separability.map((value) => clamp(value / avgSeparability, MIN_WEIGHT, MAX_WEIGHT))
+      : new Array(dimension).fill(1)
+
+  return { zones, scale, weights }
 }
 
-/** Root-mean-square z-distance: ~1 for a typical repeat of the same tap. */
-export function scaledDistance(a: number[], b: number[], scale: number[]): number {
+/** Root-mean-square z-distance: ~1 for a typical repeat of the same tap.
+ *  `weights` is optional so the raw standardized distance stays available
+ *  (the model builder needs it before any weights exist). */
+export function scaledDistance(a: number[], b: number[], scale: number[], weights?: number[]): number {
   const length = Math.min(a.length, b.length, scale.length)
   if (length === 0) return Infinity
   let sum = 0
   for (let i = 0; i < length; i++) {
-    const z = (a[i] - b[i]) / scale[i]
+    const z = ((a[i] - b[i]) / scale[i]) * (weights?.[i] ?? 1)
     sum += z * z
   }
   return Math.sqrt(sum / length)
 }
 
-export type ClassificationReason = 'ok' | 'unrecognized' | 'ambiguous' | 'wrong-level' | 'voice' | 'no-calibration'
+function maxAbsZ(a: number[], b: number[], scale: number[], weights?: number[]): number {
+  let max = 0
+  const length = Math.min(a.length, b.length, scale.length)
+  for (let i = 0; i < length; i++) max = Math.max(max, Math.abs(((a[i] - b[i]) / scale[i]) * (weights?.[i] ?? 1)))
+  return max
+}
+
+/** How many of a zone's own calibration taps the nearest-neighbour half of
+ *  the distance averages over. */
+const KNN_NEIGHBOURS = 2
+/** How much of the distance comes from the zone's average tap rather than
+ *  its nearest individual ones. */
+const CENTROID_SHARE = 0.5
+
+/**
+ * Distance from a sound to one zone, as half "how far from this zone's
+ * average tap" and half "how far from the nearest taps actually recorded
+ * there".
+ *
+ * The average alone assumes every tap on a spot sounds like every other one,
+ * which real taps don't: force, knuckle angle and the exact square inch all
+ * move the sound, so a zone is a small cloud rather than a point, and a tap
+ * at the edge of its own cloud can sit closer to a neighbour's average than
+ * to its own. The nearest-neighbour half sees that cloud. Keeping both is
+ * deliberate shrinkage — with only a handful of taps per zone, individual
+ * neighbours are noisy, and the average is the steadier estimate.
+ */
+function zoneDistance(features: number[], profile: HoloZoneProfile, scale: number[], weights: number[]): number {
+  const centroid = scaledDistance(features, profile.features, scale, weights)
+  const taps = profile.taps ?? []
+  if (taps.length === 0) return centroid
+
+  const nearest = taps.map((tap) => scaledDistance(features, tap, scale, weights)).sort((a, b) => a - b)
+  const k = Math.min(KNN_NEIGHBOURS, nearest.length)
+  const knn = nearest.slice(0, k).reduce((a, b) => a + b, 0) / k
+  return CENTROID_SHARE * centroid + (1 - CENTROID_SHARE) * knn
+}
+
+export type ClassificationReason = 'ok' | 'unrecognized' | 'ambiguous' | 'wrong-level' | 'not-a-tap' | 'voice' | 'no-calibration'
 
 export interface ClassificationResult {
   zone: HoloZone | null
@@ -565,94 +624,166 @@ export interface ClassificationResult {
   reason: ClassificationReason
 }
 
-/** Overall (RMS) z-distance a tap may be from its nearest zone profile. A
- *  same-zone repeat scores ~1. */
-export const MAX_TRUSTED_DISTANCE = 2.8
-/** ...and no *single* feature may be wildly off. RMS alone lets a sound that
- *  matches a tap's tone but not its shape (a long ring, a bounce) average
- *  its way through; this catches exactly those. */
-export const MAX_SINGLE_FEATURE_Z = 8
-/** Best must beat the runner-up by this fraction, else "ambiguous". */
-export const MIN_CONFIDENCE_MARGIN = 0.06
-/** A sound this much louder than the loudest calibration tap, or this much
- *  quieter than the quietest, isn't the user's tap (a dropped object, a
- *  far-off noise). Generous so normal force variation still passes. */
-export const LEVEL_ABOVE_MARGIN_DB = 9
-export const LEVEL_BELOW_MARGIN_DB = 16
-
-export interface LevelCheck {
-  peakDb: number
-  range: { minDb: number; maxDb: number }
+/** Fallbacks for a calibration saved before gates were measured, and for the
+ *  degenerate case of a calibration with nothing to measure from. */
+export const DEFAULT_GATES: HoloGates = {
+  maxDistance: 2.8,
+  maxSingleFeatureZ: 8,
+  minMargin: 0.06,
+  minPeakDb: -70,
+  maxPeakDb: 0,
+  maxSustainDb: -20,
+  maxDrivenDb: -15
 }
 
-function maxAbsZ(a: number[], b: number[], scale: number[]): number {
-  let max = 0
-  const length = Math.min(a.length, b.length, scale.length)
-  for (let i = 0; i < length; i++) max = Math.max(max, Math.abs((a[i] - b[i]) / scale[i]))
-  return max
+/** Headroom over the worst calibration tap. Generous on purpose: a missed
+ *  tap is felt immediately and a false one only occasionally, so every bound
+ *  sits a clear margin outside what the user actually demonstrated. */
+const DISTANCE_HEADROOM = 1.3
+const PEAK_ABOVE_MARGIN_DB = 9
+const PEAK_BELOW_MARGIN_DB = 10
+const IMPACT_MARGIN_DB = 6
+
+function percentile(values: number[], fraction: number): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  return sorted[Math.min(sorted.length - 1, Math.max(0, Math.round(fraction * (sorted.length - 1))))]
+}
+
+/**
+ * Turns the calibration taps into the bounds above. The 90th percentile
+ * rather than the maximum, so one bad tap (a slip, a knock on the laptop
+ * itself) can't widen every gate; then a margin on top of that.
+ */
+export function deriveGates(looDistances: number[], peakDbs: number[], impacts: ImpactCheck[]): HoloGates {
+  const sustains = impacts.map((impact) => impact.sustainDb)
+  const drivens = impacts.map((impact) => impact.drivenDb)
+  return {
+    maxDistance: looDistances.length
+      ? clamp(percentile(looDistances, 0.9) * DISTANCE_HEADROOM, 1.5, 4.5)
+      : DEFAULT_GATES.maxDistance,
+    maxSingleFeatureZ: DEFAULT_GATES.maxSingleFeatureZ,
+    minMargin: DEFAULT_GATES.minMargin,
+    minPeakDb: peakDbs.length ? Math.min(...peakDbs) - PEAK_BELOW_MARGIN_DB : DEFAULT_GATES.minPeakDb,
+    maxPeakDb: peakDbs.length ? Math.max(...peakDbs) + PEAK_ABOVE_MARGIN_DB : DEFAULT_GATES.maxPeakDb,
+    maxSustainDb: sustains.length ? clamp(percentile(sustains, 0.9) + IMPACT_MARGIN_DB, -45, -6) : DEFAULT_GATES.maxSustainDb,
+    maxDrivenDb: drivens.length ? clamp(percentile(drivens, 0.9) + IMPACT_MARGIN_DB, -32, -4) : DEFAULT_GATES.maxDrivenDb
+  }
+}
+
+/**
+ * The sensitivity control, applied to the gates as well as to the onset
+ * threshold. One knob the user can actually reason about: "Light taps" leans
+ * towards firing on anything plausible, "Firm taps" towards only firing on
+ * something unmistakable. Which way to lean is a matter of where they are
+ * sitting and what else is in the room, so it belongs to them rather than to
+ * a constant in here.
+ */
+export function relaxGates(gates: HoloGates, sensitivity: HoloSensitivity): HoloGates {
+  const lean = { low: -1, medium: 0, high: 1 }[sensitivity]
+  if (lean === 0) return gates
+  return {
+    ...gates,
+    maxDistance: gates.maxDistance * (1 + 0.15 * lean),
+    minMargin: Math.max(0, gates.minMargin - 0.02 * lean),
+    minPeakDb: gates.minPeakDb - 4 * lean,
+    maxPeakDb: gates.maxPeakDb + 4 * lean,
+    maxSustainDb: gates.maxSustainDb + 3 * lean,
+    maxDrivenDb: gates.maxDrivenDb + 3 * lean
+  }
+}
+
+export interface ClassifyOptions {
+  weights?: number[]
+  gates?: HoloGates
+  /** Peak loudness of the sound, for the level bounds. */
+  peakDb?: number
+  /** Decay measures, for the impact gate. */
+  impact?: ImpactCheck
 }
 
 export function classifyZone(
   features: number[],
   profiles: HoloZoneProfile[],
   scale: number[],
-  level?: LevelCheck
+  options: ClassifyOptions = {}
 ): ClassificationResult {
   if (profiles.length === 0) return { zone: null, confidence: 0, reason: 'no-calibration' }
 
-  if (
-    level &&
-    (level.peakDb > level.range.maxDb + LEVEL_ABOVE_MARGIN_DB || level.peakDb < level.range.minDb - LEVEL_BELOW_MARGIN_DB)
-  ) {
+  const gates = options.gates ?? DEFAULT_GATES
+  const weights = options.weights ?? new Array(scale.length).fill(1)
+
+  if (options.peakDb !== undefined && (options.peakDb > gates.maxPeakDb || options.peakDb < gates.minPeakDb)) {
     return { zone: null, confidence: 0, reason: 'wrong-level' }
+  }
+  if (options.impact && !isImpactLike(options.impact, gates)) {
+    // Named apart only so the user is told something true about what they
+    // heard themselves do; both are the same rejection.
+    return { zone: null, confidence: 0, reason: options.impact.periodicity > VOICE_PERIODICITY ? 'voice' : 'not-a-tap' }
   }
 
   const ranked = profiles
     .map((profile) => ({
       zone: profile.zone,
-      distance: scaledDistance(features, profile.features, scale),
-      worst: maxAbsZ(features, profile.features, scale)
+      distance: zoneDistance(features, profile, scale, weights),
+      worst: maxAbsZ(features, profile.features, scale, weights)
     }))
     .sort((a, b) => a.distance - b.distance)
   const [best, runnerUp] = ranked
 
-  if (!(best.distance <= MAX_TRUSTED_DISTANCE) || best.worst > MAX_SINGLE_FEATURE_Z) {
+  if (!(best.distance <= gates.maxDistance) || best.worst > gates.maxSingleFeatureZ) {
     return { zone: null, confidence: 0, reason: 'unrecognized' }
   }
   if (!runnerUp) return { zone: best.zone, confidence: 1, reason: 'ok' }
 
   const margin = runnerUp.distance === 0 ? 0 : 1 - best.distance / runnerUp.distance
-  if (margin < MIN_CONFIDENCE_MARGIN) return { zone: null, confidence: margin, reason: 'ambiguous' }
+  if (margin < gates.minMargin) return { zone: null, confidence: margin, reason: 'ambiguous' }
   return { zone: best.zone, confidence: Math.min(1, margin), reason: 'ok' }
 }
 
+export interface CalibrationEvaluation {
+  /** Share of the calibration taps that land on their own zone. */
+  accuracy: number
+  /** Each tap's distance to its own zone with itself held out — the spread
+   *  of genuine taps, which is what `deriveGates` turns into `maxDistance`. */
+  distances: number[]
+}
+
 /**
- * Leave-one-out accuracy over the calibration taps themselves: each tap is
- * classified against profiles rebuilt without it. Tells the user, right
- * after calibrating, whether their zones are actually separable on this
- * setup — instead of finding out by tapping and nothing happening.
+ * Leave-one-out over the calibration taps themselves: each tap is scored
+ * against a model rebuilt without it. Tells the user, right after
+ * calibrating, whether their zones are actually separable on this setup —
+ * instead of finding out by tapping and nothing happening — and supplies the
+ * distance distribution the gates are derived from.
+ *
+ * `scale` and `weights` are not rebuilt per fold: they are second-order
+ * statistics over every tap, so holding one out barely moves them, and
+ * recomputing them 30-odd times would buy nothing.
  */
 export function evaluateCalibration(
   tapsByZone: Array<{ zone: HoloZone; taps: number[][] }>,
-  scale: number[]
-): number {
+  scale: number[],
+  weights?: number[]
+): CalibrationEvaluation {
   let correct = 0
   let total = 0
+  const distances: number[] = []
   for (const { zone, taps } of tapsByZone) {
     if (taps.length < 2) continue
     taps.forEach((tap, index) => {
       const profiles: HoloZoneProfile[] = tapsByZone.map((entry) => {
         const used = entry.zone === zone ? entry.taps.filter((_, i) => i !== index) : entry.taps
-        return { zone: entry.zone, features: averageFeatureVectors(used), sampleCount: used.length }
+        return { zone: entry.zone, features: averageFeatureVectors(used), taps: used, sampleCount: used.length }
       })
       const ranked = profiles
-        .map((profile) => ({ zone: profile.zone, distance: scaledDistance(tap, profile.features, scale) }))
+        .map((profile) => ({ zone: profile.zone, distance: zoneDistance(tap, profile, scale, weights ?? []) }))
         .sort((a, b) => a.distance - b.distance)
       total++
       if (ranked[0].zone === zone) correct++
+      const own = ranked.find((entry) => entry.zone === zone)
+      if (own) distances.push(own.distance)
     })
   }
-  return total === 0 ? 0 : correct / total
+  return { accuracy: total === 0 ? 0 : correct / total, distances }
 }
 
 // ------------------------------------------------------------ onset detection

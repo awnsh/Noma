@@ -4,14 +4,16 @@ import {
   blockEnergy,
   classifyZone,
   createOnsetDetectorState,
+  DEFAULT_GATES,
+  detectImpact,
   detectOnset,
-  detectVoice,
   extractTapFeatures,
-  isVoiceLike,
+  relaxGates,
   tapPeakDb,
   onsetThreshold,
   type ClassificationResult,
   type HoloSensitivity,
+  type ImpactCheck,
   type OnsetDetectorState
 } from './classifier'
 
@@ -34,16 +36,33 @@ import {
 
 const MAX_CHANNELS = 2
 const BLOCK_FRAMES = 512
-const RING_FRAMES = 8192
-/** Audio kept for feature extraction (~128 ms at 48 kHz): wide enough that
+const RING_FRAMES = 16384
+/** Audio kept for feature extraction (~256 ms at 48 kHz): wide enough that
  *  timer jitter in the finalize delay can't push the tap's start out of it. */
-const TAP_WINDOW_FRAMES = 6144
-/** After an onset, wait this long so the whole knock (resonance plus the
- *  ~100 ms tail/bounce check that separates it from a set-down object) is in
- *  the ring buffer before extracting features. */
-const FINALIZE_DELAY_MS = 110
+const TAP_WINDOW_FRAMES = 12288
+/**
+ * After an onset, wait this long before extracting features.
+ *
+ * This is the whole cost of the impact gate: telling a knock from a cough
+ * means watching what the sound does at 110-180 ms, which means being 190 ms
+ * behind it. That is a real delay and it was weighed rather than assumed —
+ * against needing two or three taps before one registers, which is what the
+ * shorter window was costing in practice. One tap at 190 ms beats three at
+ * 110 ms, and 190 ms is still under the ~200 ms where a press stops feeling
+ * like a direct response.
+ */
+const FINALIZE_DELAY_MS = 190
 /** A real tap's own ringing can wobble back over the threshold — without
- *  this one physical tap could register several times. */
+ *  this one physical tap could register several times. Measured from the
+ *  onset, not from the finalize that follows it, so the analysis delay above
+ *  doesn't quietly become dead time on top of it and swallow a deliberate
+ *  second tap.
+ *
+ *  Deliberately separate from the cooldown that follows a control actually
+ *  firing (`beginCooldown`): this one is about one sound arriving twice and
+ *  has to stay short, because a tap Holo *rejected* is a tap the user is
+ *  about to make again, and swallowing the retry is exactly what made it
+ *  feel like it takes three tries. */
 const TAP_REFRACTORY_MS = 220
 /** A key/mouse event within this long *before* (or shortly after) an
  *  acoustic onset means the sound was the user's typing/clicking. */
@@ -69,6 +88,10 @@ export interface HoloTapEvent extends ClassificationResult {
   features: number[]
   /** True when the sound was discarded because a key/mouse event coincided. */
   ignoredByInput: boolean
+  /** What was actually measured, so a misfire can be reported as numbers
+   *  rather than "it's flaky" — shown under Details on the Holo page. */
+  peakDb: number
+  impact: ImpactCheck | null
 }
 
 export type HoloTapListener = (event: HoloTapEvent) => void
@@ -79,6 +102,8 @@ export interface HoloStatus {
   level: number
   /** True while the mic is switched off because the user is typing/clicking. */
   muted: boolean
+  /** True while taps are being ignored because a control just fired. */
+  coolingDown: boolean
 }
 
 interface DeviceInput {
@@ -96,7 +121,7 @@ export class HoloCaptureEngine {
   private devices: DeviceInput[] = []
   private silentSink: GainNode | null = null
   private finalizeTimer: ReturnType<typeof setTimeout> | null = null
-  private lastTapAt = -Infinity
+  private lastOnsetAt = -Infinity
   private onsetAt = 0
   private calibration: HoloCalibration | null = null
   private sensitivity: HoloSensitivity = 'medium'
@@ -104,6 +129,7 @@ export class HoloCaptureEngine {
   private muted = false
   private unmuteTimer: ReturnType<typeof setTimeout> | null = null
   private settleUntil = 0
+  private cooldownUntil = 0
   private lastInputActivityAt = -Infinity
   private nextInputActivityAt = Infinity
   private readonly tapListeners = new Set<HoloTapListener>()
@@ -112,6 +138,9 @@ export class HoloCaptureEngine {
   private peakRatio = 0
   /** Peak level (dB) of the most recent accepted tap — used to find which side the mic is on. */
   lastTapPeakDb = -Infinity
+  /** How the most recent sound decayed. Read by the calibration wizard so the
+   *  gates are derived from the user's own taps (see classifier.ts). */
+  lastTapImpact: ImpactCheck | null = null
   private lastStatusAt = 0
   private starting: Promise<void> | null = null
 
@@ -243,6 +272,7 @@ export class HoloCaptureEngine {
     if (this.unmuteTimer) clearTimeout(this.unmuteTimer)
     this.unmuteTimer = null
     this.muted = false
+    this.cooldownUntil = 0
     for (const device of this.devices) {
       device.processor.onaudioprocess = null
       device.processor.disconnect()
@@ -260,6 +290,30 @@ export class HoloCaptureEngine {
 
   setCalibration(calibration: HoloCalibration | null): void {
     this.calibration = calibration
+  }
+
+  /**
+   * Ignore taps for `ms` after a control has actually fired.
+   *
+   * A macro is the end of a thought, not something pressed in a burst — so
+   * the second tap arriving a beat later is almost never a second action.
+   * It's the same one made again by someone who wasn't sure the first
+   * landed, and firing twice off that is worse than missing a genuine quick
+   * repeat. This deliberately does *not* apply to sounds Holo rejected:
+   * those are the ones the user is about to retry, and they only ever wait
+   * out TAP_REFRACTORY_MS.
+   *
+   * Called by the store once a press really happens — not when a zone is
+   * merely recognized — so a tap on a zone with nothing assigned to it
+   * doesn't quietly cost the user a second of deafness.
+   */
+  beginCooldown(ms: number): void {
+    this.cooldownUntil = performance.now() + ms
+  }
+
+  /** Milliseconds left of the post-press cooldown (0 when not in one). */
+  get cooldownRemaining(): number {
+    return Math.max(0, this.cooldownUntil - performance.now())
   }
 
   onTap(listener: HoloTapListener): () => void {
@@ -355,9 +409,12 @@ export class HoloCaptureEngine {
       const threshold = onsetThreshold(device.detector, this.sensitivity)
       this.peakRatio = Math.max(this.peakRatio, energy / threshold)
 
+      // The detector still runs through a cooldown so its noise floor and the
+      // level meter stay live — only the decision to analyse is skipped.
       const isOnset = detectOnset(energy, device.detector, this.sensitivity)
-      if (isOnset && !this.finalizeTimer && now - this.lastTapAt >= TAP_REFRACTORY_MS) {
+      if (isOnset && !this.finalizeTimer && now >= this.cooldownUntil && now - this.lastOnsetAt >= TAP_REFRACTORY_MS) {
         this.onsetAt = Date.now()
+        this.lastOnsetAt = now
         this.nextInputActivityAt = Infinity
         this.finalizeTimer = setTimeout(() => this.finalizeTap(), FINALIZE_DELAY_MS)
       }
@@ -365,7 +422,7 @@ export class HoloCaptureEngine {
 
     if (now - this.lastStatusAt > 60) {
       this.lastStatusAt = now
-      const status = { level: this.peakRatio, muted: this.muted }
+      const status = { level: this.peakRatio, muted: this.muted, coolingDown: now < this.cooldownUntil }
       this.peakRatio = 0
       for (const listener of this.statusListeners) listener(status)
     }
@@ -373,7 +430,6 @@ export class HoloCaptureEngine {
 
   private finalizeTap(): void {
     this.finalizeTimer = null
-    this.lastTapAt = performance.now()
     const context = this.audioContext
     if (!context) return
 
@@ -394,26 +450,23 @@ export class HoloCaptureEngine {
     const features = extractTapFeatures(channels, deviceOf, context.sampleRate)
     if (!features) return
     this.lastTapPeakDb = tapPeakDb(channels)
+    this.lastTapImpact = detectImpact(channels, context.sampleRate)
 
     const sinceInput = this.onsetAt - this.lastInputActivityAt
     const ignoredByInput =
       (sinceInput >= 0 && sinceInput <= INPUT_GATE_BEFORE_MS) ||
       this.nextInputActivityAt - this.onsetAt <= INPUT_GATE_AFTER_MS
     if (ignoredByInput) {
-      const result: HoloTapEvent = { zone: null, confidence: 0, reason: 'unrecognized', features, ignoredByInput }
+      const result: HoloTapEvent = {
+        zone: null,
+        confidence: 0,
+        reason: 'unrecognized',
+        features,
+        ignoredByInput,
+        peakDb: this.lastTapPeakDb,
+        impact: this.lastTapImpact
+      }
       for (const listener of this.tapListeners) listener(result)
-      return
-    }
-
-    // Speech is the other thing loud and abrupt enough to get this far, and
-    // unlike typing it has no key event to give it away — so it is told apart
-    // by how the sound itself behaves (see classifier.ts's voice rejection).
-    // Checked ahead of the calibration capture below on purpose: a word
-    // spoken during the wizard must never become part of a zone's profile.
-    const voice = detectVoice(channels, context.sampleRate)
-    if (voice && isVoiceLike(voice)) {
-      const spoken: HoloTapEvent = { zone: null, confidence: 0, reason: 'voice', features, ignoredByInput: false }
-      for (const listener of this.tapListeners) listener(spoken)
       return
     }
 
@@ -427,15 +480,30 @@ export class HoloCaptureEngine {
     const calibration = this.calibration
     if (!calibration) return
     if (calibration.layout !== this.layout || calibration.scale.length !== features.length) {
-      const mismatch: HoloTapEvent = { zone: null, confidence: 0, reason: 'no-calibration', features, ignoredByInput: false }
+      const mismatch: HoloTapEvent = {
+        zone: null,
+        confidence: 0,
+        reason: 'no-calibration',
+        features,
+        ignoredByInput: false,
+        peakDb: this.lastTapPeakDb,
+        impact: this.lastTapImpact
+      }
       for (const listener of this.tapListeners) listener(mismatch)
       return
     }
     const result = classifyZone(features, calibration.zones, calibration.scale, {
+      weights: calibration.weights,
+      // `gates` is always present in practice: holoRepository refuses any
+      // calibration whose version isn't current, and the current one writes
+      // them. DEFAULT_GATES keeps that an assumption the types enforce.
+      gates: relaxGates(calibration.gates ?? DEFAULT_GATES, this.sensitivity),
       peakDb: this.lastTapPeakDb,
-      range: calibration.levelRange
+      impact: this.lastTapImpact ?? undefined
     })
-    for (const listener of this.tapListeners) listener({ ...result, features, ignoredByInput: false })
+    for (const listener of this.tapListeners) {
+      listener({ ...result, features, ignoredByInput: false, peakDb: this.lastTapPeakDb, impact: this.lastTapImpact })
+    }
   }
 }
 

@@ -13,14 +13,24 @@ beforeEach(() => {
 const FULL_CALIBRATION: HoloCalibration = {
   version: HOLO_CALIBRATION_VERSION,
   scale: [0.3, 0.3, 0.3],
+  weights: [1, 1, 1],
   layout: '1',
   levelRange: { minDb: -30, maxDb: -12 },
+  gates: {
+    maxDistance: 2.4,
+    maxSingleFeatureZ: 8,
+    minMargin: 0.06,
+    minPeakDb: -40,
+    maxPeakDb: -3,
+    maxSustainDb: -22,
+    maxDrivenDb: -16
+  },
   accuracy: 0.95,
   zones: [
-    { zone: 'frontLeft', features: [1, 0, 0], sampleCount: 6 },
-    { zone: 'frontRight', features: [0, 1, 0], sampleCount: 6 },
-    { zone: 'rearLeft', features: [0, 0, 1], sampleCount: 6 },
-    { zone: 'rearRight', features: [1, 1, 1], sampleCount: 6 }
+    { zone: 'frontLeft', features: [1, 0, 0], taps: [[1, 0, 0]], sampleCount: 6 },
+    { zone: 'frontRight', features: [0, 1, 0], taps: [[0, 1, 0]], sampleCount: 6 },
+    { zone: 'rearLeft', features: [0, 0, 1], taps: [[0, 0, 1]], sampleCount: 6 },
+    { zone: 'rearRight', features: [1, 1, 1], taps: [[1, 1, 1]], sampleCount: 6 }
   ],
   calibratedAt: 12345
 }
