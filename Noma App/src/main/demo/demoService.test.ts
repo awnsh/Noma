@@ -15,7 +15,7 @@ import { DEMO_MACRO_TRIGGER, LEARNED_MACRO_TRIGGER } from '@shared/constants'
 /** The seed's Chrome FIND is Ctrl+F on Windows and Cmd+F on macOS. */
 const PRIMARY_MODIFIER = process.platform === 'darwin' ? 'Meta' : 'Control'
 
-/** Mirrors database/seed.ts's SEED_APPLICATIONS for 'code' and 'chrome' —
+/** Mirrors database/seed.ts's SEED_APPLICATIONS for 'code' and 'chrome'
  *  demoService.resetDemoData relies on getSeedDefaultControl, which reads
  *  those exact rows, so the test DB's starting controls must match. */
 function seedDemoProfiles(): void {
@@ -69,12 +69,12 @@ describe('simulateDemoWorkflow', () => {
     }
 
     // Deliberately tuned to stay under the repeatedShortcut threshold so the
-    // demo shows exactly one clean suggestion — see demoService.ts's doc
+    // demo shows exactly one clean suggestion: see demoService.ts's doc
     // comment on REPEAT_COUNT.
     expect(shortcutPatterns).toHaveLength(0)
   })
 
-  it('is repeatable — reset then simulate again produces the exact same result', () => {
+  it('is repeatable; reset then simulate again produces the exact same result', () => {
     simulateDemoWorkflow()
     const firstRun = detectPatterns(getWorkflowEventsSince(0)).filter(
       (p) => p.kind === 'repeatedSequence'
@@ -124,7 +124,7 @@ describe('simulateDemoMultiStepWorkflow (WORKFLOW LEARNING flagship demo)', () =
     })
   })
 
-  it('is repeatable — reset then simulate again produces the exact same result', () => {
+  it('is repeatable; reset then simulate again produces the exact same result', () => {
     simulateDemoMultiStepWorkflow()
     const first = detectPatterns(getWorkflowEventsSince(0)).filter((p) => p.kind === 'multiStepWorkflow')
 

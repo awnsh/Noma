@@ -7,18 +7,18 @@ const DEFAULT_STATUS_TIMEOUT_MS = 2000
 const DEFAULT_PING_TIMEOUT_MS = 1000
 
 /**
- * A single line of text in, a single line of text out — the entire
+ * A single line of text in, a single line of text out: the entire
  * dependency SerialHardwareDevice has on an actual serial port. Kept this
  * narrow specifically so the protocol logic below (the part worth testing)
  * never needs a real port, or the native `serialport` module, to run its
- * tests — see serialDevice.test.ts, which drives everything through an
+ * tests: see serialDevice.test.ts, which drives everything through an
  * in-memory fake transport instead. `serialTransport.ts`'s
  * `openSerialPort()` is the one place that wraps a real port into this
  * shape; nothing else in this file knows a real port exists.
  */
 export interface LineTransport {
   /** Writes one already-JSON-encoded line. The transport (not the caller)
-   *  is responsible for framing — appending the trailing newline the wire
+   *  is responsible for framing; appending the trailing newline the wire
    *  format (docs/hardware-protocol.md) requires. */
   write(line: string): void
   /** Fires once per received line, newline already stripped. Returns an
@@ -33,17 +33,17 @@ interface WireMessage {
 }
 
 /**
- * SerialHardwareDevice — the first real (non-virtual) `HardwareDevice`
+ * SerialHardwareDevice: the first real (non-virtual) `HardwareDevice`
  * implementation (docs/product-audit.md's "hardware-readiness" gap;
  * docs/hardware-protocol.md's proposed real transport). Speaks the exact
  * line-delimited JSON vocabulary that document specifies and
- * VirtualHardwareDevice already exercises in-process today — same message
- * names, same payload shapes, just over a real wire instead of an
+ * VirtualHardwareDevice already exercises in-process today; same message
+ * names, same payload shapes, over a real wire instead of an
  * in-memory call. `firmware/noma_device/noma_device.ino` is the device-side
  * half of this same contract.
  *
  * Deliberately NOT wired into main/index.ts's getDefaultHardwareDevice()
- * yet — same posture as the STM32HardwareDevice stub this supersedes, for
+ * yet; same posture as the STM32HardwareDevice stub this supersedes, for
  * a real reason rather than caution alone: the Virtual Keyboard page's
  * "simulate a press / add a module" tools (pressControl/addModuleByType/
  * removeModule/configureModule, called directly on the concrete device by
@@ -51,17 +51,16 @@ interface WireMessage {
  * on a device that has real physical buttons and no module bus yet.
  * Deciding whether/how those UI affordances coexist with a real attached
  * device is a product decision for once real hardware is actually in hand
- * to point at — not something this class should resolve unilaterally by
+ * to point at; not something this class should resolve unilaterally by
  * quietly becoming the default. Bring-up tooling (getLog/ping/reset) IS
- * meaningfully real here — a ping round-trips over the actual wire, not an
- * in-process no-op — so those are implemented for real, matching
+ * meaningfully real here: a ping round-trips over the actual wire, not an
+ * in-process no-op; so those are implemented for real, matching
  * brainstorm.md section 20's "Developer Mode exercises real hardware"
  * intent.
  *
  * "Refocus, but verify, or refuse" (docs/architecture.md) applies here
  * too: connect() only ever reports success once a real device has actually
- * answered GET_STATUS with a compatible protocol version — never just
- * because the serial port happened to open. Fails closed on a major
+ * answered GET_STATUS with a compatible protocol version; never * because the serial port happened to open. Fails closed on a major
  * version mismatch per hardware-protocol.md's versioning note, rather than
  * guessing at compatibility.
  */
@@ -152,8 +151,8 @@ export class SerialHardwareDevice implements HardwareDevice {
   async getStatus(): Promise<DeviceStatus> {
     // Returns the local mirror (kept current by connect() and by every
     // subsequent DEVICE_STATUS push) rather than round-tripping the wire on
-    // every call — same synchronous-feeling contract VirtualHardwareDevice
-    // gives callers, just backed by real state instead of in-memory state.
+    // every call; same synchronous-feeling contract VirtualHardwareDevice
+    // gives callers, backed by real state instead of in-memory state.
     return {
       connected: this.connected,
       deviceType: 'serial',
@@ -179,7 +178,7 @@ export class SerialHardwareDevice implements HardwareDevice {
   }
 
   /** Returns an unsubscribe function. Same shape as VirtualHardwareDevice's
-   *  — Developer Mode's live log view doesn't need to know which
+   * . Developer Mode's live log view doesn't need to know which
    *  implementation it's looking at. */
   onLogEntry(callback: (entry: DeviceLogEntry) => void): () => void {
     this.logListeners.add(callback)
@@ -196,7 +195,7 @@ export class SerialHardwareDevice implements HardwareDevice {
     this.log = []
   }
 
-  /** Round-trips a real PING/PONG over the wire — unlike
+  /** Round-trips a real PING/PONG over the wire; unlike
    *  VirtualHardwareDevice's near-instant in-process version, this measures
    *  actual serial latency and can genuinely time out if nothing answers. */
   async ping(): Promise<{ ok: boolean; latencyMs: number }> {
@@ -212,7 +211,7 @@ export class SerialHardwareDevice implements HardwareDevice {
   }
 
   /** Cycles the real connection: tears down the line, then re-runs the full
-   *  GET_STATUS handshake — a genuine reconnect, not just a state flip. */
+   *  GET_STATUS handshake: a genuine reconnect, not a state flip. */
   async reset(): Promise<void> {
     await this.disconnect()
     await this.connect()
@@ -255,7 +254,7 @@ export class SerialHardwareDevice implements HardwareDevice {
     try {
       message = JSON.parse(trimmed) as WireMessage
     } catch {
-      return // a corrupted/partial line — ignore, the next line resyncs
+      return // a corrupted/partial line; ignore, the next line resyncs
     }
     if (typeof message !== 'object' || message === null || typeof message.type !== 'string') return
 
@@ -301,9 +300,9 @@ export class SerialHardwareDevice implements HardwareDevice {
         const waiters = this.pendingStatus.splice(0, this.pendingStatus.length)
         for (const resolve of waiters) resolve(status)
 
-        // An unsolicited DEVICE_STATUS — the device announcing its own
-        // state change, not just replying to a GET_STATUS this class asked
-        // for — still updates the local mirror and notifies listeners.
+        // An unsolicited DEVICE_STATUS: the device announcing its own
+        // state change, not replying to a GET_STATUS this class asked
+        // for; still updates the local mirror and notifies listeners.
         // During the initial connect() handshake `this.connected` is still
         // false at this exact point (connect() flips it right after this
         // resolves), so this branch only ever fires for a later, genuinely
@@ -322,7 +321,7 @@ export class SerialHardwareDevice implements HardwareDevice {
         return
       }
       default:
-        // Unknown message type — ignore rather than throw. A future
+        // Unknown message type; ignore rather than throw. A future
         // firmware/protocol revision may send something this build
         // predates; failing open here (skip it) is safer than crashing the
         // host process over one line it doesn't recognize yet.
@@ -344,7 +343,7 @@ export class SerialHardwareDevice implements HardwareDevice {
 
   private emitStatus(): void {
     // Built directly (not via the async getStatus()) so listeners are
-    // notified synchronously — everything it needs is already in memory,
+    // notified synchronously; everything it needs is already in memory,
     // and callers reacting to a status change (e.g. the renderer push in
     // main/index.ts) shouldn't wait an extra microtask for no reason.
     const status: DeviceStatus = {

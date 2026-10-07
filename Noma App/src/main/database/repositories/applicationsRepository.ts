@@ -20,7 +20,7 @@ function rowToApplication(row: ApplicationRow): Application {
 }
 
 /** Every known application (seeded, or discovered via a profile created
- *  from an accepted suggestion) — used by the Macro Studio's "assign to
+ *  from an accepted suggestion); used by the Macro Studio's "assign to
  *  control" and launch-application pickers. */
 export function getAllApplications(): Application[] {
   const db = getDatabase()
@@ -40,18 +40,18 @@ export function getApplicationById(id: string): Application | null {
 
 /**
  * Inserts an application row if it doesn't already exist. On conflict,
- * deliberately leaves `name`/`icon` untouched — a seeded or
+ * deliberately leaves `name`/`icon` untouched: a seeded or
  * user-chosen display name (e.g. "Google Chrome") shouldn't be clobbered by
  * a later live-detection re-insert carrying the raw process name (e.g.
  * "chrome"). Required before a profile can be created for this application
- * at all — `profiles.application_id` has a foreign key to this table.
+ * at all: `profiles.application_id` has a foreign key to this table.
  *
  * `executable_path` is the one exception to "on conflict, do nothing": it's
  * backfilled with `COALESCE`, keeping whatever's already on file if the
  * incoming value is null, but filling it in the first time a real path
- * becomes known. Without this, every app in `SEED_APPLICATIONS` (seed.ts) —
+ * becomes known. Without this, every app in `SEED_APPLICATIONS` (seed.ts)
  * including VS Code and Chrome, the two most likely to be the very first
- * thing a user opens — would have its `executable_path` permanently stuck
+ * thing a user opens; would have its `executable_path` permanently stuck
  * at NULL from the pre-seeded row with no path, since a plain `DO NOTHING`
  * would silently discard the real path the very first time the real
  * process is actually detected running. Real OS-icon extraction

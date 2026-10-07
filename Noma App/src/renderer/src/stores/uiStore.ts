@@ -4,7 +4,6 @@ import { create } from 'zustand'
 // AppShell.tsx rather than deleted.
 export type Page =
   | 'home'
-  | 'controls'
   | 'workflows'
   | 'learning'
   | 'activity'
@@ -38,6 +37,10 @@ function readDeveloperTools(): boolean {
 interface UiStoreState {
   activePage: Page
   developerTools: boolean
+  /** Macro to select when Macro Studio next shows; consumed there. */
+  pendingMacroId: string | null
+  openMacro: (macroId: string) => void
+  clearPendingMacro: () => void
   setActivePage: (page: Page) => void
   setDeveloperTools: (enabled: boolean) => void
 }
@@ -45,6 +48,9 @@ interface UiStoreState {
 export const useUiStore = create<UiStoreState>((set, get) => ({
   activePage: 'home',
   developerTools: readDeveloperTools(),
+  pendingMacroId: null,
+  openMacro: (macroId) => set({ pendingMacroId: macroId, activePage: 'macros' }),
+  clearPendingMacro: () => set({ pendingMacroId: null }),
   setActivePage: (page) => set({ activePage: page }),
   setDeveloperTools: (enabled) => {
     try {

@@ -34,7 +34,7 @@ describe('shortcutRole', () => {
   })
 })
 
-describe('chainMakesSense — workflows the user accepted still pass', () => {
+describe('chainMakesSense; workflows the user accepted still pass', () => {
   it.each([
     ['Screenshot → Claude → Paste → VS Code', [key('code', 'Meta', 'Shift', 'S'), app('claude'), key('claude', 'Control', 'V'), app('code')]],
     ['Edit → Select all → Copy', [click('notepad', 'label:Edit'), click('notepad', 'label:Select all'), key('notepad', 'Control', 'C')]],
@@ -51,7 +51,7 @@ describe('chainMakesSense — workflows the user accepted still pass', () => {
   })
 })
 
-describe('chainMakesSense — the junk from real data is refused', () => {
+describe('chainMakesSense: the junk from real data is refused', () => {
   it.each([
     ['only switching windows', [app('claude'), app('chrome'), app('msedge')]],
     ['an unrelated two-app hop', [app('ms-teams'), app('msedge')]],
@@ -77,7 +77,7 @@ describe('chainMakesSense — the junk from real data is refused', () => {
   })
 })
 
-describe('storedSuggestionMakesSense — re-checking suggestions made before the rules', () => {
+describe('storedSuggestionMakesSense; re-checking suggestions made before the rules', () => {
   it.each([
     ['suggestion:multistep:app:claude->app:chrome->app:msedge', false],
     ['suggestion:shortcut:msedge::Control+A', false],
@@ -96,7 +96,7 @@ describe('storedSuggestionMakesSense — re-checking suggestions made before the
   })
 })
 
-describe('detectPatterns — noise is removed before detection', () => {
+describe('detectPatterns; noise is removed before detection', () => {
   const shortcut = (applicationId: string, timestamp: number, ...comboKeys: string[]): WorkflowEvent => ({
     applicationId,
     eventType: 'shortcut',
@@ -110,7 +110,7 @@ describe('detectPatterns — noise is removed before detection', () => {
   })
 
   it('an Undo takes back the action it undid, leaving what was meant', () => {
-    // Copy in Chrome, go to Edge, Paste, Undo, Paste as plain text — what
+    // Copy in Chrome, go to Edge, Paste, Undo, Paste as plain text; what
     // was meant is "Copy → Edge → Paste as plain text".
     const events = [0, 1, 2, 3].flatMap((i) => {
       const t = i * 60_000

@@ -1,7 +1,7 @@
 import { app } from 'electron'
 import type { WhatsNew } from '@shared/types'
 import { notesSince } from '@shared/releaseNotes'
-import { getDatabase } from './database/db'
+import { getSetting, setSetting } from './database/repositories/settingsRepository'
 import { getOnboardingState } from './database/repositories/onboardingRepository'
 
 /** The last version whose notes were shown (or a fresh install's first). */
@@ -43,17 +43,9 @@ export function markWhatsNewSeen(): void {
 }
 
 function readLastSeen(): string | null {
-  const row = getDatabase().prepare('SELECT value FROM settings WHERE key = ?').get(LAST_SEEN_KEY) as
-    | { value: string }
-    | undefined
-  return row?.value ?? null
+  return getSetting(LAST_SEEN_KEY) ?? null
 }
 
 function writeLastSeen(version: string): void {
-  getDatabase()
-    .prepare(
-      `INSERT INTO settings (key, value) VALUES (@key, @value)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value`
-    )
-    .run({ key: LAST_SEEN_KEY, value: version })
+  setSetting(LAST_SEEN_KEY, version)
 }

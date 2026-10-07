@@ -3,17 +3,17 @@ import type { LineTransport } from './serialDevice'
 /**
  * Wraps a real USB CDC serial port into the minimal `LineTransport` shape
  * `SerialHardwareDevice` depends on. This is the one place in the app that
- * needs the `serialport` npm package — deliberately isolated here behind a
+ * needs the `serialport` npm package; deliberately isolated here behind a
  * runtime `require` (not a static `import`) so nothing else in the app
  * fails to build or typecheck before that package is installed. Not wired
- * into anything yet (see serialDevice.ts's doc comment for why) — call
+ * into anything yet (see serialDevice.ts's doc comment for why); call
  * this yourself once you're ready to point a running Noma App at a real
  * attached device.
  *
  * Before calling this, install the two packages it needs:
  *   npm install serialport @serialport/parser-readline
  *
- * Not unit tested directly — it needs a real port, which no CI/dev
+ * Not unit tested directly; it needs a real port, which no CI/dev
  * environment here has. serialDevice.test.ts covers all of the actual
  * protocol logic (framing, handshake, version checks, message parsing)
  * through an in-memory fake transport instead; this function is

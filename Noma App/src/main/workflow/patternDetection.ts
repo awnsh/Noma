@@ -5,13 +5,13 @@ import { chainMakesSense, isIgnoredApp, isNoiseShortcut, isTrivialShortcut, shor
 
 /**
  * Deterministic/statistical pattern detection (brainstorm.md sections
- * 11-12) — explicitly NOT an LLM. Pure functions over already-captured,
+ * 11-12); explicitly NOT an LLM. Pure functions over already-captured,
  * already-sanitized WorkflowEvent metadata, so this is trivially unit
  * testable with synthetic events and never touches the database itself.
  *
  * Covers 3 of the 5 categories section 11 lists: repeated shortcuts,
  * repeated sequences, and frequently used controls. "Underused controls"
- * and "application-specific behavior" are deliberately deferred — both
+ * and "application-specific behavior" are deliberately deferred; both
  * need more context (the full set of configured controls, and a richer
  * per-application baseline) than is worth building before there's a
  * suggestion engine (Phase 5) to act on it.
@@ -19,15 +19,15 @@ import { chainMakesSense, isIgnoredApp, isNoiseShortcut, isTrivialShortcut, shor
  * A fourth capability, `detectCrossAppWorkflows`, was added later: the
  * three detectors above only ever look *within* one application (every
  * group key is scoped `applicationId::...`), so a workflow that spans
- * multiple apps — take a screenshot, switch to an editor, paste, repeat,
- * eventually commit — never showed up as anything more than isolated
+ * multiple apps; take a screenshot, switch to an editor, paste, repeat,
+ * eventually commit; never showed up as anything more than isolated
  * per-app noise. It reads the same already-captured WorkflowEvent stream,
- * just including 'appSwitch' events (see shared/types) alongside shortcuts,
+ * including 'appSwitch' events (see shared/types) alongside shortcuts,
  * so Flow can recognize the shape of a workflow across platforms, not only
  * the individual keystrokes within one.
  *
- * A fifth capability, `detectMultiStepWorkflows` — WORKFLOW LEARNING, Noma's
- * core differentiator (see docs/product-audit.md) — generalizes
+ * A fifth capability, `detectMultiStepWorkflows`. WORKFLOW LEARNING, Noma's
+ * core differentiator (see docs/product-audit.md); generalizes
  * `detectCrossAppWorkflows` from a fixed 2-step pair to an arbitrary-length
  * (3-6 step) chain, matched *approximately* rather than exactly: two
  * occurrences count as "the same workflow" even if one has an extra step in
@@ -50,11 +50,11 @@ const SEQUENCE_WINDOW_MS = 15_000
 
 /**
  * Spam guard: two genuinely separate, deliberate uses of the same shortcut
- * or control are realistically never closer together than this — a real
+ * or control are realistically never closer together than this: a real
  * press-release-press-again takes at least a brief moment. Anything faster
  * is either the OS's own key-repeat while a key is held down (as fast as
  * ~30ms between repeats) or someone mashing a button in a quick burst
- * (testing it, venting, curious what it does) — neither is a distinct
+ * (testing it, venting, curious what it does); neither is a distinct
  * repeated *workflow*, which is what these patterns are meant to catch.
  * Without this, 5 presses in the same half-second would look identical to
  * a suggestion engine as 5 uses genuinely spread across a real work
@@ -68,7 +68,7 @@ const MIN_REPEAT_GAP_MS = 400
 export const CROSS_APP_WORKFLOW_THRESHOLD = 3
 /**
  * How far apart two steps (an app switch or a shortcut) can be while still
- * counting as one continuous cross-app move — wider than SEQUENCE_WINDOW_MS
+ * counting as one continuous cross-app move; wider than SEQUENCE_WINDOW_MS
  * on purpose. A cross-app hop (alt-tabbing to paste into another window,
  * waiting a moment for it to focus) naturally takes longer than two
  * shortcuts pressed back-to-back inside one app.
@@ -76,13 +76,13 @@ export const CROSS_APP_WORKFLOW_THRESHOLD = 3
 const WORKFLOW_STEP_WINDOW_MS = 20_000
 /**
  * How soon after a workflow pair's last completed round a following step
- * still counts as "what this workflow leads to" — e.g. switching to a git
- * client right after several rounds of pasting into an editor — rather than
+ * still counts as "what this workflow leads to"; e.g. switching to a git
+ * client right after several rounds of pasting into an editor; rather than
  * an unrelated later action picked up by coincidence.
  */
 const CLOSING_STEP_WINDOW_MS = 30_000
 /** A closing step needs to follow the pattern's own repeat-runs at least
- *  this many separate times before it's reported — one coincidence isn't a
+ *  this many separate times before it's reported; one coincidence isn't a
  *  pattern. */
 const CLOSING_STEP_MIN_RUNS = 2
 
@@ -92,7 +92,7 @@ const CLOSING_STEP_MIN_RUNS = 2
  * later one that lands within MIN_REPEAT_GAP_MS of the last one actually
  * counted. A real, spread-out repeated workflow passes through untouched
  * (every real gap is already well above the floor); a spam burst collapses
- * toward a single occurrence, so it can't rack up a threshold on its own —
+ * toward a single occurrence, so it can't rack up a threshold on its own
  * this is the one mechanism behind every "spam vs. workflow" case below,
  * applied per pattern kind at its own natural occurrence marker (a
  * shortcut/control's own timestamp, or a sequence pair's completion time).
@@ -111,7 +111,7 @@ function countSpacedOccurrences(timestamps: number[]): number {
 }
 
 /** Two counted occurrences further apart than this belong to different
- *  "sittings" — see DetectedPatternBase.sessionCount. */
+ *  "sittings": see DetectedPatternBase.sessionCount. */
 const SESSION_GAP_MS = 5 * 60_000
 
 /** Number of separate sittings the given occurrence timestamps fall into. */
@@ -133,7 +133,7 @@ const UNDO_WINDOW_MS = 10_000
  * taken out (see workflowSense.ts): getting-around shortcuts (Alt+Tab,
  * Ctrl+Arrow, Ctrl+Backspace), system windows, and corrections. An Undo
  * removes itself *and* the action it took back, so "Paste → Undo → Paste as
- * plain text" is just "Paste as plain text", which is what was meant.
+ * plain text" is "Paste as plain text", which is what was meant.
  * Idempotent, so every detector can safely start from it.
  */
 function withoutNoise(events: WorkflowEvent[]): WorkflowEvent[] {
@@ -186,12 +186,12 @@ export function detectPatterns(rawEvents: WorkflowEvent[]): DetectedPattern[] {
 
 /**
  * A `crossAppWorkflow` pair is exactly the shape `detectMultiStepWorkflows`
- * generalizes — so whenever a richer, already-threshold-passing multi-step
+ * generalizes; so whenever a richer, already-threshold-passing multi-step
  * chain fully contains a 2-step pair (as a contiguous run of the same step
  * signatures), the pair is the same underlying behavior seen through a
  * narrower lens, not a second, independent thing the user did. Reported on
- * its own it would just be redundant noise next to the fuller suggestion
- * (STEP 4: fewer, higher-quality suggestions) — so it's dropped here, in
+ * its own it would be redundant noise next to the fuller suggestion
+ * (STEP 4: fewer, higher-quality suggestions); so it's dropped here, in
  * favor of the multi-step suggestion, rather than shown twice.
  */
 function isSubsumedByMultiStepWorkflow(pair: DetectedPattern, multiStepWorkflows: DetectedPattern[]): boolean {
@@ -212,7 +212,7 @@ function isSubsumedByMultiStepWorkflow(pair: DetectedPattern, multiStepWorkflows
 }
 
 /** Whether every element of `needle`, in order, appears as a contiguous run
- *  somewhere inside `haystack`. Pure array containment — used both to drop
+ *  somewhere inside `haystack`. Pure array containment; used both to drop
  *  a `crossAppWorkflow` pair already covered by a fuller multi-step chain
  *  (above) and, inside `detectMultiStepWorkflows` itself, to drop a shorter
  *  chain that's already covered by a longer one. */
@@ -319,8 +319,7 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
     if (first.applicationId !== second.applicationId) continue
     // A "sequence" means two *different* steps done together repeatedly
     // (Copy -> Paste). The same shortcut pressed back-to-back several times
-    // (e.g. Ctrl+T x5, typed fast) is not a sequence — it's just
-    // detectRepeatedShortcuts' job, and double-counting it here used to
+    // (e.g. Ctrl+T x5, typed fast) is not a sequence; it's // detectRepeatedShortcuts' job, and double-counting it here used to
     // produce a nonsensical "Ctrl+T -> Ctrl+T" two-step macro suggestion.
     if (first.comboKeys.join('+') === second.comboKeys.join('+')) continue
     if (
@@ -335,7 +334,7 @@ function detectRepeatedSequences(events: WorkflowEvent[]): DetectedPattern[] {
     const sequence = [first.comboKeys.join('+'), second.comboKeys.join('+')]
     const key = `${first.applicationId ?? 'unknown'}::${sequence.join('->')}`
     // The pair's completion time (when the second step actually happened)
-    // is this occurrence's marker for the same spam guard used above —
+    // is this occurrence's marker for the same spam guard used above
     // rapidly alternating Copy/Paste/Copy/Paste in a quick burst (someone
     // testing or mashing, not doing real work) collapses toward one
     // occurrence instead of racking up SEQUENCE_THRESHOLD on its own.
@@ -369,7 +368,7 @@ interface WorkflowStepEvent {
   timestamp: number
 }
 
-/** A short, stable, human-readable label for one step — used both for
+/** A short, stable, human-readable label for one step; used both for
  *  descriptions and as the per-step piece of a group's signature key. */
 export function stepSignature(step: WorkflowStep): string {
   switch (step.type) {
@@ -384,7 +383,7 @@ export function stepSignature(step: WorkflowStep): string {
 
 /**
  * A handful of shortcuts are meaningful enough, on sight, that showing the
- * raw combo instead of what it *does* would undersell what Flow noticed —
+ * raw combo instead of what it *does* would undersell what Flow noticed
  * "Screenshot -> Claude Code -> Paste" reads as a real workflow; "Meta+
  * Shift+S -> Claude Code -> Control+V" reads as a debug log. Deliberately
  * small and Windows-specific (the same closed-vocabulary spirit as
@@ -400,7 +399,7 @@ const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
 
 /** e.g. ['Control', 'V'] -> "Paste", ['Control', 'K'] -> "Control+K". When
  *  the application is known, an app-specific name wins ("Blade" for Ctrl+B
- *  in DaVinci Resolve) — see appKnowledge.ts. */
+ *  in DaVinci Resolve): see appKnowledge.ts. */
 export function shortcutDisplayLabel(comboKeys: string[], applicationId: string | null = null): string {
   const combo = comboKeys.join('+')
   return inAppLabel(applicationId, comboKeys) ?? SHORTCUT_DISPLAY_LABELS[combo] ?? combo
@@ -423,7 +422,7 @@ export function describeStep(step: WorkflowStep): string {
  * interleaved in the order they actually happened, controlActivation
  * excluded (a physical control press on Noma's own hardware isn't "moving
  * between platforms"). Two appSwitch rows landing on the same application
- * back-to-back collapse into one — a real hop always moves to a
+ * back-to-back collapse into one: a real hop always moves to a
  * *different* app, so a stray duplicate (e.g. a context refresh that isn't
  * a genuine switch) shouldn't count as a second one.
  */
@@ -479,8 +478,8 @@ function buildWorkflowSteps(events: WorkflowEvent[]): WorkflowStepEvent[] {
 const PASS_THROUGH_MS = 800
 
 interface WorkflowOccurrence {
-  /** Index of the pair's first step in the full `steps` array — kept
-   *  (rather than just the timestamp) so findClosingStep can look up
+  /** Index of the pair's first step in the full `steps` array; kept
+   *  (rather than the timestamp) so findClosingStep can look up
    *  exactly what happened right after this specific occurrence. */
   index: number
   timestamp: number
@@ -488,16 +487,16 @@ interface WorkflowOccurrence {
 
 /**
  * Recognizes short (two-step) chains that involve moving between
- * applications — the app-switch-aware sibling of detectRepeatedSequences,
+ * applications: the app-switch-aware sibling of detectRepeatedSequences,
  * which only ever looks at two shortcuts inside one app. A pair here always
  * includes at least one 'appSwitch' step; a same-app pair of two shortcuts
  * stays exclusively detectRepeatedSequences' territory, so the two
  * detectors never double-report the same underlying behavior.
  *
  * This is deliberately not an executable macro suggestion the way
- * repeatedSequence is — there's no "switch to this app" step in the macro
+ * repeatedSequence is; there's no "switch to this app" step in the macro
  * vocabulary (see actionExecutor.ts; launchApplication is disabled on
- * purpose) — so suggestionRules.ts treats this as informational: naming the
+ * purpose); so suggestionRules.ts treats this as informational: naming the
  * real workflow Flow noticed, not offering to automate half of it.
  */
 function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
@@ -537,7 +536,7 @@ function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
       ? `${chain} repeated ${count} times, usually followed by ${describeStep(closingStep)}`
       : `${chain} repeated ${count} times`
 
-    // The real gap this pair took, each time it happened — median rather
+    // The real gap this pair took, each time it happened; median rather
     // than the latest or first, so one unusually slow or fast repeat (user
     // got distracted mid-workflow once) doesn't set the replay pace.
     const gaps = group.occurrences
@@ -563,11 +562,11 @@ function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
 
 /**
  * What, if anything, consistently happens right after this chain finishes a
- * "run" — one or more back-to-back repeats with no real break in between.
+ * "run"; one or more back-to-back repeats with no real break in between.
  * Only the last occurrence of each run is a candidate point (an occurrence
- * still mid-loop would just see the next repeat starting, not the
+ * still mid-loop would see the next repeat starting, not the
  * workflow's actual conclusion), and a candidate needs to show up after at
- * least CLOSING_STEP_MIN_RUNS separate runs before it's reported — one
+ * least CLOSING_STEP_MIN_RUNS separate runs before it's reported; one
  * coincidence isn't a pattern.
  */
 function findClosingStep(occurrences: WorkflowOccurrence[], steps: WorkflowStepEvent[]): WorkflowStep | undefined {
@@ -603,7 +602,7 @@ function findClosingStep(occurrences: WorkflowOccurrence[], steps: WorkflowStepE
 export const IN_APP_CLICK_THRESHOLD = 3
 
 /**
- * In-app workflows that involve clicking on-screen controls — "Cut, then
+ * In-app workflows that involve clicking on-screen controls: "Cut, then
  * Delete" inside a video editor, "Duplicate, then Merge" in an image editor.
  * The click-aware sibling of detectRepeatedSequences: two adjacent, different
  * steps in the SAME application, at least one of them a click (a pair of two
@@ -680,47 +679,47 @@ function detectInAppClickPairs(events: WorkflowEvent[]): DetectedPattern[] {
 }
 
 // ---------------------------------------------------------------------------
-// WORKFLOW LEARNING — multi-step, approximately-matched workflow detection.
+// WORKFLOW LEARNING; multi-step, approximately-matched workflow detection.
 // ---------------------------------------------------------------------------
 
 export const MULTI_STEP_WORKFLOW_THRESHOLD = 3
 const MULTI_STEP_MIN_LENGTH = 3
 const MULTI_STEP_MAX_LENGTH = 6
 /** A window needs at least this fraction of *distinct* steps to count as
- *  informative — rejects degenerate "A, B, A, B" filler that would
+ *  informative; rejects degenerate "A, B, A, B" filler that would
  *  otherwise pad out a window's length without saying anything new (STEP 4:
  *  "avoid extremely broad patterns such as keypress -> keypress -> keypress"). */
 const MIN_INFORMATIVENESS = 0.5
 /**
  * Two step-chains count as "the same workflow" once their longest-common-
  * subsequence ratio clears this bar AND they start and end on the same
- * step — the anchor requirement keeps matching semantically meaningful
+ * step: the anchor requirement keeps matching semantically meaningful
  * (a chain that starts or ends somewhere completely different is a
  * different workflow, however similar its middle), while the ratio itself
  * is what lets one occurrence with an extra/missing middle step (e.g. an
- * uncaptured keystroke — see captureFilter.ts) still match another that
+ * uncaptured keystroke: see captureFilter.ts) still match another that
  * doesn't have it.
  */
 const WORKFLOW_SIMILARITY_THRESHOLD = 0.75
 
 interface WorkflowWindow {
   steps: WorkflowStep[]
-  /** Real timestamp of each entry in `steps`, same order — kept so the
+  /** Real timestamp of each entry in `steps`, same order; kept so the
    *  chosen representative window's actual pacing survives into the final
-   *  pattern (see `stepDelaysMs` below), not just its shape. */
+   *  pattern (see `stepDelaysMs` below), not its shape. */
   stepTimestamps: number[]
   signatures: string[]
-  /** Timestamp of the window's last step — this occurrence's marker for
+  /** Timestamp of the window's last step: this occurrence's marker for
    *  countSpacedOccurrences, same convention every other detector uses. */
   completedAt: number
 }
 
 /** `stepDelaysMs[i]` = real ms between `timestamps[i-1]` and `timestamps[i]`,
- *  `stepDelaysMs[0] = 0` (nothing precedes the first step) — shared by every
+ *  `stepDelaysMs[0] = 0` (nothing precedes the first step); shared by every
  *  detector that reports a `stepDelaysMs`-carrying pattern. Capped at
  *  WORKFLOW_STEP_WINDOW_MS, which every caller's gap already is by
  *  construction (that's the continuity requirement that put the steps in
- *  the same window/pair to begin with) — the cap is defensive, not load-bearing. */
+ *  the same window/pair to begin with): the cap is defensive, not load-bearing. */
 function stepDelaysFromTimestamps(timestamps: number[]): number[] {
   return timestamps.map((timestamp, index) =>
     index === 0 ? 0 : Math.min(WORKFLOW_STEP_WINDOW_MS, Math.max(0, timestamp - timestamps[index - 1]))
@@ -728,7 +727,7 @@ function stepDelaysFromTimestamps(timestamps: number[]): number[] {
 }
 
 /** Every contiguous, time-continuous, sufficiently-informative window of
- *  length 3-6 steps in the given step stream — the raw candidates
+ *  length 3-6 steps in the given step stream: the raw candidates
  *  `clusterWorkflowWindows` groups into recurring workflows. */
 function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
   const windows: WorkflowWindow[] = []
@@ -740,7 +739,7 @@ function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
       let continuous = true
       for (let i = 1; i < slice.length; i++) {
         const gap = slice[i].timestamp - slice[i - 1].timestamp
-        // Too far apart to be one continuous chain — or, where a click is
+        // Too far apart to be one continuous chain; or, where a click is
         // involved, too close together to be two deliberate clicks (see
         // detectInAppClickPairs).
         const mashed =
@@ -766,9 +765,9 @@ function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
       const distinctCount = new Set(signatures).size
       if (distinctCount / signatures.length < MIN_INFORMATIVENESS) continue
 
-      // Require either a genuine app switch (this is the "workflow" case —
+      // Require either a genuine app switch (this is the "workflow" case
       // moving between contexts) or enough distinct steps to be a rich,
-      // clearly-not-random same-app chain — mirrors the same reasoning
+      // clearly-not-random same-app chain; mirrors the same reasoning
       // detectCrossAppWorkflows uses for its own 2-step case, generalized.
       // A click on a real on-screen control is a meaningful step in its own
       // right (Cut, then Delete), so a chain containing one is a candidate
@@ -814,7 +813,7 @@ interface WorkflowCluster {
 
 /**
  * Greedily groups windows into clusters of "the same workflow, approximately
- * matched" — see WORKFLOW_SIMILARITY_THRESHOLD. Longer windows are
+ * matched": see WORKFLOW_SIMILARITY_THRESHOLD. Longer windows are
  * considered first and become representatives before shorter ones, so a
  * fuller chain anchors its cluster rather than a partial one; a window that
  * doesn't clear the similarity bar against any existing representative
@@ -849,7 +848,7 @@ function clusterWorkflowWindows(windows: WorkflowWindow[]): WorkflowCluster[] {
 
 /**
  * The cluster's most common exact shape (by occurrence count, first-seen to
- * break ties) — NOT necessarily the window that happened to seed the
+ * break ties). NOT necessarily the window that happened to seed the
  * cluster during greedy grouping (clusterWorkflowWindows may seed a cluster
  * with a longer, rarer, only-approximately-matching window before the more
  * common exact shape is even seen). Recomputing this after clustering is
@@ -874,7 +873,7 @@ function representativeWindow(occurrences: WorkflowWindow[]): WorkflowWindow {
 }
 
 /**
- * Recognizes recurring multi-step (3-6 step) chains — WORKFLOW LEARNING,
+ * Recognizes recurring multi-step (3-6 step) chains. WORKFLOW LEARNING,
  * Noma's core differentiator: "screenshot -> switch to Claude Code -> paste
  * -> switch back," repeated, becomes one recognized workflow, not isolated
  * per-pair noise. Reuses the same time-continuity window
@@ -917,7 +916,7 @@ export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPatte
   }
 
   // Keep only the longest chain among any that are contiguous subsets of a
-  // longer surviving one — the "screenshot -> Claude Code -> paste" chain
+  // longer surviving one: the "screenshot -> Claude Code -> paste" chain
   // should produce exactly one suggestion, not also a redundant "screenshot
   // -> Claude Code" one for the same underlying behavior.
   const sortedByLength = [...candidates].sort(
@@ -933,7 +932,7 @@ export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPatte
 
   // A loop done several times in a row shows up once per starting point:
   // "Edit → Select all → Copy", "Select all → Copy → Edit", "Copy → Edit →
-  // Select all". Same steps, so the same workflow — keep the rotation seen
+  // Select all". Same steps, so the same workflow; keep the rotation seen
   // most often, which is where the user actually starts it.
   const stepSet = (candidate: (typeof candidates)[number]): string =>
     [...candidate.representative.signatures].sort().join('|')

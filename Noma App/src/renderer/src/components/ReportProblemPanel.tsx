@@ -32,8 +32,7 @@ export function ReportProblemPanel() {
     <section className={`mb-8 px-5 py-4 ${CARD}`}>
       <div className="text-xs uppercase tracking-widest text-neutral-500">Report a problem</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
-        Something not working? Describe what you did and what happened. You can add a short technical summary of this
-        install; read it first, it&apos;s never sent automatically.
+        You can add a technical summary of this install. Read it first; it&apos;s never sent automatically.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button

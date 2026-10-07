@@ -7,7 +7,7 @@ import { WorkflowNotice, type NoticeDismissReason } from '../components/Workflow
  *
  * It renders nothing at all until main sends a workflow, which matters more
  * than it looks: the window is created once and then kept, so most of its
- * life is spent hidden and empty. No shell, no sidebar, no stores — the
+ * life is spent hidden and empty. No shell, no sidebar, no stores. The
  * notice must not drag the app's state machinery into a surface that has to
  * stay cheap enough to sit permanently on top of everything else.
  */
@@ -41,7 +41,7 @@ export function NoticeSurface() {
         // choice this card is the wrong size to ask for: which of the four
         // control slots the workflow should live on. Main decides whether
         // that is needed and either accepts outright or opens the app on
-        // this suggestion — see the REVIEW handler.
+        // this suggestion. See the REVIEW handler.
         void window.flow.reviewWorkflowNoticeInApp(notice.suggestion.id)
         setNotice(null)
       }}

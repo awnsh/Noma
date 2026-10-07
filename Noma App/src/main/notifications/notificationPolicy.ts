@@ -9,13 +9,13 @@ import type { PatternKind, SuggestionStatus } from '@shared/types'
 /**
  * Whether Noma has earned the right to interrupt.
  *
- * Kept pure — no database, no window, no clock of its own — because this is
+ * Kept pure; no database, no window, no clock of its own; because this is
  * the part of the feature that has to be *right*, and the part most likely
  * to be tuned later. Everything that touches Electron or SQLite lives in
  * workflowNotifier.ts and calls in here for the decision.
  *
  * The bar is deliberately high. A suggestion appearing in the app's own
- * Suggestions panel costs the user nothing — they see it when they choose
+ * Suggestions panel costs the user nothing; they see it when they choose
  * to look. A surface that floats over whatever they are actually doing
  * costs them attention every single time, so it has to clear several
  * independent hurdles rather than one.
@@ -35,7 +35,7 @@ export interface NotificationCandidate {
 export interface NotificationState {
   /** When any workflow notice was last shown (the shared cooldown). */
   lastNotifiedAt: number | null
-  /** True while a notice is still on screen — never stack two. */
+  /** True while a notice is still on screen; never stack two. */
   noticeVisible: boolean
   now: number
 }
@@ -43,7 +43,7 @@ export interface NotificationState {
 /**
  * Why a candidate was passed over. Returned rather than logged so the
  * decision is inspectable from a test and from Developer Mode, instead of
- * "nothing happened and nobody knows why" — the same reasoning behind
+ * "nothing happened and nobody knows why": the same reasoning behind
  * Holo's per-tap outcome line.
  */
 export type NotificationVerdict =
@@ -68,7 +68,7 @@ export function shouldNotifyForWorkflow(
     return { notify: false, reason: 'not-a-workflow' }
   }
   // Accepted, rejected and dismissed all mean the user has already had this
-  // conversation. "Not now" (dismissed) keeps the workflow — it just stops
+  // conversation. "Not now" (dismissed) keeps the workflow; it stops
   // Noma raising it again unprompted.
   if (candidate.status !== 'pending') return { notify: false, reason: 'already-resolved' }
   if (candidate.notifiedAt !== null) return { notify: false, reason: 'already-notified' }
@@ -88,7 +88,7 @@ export function shouldNotifyForWorkflow(
 }
 
 /**
- * The one candidate to announce out of everything Flow currently knows —
+ * The one candidate to announce out of everything Flow currently knows
  * the most-repeated, then the most confident. Returns null when none of
  * them has earned it, which is the overwhelmingly common case.
  */

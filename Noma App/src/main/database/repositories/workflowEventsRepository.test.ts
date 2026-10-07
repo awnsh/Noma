@@ -70,7 +70,7 @@ describe('getShortcutUsageStats', () => {
     expect(getShortcutUsageStats()).toHaveLength(2)
   })
 
-  it('ignores controlActivation events — only real captured shortcuts count', () => {
+  it('ignores controlActivation events; only real captured shortcuts count', () => {
     insertWorkflowEvent({
       applicationId: 'code',
       eventType: 'controlActivation',
@@ -126,7 +126,7 @@ describe('getControlUsageStats', () => {
     expect(control2).toMatchObject({ count: 1, firstUsed: 1500, lastUsed: 1500 })
   })
 
-  it('ignores shortcut events — only real control presses count', () => {
+  it('ignores shortcut events; only real control presses count', () => {
     insertWorkflowEvent({
       applicationId: 'code',
       eventType: 'shortcut',
@@ -167,7 +167,7 @@ describe('getDailyActivityCounts', () => {
     expect(counts[2].count).toBe(1)
     expect(counts[1].date).toBe(localDateKey(new Date(2026, 8, 2)))
     expect(counts[1].count).toBe(1)
-    expect(counts[0].count).toBe(0) // Sep 1 — zero-filled, not missing
+    expect(counts[0].count).toBe(0) // Sep 1; zero-filled, not missing
 
     vi.useRealTimers()
   })

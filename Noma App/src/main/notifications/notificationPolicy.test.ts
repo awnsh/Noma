@@ -91,7 +91,7 @@ describe('shouldNotifyForWorkflow', () => {
   })
 
   it('reports the candidate’s own shortcoming ahead of the cooldown', () => {
-    // Otherwise a workflow that was simply too new would be reported as
+    // Otherwise a workflow that was too new would be reported as
     // "blocked by the cooldown", and tuning the wrong number is the natural
     // next move after reading that.
     const verdict = shouldNotifyForWorkflow(
@@ -126,7 +126,7 @@ describe('pickWorkflowToNotify', () => {
     expect(chosen?.suggestionId).toBe('fresh')
   })
 
-  it('returns null when nothing has earned an interruption — the usual case', () => {
+  it('returns null when nothing has earned an interruption: the usual case', () => {
     expect(pickWorkflowToNotify([candidate({ occurrenceCount: 1 })], state())).toBeNull()
     expect(pickWorkflowToNotify([], state())).toBeNull()
   })

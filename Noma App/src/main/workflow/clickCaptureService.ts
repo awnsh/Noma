@@ -7,7 +7,7 @@ import type { ClickInspector } from './uiaInspector'
 
 export interface CapturedClickEvent {
   applicationId: string | null
-  /** `label:<name>` or `zone:<col>x<row>` — see clickTarget.ts. */
+  /** `label:<name>` or `zone:<col>x<row>`: see clickTarget.ts. */
   clickTarget: string
   timestamp: number
 }
@@ -65,7 +65,7 @@ export class ClickCaptureService {
     // No known application (nothing focused / Flow itself) -> nothing to attribute a click to.
     if (!applicationId) return
     // Browsers, chat and meeting apps put people's names and page content in
-    // their buttons — see isClickCaptureExcluded. Skipped before inspecting.
+    // their buttons: see isClickCaptureExcluded. Skipped before inspecting.
     if (isClickCaptureExcluded(applicationId)) return
     const inspection = await this.inspector.inspect(x, y)
     if (!inspection) return
@@ -78,7 +78,7 @@ export class ClickCaptureService {
 
   private readonly handleMouseDown = (event: UiohookMouseEvent): void => {
     if (event.button !== LEFT_BUTTON) return
-    // A control/macro's own click step fires through this exact hook too —
+    // A control/macro's own click step fires through this exact hook too
     // see selfInjectedClicks.ts. Checked first, before the (async) UIA
     // inspection, so Flow's own replayed click is never even looked at.
     if (isSelfInjectedClick()) return

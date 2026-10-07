@@ -139,7 +139,7 @@ export function toMacApplication(raw: RawFrontmostApp): Application {
     id: macApplicationId(raw.bundleId, executable),
     name: raw.name || executable,
     // The executable name, matching what processNameForPid (macos.ts)
-    // reports for a pid — click replay compares the two.
+    // reports for a pid; click replay compares the two.
     processName: executable,
     // The .app bundle: iconService reads the app's real icon from it (macAppIcon.ts).
     executablePath: raw.bundlePath ?? undefined
@@ -207,7 +207,7 @@ export class MacOSAdapter implements PlatformOSAdapter {
           this.lastKnownPid = raw.processId
           for (const listener of this.listeners) listener(application)
         } catch {
-          // Malformed/partial line — ignore, the next one resyncs.
+          // Malformed/partial line; ignore, the next one resyncs.
         }
       })
     }

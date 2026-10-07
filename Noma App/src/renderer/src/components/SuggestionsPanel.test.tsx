@@ -43,8 +43,8 @@ describe('SuggestionsPanel', () => {
 
     render(<SuggestionsPanel />)
 
-    expect(await screen.findByText(/Noma hasn.t noticed a pattern yet\./)).toBeInTheDocument()
-    expect(screen.getByText(/Keep working normally/)).toBeInTheDocument()
+    expect(await screen.findByText(/A workflow appears here/)).toBeInTheDocument()
+    expect(screen.queryByText(/Noma hasn.t noticed a pattern yet\./)).not.toBeInTheDocument()
   })
 
   it('renders the real suggestion list once one exists, not the empty state', async () => {
@@ -52,7 +52,7 @@ describe('SuggestionsPanel', () => {
 
     render(<SuggestionsPanel />)
 
-    // The raw, configuration-flavored `title` field is no longer shown —
+    // The raw, configuration-flavored `title` field is no longer shown.
     // NomaMoment replaces it with human framing (see NomaMoment.test.tsx);
     // the suggestion's own explanation text is still real, still rendered.
     expect(await screen.findByText(PENDING_SUGGESTION.explanation)).toBeInTheDocument()

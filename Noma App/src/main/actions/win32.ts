@@ -2,15 +2,15 @@ import koffi, { type LibraryHandle } from 'koffi'
 import { isWindows } from '../platform'
 
 /**
- * The single place user32.dll gets loaded and its functions declared —
+ * The single place user32.dll gets loaded and its functions declared
  * shared by windowFocus.ts, windowClose.ts, and systemCommands.ts so
  * there's one definition of each signature, not three.
  *
  * Why koffi: it's an FFI library with N-API prebuilt binaries (same
- * reasoning as better-sqlite3/uiohook-napi — no C++ toolchain on this
+ * reasoning as better-sqlite3/uiohook-napi; no C++ toolchain on this
  * machine, no compilation on install). This replaces what used to be a
  * spawned PowerShell child process per action with a direct, synchronous
- * call from Flow's own process — see windowFocus.ts for why that
+ * call from Flow's own process: see windowFocus.ts for why that
  * distinction is exactly what makes the redesigned focus mechanism safe.
  */
 const user32 = isWindows ? koffi.load('user32.dll') : null
@@ -35,7 +35,7 @@ function declare(lib: LibraryHandle | null, definition: string): NativeFunction 
 export const GetForegroundWindow = declare(user32, 'intptr_t GetForegroundWindow()')
 export const SetForegroundWindow = declare(user32, 'bool SetForegroundWindow(intptr_t hwnd)')
 export const IsWindow = declare(user32, 'bool IsWindow(intptr_t hwnd)')
-// user32.dll exports PostMessageW/PostMessageA, not "PostMessage" itself —
+// user32.dll exports PostMessageW/PostMessageA, not "PostMessage" itself
 // that name is only a C-header macro that resolves to one or the other.
 export const PostMessage = declare(user32, 
   'bool PostMessageW(intptr_t hwnd, uint32_t msg, uintptr_t wParam, intptr_t lParam)'
@@ -48,10 +48,10 @@ export const WM_CLOSE = 0x0010
 export const KEYEVENTF_KEYUP = 0x0002
 
 /**
- * Click replay (main/actions/click.ts) — resolving a stored `zone:<col>x<row>`
+ * Click replay (main/actions/click.ts); resolving a stored `zone:<col>x<row>`
  * target back to a real screen point needs the target window's *current*
  * bounds (GetWindowRect), and firing the click itself needs real synthetic
- * mouse input (SetCursorPos + SendInput), not just keyboard. Declared here
+ * mouse input (SetCursorPos + SendInput), not keyboard. Declared here
  * rather than a second koffi.load('user32.dll') for the same reason every
  * other function in this file already lives in one place: one definition
  * per signature, not N.
@@ -75,7 +75,7 @@ const MOUSEINPUT = koffi.struct('MOUSEINPUT', {
 })
 // KEYBDINPUT/HARDWAREINPUT members of the real Win32 union are never
 // populated (mouse-only here), so the union only needs to declare the one
-// member this file actually writes — koffi just needs the union's own
+// member this file actually writes; koffi needs the union's own
 // layout to match the real INPUT struct's size for SendInput to read it
 // correctly, not every member the OS header defines.
 const INPUT = koffi.struct('INPUT', {
@@ -178,7 +178,7 @@ export const HID_USAGE_DIGITIZER_CONTACT_ID = 0x51
 export const HID_USAGE_DIGITIZER_CONTACT_COUNT = 0x54
 
 /**
- * Which process owns a window — used by replay to confirm the app a learned
+ * Which process owns a window; used by replay to confirm the app a learned
  * step expects is really the one in front before it clicks (see
  * windowProcess.ts). PROCESS_QUERY_LIMITED_INFORMATION is the least access
  * that can read an image name, and works for elevated processes too.
@@ -196,7 +196,7 @@ export const QueryFullProcessImageNameW = declare(kernel32,
 export const CloseHandle = declare(kernel32, 'bool __stdcall CloseHandle(intptr_t hObject)')
 export const PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 
-/** Which top-level window is at a screen point — replay checks a found
+/** Which top-level window is at a screen point; replay checks a found
  *  control's point is really inside the expected app before clicking it
  *  (something else could be covering it). */
 koffi.struct('POINT', { x: 'long', y: 'long' }) // registered by name for the signature below

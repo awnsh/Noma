@@ -5,13 +5,13 @@ export function startOfDayMs(date: Date): number {
   return start.getTime()
 }
 
-/** Start of the current local day, in epoch ms — the window used throughout
+/** Start of the current local day, in epoch ms: the window used throughout
  *  the app for "today"'s actions/patterns/suggestions. */
 export function startOfTodayMs(): number {
   return startOfDayMs(new Date())
 }
 
-/** A local (not UTC) `YYYY-MM-DD` calendar-day key for `date` — used to
+/** A local (not UTC) `YYYY-MM-DD` calendar-day key for `date`; used to
  *  bucket timestamps by the same local-day boundary `startOfDayMs` uses, so
  *  a day's activity always lines up with what the rest of the app considers
  *  "today"/"yesterday". */

@@ -28,7 +28,7 @@ describe('workflow monitoring setting', () => {
 })
 
 describe('input source setting', () => {
-  it('defaults to keyboard — Holo is opt-in', () => {
+  it('defaults to keyboard. Holo is opt-in', () => {
     expect(getInputSource()).toBe('keyboard')
   })
 

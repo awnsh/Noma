@@ -35,7 +35,7 @@ describe('SuggestionEngine.refresh (end-to-end: events -> patterns -> suggestion
         eventType: 'shortcut',
         comboKeys: ['Control', 'S'],
         // Spread far apart so they don't also register as a repeated
-        // sequence — this test is only about the repeatedShortcut path.
+        // sequence: this test is only about the repeatedShortcut path.
         timestamp: Date.now() + i * 60_000
       })
     }
@@ -49,7 +49,7 @@ describe('SuggestionEngine.refresh (end-to-end: events -> patterns -> suggestion
     expect(pending[0].status).toBe('pending')
   })
 
-  it('is idempotent — calling refresh again does not duplicate the suggestion', async () => {
+  it('is idempotent; calling refresh again does not duplicate the suggestion', async () => {
     for (let i = 0; i < 5; i++) {
       insertWorkflowEvent({
         applicationId: 'code',
@@ -156,10 +156,10 @@ describe('SuggestionEngine.refresh (end-to-end: events -> patterns -> suggestion
     expect(suggestions).toHaveLength(1)
     expect(suggestions[0].explanation).toContain('Click “Cut”')
     expect(suggestions[0].explanation).toContain('Click “Delete”')
-    // Real control slot now (click execution exists — main/actions/click.ts).
+    // Real control slot now (click execution exists; main/actions/click.ts).
     // A `label:` click target still refuses at press time with a clear
     // reason (re-finding a named control isn't supported yet), but the
-    // suggestion itself is no longer informational-only just because it
+    // suggestion itself is no longer informational-only because it
     // contains a click.
     expect(suggestions[0].applicationId).toBe('resolve')
     expect(suggestions[0].action).toMatchObject({ kind: 'createWorkflowMacroAndAssignToControl' })

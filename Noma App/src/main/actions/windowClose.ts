@@ -3,8 +3,8 @@ import { closeFocusedWindow } from './macos'
 import { isMac } from '../platform'
 
 /**
- * Posts WM_CLOSE directly to a window handle — the exact same message a
- * title bar's X button sends — instead of simulating a keypress. No focus
+ * Posts WM_CLOSE directly to a window handle: the exact same message a
+ * title bar's X button sends; instead of simulating a keypress. No focus
  * needed at all (PostMessage can target any window regardless of what's
  * currently focused), so none of windowFocus.ts's concerns apply here,
  * and never a forceful termination: the target application decides how to
@@ -12,7 +12,7 @@ import { isMac } from '../platform'
  * would for a real click on X.
  *
  * Returns whether the message was successfully queued, not whether the
- * window actually closed — that's the app's call, same as a real click.
+ * window actually closed: that's the app's call, same as a real click.
  */
 export function closeWindowGracefully(targetHwnd: number): boolean {
   // macOS: the handle is the app's pid; its focused window's close button is

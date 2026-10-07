@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { NoticeSurface } from './notice/NoticeSurface'
 import './styles/globals.css'
+import './styles/motion-content.css'
 
 /**
  * One bundle, two windows. The main window loads this normally; Noma
@@ -12,7 +13,7 @@ import './styles/globals.css'
  *
  * A query parameter rather than a second Vite entry point on purpose: the
  * notice is built from the app's own components, tokens and fonts, so it
- * should ship as part of the same bundle — and this way the build config,
+ * should ship as part of the same bundle. This way the build config,
  * the preload and the packaging story all stay exactly as they were.
  */
 const isNoticeSurface = new URLSearchParams(window.location.search).get('surface') === 'notice'

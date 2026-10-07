@@ -5,21 +5,22 @@ import { ControlTile } from '../components/ControlTile'
 import { NomaMoment } from '../components/NomaMoment'
 import { AppIcon } from '../components/AppIcon'
 import { CARD } from '../lib/surfaces'
+import { CONTROL_SLOTS } from '@shared/constants'
 
 /**
- * Demo Mode — "the Noma Moment". A polished, deterministic, repeatable
+ * Demo Mode: "the Noma Moment". A polished, deterministic, repeatable
  * walkthrough of the product story in two acts: (1) an application switch
  * changes the physical controls, and a simple repeated shortcut pair becomes
- * an explainable suggestion — the baseline pattern-detection loop; then (2)
- * WORKFLOW LEARNING, the actual differentiator — a longer, multi-step,
- * cross-app workflow (screenshot -> Claude Code -> paste) gets recognized
+ * an explainable suggestion (the baseline pattern-detection loop); then (2)
+ * WORKFLOW LEARNING, the actual differentiator (a longer, multi-step,
+ * cross-app workflow where screenshot -> Claude Code -> paste gets recognized
  * as one thing, turned into a real action, assigned to a control, and
- * *executed* for real. Built for presentations (Purdue Innovates, investors,
+ * *executed* for real). Built for presentations (Purdue Innovates, investors,
  * user testing), not just internal demoing.
  *
- * Every step drives the real pipeline — the same ApplicationContextService,
- * pattern detection, and suggestion engine any real usage does (see
- * src/main/demo/demoService.ts) — nothing here is a separate, faked path.
+ * Every step drives the real pipeline (the same ApplicationContextService,
+ * pattern detection, and suggestion engine any real usage does; see
+ * src/main/demo/demoService.ts). Nothing here is a separate, faked path.
  * Because of that, the Dashboard/Virtual Keyboard/Developer pages will
  * honestly reflect whatever step the demo is on if you switch to them
  * mid-demo; click "Exit Demo" when done to hand control back to real
@@ -33,7 +34,7 @@ type DemoPhase =
   | 'simulating'
   | 'suggested'
   | 'accepted'
-  // WORKFLOW LEARNING — the flagship story: this is the feature the rest of
+  // WORKFLOW LEARNING: the flagship story, the feature the rest of
   // the demo exists to lead into. Continues straight from 'accepted' rather
   // than being a separate page, so the whole thing plays as one walkthrough.
   | 'multiStepIntro'
@@ -83,7 +84,7 @@ export function Demo() {
   useEffect(() => {
     if (phase === 'vscode') void window.flow.setDemoApplication('code')
     if (phase === 'chrome') void window.flow.setDemoApplication('chrome')
-    // Deliberately back to 'code', never 'claude' — see
+    // Deliberately back to 'code', never 'claude'. See
     // simulateDemoMultiStepWorkflow's doc comment for why the live context
     // stays on the app the workflow *starts* in throughout this section.
     if (phase === 'multiStepIntro') void window.flow.setDemoApplication('code')
@@ -98,7 +99,7 @@ export function Demo() {
     (suggestion) => suggestion.action?.kind === 'createWorkflowMacroAndAssignToControl'
   )
   // Whichever control the presenter actually assigned the learned action
-  // to — NomaMoment's own slot picker decides this for real, never a
+  // to: NomaMoment's own slot picker decides this for real, never a
   // hardcoded slot the script picks for them (same "you choose, Noma never
   // assigns on its own" rule the real Suggestions panel follows). A fresh
   // demo profile's seeded controls are never a macro, so once one is, it's
@@ -128,10 +129,10 @@ export function Demo() {
     setIsWorking(true)
     setExecutionResult(null)
     setPhase('multiStepExecuted')
-    // The real press-a-control path (see FlowApi.pressControl) — this
+    // The real press-a-control path (see FlowApi.pressControl). This
     // actually sends Meta+Shift+S, tries to focus Claude Code, and sends
     // Control+V then Enter. Not a simulation, so if Claude Code isn't
-    // running right now, the focus step honestly fails — see the result
+    // running right now, the focus step honestly fails. See the result
     // panel below.
     await window.flow.pressControl(learnedControl.id)
     setIsWorking(false)
@@ -190,7 +191,7 @@ export function Demo() {
         ))}
       </div>
 
-      {/* Live device state — the same signal Dashboard/Virtual Keyboard show */}
+      {/* Live device state: the same signal Dashboard/Virtual Keyboard show */}
       <div className={`mb-8 p-6 ${CARD}`}>
         <div className="text-xs text-neutral-600">Current application</div>
         <div className="mt-2 flex items-center gap-3">
@@ -202,7 +203,7 @@ export function Demo() {
           </div>
         </div>
         <div className="mt-4 grid grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((slot) => {
+          {CONTROL_SLOTS.map((slot) => {
             const control = controls.find((c) => c.slot === slot)
             return <ControlTile key={slot} slot={slot} control={control} application={context.application} />
           })}

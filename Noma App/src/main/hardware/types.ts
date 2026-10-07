@@ -4,13 +4,13 @@ import type { Control, DeviceEvent, DeviceStatus, LEDState } from '@shared/types
  * Hardware abstraction layer (brainstorm.md section 9).
  *
  * Nothing in the rest of the app should ever import VirtualHardwareDevice
- * or a future USB/SerialHardwareDevice directly — only this interface.
+ * or a future USB/SerialHardwareDevice directly; only this interface.
  * That is what makes swapping the virtual device for real STM32 hardware
  * later an implementation swap, not an architecture rewrite (Milestone 3).
  *
  * onDeviceEvent/onStatusChanged model the DEVICE → HOST direction
  * (brainstorm.md section 21): a real device reports button presses,
- * encoder turns, and module changes asynchronously, not just in response
+ * encoder turns, and module changes asynchronously, not in response
  * to a host command. The virtual device raises the same shape from UI
  * clicks so the rest of the app is exercised the same way it will be
  * against real hardware.

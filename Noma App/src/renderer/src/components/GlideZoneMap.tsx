@@ -21,7 +21,7 @@ const PLACEMENT: Record<'full' | 'half', Record<GlideZoneName, string>> = {
 
 /** True when a slot has nothing on it yet (a new app's "SLOT n"). */
 export function isEmptyControl(control: Control | undefined): boolean {
-  return !control || (control.action.type === 'shortcut' && control.action.keys.length === 0)
+  return !control || control.action.type === 'none' || (control.action.type === 'shortcut' && control.action.keys.length === 0)
 }
 
 /**

@@ -19,7 +19,7 @@ interface ControlRow {
  * Returns the active profile configured for a given application id, or
  * null if none exists yet. A null profile is an honest, expected state
  * (brainstorm.md's "extensible" profile system means most applications
- * won't have one until the user — or a future onboarding flow — creates
+ * won't have one until the user; or a future onboarding flow; creates
  * it), not an error.
  */
 export function getProfileForApplicationId(applicationId: string): ApplicationProfile | null {

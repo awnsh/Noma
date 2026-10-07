@@ -23,11 +23,11 @@ function appSwitchEvent(applicationId: string | null, timestamp: number): Workfl
 }
 
 // Spaced well beyond SEQUENCE_WINDOW_MS so identical back-to-back
-// shortcuts don't also register as a repeated A->A sequence — that cross-
-// interaction is real (and covered below), just not what these cases test.
+// shortcuts don't also register as a repeated A->A sequence: that cross-
+// interaction is real (and covered below), not what these cases test.
 const FAR_APART_MS = 60_000
 
-describe('detectPatterns — repeated shortcuts', () => {
+describe('detectPatterns; repeated shortcuts', () => {
   it('does not report a shortcut used below the threshold', () => {
     const events = [1, 2, 3, 4].map((i) => shortcutEvent(['Control', 'S'], i * FAR_APART_MS))
     expect(detectPatterns(events)).toEqual([])
@@ -59,7 +59,7 @@ describe('detectPatterns — repeated shortcuts', () => {
     // Regression: pressing one shortcut rapidly several times (e.g. Ctrl+T
     // x5, fast) used to also register 3+ consecutive A->A pairs as a
     // repeatedSequence, producing a nonsensical "Ctrl+T -> Ctrl+T" two-step
-    // macro suggestion for what is honestly just one repeated action.
+    // macro suggestion for what is honestly one repeated action.
     const events = [1, 2, 3, 4, 5].map((i) => shortcutEvent(['Control', 'T'], i * 1000))
     const patterns = detectPatterns(events)
     expect(patterns.some((p) => p.kind === 'repeatedSequence')).toBe(false)
@@ -67,7 +67,7 @@ describe('detectPatterns — repeated shortcuts', () => {
   })
 })
 
-describe('detectPatterns — frequent controls', () => {
+describe('detectPatterns; frequent controls', () => {
   it('reports a control once it crosses the threshold', () => {
     const events = [1, 2, 3, 4, 5].map((i) => controlEvent('ctrl-run', i * 1000))
     const patterns = detectPatterns(events)
@@ -81,7 +81,7 @@ describe('detectPatterns — frequent controls', () => {
   })
 })
 
-describe('detectPatterns — repeated sequences', () => {
+describe('detectPatterns; repeated sequences', () => {
   it('reports a two-step sequence repeated within the time window', () => {
     const events: WorkflowEvent[] = []
     for (let i = 0; i < 3; i++) {
@@ -130,15 +130,15 @@ describe('detectPatterns — repeated sequences', () => {
   })
 })
 
-describe('detectPatterns — empty input', () => {
+describe('detectPatterns; empty input', () => {
   it('returns no patterns for no events', () => {
     expect(detectPatterns([])).toEqual([])
   })
 })
 
-describe('detectPatterns — spam vs. a real workflow', () => {
+describe('detectPatterns; spam vs. a real workflow', () => {
   it('does not report a shortcut spammed in a quick burst, even well past the raw count threshold', () => {
-    // 8 presses inside 350ms — key-repeat from holding the key down, or a
+    // 8 presses inside 350ms; key-repeat from holding the key down, or a
     // few seconds of impatient mashing, not 8 separate deliberate uses.
     const events = [0, 50, 100, 150, 200, 250, 300, 350].map((t) => shortcutEvent(['Control', 'S'], t))
     expect(detectPatterns(events)).toEqual([])
@@ -150,7 +150,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
   })
 
   it('still reports a shortcut used the same number of times, genuinely spread across real work', () => {
-    // Same raw count as the burst above (8), but spaced like real use —
+    // Same raw count as the burst above (8), but spaced like real use
     // this is exactly the case a spam guard must not also suppress.
     const events = [0, 1, 2, 3, 4, 5, 6, 7].map((i) => shortcutEvent(['Control', 'S'], i * 30_000))
     const patterns = detectPatterns(events)
@@ -159,7 +159,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
 
   it('a burst followed by real spaced-out use only counts the spaced ones', () => {
     // 4 rapid presses (spam, collapses to 1) then 4 more spaced 10s apart
-    // (real use) — total raw presses is 8, but only 5 are genuinely
+    // (real use); total raw presses is 8, but only 5 are genuinely
     // separate occurrences, which is exactly enough to cross the threshold.
     const burst = [0, 50, 100, 150]
     const spaced = [10_000, 20_000, 30_000, 40_000]
@@ -170,7 +170,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
   })
 
   it('does not collapse presses that are merely quick, not spammed', () => {
-    // 500ms apart is a fast but perfectly plausible deliberate repeat —
+    // 500ms apart is a fast but perfectly plausible deliberate repeat
     // the guard must not be so aggressive it eats real quick-fire use.
     const events = [0, 1, 2, 3, 4].map((i) => shortcutEvent(['Control', 'S'], i * 500))
     const patterns = detectPatterns(events)
@@ -178,7 +178,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
   })
 
   it('does not report a Copy/Paste sequence mashed rapidly in a burst', () => {
-    // Copy, Paste, Copy, Paste... 8 presses inside half a second — someone
+    // Copy, Paste, Copy, Paste... 8 presses inside half a second; someone
     // testing what Ctrl+C/Ctrl+V do, not a real repeated copy-paste workflow.
     const times = [0, 60, 120, 180, 240, 300, 360, 420]
     const events = times.map((t, i) => shortcutEvent(['Control', i % 2 === 0 ? 'C' : 'V'], t))
@@ -196,7 +196,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
     expect(patterns.some((p) => p.kind === 'repeatedSequence' && p.count === 3)).toBe(true)
   })
 
-  it('keeps the burst guard scoped per key — spamming one shortcut does not suppress a real pattern in another', () => {
+  it('keeps the burst guard scoped per key; spamming one shortcut does not suppress a real pattern in another', () => {
     const spam = [0, 50, 100, 150, 200].map((t) => shortcutEvent(['Control', 'T'], t))
     const real = [0, 1, 2, 3, 4].map((i) => shortcutEvent(['Control', 'S'], i * 30_000))
     const patterns = detectPatterns([...spam, ...real])
@@ -205,7 +205,7 @@ describe('detectPatterns — spam vs. a real workflow', () => {
   })
 })
 
-describe('detectPatterns — cross-app workflows', () => {
+describe('detectPatterns; cross-app workflows', () => {
   it('reports a two-step chain repeated across applications', () => {
     const events: WorkflowEvent[] = []
     for (let i = 0; i < 3; i++) {
@@ -229,7 +229,7 @@ describe('detectPatterns — cross-app workflows', () => {
     }
     const workflow = detectPatterns(events).find((p) => p.kind === 'crossAppWorkflow')
     expect(workflow).toMatchObject({ count: 3 })
-    // A shortcut Noma knows in that app is named by what it does — see
+    // A shortcut Noma knows in that app is named by what it does: see
     // shortcutDisplayLabel in patternDetection.ts.
     expect(workflow?.description).toContain('Reopen closed tab')
   })
@@ -272,7 +272,7 @@ describe('detectPatterns — cross-app workflows', () => {
 
   it('attaches a consistent closing step once it follows the chain across multiple separate runs', () => {
     // Two runs of "screenshot -> code" repeated twice back-to-back, each
-    // run followed a few seconds later by switching to a git client —
+    // run followed a few seconds later by switching to a git client
     // exactly the "screenshot -> Claude Code, repeated, then commit" shape.
     const events: WorkflowEvent[] = [
       appSwitchEvent('screenshot', 0),
@@ -298,7 +298,7 @@ describe('detectPatterns — cross-app workflows', () => {
       appSwitchEvent('screenshot', 5_000),
       appSwitchEvent('code', 7_000),
       appSwitchEvent('git', 10_000),
-      // A second run of the same chain — but nothing follows it this time,
+      // A second run of the same chain; but nothing follows it this time,
       // so "git" has only shown up once and isn't a consistent follow-up yet.
       appSwitchEvent('screenshot', 100_000),
       appSwitchEvent('code', 102_000),
@@ -324,7 +324,7 @@ describe('detectPatterns — cross-app workflows', () => {
   })
 })
 
-describe('detectPatterns — multi-step workflow learning', () => {
+describe('detectPatterns; multi-step workflow learning', () => {
   /** The flagship story: screenshot -> switch to Claude Code -> paste ->
    *  switch back. Repetitions are spaced far enough apart that they never
    *  chain continuously into each other (see WORKFLOW_STEP_WINDOW_MS). */
@@ -354,8 +354,8 @@ describe('detectPatterns — multi-step workflow learning', () => {
       expect(workflow.consistency).toBe(1)
       expect(workflow.applicationIds).toEqual(['code', 'claude'])
       // The real, consistently-observed 2s gap before each step in
-      // flagshipWorkflowEvents — [0] is a placeholder (nothing precedes the
-      // first step) — so pressing the resulting control can replay at
+      // flagshipWorkflowEvents: [0] is a placeholder (nothing precedes the
+      // first step); so pressing the resulting control can replay at
       // roughly the pace the user actually worked at.
       expect(workflow.stepDelaysMs).toEqual([0, 2_000, 2_000, 2_000])
     }
@@ -364,7 +364,7 @@ describe('detectPatterns — multi-step workflow learning', () => {
   it('drops the redundant crossAppWorkflow pairs once the fuller chain subsumes them', () => {
     // Every 2-step pair inside the flagship chain (screenshot->claude,
     // claude->paste, paste->code) also clears CROSS_APP_WORKFLOW_THRESHOLD
-    // on its own — without subsumption this would surface 3 extra,
+    // on its own; without subsumption this would surface 3 extra,
     // redundant "Flow noticed a workflow across apps" cards.
     const patterns = detectPatterns(flagshipWorkflowEvents(4))
     expect(patterns.filter((p) => p.kind === 'crossAppWorkflow')).toHaveLength(0)
@@ -379,7 +379,7 @@ describe('detectPatterns — multi-step workflow learning', () => {
   it('tolerates an occurrence with an extra step in the middle (approximate matching)', () => {
     const events = flagshipWorkflowEvents(3)
     // A 4th repetition where an extra, unrelated shortcut happens between
-    // the app switch and the paste — e.g. an uncaptured keystroke elsewhere
+    // the app switch and the paste; e.g. an uncaptured keystroke elsewhere
     // in the flow. Same first/last anchors, one extra middle step.
     const base = 3 * 30_000
     events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'code'))
@@ -401,7 +401,7 @@ describe('detectPatterns — multi-step workflow learning', () => {
 
   it('does not merge workflows interrupted by genuinely unrelated actions into the same chain', () => {
     // Same repeated shape, but each repetition is broken up by a long gap
-    // in the middle — never continuous, so it never forms one window at
+    // in the middle; never continuous, so it never forms one window at
     // all. Repetitions are spaced far enough apart (100s) that the tail of
     // one repetition and the head of the next don't accidentally bridge
     // into a *different* continuous 3-step run of their own.
@@ -417,7 +417,7 @@ describe('detectPatterns — multi-step workflow learning', () => {
 
   it('rejects a low-diversity same-app burst instead of treating it as a workflow', () => {
     // Alternating two same-app shortcuts, no app switch, no third distinct
-    // step — exactly the "keypress -> keypress -> keypress" shape STEP 4
+    // step; exactly the "keypress -> keypress -> keypress" shape STEP 4
     // calls out to avoid, even though it technically repeats.
     const events: WorkflowEvent[] = []
     for (let i = 0; i < 5; i++) {
@@ -468,7 +468,7 @@ describe('detectPatterns — multi-step workflow learning', () => {
   })
 })
 
-describe('detectPatterns — passing through an app is not a step', () => {
+describe('detectPatterns; passing through an app is not a step', () => {
   // Clicking a taskbar button puts Explorer (which owns the taskbar) in
   // front for a moment before the target app.
   const viaTaskbar = (start: number): WorkflowEvent[] => [

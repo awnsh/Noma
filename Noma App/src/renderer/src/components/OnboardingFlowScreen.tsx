@@ -36,9 +36,9 @@ export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenP
           <ul className="space-y-1.5 text-xs text-neutral-300">
             {SEES.map((item) => (
               <li key={item} className="flex gap-2">
-                <span className="text-accent" aria-hidden>
-                  ✓
-                </span>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 shrink-0 text-accent" aria-hidden="true">
+                  <path d="M20.25 6l-12 12-4.5-4.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 {item}
               </li>
             ))}
@@ -49,9 +49,9 @@ export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenP
           <ul className="space-y-1.5 text-xs text-neutral-400">
             {NEVER.map((item) => (
               <li key={item} className="flex gap-2">
-                <span className="text-neutral-500" aria-hidden>
-                  ✕
-                </span>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 shrink-0 text-neutral-500" aria-hidden="true">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 {item}
               </li>
             ))}
@@ -59,7 +59,7 @@ export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenP
         </div>
       </div>
       <p className="mt-3 max-w-md text-xs text-neutral-500">
-        It all stays in a file on this computer. Pause Flow or clear what it learned any time in Settings.
+        Pause Flow or clear what it learned any time in Settings.
       </p>
 
       <div className="mt-10 flex items-center gap-6">

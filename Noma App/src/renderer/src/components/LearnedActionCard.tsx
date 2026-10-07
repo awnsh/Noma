@@ -11,11 +11,11 @@ interface LearnedActionCardProps {
 }
 
 /**
- * One row in the Controls page's "Learned actions" list — an action Noma
+ * One row in the Controls page's "Learned actions" list; an action Noma
  * created from a workflow it noticed, not something hand-configured. The
  * distinction is communicated entirely through metadata and typography
  * ("Created from a repeated workflow," in the quiet secondary tier) plus
- * the real application mark it was learned in — no color badge, no
+ * the real application mark it was learned in; no color badge, no
  * sparkle, nothing marking it as "AI." When the workflow's chain already
  * shows more than one app (`WorkflowChain` below), that sequence carries
  * the identity on its own and the leading icon is skipped so the row

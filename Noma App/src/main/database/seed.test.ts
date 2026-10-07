@@ -30,7 +30,7 @@ describe('seedDefaultProfiles', () => {
     getDatabase().prepare("INSERT INTO applications (id, name, process_name) VALUES ('x','X','x.exe')").run()
     seedDefaultProfiles(getDatabase())
     const apps = getDatabase().prepare('SELECT id FROM applications').all() as Array<{ id: string }>
-    // Only the manually-inserted row plus the original seed — not doubled.
+    // Only the manually-inserted row plus the original seed; not doubled.
     expect(apps.filter((a) => a.id === 'code')).toHaveLength(1)
   })
 
@@ -45,7 +45,7 @@ describe('seedDefaultProfiles', () => {
       if (action.type === 'shortcut') {
         expect(resolveShortcutParts(action.keys), `unresolvable keys: ${action.keys.join('+')}`).not.toBeNull()
         // A seeded control that resolves but is also blocked would be a
-        // silently-dead button — exactly the Chrome CLOSE TAB mistake.
+        // silently-dead button; exactly the Chrome CLOSE TAB mistake.
         expect(isBlockedShortcut(action.keys), `seeded a blocked combo: ${action.keys.join('+')}`).toBe(
           false
         )

@@ -38,8 +38,7 @@ import type { TouchContact, TouchFrame } from './trackpadGesture'
  * X, Y, a tip switch, a confidence bit and a contact ID, plus a contact count.
  * hid.dll's HidP_* functions read values by meaning rather than byte offset,
  * so this works on any precision touchpad without per-model code. Older
- * mouse-mode trackpads send no such reports (see touchCoverage.ts) and simply
- * never produce a frame.
+ * mouse-mode trackpads send no such reports (see touchCoverage.ts) and * never produce a frame.
  *
  * Positions only ever live in memory long enough to recognise the gesture;
  * nothing is stored or sent anywhere.

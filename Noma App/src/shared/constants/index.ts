@@ -1,5 +1,9 @@
 import type { PatternKind } from '../types'
 
+/** The four physical control slots on a Noma device. */
+export const CONTROL_SLOTS = [1, 2, 3, 4] as const
+export type ControlSlot = (typeof CONTROL_SLOTS)[number]
+
 /**
  * Every build people download is a beta until this flips. It drives the
  * "Beta" badge in the sidebar and on the welcome screen, the window title,
@@ -35,7 +39,7 @@ export const IPC_CHANNELS = {
   DEVICE_LOG_ENTRY: 'flow:device-log-entry',
   GET_EXECUTION_STATUS: 'flow:get-execution-status',
   UPDATE_CONTROL: 'flow:update-control',
-  RESET_CONTROL_TO_DEFAULT: 'flow:reset-control-to-default',
+  CLEAR_CONTROL: 'flow:clear-control',
   TEST_CONTROL_ACTION: 'flow:test-control-action',
   GET_MACROS: 'flow:get-macros',
   GET_ALL_APPLICATIONS: 'flow:get-all-applications',
@@ -76,6 +80,8 @@ export const IPC_CHANNELS = {
   GLIDE_GET_STATE: 'flow:glide-get-state',
   GLIDE_SET_ENABLED: 'flow:glide-set-enabled',
   GLIDE_SET_ZONE_COUNT: 'flow:glide-set-zone-count',
+  MAC_EDGE_SWIPE_GET: 'flow:mac-edge-swipe-get',
+  MAC_EDGE_SWIPE_SET: 'flow:mac-edge-swipe-set',
   GLIDE_STATE_CHANGED: 'flow:glide-state-changed',
   GLIDE_ACTIVITY: 'flow:glide-activity',
   ACTION_RUN_STATE: 'flow:action-run-state',

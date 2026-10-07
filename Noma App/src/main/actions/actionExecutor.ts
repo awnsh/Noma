@@ -11,12 +11,13 @@ import { executeSystemCommand, isKnownSystemCommand } from './systemCommands'
 import { findMainWindowHandleForProcess } from './processWindow'
 import { executeClick } from './click'
 import { uiaControlFinder } from './uiaControlFinder'
+import { sleep } from '../util'
 
 /**
  * The only implemented flowAction so far. Deliberately the *safe*
  * replacement for sending Alt+F4/Ctrl+Q as a keystroke (see
- * BLOCKED_COMBOS below and windowClose.ts): posts WM_CLOSE — the same
- * message a title bar's X button sends — rather than simulating a
+ * BLOCKED_COMBOS below and windowClose.ts): posts WM_CLOSE: the same
+ * message a title bar's X button sends; rather than simulating a
  * shortcut, so there's no keystroke, no focus-stealing, and no risk of a
  * forceful termination. The app being closed decides how to respond,
  * exactly as it would for a real click on X.
@@ -40,28 +41,28 @@ export interface ExecutionResult {
 }
 
 /**
- * Keystroke execution (shortcut/macro controls) — re-enabled after a
+ * Keystroke execution (shortcut/macro controls); re-enabled after a
  * redesign, following two real incidents with the previous mechanism.
  *
  * What happened: the old windowFocus.ts used an `AttachThreadInput`
  * dance run inside a *freshly-spawned PowerShell child process* to work
  * around Windows' foreground-lock restriction. Chrome was left unable to
  * reopen after a configured Ctrl+W, then crashed outright on a plain
- * Ctrl+R — two different actions, one shared mechanism.
+ * Ctrl+R; two different actions, one shared mechanism.
  *
  * What changed: windowFocus.ts no longer spawns anything or uses
  * AttachThreadInput at all. It calls `SetForegroundWindow` directly from
  * Flow's own main process via `koffi` (an FFI library with prebuilt
  * binaries), synchronously, in the same tick as the click that triggered
- * it. That matters because Flow's process — not some unrelated freshly
- * spawned child — is the one that just received the user's input, which
+ * it. That matters because Flow's process; not some unrelated freshly
+ * spawned child; is the one that received the user's input, which
  * is exactly the ordinary case `SetForegroundWindow` is designed to
  * allow. `AttachThreadInput` existed specifically to work around *not*
  * having that standing; removing the need for the workaround removes the
  * failure mode it was implicated in.
  *
  * This constant exists so the whole mechanism can still be switched off
- * in one place if something goes wrong again — see
+ * in one place if something goes wrong again: see
  * docs/architecture.md's "Real execution" section.
  */
 const KEYSTROKE_EXECUTION_ENABLED = true
@@ -77,23 +78,23 @@ export function isKeystrokeExecutionEnabled(): boolean {
  * Shortcuts that can close a window or quit an application entirely.
  *
  * Kept even after the windowFocus.ts redesign above: closing a window is
- * a fundamentally different risk than pressing Ctrl+S or Ctrl+F5 — it can
- * end a whole application's session — and it already has a dedicated,
+ * a fundamentally different risk than pressing Ctrl+S or Ctrl+F5; it can
+ * end a whole application's session; and it already has a dedicated,
  * genuinely safer path (`flowAction: 'closeWindow'` / windowClose.ts, no
  * keystroke at all). Per brainstorm.md section 16's caution about
  * automating potentially dangerous actions, these never execute as a
- * keystroke — refused with a clear reason, same as an unrecognized key
+ * keystroke; refused with a clear reason, same as an unrecognized key
  * name. Order-independent (checked as a set).
  *
  * `Control+W` was deliberately removed from this list by explicit user
  * request (2026-09-07), to let a control map directly to it (e.g. closing
- * a browser tab) — even after being told the specific incident this list
+ * a browser tab); even after being told the specific incident this list
  * exists to prevent: sending `Ctrl+W` to Chrome's last tab once left
  * Chrome running as an unresponsive background process, needing every
  * `chrome.exe` killed by hand before it would open again (see
  * docs/security-review.md and docs/architecture.md's "Real execution"
  * section for the full history). That failure mode is real and this
- * change reintroduces it — if it recurs, that's this change, not a new
+ * change reintroduces it; if it recurs, that's this change, not a new
  * bug, and the fix is to re-add `['Control', 'W']` here rather than
  * re-investigate from scratch. `flowAction: 'closeWindow'` below remains
  * the safer choice for "close a window" in any new configuration.
@@ -155,16 +156,16 @@ export function resolveShortcutParts(
 
 function sendShortcut(comboKeys: string[]): ExecutionResult {
   // A brand-new, not-yet-configured control (see profileCreation.ts)
-  // starts with an empty combo — a deliberate safe no-op, not a malformed
+  // starts with an empty combo: a deliberate safe no-op, not a malformed
   // one, so it deserves its own clear reason rather than falling through
   // to resolveShortcutParts' generic "unrecognized key" message.
   if (comboKeys.length === 0) {
     return { ok: false, reason: 'This control has no shortcut set yet' }
   }
 
-  // Enforced here too (not just in executeControlAction) so a macro step
+  // Enforced here too (not in executeControlAction) so a macro step
   // that happens to be a window-closing combo is refused the same way a
-  // direct shortcut control would be — one true enforcement point.
+  // direct shortcut control would be; one true enforcement point.
   if (isBlockedShortcut(comboKeys)) {
     return {
       ok: false,
@@ -176,17 +177,13 @@ function sendShortcut(comboKeys: string[]): ExecutionResult {
   if (!parts) {
     return { ok: false, reason: `Unrecognized key in combo: ${comboKeys.join('+')}` }
   }
-  // Mark this combo as our own synthetic input *before* sending it — see
+  // Mark this combo as our own synthetic input *before* sending it: see
   // selfInjectedKeys.ts. Otherwise captureService.ts's global hook (if
   // workflow monitoring is on) would pick up this exact keydown and log it
   // as a real user-typed shortcut.
   markSelfInjected(comboKeys)
   uIOhook.keyTap(parts.triggerCode, parts.modifierCodes)
   return { ok: true }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 /** Set by cancelRunningAction; checked between steps and during waits. */
@@ -206,13 +203,13 @@ async function waitUnlessCancelled(ms: number): Promise<boolean> {
 }
 
 /**
- * Switches to an already-running application by id — the `focusApplication`
+ * Switches to an already-running application by id: the `focusApplication`
  * ControlAction/MacroStep (see its doc comment in shared/types). Resolves
  * the id to a process name (applicationsRepository), finds that process's
  * main window (processWindow.ts), and focuses it via the exact same
  * SetForegroundWindow + verify path every other real focus already uses.
- * Fails closed at every step — unknown application, not currently running,
- * or focus not confirmed — never guesses and never launches anything.
+ * Fails closed at every step; unknown application, not currently running,
+ * or focus not confirmed; never guesses and never launches anything.
  */
 async function focusApplicationById(applicationId: string): Promise<ExecutionResult> {
   const application = getApplicationById(applicationId)
@@ -235,7 +232,7 @@ async function focusApplicationById(applicationId: string): Promise<ExecutionRes
 
 /**
  * Best-effort refocuses `targetHwnd` (if given) before sending, and
- * refuses to send at all if that focus can't be confirmed — see
+ * refuses to send at all if that focus can't be confirmed: see
  * windowFocus.ts for why a naive focus call isn't trustworthy on its own.
  * `targetHwnd: null` means "send without refocusing" (used for the
  * currently-focused app, where no refocus is needed).
@@ -251,20 +248,20 @@ async function focusThenSend(comboKeys: string[], targetHwnd: number | null): Pr
 }
 
 /** How many macros deep a chain of nested `{type: 'macro'}` steps can go
- *  before execution refuses to continue — a fixed backstop against a
+ *  before execution refuses to continue: a fixed backstop against a
  *  runaway chain, on top of (not instead of) the cycle check below. */
 const MAX_MACRO_NESTING_DEPTH = 3
 
 /**
  * Runs a macro's steps in order, stopping at the first failure. Shared by
  * the `macro` control-action case above and by the Macro Studio's "Test"
- * button (testMacroSteps, via IPC) — the latter runs on steps that may not
+ * button (testMacroSteps, via IPC): the latter runs on steps that may not
  * be saved yet, so it calls this directly with a fresh visited-set rather
  * than going through a macro id.
  *
  * `visitedMacroIds` is how a nested `{type: 'macro'}` step is guarded
  * against referencing itself, directly or through a longer cycle (A → B →
- * A) — refused with a clear reason rather than recursing forever.
+ * A); refused with a clear reason rather than recursing forever.
  */
 export async function executeMacroSteps(
   steps: MacroStep[],
@@ -291,7 +288,7 @@ export async function executeMacroSteps(
         : result
     }
 
-    // Real input pacing between steps — skipped for 'delay' (already
+    // Real input pacing between steps; skipped for 'delay' (already
     // waited) and 'flowAction' (WM_CLOSE isn't synthetic input, so there's
     // nothing to give the OS time to process). A freshly-focused window gets
     // longer: raising a window can involve an animation, and the next step
@@ -313,6 +310,9 @@ async function executeMacroStep(
   visitedMacroIds: Set<string>
 ): Promise<ExecutionResult> {
   switch (step.type) {
+    case 'none':
+      return { ok: true }
+
     case 'delay':
       return (await waitUnlessCancelled(Math.max(0, step.ms)))
         ? { ok: true }
@@ -381,7 +381,7 @@ export const ACTION_BUSY_REASON = 'Still finishing the previous action, so this 
  * natural. Two runs at once drive the same mouse and keyboard and undo each
  * other: on a real test, a second press 1.85 s into a Notepad "Edit -> Select
  * all -> Copy" replay clicked Edit again, closing the menu the first run had
- * just opened, and both runs failed at "Select all". Refusing is safer than
+ * opened, and both runs failed at "Select all". Refusing is safer than
  * queueing: an action that fires seconds after the press, after the user has
  * moved on, is worse than one that didn't fire.
  */
@@ -451,12 +451,12 @@ export async function runActionExclusively(
  * specific target window (or null for "whatever's already focused").
  *
  * Only ever sends combos already validated against the closed key-name
- * vocabulary (never arbitrary typed content — same "no content" property
+ * vocabulary (never arbitrary typed content; same "no content" property
  * that governs capture also governs execution), never a window-closing
- * combo as a keystroke (see BLOCKED_COMBOS above — closing has its own
+ * combo as a keystroke (see BLOCKED_COMBOS above; closing has its own
  * safe path via `flowAction: 'closeWindow'` instead), and only ever runs
  * system commands from the fixed allowlist. `launchApplication` and any
- * other `flowAction` are not implemented yet — see docs/architecture.md.
+ * other `flowAction` are not implemented yet: see docs/architecture.md.
  */
 export async function executeControlAction(
   action: ControlAction,
@@ -467,7 +467,7 @@ export async function executeControlAction(
       if (!KEYSTROKE_EXECUTION_ENABLED) {
         return { ok: false, reason: KEYSTROKE_EXECUTION_DISABLED_REASON }
       }
-      // Checked before the focus dance too, not just inside sendShortcut —
+      // Checked before the focus dance too, not inside sendShortcut
       // no reason to steal focus for a combo that's about to be refused.
       if (isBlockedShortcut(action.keys)) {
         return sendShortcut(action.keys) // returns the same refusal, no focus attempt
@@ -509,6 +509,9 @@ export async function executeControlAction(
       }
       return { ok: false, reason: `flowAction "${action.action}" is not implemented yet` }
 
+    case 'none':
+      return { ok: false, reason: 'Nothing is assigned to this zone' }
+
     case 'launchApplication':
       return { ok: false, reason: `${action.type} execution is not implemented yet` }
 
@@ -516,7 +519,7 @@ export async function executeControlAction(
       return focusApplicationById(action.applicationId)
 
     // Only ever reached via a nested `macro` action's own steps in
-    // practice — see the `click` ControlAction's doc comment in
+    // practice: see the `click` ControlAction's doc comment in
     // shared/types for why the Control Mapping Editor never offers it
     // directly. Handled here too so `executeControlAction` stays
     // exhaustive rather than silently unreachable for a valid variant.

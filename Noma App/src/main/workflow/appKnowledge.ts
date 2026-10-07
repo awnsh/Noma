@@ -1,9 +1,9 @@
 /**
  * What Noma knows about applications, so pattern detection can judge whether
- * a chain is a *plausible workflow* rather than just a repeated coincidence.
+ * a chain is a *plausible workflow* rather than a repeated coincidence.
  * Pure data + pure functions, deliberately closed-vocabulary in the same
  * spirit as keyNames.ts: it only ever claims what it's confident about, and
- * anything unrecognized is treated as neutral (0.5), never as wrong — the
+ * anything unrecognized is treated as neutral (0.5), never as wrong: the
  * learned model (ai/workflowQuality.ts) covers whatever this doesn't.
  *
  * Application ids are the lowercased executable name without ".exe" (see
@@ -26,7 +26,7 @@ export type AppCategory =
   | 'video'
   | 'capture'
   /** Background apps you glance at mid-task (music players). Never part of
-   *  a work chain — see isAmbientApp. */
+   *  a work chain: see isAmbientApp. */
   | 'ambient'
 
 interface CategoryRule {
@@ -98,7 +98,7 @@ export function isAmbientApp(applicationId: string | null): boolean {
 
 /** Pieces of the operating system (Start menu, search, sign-in prompts, tray
  *  helpers) and Noma itself. They take focus for a moment while you get
- *  somewhere else, so they're never a step of anyone's workflow — real data
+ *  somewhere else, so they're never a step of anyone's workflow; real data
  *  had "Chrome → ShellHost → Explorer" and "electron → Claude → electron"
  *  (Noma's own window, opened to read a suggestion). */
 const SYSTEM_SURFACES = new Set([
@@ -258,7 +258,7 @@ const SAME_CATEGORY = 0.7
 const NEUTRAL = 0.5
 
 /** How reasonable one hop between two apps is, 0-1. 0.5 when either app
- *  isn't recognized — no claim either way. */
+ *  isn't recognized; no claim either way. */
 export function pairPlausibility(fromId: string | null, toId: string | null): number {
   const from = categoryOf(fromId)
   const to = categoryOf(toId)
@@ -301,7 +301,7 @@ interface InAppProfile {
   groups: Record<string, Record<string, string>>
 }
 
-/** Only shortcuts confidently known — see the note at the top. Bare keys
+/** Only shortcuts confidently known: see the note at the top. Bare keys
  *  (Delete, Backspace, single letters) never appear: the capture policy
  *  (captureFilter.ts) never records them, so they couldn't be matched. */
 const IN_APP_PROFILES: InAppProfile[] = [

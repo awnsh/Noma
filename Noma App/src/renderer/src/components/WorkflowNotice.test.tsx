@@ -73,11 +73,11 @@ const renderNotice = (overrides: Partial<Parameters<typeof WorkflowNotice>[0]> =
 describe('WorkflowNotice', () => {
   it('states who is talking, what was noticed, and the workflow itself', () => {
     renderNotice()
-    // The real lockup, not a typeset name — and announced exactly once,
+    // The real lockup, not a typeset name. Announced exactly once,
     // since the mark and the wordmark are one logo between them.
     expect(screen.getByAltText('Noma')).toBeInTheDocument()
     expect(screen.getByText('New workflow detected')).toBeInTheDocument()
-    // The real chain, from the suggestion's own steps — not a hardcoded string.
+    // The real chain, from the suggestion's own steps. Not a hardcoded string.
     expect(screen.getByText('Claude Code')).toBeInTheDocument()
     expect(screen.getByText('6x')).toBeInTheDocument()
   })
@@ -95,7 +95,7 @@ describe('WorkflowNotice', () => {
 
   it('can be closed from the review state too', () => {
     const { onDismiss } = renderNotice()
-    fireEvent.click(screen.getByText('Review →'))
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     fireEvent.click(screen.getByLabelText('Close'))
     act(() => void vi.advanceTimersByTime(300))
     expect(onDismiss).toHaveBeenCalledWith('closed')
@@ -103,7 +103,7 @@ describe('WorkflowNotice', () => {
 
   it('offers one action, and no marketing', () => {
     renderNotice()
-    expect(screen.getByText('Review →')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Review/ })).toBeInTheDocument()
     expect(screen.queryByText(/\bAI\b/)).toBeNull()
     expect(screen.queryByText(/!/)).toBeNull()
   })
@@ -136,9 +136,9 @@ describe('WorkflowNotice', () => {
 
   it('stops the countdown for good once the user opens the review', () => {
     const { onDismiss } = renderNotice()
-    fireEvent.click(screen.getByText('Review →'))
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     // Leaving the card again must not restart a timer under someone who is
-    // reading it — they already told us they were interested.
+    // reading it. They already told us they were interested.
     fireEvent.mouseLeave(screen.getByRole('status'))
     act(() => void vi.advanceTimersByTime(10_000))
     expect(onDismiss).not.toHaveBeenCalled()
@@ -146,7 +146,7 @@ describe('WorkflowNotice', () => {
 
   it('shows why Noma raised it, and both answers, on review', () => {
     renderNotice()
-    fireEvent.click(screen.getByText('Review →'))
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     expect(screen.getByText(SUGGESTION.explanation)).toBeInTheDocument()
     expect(screen.getByText('Review steps in Noma')).toBeInTheDocument()
     expect(screen.getByText('Not now')).toBeInTheDocument()
@@ -154,16 +154,16 @@ describe('WorkflowNotice', () => {
 
   it('treats "Not now" as a real answer and "Review steps in Noma" as acceptance', () => {
     const { onDismiss, onAccept } = renderNotice()
-    fireEvent.click(screen.getByText('Review →'))
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     fireEvent.click(screen.getByText('Not now'))
     act(() => void vi.advanceTimersByTime(300))
     expect(onDismiss).toHaveBeenCalledWith('dismissed')
     expect(onAccept).not.toHaveBeenCalled()
   })
 
-  it('accepts without dismissing itself — main decides what happens next', () => {
+  it('accepts without dismissing itself. Main decides what happens next', () => {
     const { onAccept } = renderNotice()
-    fireEvent.click(screen.getByText('Review →'))
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     fireEvent.click(screen.getByText('Review steps in Noma'))
     expect(onAccept).toHaveBeenCalled()
   })

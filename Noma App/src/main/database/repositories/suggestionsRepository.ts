@@ -12,7 +12,7 @@ interface SuggestionRow {
   created_at: number
   resolved_at: number | null
   application_id: string | null
-  /** Joined live from `applications.name` — see the SELECTs below. Never a
+  /** Joined live from `applications.name`: see the SELECTs below. Never a
    *  persisted column of its own, so it can't go stale the way a name
    *  frozen at suggestion-creation time could (e.g. if a profile is later
    *  renamed). */
@@ -44,7 +44,7 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
     applicationId: row.application_id,
     applicationName: row.application_name,
     // action_kind/action_payload/confidence_breakdown are only absent for
-    // rows from before those columns existed — degrade gracefully rather
+    // rows from before those columns existed; degrade gracefully rather
     // than throw.
     action:
       row.action_kind && row.action_payload
@@ -70,7 +70,7 @@ export function getPendingSuggestions(): Suggestion[] {
   return rows.map(rowToSuggestion)
 }
 
-/** Every suggestion ever generated, regardless of status — the Flow
+/** Every suggestion ever generated, regardless of status: the Flow
  *  Learning Center's history list, most recent first. */
 export function getAllSuggestions(): Suggestion[] {
   const db = getDatabase()
@@ -93,7 +93,7 @@ export function getSuggestionById(id: string): Suggestion | null {
  */
 /** What the quality model needs remembered about the pattern behind a
  *  suggestion: its dedupe fingerprint, and the features to train on when the
- *  user later accepts/rejects it. Internal — never sent to the renderer. */
+ *  user later accepts/rejects it. Internal; never sent to the renderer. */
 export interface SuggestionPatternMeta {
   fingerprint: string[]
   features: PatternFeatures
@@ -165,7 +165,7 @@ export function setSuggestionPatternMeta(id: string, meta: SuggestionPatternMeta
 }
 
 /** Removes a still-pending suggestion that a fuller/duplicate one replaced.
- *  Never touches resolved rows — those are the user's decisions. */
+ *  Never touches resolved rows; those are the user's decisions. */
 export function deletePendingSuggestion(id: string): void {
   const db = getDatabase()
   db.prepare(`DELETE FROM suggestions WHERE id = ? AND status = 'pending'`).run(id)
@@ -199,7 +199,7 @@ export function resolveSuggestion(
 }
 
 /** suggestion ids are always `suggestion:<pattern.id>`, and pattern.id is
- *  always `<kindPrefix>:...` (see patternDetection.ts) — reused here to
+ *  always `<kindPrefix>:...` (see patternDetection.ts); reused here to
  *  scope the accept/reject history to one pattern kind without a schema
  *  change. */
 function idPrefixForKind(kind: PatternKind): string {
@@ -218,7 +218,7 @@ function idPrefixForKind(kind: PatternKind): string {
 }
 
 /** A pattern kind's historical accept/reject record, and the deterministic
- *  confidence nudge derived from it — see getSuggestionHistoryForKind. */
+ *  confidence nudge derived from it: see getSuggestionHistoryForKind. */
 export interface SuggestionHistory {
   accepted: number
   rejected: number
@@ -232,8 +232,8 @@ export interface SuggestionHistory {
  * bounded to +-0.15 so it can influence but never dominate a suggestion's
  * base confidence. Returns the raw accepted/rejected counts alongside the
  * bias itself so a suggestion's confidenceBreakdown (Product Development
- * Phase 2 — "Explainable Flow Suggestions") can show real numbers instead
- * of just the resulting nudge.
+ * Phase 2: "Explainable Flow Suggestions") can show real numbers instead
+ * of the resulting nudge.
  */
 export function getSuggestionHistoryForKind(kind: PatternKind): SuggestionHistory {
   const db = getDatabase()
@@ -267,7 +267,7 @@ function escapeLike(value: string): string {
  * Keeps a pending suggestion's observed-occurrence count current.
  *
  * `insertSuggestionIfNew` is deliberately a no-op once an id exists, which
- * is what stops Flow re-suggesting something the user already answered — but
+ * is what stops Flow re-suggesting something the user already answered; but
  * it also means the count written at first detection would freeze there. Noma
  * Notice's whole threshold rests on that number still being true, so it is
  * refreshed on every detection pass. Scoped to pending rows: a resolved

@@ -20,7 +20,7 @@ function keydown(
 }
 
 describe('comboFromKeydownEvent', () => {
-  it('returns null for a bare modifier keydown (e.g. just pressing Ctrl)', () => {
+  it('returns null for a bare modifier keydown (e.g. pressing Ctrl)', () => {
     expect(comboFromKeydownEvent(keydown(UiohookKey.Ctrl, { ctrlKey: true }))).toBeNull()
   })
 
@@ -62,7 +62,7 @@ describe('comboFromKeydownEvent', () => {
     expect(comboFromKeydownEvent(keydown(UiohookKey.ShiftRight, { shiftKey: true }))).toBeNull()
   })
 
-  // These two cases exist specifically to demonstrate — not just assert —
+  // These two cases exist specifically to demonstrate; not assert
   // the guarantee documented in docs/security-review.md: typing a password
   // never produces a captured combo, capitals and symbols included, because
   // it never requires holding Control, Alt, or Meta.
@@ -92,12 +92,12 @@ describe('comboFromKeydownEvent', () => {
   })
 })
 
-describe('CaptureService — ignores its own synthetic keystrokes', () => {
+describe('CaptureService; ignores its own synthetic keystrokes', () => {
   beforeEach(() => {
     __resetSelfInjectedGuardForTesting()
   })
 
-  // handleKeydown is private — accessed directly here (TS's `private` is
+  // handleKeydown is private; accessed directly here (TS's `private` is
   // compile-time only) rather than through the real uIOhook.start(), the
   // same way comboFromKeydownEvent above is tested without a real hook.
   function fireKeydown(service: CaptureService, event: UiohookKeyboardEvent): void {
@@ -106,7 +106,7 @@ describe('CaptureService — ignores its own synthetic keystrokes', () => {
     )
   }
 
-  it('does not report a combo that was just marked as self-injected (e.g. a control press)', () => {
+  it('does not report a combo that was marked as self-injected (e.g. a control press)', () => {
     const onCombo = vi.fn()
     const service = new CaptureService(onCombo)
 
@@ -128,7 +128,7 @@ describe('CaptureService — ignores its own synthetic keystrokes', () => {
     )
   })
 
-  it('only swallows one occurrence per mark — a genuine repeat right after is captured', () => {
+  it('only swallows one occurrence per mark: a genuine repeat right after is captured', () => {
     const onCombo = vi.fn()
     const service = new CaptureService(onCombo)
 

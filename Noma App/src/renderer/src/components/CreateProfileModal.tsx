@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import type { Application, ApplicationProfile } from '@shared/types'
-import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
+import { Modal, ModalCloseButton } from './Modal'
+import { PrimaryButton } from './Button'
+import { FIELD_INPUT, FIELD_INPUT_MONO, FIELD_LABEL } from '../lib/surfaces'
 
 interface CreateProfileModalProps {
   /** When given (the Dashboard's "create a profile for what's focused
    *  right now" flow), the application is already known and its fields are
-   *  locked. When omitted (the Profiles page's manual flow, for an
+   *  locked. When omitted (the Profiles page's manual flow for an
    *  application Flow hasn't detected yet), the user fills them in by
    *  hand. */
   application?: Application
@@ -14,7 +16,7 @@ interface CreateProfileModalProps {
 }
 
 /** Matches how WindowsOSAdapter derives an id from a real detected window
- *  (lowercased exe filename, no extension) — an id typed here has to agree
+ *  (lowercased exe filename, no extension); an id typed here has to agree
  *  with that or the profile will never actually match a real detection. */
 function normalizeId(raw: string): string {
   return raw
@@ -57,97 +59,74 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
   }
 
   return (
-    <div className={MODAL_SCRIM}>
-      <div className={`w-full max-w-md p-6 ${GLASS_PANEL}`}>
-        <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">
-          {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
-        </h2>
-        <p className="mb-5 text-xs text-neutral-500">
-          Starts with 4 empty controls. Configure them afterward with the Control Mapping Editor.
-        </p>
+    <Modal onClose={onClose}>
+      <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">
+        {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
+      </h2>
+      <p className="mb-5 text-xs text-neutral-500">
+        Starts with 4 empty controls. Configure them afterward with the Control Mapping Editor.
+      </p>
 
-        {!application && (
-          <>
-            <div className="mb-3">
-              <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500">
-                Application ID
-              </label>
-              <input
-                type="text"
-                value={id}
-                onChange={(event) => setId(event.target.value)}
-                placeholder="e.g. notepad"
-                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
-              />
-              <p className="mt-1 text-[11px] text-neutral-600">
-                Must match the .exe filename (lowercase, no extension) so a real detection finds it,
-                normalized to <span className="font-mono">{normalizedId || '–'}</span>.
-              </p>
-            </div>
-            <div className="mb-3">
-              <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500">
-                Display name
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(event) => setDisplayName(event.target.value)}
-                placeholder="e.g. Notepad"
-                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
-              />
-            </div>
-            <div className="mb-3">
-              <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500">
-                Process filename
-              </label>
-              <input
-                type="text"
-                value={processName}
-                onChange={(event) => setProcessName(event.target.value)}
-                placeholder="e.g. notepad.exe"
-                className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 font-mono text-sm text-neutral-100"
-              />
-            </div>
-          </>
-        )}
-
-        <div className="mb-5">
-          <label className="mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500">
-            Profile name
-          </label>
-          <input
-            type="text"
-            value={profileName}
-            onChange={(event) => setProfileName(event.target.value)}
-            placeholder="e.g. Writing"
-            className="w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100"
-          />
-        </div>
-
-        {error && (
-          <div className="mb-4 rounded-md border border-white/10 px-3 py-2 text-xs text-neutral-400">
-            {error}
+      {!application && (
+        <>
+          <div className="mb-3">
+            <label className={FIELD_LABEL}>Application ID</label>
+            <input
+              type="text"
+              value={id}
+              onChange={(event) => setId(event.target.value)}
+              placeholder="e.g. notepad"
+              className={FIELD_INPUT_MONO}
+            />
+            <p className="mt-1 text-[11px] text-neutral-600">
+              Must match the .exe filename (lowercase, no extension) so a real detection finds it, normalized to{' '}
+              <span className="font-mono">{normalizedId || '–'}</span>.
+            </p>
           </div>
-        )}
+          <div className="mb-3">
+            <label className={FIELD_LABEL}>Display name</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              placeholder="e.g. Notepad"
+              className={FIELD_INPUT}
+            />
+          </div>
+          <div className="mb-3">
+            <label className={FIELD_LABEL}>Process filename</label>
+            <input
+              type="text"
+              value={processName}
+              onChange={(event) => setProcessName(event.target.value)}
+              placeholder="e.g. notepad.exe"
+              className={FIELD_INPUT_MONO}
+            />
+          </div>
+        </>
+      )}
 
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-300"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={!canSave || isSaving}
-            className="rounded-md border border-accent-muted bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
-          >
-            {isSaving ? 'Creating…' : 'Create profile'}
-          </button>
-        </div>
+      <div className="mb-5">
+        <label className={FIELD_LABEL}>Profile name</label>
+        <input
+          type="text"
+          value={profileName}
+          onChange={(event) => setProfileName(event.target.value)}
+          placeholder="e.g. Writing"
+          className={FIELD_INPUT}
+        />
       </div>
-    </div>
+
+      {error && (
+        <div className="mb-4 rounded-md border border-white/10 px-3 py-2 text-xs text-neutral-400">{error}</div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <ModalCloseButton className="rounded-md px-3 py-1.5 text-xs text-neutral-500 hover:text-neutral-300">Cancel</ModalCloseButton>
+        <PrimaryButton onClick={handleCreate} disabled={!canSave || isSaving}>
+          {isSaving ? 'Creating…' : 'Create profile'}
+        </PrimaryButton>
+      </div>
+    </Modal>
   )
 }

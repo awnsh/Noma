@@ -92,8 +92,7 @@ const flowApi: FlowApi = {
 
   updateControl: (applicationId, slot, label, action) =>
     ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CONTROL, applicationId, slot, label, action),
-  resetControlToDefault: (applicationId, slot) =>
-    ipcRenderer.invoke(IPC_CHANNELS.RESET_CONTROL_TO_DEFAULT, applicationId, slot),
+  clearControl: (applicationId, slot) => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_CONTROL, applicationId, slot),
   testControlAction: (action) => ipcRenderer.invoke(IPC_CHANNELS.TEST_CONTROL_ACTION, action),
   getMacros: () => ipcRenderer.invoke(IPC_CHANNELS.GET_MACROS),
   getAllApplications: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ALL_APPLICATIONS),
@@ -159,6 +158,8 @@ const flowApi: FlowApi = {
   getHoloTouchCheckLast: () => ipcRenderer.invoke(IPC_CHANNELS.HOLO_TOUCH_CHECK_LAST),
   stopHoloTouchCheck: (phases) => ipcRenderer.invoke(IPC_CHANNELS.HOLO_TOUCH_CHECK_STOP, phases),
   getGlideState: () => ipcRenderer.invoke(IPC_CHANNELS.GLIDE_GET_STATE),
+  getMacEdgeSwipe: () => ipcRenderer.invoke(IPC_CHANNELS.MAC_EDGE_SWIPE_GET),
+  setMacEdgeSwipe: (enabled) => ipcRenderer.invoke(IPC_CHANNELS.MAC_EDGE_SWIPE_SET, enabled),
   setGlideEnabled: (enabled) => ipcRenderer.invoke(IPC_CHANNELS.GLIDE_SET_ENABLED, enabled),
   setGlideZoneCount: (zoneCount) => ipcRenderer.invoke(IPC_CHANNELS.GLIDE_SET_ZONE_COUNT, zoneCount),
   onGlideState: (callback) => {

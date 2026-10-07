@@ -37,16 +37,12 @@ import {
   postMouseEvent
 } from './macos'
 import { isMac } from '../platform'
+import { sleep } from '../util'
+import { APPROACH_STEP_MS, FIND_RETRY_MS, FIND_WAIT_MS, HOVER_MS, PRESS_MS } from './timings'
 
 /** A window minimized (or otherwise off-screen) reports coordinates around
- *  -32000 on Windows — nowhere close to a real, clickable position. */
+ *  -32000 on Windows; nowhere close to a real, clickable position. */
 const OFFSCREEN_COORD_THRESHOLD = -30000
-
-/** How long a named control may take to appear. A replayed step often
- *  follows one that opens something (a menu, a panel, a dialog), and the
- *  app needs a moment to draw it; the search is repeated until then. */
-const FIND_WAIT_MS = 2000
-const FIND_RETRY_MS = 200
 
 /**
  * Real click replay for a learned workflow's `click` MacroStep.
@@ -61,7 +57,7 @@ const FIND_RETRY_MS = 200
  *    belong to that app's process. Otherwise, e.g. if a focus step before
  *    it lost a race with a notification, the click would land in whatever
  *    happened to be on top.
- * 2. **`label:<name>` — the same control, found again.** The named button
+ * 2. **`label:<name>`: the same control, found again.** The named button
  *    or menu item is looked up afresh by UI Automation in that app's
  *    windows (uiaControlFinder.ts), so it's found wherever it is *now*:
  *    after a window resize, a moved toolbar or a different screen. It must
@@ -69,7 +65,7 @@ const FIND_RETRY_MS = 200
  *    waiting FIND_WAIT_MS for it to appear) or several both refuse. The
  *    found point must also belong to the app's own window, so a popup
  *    covering the button can't receive the click instead.
- * 3. **`zone:<col>x<row>` — a position.** Only recorded where the app
+ * 3. **`zone:<col>x<row>`: a position.** Only recorded where the app
  *    exposes no named controls (custom-drawn UIs). Mapped onto the
  *    foreground window's *current* bounds, so a moved or resized window
  *    still gets the same relative spot. This one is approximate by design:
@@ -133,27 +129,21 @@ async function clickNamedControl(label: string, processId: number | null): Promi
     if (Date.now() >= deadline) {
       return { ok: false, reason: `Couldn't find “${label}” in the app. It may be hidden, disabled or renamed` }
     }
-    await new Promise((resolve) => setTimeout(resolve, FIND_RETRY_MS))
+    await sleep(FIND_RETRY_MS)
   }
 }
 
-/** Mouse path onto the target before pressing: a few steps in from just
- *  below-left of it, like a hand arriving. */
+/** Mouse path onto the target before pressing: a few steps in from *  below-left of it, like a hand arriving. */
 const APPROACH_OFFSETS: Array<[number, number]> = [
   [-12, 10],
   [-8, 6],
   [-4, 3],
   [0, 0]
 ]
-const APPROACH_STEP_MS = 12
-/** Time over the target before pressing: long enough for the app to
- *  register the pointer as hovering it. */
-const HOVER_MS = 80
-const PRESS_MS = 40
 
 /**
  * Clicks the way a hand does: moves onto the target, pauses, presses,
- * releases. Not just "put the cursor there and click".
+ * releases. Not "put the cursor there and click".
  *
  * Apps built on newer Windows UI frameworks (new Notepad, Settings,
  * Terminal; WinUI 3 / XAML) only treat a press as a click on a control once
@@ -181,7 +171,6 @@ async function sendClick(x: number, y: number): Promise<ExecutionResult> {
   return down === 1 && up === 1 ? { ok: true } : { ok: false, reason: 'The OS refused the synthetic click' }
 }
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** An absolute move to screen pixel (x, y), across all monitors. */
 function absoluteMove(x: number, y: number): ReturnType<typeof mouseEvent> {

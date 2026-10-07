@@ -372,7 +372,7 @@ export function focusedWindowRect(pid: number): ScreenRect | null {
 }
 
 /**
- * Presses the focused window's close button — the macOS equivalent of the
+ * Presses the focused window's close button: the macOS equivalent of the
  * WM_CLOSE windowClose.ts posts on Windows: exactly what clicking the red
  * button does, so the app still gets to ask about unsaved changes.
  */
@@ -528,7 +528,7 @@ export interface ElementAtPoint {
   window: ScreenRect | null
 }
 
-/** What control is at a screen point — the AX equivalent of the UI
+/** What control is at a screen point: the AX equivalent of the UI
  *  Automation hit-test in uiaInspector.ts. */
 export function elementAtPoint(x: number, y: number): ElementAtPoint | null {
   const mac = load()
@@ -581,7 +581,7 @@ export type MacFindResult =
   | { status: 'unavailable' }
 
 /**
- * Finds enabled, on-screen command controls named `label` in an app — the
+ * Finds enabled, on-screen command controls named `label` in an app: the
  * AX equivalent of uiaControlFinder.ts. Searches the app's windows, any open
  * popup menus, and the menu bar; a menu-bar menu is only searched while it's
  * open (its title is selected), because closed menus still have items in

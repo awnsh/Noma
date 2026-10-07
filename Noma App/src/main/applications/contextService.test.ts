@@ -51,7 +51,7 @@ beforeEach(() => {
   seedProfile('chrome', 'Google Chrome')
 })
 
-describe('ApplicationContextService — demo override', () => {
+describe('ApplicationContextService; demo override', () => {
   it('setDemoApplication overrides the context and resolves the real profile for it', async () => {
     const osAdapter = new FakeOSAdapter()
     const service = new ApplicationContextService(osAdapter)

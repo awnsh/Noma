@@ -10,7 +10,7 @@ afterEach(() => {
 })
 
 describe('markSelfInjected / isSelfInjected', () => {
-  it('reports and consumes a marked combo — a matching real keydown right after is suppressed', () => {
+  it('reports and consumes a marked combo: a matching real keydown right after is suppressed', () => {
     markSelfInjected(['Control', 'F5'])
     expect(isSelfInjected(['Control', 'F5'])).toBe(true)
   })

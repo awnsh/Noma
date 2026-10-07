@@ -36,8 +36,8 @@ interface SeedApplication {
  * Starter profiles (brainstorm.md section 5) for applications likely to
  * already be installed on a development machine, so Milestone 1 ("the
  * keyboard changes when I change applications") is demoable immediately
- * without a profile editor. The profile system itself is generic — this
- * is just seed data, not a hardcoded assumption about which apps exist.
+ * without a profile editor. The profile system itself is generic: this
+ * is seed data, not a hardcoded assumption about which apps exist.
  */
 const SEED_APPLICATIONS: SeedApplication[] = [
   {
@@ -82,7 +82,7 @@ const SEED_APPLICATIONS: SeedApplication[] = [
       { slot: 2, label: 'PLAY / PAUSE', action: { type: 'shortcut', keys: ['Space'] } },
       { slot: 3, label: 'NEXT', action: { type: 'shortcut', keys: ['Control', 'ArrowRight'] }, macKeys: ['Meta', 'ArrowRight'] },
       // A single button can't do continuous volume (that's what a future
-      // Rotary Encoder Module is for) — mute/unmute toggle is the honest,
+      // Rotary Encoder Module is for); mute/unmute toggle is the honest,
       // demonstrable action a discrete control can actually perform.
       { slot: 4, label: 'MUTE', action: { type: 'systemCommand', command: 'volumeMute' } }
     ]
@@ -91,7 +91,7 @@ const SEED_APPLICATIONS: SeedApplication[] = [
 
 /**
  * The original seed control for a given application/slot, if that
- * application was seeded — used by the Control Mapping Editor's "Reset to
+ * application was seeded; used by the Control Mapping Editor's "Reset to
  * default" action. Returns null for an application that was never seeded
  * (there's no "default" to reset to), which the caller must treat as "no
  * reset available", not an error.

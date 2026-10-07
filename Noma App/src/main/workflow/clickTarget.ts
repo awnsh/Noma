@@ -1,6 +1,6 @@
 /**
  * Turns "the user clicked here" into the only thing Noma is willing to
- * remember about it — the click-capture counterpart of captureFilter.ts, and
+ * remember about it: the click-capture counterpart of captureFilter.ts, and
  * the single enforcement point for what a click may become. Pure, so it's
  * unit-tested and runs before anything is stored or logged.
  *
@@ -9,14 +9,14 @@
  *    Only command-style controls count (buttons, menu items, check/radio
  *    boxes). Tabs deliberately don't: in a browser a tab is named after the
  *    page ("Inbox", "Google Calendar - September 2026"), i.e. content. Text fields, documents, list/tree/table rows and links are
- *    where user content lives — filenames, messages, page text — and are
+ *    where user content lives; filenames, messages, page text; and are
  *    never recorded, not even their type.
  *  - A control's name is kept only if it looks like a *label*: one to three
  *    plain words, no digits, no path/URL/e-mail punctuation. "Delete" and
  *    "Save As" pass; "Reply to a.b@x.com", "Report_Q3.xlsx", "3 unread" don't.
  *  - When an app doesn't expose named controls at all (many custom-drawn
  *    UIs), the click falls back to a coarse cell of a grid laid over the
- *    window — a position, not a name — so a repeated click sequence there is
+ *    window: a position, not a name; so a repeated click sequence there is
  *    still recognizable without reading anything from the screen.
  */
 
@@ -31,7 +31,7 @@ const COMMAND_CONTROL_TYPES = new Set([
 ])
 
 /** Control types where user content lives. A click on one is not recorded at
- *  all — not by label, and not even as a position — so where you click inside
+ *  all; not by label, and not even as a position; so where you click inside
  *  a document, a message box or a file list is never captured. */
 const CONTENT_CONTROL_TYPES = new Set([
   'ControlType.Edit',
@@ -74,7 +74,7 @@ export function sanitizeControlLabel(controlType: string | null, name: string | 
 export const ZONE_COLUMNS = 16
 export const ZONE_ROWS = 10
 /** A window smaller than this in either direction is too small for a grid
- *  cell to mean anything (tooltips, popups, tray flyouts) — exported so
+ *  cell to mean anything (tooltips, popups, tray flyouts); exported so
  *  click.ts's replay path applies the exact same floor capture used, rather
  *  than a second guessed-at constant. */
 export const MIN_WINDOW_SIZE = 200
@@ -106,7 +106,7 @@ export interface RawClickInspection {
 }
 
 /** The stored target for one click: a sanitized label when the control's
- *  name is safe, else the window grid zone — but only where the app exposes
+ *  name is safe, else the window grid zone; but only where the app exposes
  *  nothing meaningful at that point (an opaque pane/canvas/window, as in
  *  custom-drawn UIs). A content control, or a command control whose name
  *  failed sanitizing, records nothing. */
@@ -116,7 +116,7 @@ export function clickTargetFor(x: number, y: number, inspection: RawClickInspect
   if (label) return `label:${label}`
   // A real command control whose name isn't label-shaped is still a
   // *known* control, not an opaque surface: recording its position instead
-  // would just be a back door around the name filter.
+  // would be a back door around the name filter.
   if (inspection.controlType && COMMAND_CONTROL_TYPES.has(inspection.controlType)) return null
   return inspection.window ? zoneForClick(x, y, inspection.window) : null
 }

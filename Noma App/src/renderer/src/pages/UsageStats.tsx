@@ -3,6 +3,7 @@ import type { DailyActivityCount, ShortcutUsageStat } from '@shared/types'
 import { formatShortcutCaption } from '../lib/describeAction'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 import { DailyActivityChart } from '../components/DailyActivityChart'
+import { plural } from '../lib/plural'
 
 const ACTIVITY_WINDOW_DAYS = 14
 
@@ -18,7 +19,7 @@ function ShortcutUsageRow({ stat }: { stat: ShortcutUsageStat }) {
       <div className="flex shrink-0 items-center gap-4">
         <div
           className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-300"
-          title={`Used ${stat.count} time${stat.count === 1 ? '' : 's'} since ${formatAbsoluteTime(stat.firstUsed)}`}
+          title={`Used ${stat.count} ${plural(stat.count, 'time')} since ${formatAbsoluteTime(stat.firstUsed)}`}
         >
           {stat.count}×
         </div>

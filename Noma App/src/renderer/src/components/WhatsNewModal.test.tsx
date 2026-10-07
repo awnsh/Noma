@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import type { WhatsNew } from '@shared/types'
 import { WhatsNewModal } from './WhatsNewModal'
@@ -40,7 +40,7 @@ describe('WhatsNewModal', () => {
     const api = stubFlow(WHATS_NEW)
     render(<WhatsNewModal />)
     fireEvent.click(await screen.findByRole('button', { name: 'Got it' }))
-    expect(api.dismissWhatsNew).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(api.dismissWhatsNew).toHaveBeenCalledTimes(1))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
@@ -49,7 +49,7 @@ describe('WhatsNewModal', () => {
     render(<WhatsNewModal />)
     await screen.findByRole('dialog')
     fireEvent.keyDown(window, { key: 'Escape' })
-    expect(api.dismissWhatsNew).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(api.dismissWhatsNew).toHaveBeenCalledTimes(1))
   })
 
   it('renders nothing when this launch did not follow an update', async () => {

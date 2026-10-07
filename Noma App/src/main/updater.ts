@@ -39,7 +39,7 @@ function foundUpdate(): boolean {
  * Windows: downloads in the background and installs when Noma quits (or
  * right away from the tray's "Restart to update" or Settings).
  *
- * macOS: only an app signed with an Apple Developer ID can replace itself —
+ * macOS: only an app signed with an Apple Developer ID can replace itself
  * macOS refuses a self-update of an ad-hoc signed build. So an unsigned
  * build doesn't download anything; it shows a notification that opens the
  * download page instead. Once the Mac build is signed (see RELEASING.md),

@@ -23,6 +23,8 @@ export interface Application {
 }
 
 export type ControlAction =
+  /** An empty zone: nothing assigned, nothing runs. What "Clear" in the control editor leaves behind. */
+  | { type: 'none' }
   | { type: 'shortcut'; keys: string[] }
   | { type: 'macro'; macroId: string }
   | { type: 'launchApplication'; applicationId: string }
@@ -60,6 +62,12 @@ export type ControlAction =
    * before it existed still run.
    */
   | { type: 'click'; target: string; applicationId?: string }
+
+/** The macOS right-edge swipe (Notification Center): `supported` is false off macOS. */
+export interface MacEdgeSwipeState {
+  supported: boolean
+  enabled: boolean
+}
 
 export interface Control {
   id: string
@@ -802,7 +810,7 @@ export interface FlowApi {
   ): Promise<ApplicationProfile | null>
   /** Restores a control to its original seed configuration. Returns null
    *  if this application was never seeded — there's nothing to reset to. */
-  resetControlToDefault(applicationId: string, slot: number): Promise<ApplicationProfile | null>
+  clearControl(applicationId: string, slot: number): Promise<ApplicationProfile | null>
   /** Runs a control action once, against whatever the last known real
    *  application was, without saving it to any control. Same execution
    *  path and same safety rules (closed vocabulary, blocklist, fail-closed
@@ -955,6 +963,9 @@ export interface FlowApi {
   /** Glide: the trackpad swipe-in. On/off and zone count are stored by main
    *  and take effect immediately, with or without this window open. */
   getGlideState(): Promise<GlideState>
+  /** macOS only: whether the system's swipe-in-from-the-right-edge gesture (Notification Center) is on, which clashes with Glide's right zones. */
+  getMacEdgeSwipe(): Promise<MacEdgeSwipeState>
+  setMacEdgeSwipe(enabled: boolean): Promise<MacEdgeSwipeState>
   setGlideEnabled(enabled: boolean): Promise<GlideState>
   setGlideZoneCount(zoneCount: HoloTrackpadZoneCount): Promise<GlideState>
   onGlideState(callback: (state: GlideState) => void): () => void

@@ -3,11 +3,11 @@ import { useApplicationsStore } from '../stores/applicationsStore'
 import { useOsIcon } from '../lib/osIconCache'
 
 interface AppIconProps {
-  /** The real `applicationId` (`code`, `chrome`, `claude`, ...) when known —
+  /** The real `applicationId` (`code`, `chrome`, `claude`, ...) when known;
    *  `undefined`/`null` (an app Noma hasn't identified) still resolves to
    *  the generic catch-all glyph, never a blank space. */
   applicationId?: string | null
-  /** The display name — used only as the icon's accessible label. */
+  /** The display name; used only as the icon's accessible label. */
   name: string
   size?: number
   className?: string
@@ -18,7 +18,7 @@ interface AppIconProps {
    *  visual anchor. */
   variant?: 'bare' | 'tile'
   /** `'bare'` only: renders the mark at ~92% of `size` instead of the
-   *  default 68%/58%, and drops the small inset background — for a caller
+   *  default 68%/58%, and drops the small inset background. For a caller
    *  that already wraps this in its own sized container (e.g.
    *  `WorkflowChain`'s icon chip) and wants the icon to actually fill it,
    *  not float in the middle with a visible ring of empty space. The
@@ -28,25 +28,25 @@ interface AppIconProps {
 }
 
 /**
- * The one place in the app that turns an application into a visual mark —
- * every call site (`WorkflowChain`, `ControlTile`, `LearnedActionCard`,
+ * The one place in the app that turns an application into a visual mark.
+ * Every call site (`WorkflowChain`, `ControlTile`, `LearnedActionCard`,
  * every "current application" indicator) goes through this instead of
  * rendering its own icon logic.
  *
  * Three tiers, in order, never skipping a tier when a higher one is
  * available:
  *  1. The real OS-extracted icon (`useOsIcon`, backed by `iconService.ts`'s
- *     `app.getFileIcon` in the main process) — an actual `<img>` of that
+ *     `app.getFileIcon` in the main process). An actual `<img>` of that
  *     exact application's real icon, works for *any* installed
  *     application, not just ones this app happens to have a hand-drawn
  *     glyph for. This is what makes "arbitrary application" support real
  *     rather than aspirational.
- *  2. This app's own hand-drawn glyph (`lib/appIcons.ts`'s small curated
- *     registry) — used only while the real icon is still loading, or once
+ *  2. This app's own hand-drawn glyph (`lib/appIcons.ts`'s small selected
+ *     registry). Used only while the real icon is still loading, or once
  *     it's confirmed unavailable (no `executablePath` on record yet, or
  *     the OS couldn't resolve one).
  *  3. The generic catch-all glyph (`AppGlyphIcon`, `resolveAppIcon`'s own
- *     fallback) — so no application ever falls back to a bare text
+ *     fallback). So no application ever falls back to a bare text
  *     initial or an empty box.
  *
  * The executable path itself is resolved from `applicationId` via

@@ -79,11 +79,11 @@ function describe(status: UpdateStatus): string {
   const current = `You have version ${status.currentVersion}.`
   switch (status.phase) {
     case 'unavailable':
-      return `${current} Updates only apply to installed copies of Noma, not this development build.`
+      return `${current} Development build; updates apply to installed copies only.`
     case 'checking':
       return `${current} Checking for a newer version…`
     case 'up-to-date':
-      return `${current} That's the newest version.`
+      return `${current} Up to date.`
     case 'available':
       return `Version ${status.version} is out. Download it and install it over this one; your settings and workflows stay.`
     case 'downloading':

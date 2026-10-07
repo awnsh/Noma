@@ -26,7 +26,7 @@ People who live in a handful of apps on a Windows laptop with a precision
 touchpad: first, Purdue students in a small external beta. They have never
 heard of Noma and give it a few minutes to prove itself.
 
-## The v0.1 journey
+## The v0.1 workflow
 
 1. **Install and launch.** Single instance, tray icon, Noma identity on the
    taskbar and in notifications.
@@ -74,11 +74,10 @@ heard of Noma and give it a few minutes to prove itself.
   CI's Mac runner, but no one has used it on a real Mac yet, and Glide's
   thresholds were tuned on a Windows touchpad.
 - No physical device exists for users; never fake a hardware connection.
-- Visual identity: near-black graphite, Sora / Inter / JetBrains Mono, blue
+- Visual identity: near-black graphite, Sora, JetBrains Mono, blue
   accent `#4c7eff`, violet only to mark a Flow suggestion, gold only for real
   hardware contact. No AI gradients or glow, no fake 3D hardware.
-- Voice: plain, specific, quiet. Never "AI-powered", "supercharge",
-  "unlock".
+- Voice: plain, specific, quiet. No marketing clichés or hype language.
 
 ## Product principles
 

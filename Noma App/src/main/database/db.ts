@@ -37,8 +37,8 @@ export function closeDatabase(): void {
 
 /**
  * Test-only: injects a database instance directly (e.g. an in-memory
- * better-sqlite3 database) so repository functions — which call
- * getDatabase() internally — are unit-testable without Electron's
+ * better-sqlite3 database) so repository functions; which call
+ * getDatabase() internally; are unit-testable without Electron's
  * app.getPath('userData'). Never called outside tests.
  */
 export function __setDatabaseForTesting(instance: Database.Database): void {
@@ -138,7 +138,7 @@ export function runMigrations(database: Database.Database): void {
   ensureColumn(database, 'applications', 'executable_path', 'executable_path TEXT')
   // Noma Notice: how many times Flow has now seen this workflow, and when (if
   // ever) it was announced on screen. Both additive, so an existing flow.db
-  // picks them up with no reset — same pattern as every column above.
+  // picks them up with no reset; same pattern as every column above.
   ensureColumn(database, 'suggestions', 'occurrence_count', 'occurrence_count INTEGER')
   ensureColumn(database, 'suggestions', 'notified_at', 'notified_at INTEGER')
   // Demo Mode's scripted events and the suggestions they produce. Kept apart

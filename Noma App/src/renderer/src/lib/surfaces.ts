@@ -19,7 +19,7 @@
 
 /** The scrim behind a modal — a soft, mostly-transparent dark wash over
  *  real page content, not a full black-out. */
-export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]'
+export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px] noma-fade-in'
 
 /**
  * The default solid surface — Card fill, real border, a plain shadow.
@@ -35,7 +35,7 @@ export const CARD =
  *  visibly lifts off the page behind the scrim. Callers still supply their
  *  own `max-w-*`/`p-*`. */
 export const GLASS_PANEL =
-  'rounded-2xl border border-base-700 bg-base-800 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)]'
+  'rounded-2xl border border-base-700 bg-base-800 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)] noma-scale-in'
 
 /**
  * The one deliberate glass surface outside Holo/Noma Notice: HomeSidePanel's
@@ -98,3 +98,12 @@ export const HERO_CARD =
 export const NOTICE_GLASS =
   'rounded-2xl border border-white/[0.09] bg-[rgba(17,18,20,0.82)] backdrop-blur-xl shadow-[0_24px_64px_-24px_rgba(0,0,0,0.8)]'
 
+
+/** Form field recipes shared by the modals and the macro editor. */
+export const FIELD_INPUT =
+  'w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100'
+export const FIELD_INPUT_MONO = `${FIELD_INPUT} font-mono`
+/** Compact select used inside per-function cards (ModuleConfigModal). */
+export const FIELD_INPUT_SM =
+  'w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200'
+export const FIELD_LABEL = 'mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500'

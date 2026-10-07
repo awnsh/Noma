@@ -4,7 +4,7 @@ import { ONBOARDING_FOCUS_RING } from './OnboardingButton'
 
 interface OnboardingLayoutProps {
   stepIndex: number
-  /** Omitted on the first screen — there's nowhere to go back to. */
+  /** Omitted on the first screen. There's nowhere to go back to. */
   onBack?: () => void
   /** The Noma Demo screen needs more room for the keyboard + controls. */
   wide?: boolean
@@ -12,7 +12,7 @@ interface OnboardingLayoutProps {
 }
 
 /**
- * The onboarding shell: no sidebar, no app navigation — just a back
+ * The onboarding shell: no sidebar, no app navigation. Just a back
  * button, a step progress indicator, and a centered content column. Every
  * screen renders inside this so the chrome (spacing, progress dots, back
  * affordance) never has to be rebuilt per-screen.
@@ -28,7 +28,9 @@ export function OnboardingLayout({ stepIndex, onBack, wide = false, children }: 
           disabled={!onBack}
           className={`flex h-8 w-8 items-center justify-center rounded-full text-neutral-500 transition-colors duration-150 hover:text-neutral-200 disabled:pointer-events-none disabled:opacity-0 ${ONBOARDING_FOCUS_RING}`}
         >
-          ←
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
         </button>
         <div
           className="flex gap-1.5"

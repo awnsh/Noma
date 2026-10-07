@@ -4,8 +4,8 @@ import { isAmbientApp, isSystemSurface, matchRealisticWorkflow } from './appKnow
 /**
  * Does a repeated chain actually make sense as a workflow? Repetition alone
  * isn't enough: in real data Flow kept offering things like "Claude → Chrome
- * → msedge" (just switching windows), "Alt+Tab → WINWORD → Alt+Tab", "Paste →
- * Undo → Paste as plain text", and "Copy → Paste → Copy → Paste" — all
+ * → msedge" (switching windows), "Alt+Tab → WINWORD → Alt+Tab", "Paste →
+ * Undo → Paste as plain text", and "Copy → Paste → Copy → Paste"; all
  * repeated, none of them something a person would want as one press.
  *
  * Two jobs, both pure:
@@ -118,12 +118,12 @@ function actionKey(step: WorkflowStep): string {
  * - It has to *do* something. A chain that's only app switches is moving
  *   between windows, except a two-app hop people genuinely make for a reason
  *   (Explorer → Teams: attach a file), which can stand on its own.
- * - No step that's just getting around (Alt+Tab, Undo, Ctrl+Arrow) and no
+ * - No step that's getting around (Alt+Tab, Undo, Ctrl+Arrow) and no
  *   system window or music player.
  * - Every app it visits, something is done there, or the visit itself is the
  *   point (editor → browser: check the result). "Claude → Chrome → msedge"
  *   visits Chrome and does nothing. It never *starts* in an app where nothing
- *   happens, since that's just where you were.
+ *   happens, since that's where you were.
  * - It never starts or ends on a click at an unnamed spot. "Save, then click
  *   somewhere in the editor" is clicking back into the text, not a step.
  * - Each action happens once and no hop repeats: "Copy → Paste → Copy →

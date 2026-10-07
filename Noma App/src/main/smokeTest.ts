@@ -5,6 +5,7 @@ import { frontWindowOwnerPid, frontmostPid, isAccessibilityTrusted, pointerPosit
 import { macTrackpadStatus } from './holo/macTrackpad'
 import { getApplicationIcon } from './applications/iconService'
 import { isMac } from './platform'
+import { sleep } from './util'
 
 /**
  * Launch check for CI (`NOMA_SMOKE_TEST=<report path>`, only honoured
@@ -43,7 +44,7 @@ export function runSmokeTest(options: {
     // The app watcher polls; give it a few seconds to report the first app.
     const started = Date.now()
     while (!options.getContext().application && Date.now() - started < 10_000) {
-      await new Promise((resolve) => setTimeout(resolve, 250))
+      await sleep(250)
     }
     report.application = options.getContext().application?.id ?? null
     report.glide = options.enableGlide()

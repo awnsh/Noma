@@ -1,6 +1,7 @@
 import { app, type BrowserWindow } from 'electron'
 import { mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { sleep } from './util'
 
 /**
  * Captures the real main window as PNGs for the website
@@ -15,7 +16,6 @@ export async function captureApp(options: {
   window: BrowserWindow
   makeSuggestion: () => Promise<void>
 }): Promise<void> {
-  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
   const { window } = options
   const run = (code: string) => window.webContents.executeJavaScript(code)
   const open = (label: string) =>
@@ -40,27 +40,27 @@ export async function captureApp(options: {
     window.webContents.reload()
     await new Promise((resolve) => window.webContents.once('did-finish-load', () => resolve(undefined)))
     await window.webContents.insertCSS('::-webkit-scrollbar { display: none !important; }')
-    await wait(1500)
+    await sleep(1500)
 
     for (const id of ['code', 'chrome', 'claude']) {
       await run(`window.flow.setDemoApplication(${JSON.stringify(id)})`)
       await open('Home')
-      await wait(1200)
+      await sleep(1200)
       await save(`home-${id}.png`)
     }
 
     await options.makeSuggestion()
     await run("window.flow.setDemoApplication('code')")
     await open('Workflows')
-    await wait(300)
+    await sleep(300)
     await open('Home')
-    await wait(1500)
+    await sleep(1500)
     await save('home-suggestion.png')
     await open('Workflows')
-    await wait(1200)
+    await sleep(1200)
     await save('workflows.png')
     await open('Glide')
-    await wait(1200)
+    await sleep(1200)
     await save('glide.png')
     app.exit(0)
   } catch (error) {

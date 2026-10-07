@@ -7,11 +7,11 @@ import { useOnboardingStore } from '../stores/onboardingStore'
 type PendingAction = 'clear' | 'delete' | null
 
 /**
- * Clear/Export/Delete data (this phase's section 13). "Export" isn't built
- * — there's nothing yet worth exporting beyond what Clear/Delete already
+ * Clear/Export/Delete data (this phase's section 13). "Export" isn't built;
+ * there's nothing yet worth exporting beyond what Clear/Delete already
  * make legible on this same page (see README's "what remains incomplete").
  * Each destructive action requires an explicit second click (inline, not a
- * separate modal) before it runs — mirrors the "warns first" pattern the
+ * separate modal) before it runs; mirrors the "warns first" pattern the
  * Macro Studio already uses for deleting a referenced macro.
  */
 export function DataManagementPanel() {
@@ -30,7 +30,7 @@ export function DataManagementPanel() {
     setPending(null)
     const refreshes = [refreshWorkflow(), refreshFlow()]
     // deleteAllData() wipes the whole `settings` table, which is also
-    // where onboarding's progress lives (see onboardingRepository.ts) — a
+    // where onboarding's progress lives (see onboardingRepository.ts). A
     // factory reset really is "the state a fresh install starts in," so
     // re-load it here too, rather than only picking that up on next
     // relaunch (App.tsx only loads it once, on mount).
@@ -42,8 +42,7 @@ export function DataManagementPanel() {
     <section className="rounded-xl border border-white/10 bg-base-900 px-5 py-4">
       <div className="text-xs uppercase tracking-widest text-neutral-500">Your Data</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
-        Everything Flow has observed and suggested is stored locally, never sent anywhere. You can
-        clear it at any time.
+        Stored on this computer. Never sent anywhere.
       </p>
 
       {lastAction && (

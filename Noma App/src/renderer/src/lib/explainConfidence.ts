@@ -1,4 +1,5 @@
 import type { ConfidenceBreakdown } from '@shared/types'
+import { plural } from './plural'
 
 /**
  * Turns the real numbers behind a suggestion's confidence into a plain-
@@ -22,10 +23,10 @@ export function explainConfidence(breakdown: ConfidenceBreakdown): string {
     priorTotal === 0
       ? "Flow hasn't learned a preference for suggestions like this yet. No bias applied."
       : biasPercent === 0
-        ? `Flow remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted, roughly balanced, so no meaningful nudge either way.`
-        : `Flow also remembers ${breakdown.priorAccepted} of ${priorTotal} similar suggestion${priorTotal === 1 ? '' : 's'} you've resolved before were accepted, ${
+        ? `Flow remembers ${breakdown.priorAccepted} of ${priorTotal} similar ${plural(priorTotal, 'suggestion')} you've resolved before were accepted, roughly balanced, so no meaningful nudge either way.`
+        : `Flow also remembers ${breakdown.priorAccepted} of ${priorTotal} similar ${plural(priorTotal, 'suggestion')} you've resolved before were accepted, ${
             biasPercent > 0 ? 'adding' : 'subtracting'
           } ${Math.abs(biasPercent)}%.`
 
-  return `Occurred ${breakdown.occurrenceCount} time${breakdown.occurrenceCount === 1 ? '' : 's'} today. ${occurrenceSentence} ${historySentence}`
+  return `Occurred ${breakdown.occurrenceCount} ${plural(breakdown.occurrenceCount, 'time')} today. ${occurrenceSentence} ${historySentence}`
 }

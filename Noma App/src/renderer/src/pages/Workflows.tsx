@@ -1,50 +1,34 @@
-import { useEffect, useState } from 'react'
 import { useSuggestionsStore } from '../stores/suggestionsStore'
-import { useLearnedActions, type LearnedAction } from '../lib/useLearnedActions'
+import { useLearnedActions } from '../lib/useLearnedActions'
 import { NomaMoment } from '../components/NomaMoment'
 import { WorkflowCard } from '../components/WorkflowCard'
-import { WorkflowDetailModal } from '../components/WorkflowDetailModal'
 import { EmptyState } from '../components/EmptyState'
+import { useUiStore } from '../stores/uiStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { CARD } from '../lib/surfaces'
 import { COMMAND_MODIFIERS_COPY } from '../lib/platform'
+import { useStoreSync } from '../lib/useStoreSync'
 
 /**
- * Workflows — "what has Noma learned that I actually do?"
+ * Workflows: "what has Noma learned that I actually do?"
  *
- * Deliberately not a new data model: pending suggestions come from the same
+ * Deliberately not a new data model. Pending suggestions come from the same
  * `useSuggestionsStore` Home's hero and Controls' `SuggestionsPanel` already
  * read, and already-added workflows come from the same `useLearnedActions`
  * Home's preview and Controls' list already read. This page's only job is
- * to give that existing lifecycle — Noma notices → you review → you add it
- * → it's yours to use — a place where the whole arc is visible at once,
+ * to give that existing lifecycle (Noma notices → you review → you add it
+ * → it's yours to use) a place where the whole arc is visible at once,
  * as real objects rather than list rows. Nothing here is fabricated: an
  * empty section is shown as empty, never padded with example cards.
  */
 export function Workflows() {
   const { suggestions, isLoading: suggestionsLoading, refresh, subscribe, resolve } = useSuggestionsStore()
   const learnedActions = useLearnedActions()
-  const [selected, setSelected] = useState<LearnedAction | null>(null)
+  const openMacro = useUiStore((state) => state.openMacro)
   const { enabled: flowEnabled, isLoading: flowLoading, refresh: refreshFlow, setEnabled: setFlowEnabled } =
     useWorkflowStore()
 
-  useEffect(() => {
-    refresh()
-    void refreshFlow()
-    const unsubscribe = subscribe()
-    return unsubscribe
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Keep the open detail view in sync with the underlying list — a usage
-  // count ticking up, or the workflow being edited away entirely from
-  // inside the modal itself, both flow through here rather than freezing
-  // the modal on stale data.
-  useEffect(() => {
-    if (!selected || !learnedActions) return
-    const fresh = learnedActions.find((action) => action.macro.id === selected.macro.id)
-    setSelected(fresh ?? null)
-  }, [learnedActions, selected])
+  useStoreSync({ refresh, subscribe }, { refresh: refreshFlow })
 
   const isLoading = suggestionsLoading || learnedActions === null
   const hasPending = suggestions.length > 0
@@ -66,7 +50,7 @@ export function Workflows() {
             <p className="text-sm font-medium text-neutral-100">Flow is off, so Noma isn&apos;t noticing anything.</p>
             <p className="mt-1 max-w-md text-xs leading-relaxed text-neutral-500">
               When on, Flow records which app is in front and which shortcuts you press that hold {COMMAND_MODIFIERS_COPY}.
-              Never what you type, never screenshots. It all stays on this computer.
+              Never what you type, never screenshots.
             </p>
           </div>
           <button
@@ -80,24 +64,20 @@ export function Workflows() {
       )}
 
       {isLoading ? null : !hasPending && !hasLearned ? (
-        // Case 1 — nothing at all: the page should read as active, not empty.
+        // Case 1: nothing at all. The page should read as active, not empty.
         flowEnabled && (
           <EmptyState
             title="Nothing noticed yet."
-            hint={`Keep working normally. Once you've repeated the same shortcut sequence about three times, it shows up here for you to review. Shortcuts that hold ${COMMAND_MODIFIERS_COPY} count; plain typing never does.`}
+            hint={`Repeat the same shortcut sequence about three times and it shows up here. Shortcuts that hold ${COMMAND_MODIFIERS_COPY} count; plain typing never does.`}
           />
         )
       ) : (
         <>
-          <section className="mb-14">
-            <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Noma noticed</h2>
-            <p className="mb-5 text-sm text-neutral-600">
-              {hasPending
-                ? 'Patterns Noma has detected, waiting on you.'
-                : "Nothing new right now — you'll see it here the moment Noma notices something."}
-            </p>
-            {hasPending && (
-              <div className="space-y-4">
+          {hasPending && (
+            <section className="mb-14">
+              <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Suggestions</h2>
+              <p className="mb-5 text-sm text-neutral-600">Patterns Noma has detected, waiting on you.</p>
+              <div className="space-y-4 mc-stagger">
                 {suggestions.map((suggestion) => (
                   <NomaMoment
                     key={suggestion.id}
@@ -108,26 +88,26 @@ export function Workflows() {
                   />
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
           <section>
             <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Your workflows</h2>
             <p className="mb-5 text-sm text-neutral-600">
               {hasLearned
-                ? 'Click one to pause it, change its zone, or remove it.'
+                ? 'Click one to open it in Macro Studio.'
                 : 'Workflows you save appear here, with the Glide zone that runs them.'}
             </p>
             {hasLearned ? (
-              <div className="space-y-4">
+              <div className="space-y-4 mc-stagger">
                 {(learnedActions ?? []).map((action) => (
-                  <WorkflowCard key={action.macro.id} action={action} onSelect={() => setSelected(action)} />
+                  <WorkflowCard key={action.macro.id} action={action} onSelect={() => openMacro(action.macro.id)} />
                 ))}
               </div>
             ) : (
               hasPending && (
                 <p className="text-sm text-neutral-600">
-                  Review what Noma noticed above to add your first one.
+                  Review the suggestions above to add your first one.
                 </p>
               )
             )}
@@ -135,7 +115,6 @@ export function Workflows() {
         </>
       )}
 
-      {selected && <WorkflowDetailModal action={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }

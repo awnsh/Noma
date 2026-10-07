@@ -4,6 +4,7 @@ import { VirtualControlButton } from '../components/VirtualControlButton'
 import { ControlEditorModal } from '../components/ControlEditorModal'
 import { CreateProfileModal } from '../components/CreateProfileModal'
 import { AppIcon } from '../components/AppIcon'
+import { CONTROL_SLOTS } from '@shared/constants'
 
 export function Profiles() {
   const [summaries, setSummaries] = useState<ApplicationProfileSummary[]>([])
@@ -230,7 +231,7 @@ export function Profiles() {
                   Controls: click a tile to configure it
                 </div>
                 <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map((slot) => (
+                  {CONTROL_SLOTS.map((slot) => (
                     <VirtualControlButton
                       key={slot}
                       slot={slot}

@@ -3,9 +3,9 @@ import type { AIProvider } from './types'
 import { suggestionForPattern } from './suggestionRules'
 
 /** What LocalRuleBasedProvider needs about a pattern kind's past
- *  accept/reject record — same shape as suggestionsRepository's
+ *  accept/reject record; same shape as suggestionsRepository's
  *  SuggestionHistory, restated here so this file doesn't import across the
- *  main-process/database boundary just for a type. */
+ *  main-process/database boundary for a type. */
 export interface PatternHistory {
   accepted: number
   rejected: number
@@ -13,7 +13,7 @@ export interface PatternHistory {
 }
 
 /**
- * LocalRuleBasedProvider — the MVP suggestion engine (brainstorm.md
+ * LocalRuleBasedProvider: the MVP suggestion engine (brainstorm.md
  * sections 11-13). Deterministic/statistical, not an LLM, and requires no
  * API key.
  *
@@ -23,7 +23,7 @@ export interface PatternHistory {
  * MODEL / IMPROVE FUTURE SUGGESTIONS" step of the learning loop, section
  * 14); tests can pass nothing and get an unbiased, history-free `0` for
  * every kind. `getApplicationName` is injected the same way, backed by
- * applicationsRepository.getApplicationById in production — so a
+ * applicationsRepository.getApplicationById in production; so a
  * suggestion's `explanation` names the real application ("Visual Studio
  * Code") instead of its raw internal id ("code"); see suggestionRules.ts's
  * `applicationName` param.
@@ -47,7 +47,7 @@ export class LocalRuleBasedProvider implements AIProvider {
       const applicationName = pattern.applicationId ? this.getApplicationName(pattern.applicationId) : null
       // crossAppWorkflow and multiStepWorkflow are the pattern kinds whose
       // explanation needs more than one application's name (see
-      // suggestionRules.ts's `chainApplicationNames` doc comment) — resolve
+      // suggestionRules.ts's `chainApplicationNames` doc comment); resolve
       // every id in `applicationIds` via the exact same injected resolver.
       const chainApplicationNames: Record<string, string | null> =
         pattern.kind === 'crossAppWorkflow' || pattern.kind === 'multiStepWorkflow'

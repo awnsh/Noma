@@ -9,10 +9,10 @@
 > (writes `dist/Noma-Setup-<version>.exe`). Much of the history below
 > predates v0.1 and describes earlier phases.
 
-Adaptive computer interface — software brain and development platform for a
+Adaptive computer interface: software brain and development platform for a
 future modular keyboard. **Noma** is the product/company name; **Flow** is
 specifically the adaptive suggestion/pattern-learning feature within it (the
-Dashboard's Workflow Monitoring + Suggestions panels) — not the whole app,
+Dashboard's Workflow Monitoring + Suggestions panels), not the whole app,
 even though earlier phases of this README used "Flow" for both. See
 `brainstorm.md` for the full product vision and build order,
 `docs/architecture.md` for how this codebase is organized,
@@ -48,64 +48,64 @@ npm run dev
 
 Opens the Flow dashboard in an Electron window. You should see:
 
-- **Current Application** — the real foreground Windows application, updating
+- **Current Application**: the real foreground Windows application, updating
   live as you Alt-Tab or click between windows (detected via a PowerShell
-  Win32 helper process — see `src/main/os/windowsAdapter.ts`)
-- **Current Controls** — four control tiles. Switch focus to VS Code, Chrome,
+  Win32 helper process; see `src/main/os/windowsAdapter.ts`)
+- **Current Controls**: four control tiles. Switch focus to VS Code, Chrome,
   or Spotify (seeded profiles) and watch them change; any other app shows
-  "No profile configured for X yet" with empty tiles, which is expected —
+  "No profile configured for X yet" with empty tiles, which is expected;
   the profile system is generic and only these three are seeded for now
-- **Flow Status** — real counts from the local SQLite database (starts at 0,
+- **Flow Status**: real counts from the local SQLite database (starts at 0,
   not faked)
 
 Try it: open VS Code, glance at the dashboard, then switch to Chrome or
-Spotify — the controls should update within well under a second, no restart
+Spotify. The controls should update within well under a second, no restart
 needed.
 
-Then click **Virtual Keyboard** in the sidebar — this is brainstorm.md's
-Milestone 1, a **functional digital twin**: pressing a control performs
+Then click **Virtual Keyboard** in the sidebar (this is brainstorm.md's
+Milestone 1, a **functional digital twin**): pressing a control performs
 the configured action for real.
 
-- A decorative QWERTY layout sits at the top — purely visual, "this
-  represents your physical keyboard"; it's never interactive and standard
+- A decorative QWERTY layout sits at the top, purely visual ("this
+  represents your physical keyboard"). It's never interactive and standard
   typing never touches Flow (see `docs/privacy-and-legal.md`)
 - The display strip shows the current application's name, live
 - The four control tiles mirror whatever app is focused (switch apps with
-  the Flow window still open, or Alt-Tab away and back — the deck updates)
+  the Flow window still open, or Alt-Tab away and back; the deck updates)
 - **Click a control tile and it executes.** RUN in VS Code sends `Ctrl+F5`
   to VS Code, RELOAD in Chrome sends `Ctrl+R`, MUTE in Spotify mutes your
   system volume, CLOSE WINDOW in Chrome closes it gracefully. This path
   caused two real crashes during earlier testing and was rebuilt from
-  scratch afterward — see "Two incidents, then a redesign" below for the
+  scratch afterward; see "Two incidents, then a redesign" below for the
   full account, worth reading given the history. The event line shows
-  `✓ executed` on success and `✗ <reason>` on failure — a failure is always
+  `✓ executed` on success and `✗ <reason>` on failure. A failure is always
   visible, never silent
-- Use "Add Module" to add a Macro / Rotary Encoder / Slider / Display /
-  Numpad / Creator module — it appears as a chip immediately; the × removes
+- Use "Add Module" to add a Macro, Rotary Encoder, Slider, Display,
+  Numpad, or Creator module. It appears as a chip immediately; the × removes
   it. Both fire a real `MODULE_CONNECTED`/`MODULE_DISCONNECTED` device event
   under the hood, the same shape a real module plugging into a physical slot
   will report later
-- The **Suggestions** panel lives here too (see below) — this is the page
+- The **Suggestions** panel lives here too (see below); this is the page
   meant for demos: switch apps, trigger a pattern, accept the suggestion,
   watch the deck update, all on one screen
 
-Then click **Developer** in the sidebar — this is Phase 7, brainstorm.md
-section 20:
+Then click **Developer** in the sidebar (this is Phase 7, brainstorm.md
+section 20):
 
 - Three status pills: hardware connection (connected/deviceType/protocol
-  version), Workflow Monitoring, and Keystroke Execution — the last one
+  version), Workflow Monitoring, and Keystroke Execution; the last one
   shows **Enabled**, but the pill (and the one-line reason if it's ever
   flipped off again) means it's never a silent surprise either way
-- **Current Control Mappings** — the live 4 controls for whatever app is
+- **Current Control Mappings**: the live 4 controls for whatever app is
   focused, each with its actual configured action (`shortcut: Control+F5`,
-  `systemCommand: volumeMute`, ...), not just a label
-- **Modules** — whatever's currently attached, mirroring the Virtual
+  `systemCommand: volumeMute`, etc.), not just a label
+- **Modules**: whatever's currently attached, mirroring the Virtual
   Keyboard page
-- **HOST ↔ DEVICE Log** — a live, scrolling record of every message
+- **HOST ↔ DEVICE Log**: a live, scrolling record of every message
   exchanged with the hardware layer, using the exact message names
   `docs/hardware-protocol.md` documents (`SET_CONTROLS`, `SET_DISPLAY`,
-  `BUTTON_PRESS`, `MODULE_CONNECTED`, ...). Switch apps or press a control
-  and watch it fill in real time — this is the same log a real firmware
+  `BUTTON_PRESS`, `MODULE_CONNECTED`, etc.). Switch apps or press a control
+  and watch it fill in real time; this is the same log a real firmware
   bridge will need for debugging hardware bring-up, not a separate
   debug-only view
 
@@ -114,38 +114,38 @@ lives:
 
 - Its toggle switch's knob had no explicit `left` anchor, so its
   un-transformed position was browser-determined rather than pinned to the
-  track's left edge — the fix was giving it one (`ToggleSwitch.tsx`)
+  track's left edge; the fix was giving it one (`ToggleSwitch.tsx`)
 - It's **off by default**. Flip it on and Flow starts watching for
-  keyboard shortcuts that hold Control, Alt, or the Windows key — nothing
+  keyboard shortcuts that hold Control, Alt, or the Windows key, nothing
   else. Flip it off and the OS-level hook is released immediately, not just
   ignored (see `docs/privacy-and-legal.md`)
 - To see a pattern appear: with monitoring on, press the same shortcut
-  (e.g. `Ctrl+S`) 5+ times in whatever app is focused — a "Patterns
+  (e.g. `Ctrl+S`) 5+ times in whatever app is focused. A "Patterns
   detected today" entry should show up in the panel and the Dashboard's
   Flow Status stat within a keystroke or two. Pressing a virtual control on
   the Virtual Keyboard page 5+ times does the same for "frequently used
   control" patterns
 - Thresholds are intentionally not hair-trigger (5 uses for a shortcut/
-  control, 3 for a repeated two-step sequence within 15s) — see
+  control, 3 for a repeated two-step sequence within 15s); see
   `src/main/workflow/patternDetection.ts` if you want to tune them
 
 Once a pattern crosses its threshold, a **Suggestions** section appears above
-Workflow Monitoring — this is Phase 5's learning loop plus Phase 6's slot
+Workflow Monitoring; this is Phase 5's learning loop plus Phase 6's slot
 assignment, working together:
 
 - Each card shows the suggestion, a plain-language explanation with the real
   count, and a confidence percentage
 - Click **Accept** and the card opens an inline picker showing your 4
-  current controls (with their current labels) for that application — pick
+  current controls (with their current labels) for that application; pick
   one and the shortcut (or a newly-created macro, for a repeated-sequence
   suggestion) is assigned to it immediately, overwriting whatever was there.
   If you're currently focused on that same application, the Dashboard and
   Virtual Keyboard update live, no Alt-Tab needed
-- Flow never picks the slot for you — you always choose, every time. See
+- Flow never picks the slot for you; you always choose, every time. See
   `assignSuggestionToControl` in `src/main/applications/suggestionResolution.ts`
 - **Reject**/**Dismiss** work as before: the decision is remembered
   permanently (the suggestion is never re-shown), and accept/reject nudge
-  future confidence for that same suggestion kind — the deterministic
+  future confidence for that same suggestion kind; the deterministic
   UPDATE USER MODEL step from brainstorm.md section 14, inspectable in
   `getConfidenceBiasForKind`
 
@@ -173,7 +173,7 @@ npm run build
 
 ```
 src/
-  main/        Electron main process (Node) — database, IPC, OS/hardware/AI
+  main/        Electron main process (Node): database, IPC, OS/hardware/AI
                abstractions
   preload/     The only bridge between renderer and main (window.flow)
   renderer/    React + TypeScript + Tailwind UI
@@ -193,14 +193,14 @@ schema, basic dashboard UI, and interface-level architecture for
 instead of inventing them under deadline.
 
 Done (Phase 2): `WindowsOSAdapter` detects the real foreground application
-(polling a persistent PowerShell Win32 helper process — see the "why not a
+(polling a persistent PowerShell Win32 helper process; see the "why not a
 native module" note in `src/main/os/windowsAdapter.ts`), a profile system
 with seed data for VS Code/Chrome/Spotify, and an `ApplicationContextService`
 that pushes live application+profile updates to the dashboard over IPC so
 the four control tiles change in real time as you switch windows.
 
-Done (Phase 3): `VirtualHardwareDevice` is now real, stateful hardware —
-connected state, controls, a display, and modules — driven by the same
+Done (Phase 3): `VirtualHardwareDevice` is now real, stateful hardware:
+connected state, controls, a display, and modules, driven by the same
 `ApplicationContext` from Phase 2. The `HardwareDevice` interface grew a
 DEVICE → HOST direction (`onDeviceEvent`/`onStatusChanged`) matching the
 future STM32 protocol (section 21), so a button click on the Virtual
@@ -209,40 +209,40 @@ raise. Module add/remove works end-to-end from the shared `MODULE_CATALOG`.
 
 Done (Phase 4): `CaptureService` (`src/main/workflow/captureService.ts`) wires
 the already-tested `shouldCaptureKeyCombo` policy to a real global keyboard
-hook (`uiohook-napi` — another N-API prebuilt-binary dependency, same
+hook (`uiohook-napi`; another N-API prebuilt-binary dependency, same
 reasoning as `better-sqlite3`; see the module's own doc comment for why not
 a hand-rolled hook or a node-gyp-based package). It's gated by a
 Dashboard-visible Enabled/Disabled toggle backed by a `settings` row, **off
 by default**. Control activations on the Virtual Keyboard page feed the same
 pipeline. `src/main/workflow/patternDetection.ts` is a small deterministic
 engine (no LLM) covering repeated shortcuts, repeated two-step sequences,
-and frequently used controls — "Patterns detected" on the Dashboard is real
+and frequently used controls. "Patterns detected" on the Dashboard is real
 now, not hardcoded.
 
 Done (Phase 5): `LocalRuleBasedProvider` (`src/main/ai/localProvider.ts`)
-implements the `AIProvider` interface from Phase 1 — zero API keys, fully
+implements the `AIProvider` interface from Phase 1; zero API keys, fully
 deterministic. `suggestionRules.ts` turns a `repeatedShortcut` or
 `repeatedSequence` pattern into a `Suggestion` with real copy and a
 count-scaled confidence; `frequentControl` patterns deliberately produce no
-suggestion (not independently actionable — see the file's doc comment).
+suggestion (not independently actionable; see the file's doc comment).
 `SuggestionEngine` orchestrates OBSERVE → IDENTIFY PATTERN → GENERATE
 SUGGESTION and is safe to call on every captured event (`insertSuggestionIfNew`
 is a no-op once a pattern has already been suggested, in any status).
 Accept/Reject/Dismiss close the loop: resolving a suggestion is remembered
 permanently (never re-suggested) and, for accept/reject, nudges future
-confidence for that pattern kind via a small deterministic bias — the
+confidence for that pattern kind via a small deterministic bias; the
 UPDATE USER MODEL step, inspectable in `suggestionsRepository.ts`, not a
 black box.
 
-Done (Phase 6 — slot assignment slice): accepting a suggestion now actually
+Done (Phase 6: slot assignment slice): accepting a suggestion now actually
 does something, on the user's explicit terms. `assignSuggestionToControl`
 (`src/main/applications/suggestionResolution.ts`) writes a
 `repeatedShortcut` suggestion's combo directly onto a chosen control, or, for
 a `repeatedSequence` suggestion, creates a `Macro` row
-(`macrosRepository.ts`) and assigns *that* to a chosen control — always a
+(`macrosRepository.ts`) and assigns *that* to a chosen control. Always a
 slot the user picked in the UI, never one Flow guesses. The `suggestions`
 table gained `application_id`/`action_kind`/`action_payload` via an additive,
-backward-compatible migration (`ensureColumn` in `db.ts`) — existing
+backward-compatible migration (`ensureColumn` in `db.ts`); existing
 `flow.db` files pick this up automatically, no reset needed. If the
 suggestion's application happens to be the one currently focused, the
 Dashboard/Virtual Keyboard update immediately via
@@ -252,14 +252,14 @@ Done (security hardening pass, prompted by an explicit ask): `BrowserWindow`
 now sets `contextIsolation`/`nodeIntegration`/`sandbox` explicitly rather
 than relying on Electron's current defaults; verified the app still launches
 correctly with the OS-level sandbox enabled. Added two tests that
-specifically demonstrate — not just assert — that typing a password (with or
+specifically demonstrate (not just assert) that typing a password (with or
 without Shift for capitals/symbols) never produces a captured combo, since
 it never involves Control/Alt/Meta. Full writeup in
 `docs/security-review.md`, including the IPC surface, SQL parameterization,
 and dependency posture (`npm audit`: 0 known vulnerabilities as of this
 pass).
 
-Done — after two incidents, then a redesign (real execution): pressing a
+Done: after two incidents, then a redesign (real execution), pressing a
 virtual control performs the configured action for real. `actionExecutor.ts`
 resolves a `shortcut` action's key names through the same closed vocabulary
 capture uses (`keyNames.ts`, shared by both directions) and sends it via
@@ -270,12 +270,12 @@ target window and confirms the switch actually landed.
 PowerShell child process per press and used `AttachThreadInput` to work
 around Windows' foreground-lock restriction. First, using Chrome's CLOSE
 TAB control (`Ctrl+W`) on Chrome's last tab closed its only window and left
-Chrome running in the background but unable to open a new one — every
+Chrome running in the background but unable to open a new one. Every
 `chrome.exe` process had to be killed by hand before Chrome would launch
 again (that hard kill, not the original `Ctrl+W`, is also almost certainly
 why Chrome's next launch showed a "restore pages" prompt).
-Then, shortly after, pressing RELOAD — a completely ordinary `Ctrl+R`,
-nothing to do with closing anything — crashed Chrome outright. Same
+Then, shortly after, pressing RELOAD—a completely ordinary `Ctrl+R`,
+nothing to do with closing anything—crashed Chrome outright. Same
 mechanism, a different action, a different failure: two crashes from one
 technique was enough to disable keystroke execution entirely
 (`KEYSTROKE_EXECUTION_ENABLED = false`) while it was rebuilt, not patched.
@@ -283,28 +283,28 @@ technique was enough to disable keystroke execution entirely
 The rebuild: `windowFocus.ts` no longer spawns anything or uses
 `AttachThreadInput`. It calls `SetForegroundWindow` **directly from Flow's
 own main process**, synchronously, via `koffi` (an FFI library with
-prebuilt binaries — no C++ toolchain needed, same reasoning as
+prebuilt binaries; no C++ toolchain needed, same reasoning as
 `better-sqlite3`/`uiohook-napi`). This isn't a workaround for the
-foreground-lock restriction — it sidesteps the restriction entirely,
+foreground-lock restriction; it sidesteps the restriction entirely,
 because Flow's own process genuinely is the current foreground process at
 the moment of a click (it just received that click), which is exactly the
 ordinary case `SetForegroundWindow` is designed to allow. `windowClose.ts`
 and `systemCommands.ts` were migrated to the same direct-call approach for
-consistency — neither used `AttachThreadInput`, but both previously
-spawned a process per call; now neither does. `KEYSTROKE_EXECUTION_ENABLED
+consistency; neither used `AttachThreadInput`, but both previously
+spawned a process per call. Now neither does. `KEYSTROKE_EXECUTION_ENABLED
 = true` again, with the constant left in place as a single kill switch.
 The window-closing keystroke blocklist (`Alt+F4`, `Ctrl+W`,
-`Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`) stayed regardless — closing already
+`Ctrl+Shift+W`, `Ctrl+Q`, `Ctrl+F4`) stayed regardless; closing already
 has a strictly safer dedicated path (`flowAction: 'closeWindow'` /
-`windowClose.ts`, posting `WM_CLOSE` — the same message a title bar's X
+`windowClose.ts`, posting `WM_CLOSE`, the same message a title bar's X
 sends, no keystroke, no focus needed at all). Full account in
 `docs/architecture.md`'s "Real execution" section. (Plain `Ctrl+W` was
 later deliberately removed from that list, 2026-09-07, by explicit user
-request — see the comment at `actionExecutor.ts`'s `BLOCKED_COMBOS`.)
+request; see the comment at `actionExecutor.ts`'s `BLOCKED_COMBOS`.)
 
 Done (Phase 7): `docs/hardware-protocol.md` documents the full HOST↔DEVICE
 message protocol (`SET_CONTROLS`, `SET_DISPLAY`, `SET_LED`, `BUTTON_PRESS`,
-`MODULE_CONNECTED`, ...) — already implemented today via
+`MODULE_CONNECTED`, etc.); already implemented today via
 `VirtualHardwareDevice`, not a future design to interpret later. Every
 message it sends/receives is now recorded to an in-memory log
 (`getLog()`/`onLogEntry()` in `virtualDevice.ts`, capped at 100 entries)
@@ -314,63 +314,63 @@ hardware connection status, current control mappings, connected modules,
 and a visible Keystroke Execution status pill so its state is never a
 silent surprise while poking around the app.
 
-Not yet built (by design — see brainstorm.md's build order): the
-underused-controls / per-application-behavior pattern categories (deferred —
+Not yet built (by design; see brainstorm.md's build order): the
+underused-controls / per-application-behavior pattern categories (deferred;
 see the comment atop `patternDetection.ts`). The general Control Mapping
 Editor and a standalone Macro Studio, both listed here as future work when
-this section was first written, are now built — see "Product Development
+this section was first written, are now built; see "Product Development
 Phase 2" below.
 
 ## Next logical step
 
 Test the redesigned execution path across more apps than VS Code/Chrome/
 Spotify's seeded shortcuts to build real confidence beyond the reasoning
-in `docs/architecture.md` — the theory for *why* the new mechanism avoids
+in `docs/architecture.md`; the theory for *why* the new mechanism avoids
 the old failure mode is sound (a real Windows API exception, not a
 workaround), but reasoning isn't the same as hours of real use. After
 that: a real STM32 device sending real USB HID keystrokes has none of this
 focus-stealing problem in the first place, which is worth keeping in mind
 for how much further this software-side mechanism is worth hardening
-versus simply waiting for real hardware.
+versus waiting for real hardware.
 
 ## Product Development Phase 2 (a second, distinct roadmap)
 
-A separate, later roadmap — 20 phases turning the technical prototype above
+A separate, later roadmap: 20 phases turning the technical prototype above
 into a convincing *product* prototype (manual control configuration, a
 Macro Studio, a Learning Center, onboarding, demo mode, and more). To avoid
 colliding with the "Phase 1–7" numbering above (a different roadmap, from
 `brainstorm.md`'s original build order), this work is tracked separately
 here rather than renumbered into it.
 
-**Done — Phase 1: Control Mapping Editor.** Every control can now be
+**Done: Phase 1: Control Mapping Editor.** Every control can now be
 configured by hand, not just via seed data or an accepted suggestion.
 Click **Edit Controls** on the Virtual Keyboard page, then any control
-tile, to open the editor: rename it (12-char limit — same physical-display
+tile, to open the editor: rename it (12-char limit; same physical-display
 constraint as everywhere else), pick an action type (shortcut / macro /
 launch application / system action / Flow action), and for a shortcut,
-*press the keys you want* rather than typing them out —
+*press the keys you want* rather than typing them out.
 `ShortcutRecorder.tsx` uses a plain DOM `keydown` listener (no native hook
 needed just to record a chord) translated through a shared DOM-code → Flow
 vocabulary table (`domKeyCodes.ts`) that's tested to guarantee every
-recordable shortcut is actually executable — the exact class of bug that
+recordable shortcut is actually executable; the exact class of bug that
 shipped once already (Spotify's `'Left'`/`'Right'` mistake) can't recur
 here. **Test** runs the action for real via the same `executeControlAction`
 path a live press uses; **Save** persists through the existing
 `controlsRepository.assignControlAction`; **Reset to default** restores a
 seeded control via a new `getSeedDefaultControl` lookup. Deliberately
-scoped to applications that already have a profile — configuring a
+scoped to applications that already have a profile; configuring a
 brand-new, never-seen application has no bootstrap path yet, left as a
 clean next increment rather than folded into this one.
 
-**Done — Phase 2: Macro Studio.** A dedicated page (nav: **Macro Studio**)
+**Done: Phase 2: Macro Studio.** A dedicated page (nav: **Macro Studio**)
 for authoring macros by hand, independent of Flow's suggestion engine.
-Macros are no longer just `Control+C → Control+V`-style shortcut chains —
+Macros are no longer just `Control+C → Control+V`-style shortcut chains;
 `Macro.actions` is now `MacroStep[]`, reusing `ControlAction`'s own
 variants (shortcut / macro / launch application / system action / Flow
 action) plus a macro-only `delay` step, so a macro step and a control's
 action are drawn from exactly the same executable vocabulary instead of a
 second parallel format. The editor is a vertical step timeline (numbered,
-connected by a plain CSS rail — no diagramming library): add a step of any
+connected by a plain CSS rail; no diagramming library): add a step of any
 type, reorder with ↑/↓, delete with ✕, record a shortcut step the same way
 the Control Mapping Editor does. **Test** runs the in-progress steps for
 real (via a new `executeMacroSteps` the `macro` control-action case now
@@ -379,28 +379,28 @@ delegates to) even before saving; **Save** creates or updates the row;
 the original or any control already assigned to it; **Delete** warns first
 if any control still points at this macro
 (`getControlsReferencingMacro`). A macro step can reference *another*
-macro — guarded at execution time against both self-reference and
+macro; guarded at execution time against both self-reference and
 excessive nesting (capped at 3 levels), so a cyclic or runaway chain fails
 closed with a clear reason instead of hanging. Assigning a macro to a
 control is done right from its editor (pick an application + slot) rather
 than only from the Control Mapping Editor, satisfying the spec's "assign
 macro to a contextual control" requirement from either direction.
 
-**Done — Phase 3: Explainable Flow Suggestions.** Every suggestion's
+**Done: Phase 3: Explainable Flow Suggestions.** Every suggestion's
 confidence percentage now has a real "why?" behind it instead of just a
 number. `suggestionRules.ts` was already computing genuine deterministic
 math (occurrence count vs. a threshold, plus a bounded nudge from this
-pattern kind's historical accept/reject ratio) — that math just wasn't
+pattern kind's historical accept/reject ratio); that math just wasn't
 visible anywhere. It's now captured at generation time as a
 `confidenceBreakdown` on the `Suggestion` itself (persisted, so "why am I
 seeing this?" always reflects the numbers that were true when the
 suggestion was made, not numbers recomputed later against a history that's
 since moved on) and rendered as a plain-language sentence behind a "Why?"
-toggle on each suggestion card — e.g. *"Occurred 8 times today. That's 3
+toggle on each suggestion card; e.g. *"Occurred 8 times today. That's 3
 more than the 5 needed to trigger a suggestion at all, giving a base
 confidence of 65%. Flow also remembers 2 of 2 similar suggestions you've
 resolved before were accepted, adding 15%."* Deliberately not a fabricated
-"AI reasoning" narrative — this is a local rule-based engine, not an LLM
+"AI reasoning" narrative; this is a local rule-based engine, not an LLM
 (see `docs/architecture.md`'s "not an AI keyboard" principle), so the
 explanation is exactly the arithmetic that ran, stated in plain English.
 `suggestionsRepository`'s bias function was renamed
@@ -408,17 +408,17 @@ explanation is exactly the arithmetic that ran, stated in plain English.
 counts alongside the bias value it already computed, since the breakdown
 needed both.
 
-**Done — Phase 4: Flow Learning Center.** A new page (nav: **Learning
+**Done: Phase 4: Flow Learning Center.** A new page (nav: **Learning
 Center**) that shows Flow's aggregate learning state, not just one
 suggestion's. Two parts: a card per actionable pattern kind (repeated
-shortcuts, repeated sequences — `frequentControl` is excluded, same
+shortcuts, repeated sequences; `frequentControl` is excluded, same
 reasoning as suggestionRules.ts: it never produces a suggestion, so it has
 no accept/reject history to show) with its real threshold and its live
 accepted/rejected counts and resulting confidence bias
 (`getLearningStats`, injected with a history lookup the same way
 `LocalRuleBasedProvider` is, so it's testable without a database); and a
-full suggestion history — every suggestion ever generated, any status, not
-just the pending ones the Dashboard shows — each with the same "Why?"
+full suggestion history: every suggestion ever generated, any status, not
+just the pending ones the Dashboard shows, each with the same "Why?"
 breakdown from Phase 3. That breakdown explainer was pulled out of
 `SuggestionCard.tsx` into `lib/explainConfidence.ts` so both places explain
 the same numbers the same way instead of maintaining two copies. The page
@@ -426,21 +426,21 @@ re-fetches on the existing `SUGGESTIONS_CHANGED` push (accept/reject/
 dismiss anywhere in the app invalidates both the history list and the bias
 numbers) rather than adding a second push channel.
 
-**Done — Phase 5: Personalized Application Profiles.** Closes the gap
+**Done: Phase 5: Personalized Application Profiles.** Closes the gap
 flagged since Phase 1: there was no way to create a profile for an
 application at all, only to edit one that already existed (seeded, or
 created by accepting a suggestion). Two entry points now exist. First, a
 contextual one: the Dashboard already distinguished "no application
-detected" from "no profile configured for X yet" — that second case now
+detected" from "no profile configured for X yet"; that second case now
 gets a **Create profile** button right next to the message, opening a
 small form (just a profile name; the application itself is already known
 from live detection). Second, a dedicated **Profiles** page for systematic
 management: every known application, whether it's been personalized yet,
-and — for one without a profile Flow hasn't even detected — a manual
+and, for one without a profile Flow hasn't even detected, a manual
 "+ New Application Profile" form (id/display name/process filename typed
 by hand, normalized to match how `WindowsOSAdapter` derives an id from a
 real detection, so a hand-created profile actually matches later). A new
-profile starts with 4 unconfigured controls (an empty shortcut combo — a
+profile starts with 4 unconfigured controls (an empty shortcut combo; a
 deliberate safe no-op, not a placeholder that might do something
 unintended) that the user fills in with the same Control Mapping Editor
 from Phase 1, reused here unmodified since it was already decoupled from
@@ -448,28 +448,28 @@ from Phase 1, reused here unmodified since it was already decoupled from
 the rest of a profile's lifecycle: rename, and delete (with the controls
 under it cascading via the existing FK). Small bonus fix found while
 building this: `executeControlAction` on an empty/unconfigured shortcut
-used to report a blank "Unrecognized key in combo: " — now a clear "This
+used to report a blank "Unrecognized key in combo: "; now a clear "This
 control has no shortcut set yet."
 
-**Done — Phase 6: Improved Virtual Keyboard.** The decorative "Standard
-Keys" section was a purely static picture — 3 letter rows and a blank
+**Done: Phase 6: Improved Virtual Keyboard.** The decorative "Standard
+Keys" section was a purely static picture: 3 letter rows and a blank
 spacebar, no modifiers, no function/number/arrow keys, never reacting to
 anything. It's now a full, physically laid-out keyboard (function row,
-number row, the three letter rows with their real neighbors — brackets,
+number row, the three letter rows with their real neighbors: brackets,
 punctuation, Enter, the modifier row, a separate arrow cluster) that
 **flashes the real keys of a real captured shortcut** the instant workflow
-monitoring captures one. This reuses the existing capture pipeline as-is —
+monitoring captures one. This reuses the existing capture pipeline as-is;
 `captureService`'s already-sanitized, already-privacy-filtered combo (the
 same one `insertWorkflowEvent` persists) is now also pushed live to the
-renderer over a new `WORKFLOW_COMBO_CAPTURED` channel — so a bare letter
+renderer over a new `WORKFLOW_COMBO_CAPTURED` channel, so a bare letter
 can never light up on its own, only ever as part of a combo that already
 passed the Ctrl/Alt/Win gate. That's the actual "digital twin" bar for
 this page: not "looks like a keyboard" but "visibly reacts to genuine
 input, and only the class of input it's honestly allowed to react to."
 
-**Done — Phase 7: Demo Mode ("the Noma Moment").** A dedicated **Demo** page
-(nav, right after Dashboard) for presenting the core product story —
-Purdue Innovates, investors, user testing — as a deterministic, repeatable
+**Done: Phase 7: Demo Mode ("the Noma Moment").** A dedicated **Demo** page
+(nav, right after Dashboard) for presenting the core product story:
+Purdue Innovates, investors, user testing; as a deterministic, repeatable
 script rather than hoping a live Alt-Tab demo goes well. Walks through
 exactly the sequence from the product brief: VS Code's contextual controls
 → switch to Chrome, controls change → simulate a repeated Copy→Paste
@@ -481,32 +481,32 @@ pipeline real usage does, never a separate fake path:
 (`src/main/applications/contextService.ts`), which overrides the live
 context through the identical `updateContext` path a real foreground-window
 change uses (ignoring real OS detection until explicitly cleared, then
-re-syncing from it immediately — see its tests), and
+re-syncing from it immediately; see its tests), and
 `src/main/demo/demoService.ts`'s `simulateDemoWorkflow()` inserts backdated
 workflow events via the same `insertWorkflowEvent` real capture calls,
 tuned (4 repetitions, spaced to land inside/outside the sequence window on
-purpose — see its doc comment) to produce exactly one clean suggestion,
+purpose; see its doc comment) to produce exactly one clean suggestion,
 never three. Because the override runs through the real context service,
 the Dashboard/Virtual Keyboard/Developer pages honestly reflect whatever
 step the demo is on if you switch to them mid-demo. **Reset Demo** restores
 VS Code/Chrome to their seeded controls and clears the simulated workflow
 data (`resetDemoData()`), so the whole thing is safe to re-run for a second
-audience without restarting the app or touching the database by hand —
+audience without restarting the app or touching the database by hand;
 Phase 21's "demo reset" mechanism, scoped precisely to the demo's own two
 profiles rather than a blanket wipe.
 
-Not yet built: onboarding, and everything else further down the roadmap —
+Not yet built: onboarding, and everything else further down the roadmap;
 see `docs/product-audit.md` for the full audit and recommended order.
 
 Verified: typecheck clean, **173/173 tests pass** (10 new: `demoService`'s
 simulate/reset behavior and repeatability, and `ApplicationContextService`'s
-demo-override semantics), app launches cleanly (verified via `npm run dev`
-— main/preload/renderer all build, window opens titled "Noma").
+demo-override semantics), app launches cleanly (verified via `npm run dev`;
+main/preload/renderer all build, window opens titled "Noma").
 
 ## Software Polish & Product Validation Phase
 
 A later pass, done against `docs/product-audit.md`'s ground-truth gap list
-rather than re-implementing the full 21-section brief it was scoped from —
+rather than re-implementing the full 21-section brief it was scoped from;
 most of that brief (contextual controls, the Virtual Keyboard, Flow's
 suggestion loop, Demo Mode, per-application profiles) was already real, not
 a placeholder, so this pass targeted product-audit.md's three highest-value
@@ -518,29 +518,29 @@ Monitoring an actual home instead of living buried at the bottom of the
 Dashboard, states plainly what Flow does and doesn't see (`Settings.tsx`),
 and adds the "clear all workflow data" action `docs/privacy-and-legal.md`
 called for since Phase 4 but that never got built: **Pause Learning**,
-**Clear Learning Data** (`clearLearningData` — wipes `workflow_events`/
+**Clear Learning Data** (`clearLearningData`; wipes `workflow_events`/
 `suggestions` only, never your controls or macros), and **Delete All Data**
-(`deleteAllData` — a full factory reset back to the seeded defaults,
+(`deleteAllData`; a full factory reset back to the seeded defaults,
 `src/main/privacy/dataManagement.ts`). Each destructive action requires an
 explicit inline confirm, not a single click. The Dashboard itself lost its
 three raw counters (`actionsObservedToday`/`patternsDetected`/
-`suggestionsCount` as bare numbers) in favor of one plain-language line —
-*"Flow is learning your workflow."* / *"Flow noticed something — see
-below."* — matching this phase's "answer what Noma is doing right now,
+`suggestionsCount` as bare numbers) in favor of one plain-language line:
+*"Flow is learning your workflow."* / *"Flow noticed something; see
+below."* Matching this phase's "answer what Noma is doing right now,
 don't fill the home screen with analytics" brief; the real numbers still
 live on the Learning Center for anyone who wants them.
 
 **Hardware readiness.** `STM32HardwareDevice`
 (`src/main/hardware/stm32Device.ts`) is a typed stub implementing the exact
-same `HardwareDevice` interface `VirtualHardwareDevice` does — proof, by
+same `HardwareDevice` interface `VirtualHardwareDevice` does; proof, by
 actually compiling against a second implementation, that Phase 1's
 interface is sufficient before real hardware exists to find out otherwise.
 It is never wired into the running app and never fakes a connection:
 `connect()` rejects clearly, `getStatus()` honestly reports
-`connected: false`. Developer Mode gained real **hardware bring-up tools**
-— Ping (a real measured PING/PONG round-trip), Reset (a real
+`connected: false`. Developer Mode gained real **hardware bring-up tools**:
+Ping (a real measured PING/PONG round-trip), Reset (a real
 disconnect→connect cycle), Simulate Button Press, Simulate Encoder
-Rotation, Simulate Module Connect, and Clear Log — every one calling
+Rotation, Simulate Module Connect, and Clear Log; every one calling
 straight into `VirtualHardwareDevice`/the real event pipeline, never a
 second fake path (`product-audit.md`'s explicit constraint). The Hardware
 Connection card now also names what's virtual today versus what's coming.
@@ -549,25 +549,25 @@ Connection card now also names what's virtual today versus what's coming.
 now configurable: each capability function (a Rotary Encoder's Turn/Press)
 can be given a short name and a real, executable action
 (`configureModule`, `ModuleConfigModal.tsx`), testable in place with the
-same `testControlAction` path the Control Mapping Editor already uses — one
+same `testControlAction` path the Control Mapping Editor already uses; one
 execution path in the app, not two. `ModuleChip.tsx` renders each module as
 a labeled piece of hardware (a glyph, its capabilities, its assigned
 functions) rather than a generic pill. Macro/Numpad/Creator modules
 ("buttons" capability) don't have a per-key model yet, so they're left as a
-simpler identity card rather than a fabricated one — see "what remains
+simpler identity card rather than a fabricated one; see "what remains
 incomplete" below.
 
 **Physical identity for controls.** `ControlTile` and `VirtualControlButton`
 now show a small glyph and the actual shortcut/action caption under every
-label (`lib/describeAction.ts`) — e.g. RUN's tile now reads `⌨ Ctrl+F5`,
-not just "RUN" — instead of looking like a generic button. Both components
+label (`lib/describeAction.ts`); e.g. RUN's tile now reads `⌨ Ctrl+F5`,
+not just "RUN"; instead of looking like a generic button. Both components
 share the same caption logic, one of two remaining "same idea, different
 look" spots product-audit.md flagged.
 
 Verified: typecheck clean on both `tsconfig.node.json` and
 `tsconfig.web.json`, **193/193 tests pass** (20 new: `STM32HardwareDevice`'s
 interface conformance and honest-not-connected behavior, the new
-`VirtualHardwareDevice` methods — `configureModule`/`rotateEncoder`/`ping`/
-`reset`/`clearLog` — and `clearLearningData`/`deleteAllData`'s exact table
+`VirtualHardwareDevice` methods; `configureModule`/`rotateEncoder`/`ping`/
+`reset`/`clearLog`; and `clearLearningData`/`deleteAllData`'s exact table
 scope), app launches cleanly (`npm run dev`: main/preload/renderer all
 build, window opens titled "Noma", no runtime errors).

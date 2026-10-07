@@ -1,5 +1,6 @@
 import type { DetectedPattern } from '@shared/types'
 import { shortcutStepLabel } from './workflowChain'
+import { plural } from './plural'
 
 /**
  * A plain-language sentence for a cross-app or multi-step
@@ -25,7 +26,7 @@ export function workflowStepPlainText(
     const chain = pattern.steps
       .map((step) => (step.type === 'shortcut' ? shortcutStepLabel(step.comboKeys) : appName(step.applicationId)))
       .join(' → ')
-    return `You've repeated ${chain} ${pattern.count} time${pattern.count === 1 ? '' : 's'} today.`
+    return `You've repeated ${chain} ${pattern.count} ${plural(pattern.count, 'time')} today.`
   }
 
   return pattern.description

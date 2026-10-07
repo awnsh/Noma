@@ -1,11 +1,11 @@
-// Shared vitest setup — runs for every test file (node and jsdom alike),
+// Shared vitest setup; runs for every test file (node and jsdom alike),
 // so everything here must be guarded for environments where `window`
 // doesn't exist.
 
 // Extends vitest's `expect` with the DOM matchers (toBeInTheDocument,
 // toHaveAttribute, toBeDisabled, ...) onboarding's component tests use.
 // Harmless to import in the main-process (node-environment) test files
-// too — it only extends `expect`, it doesn't touch `window`.
+// too; it only extends `expect`, it doesn't touch `window`.
 import '@testing-library/jest-dom/vitest'
 
 // jsdom doesn't implement matchMedia. Onboarding's usePrefersReducedMotion

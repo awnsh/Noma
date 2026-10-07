@@ -10,7 +10,7 @@ vi.mock('electron', () => ({
 
 // Imported after the mock so `iconService.ts`'s own `import { app } from
 // 'electron'` resolves to the mock above, not the real Electron module
-// (which, outside a real Electron process, isn't a usable JS API at all —
+// (which, outside a real Electron process, isn't a usable JS API at all
 // see this file's own describe block for why that distinction matters).
 const { getApplicationIcon, __clearApplicationIconCacheForTesting } = await import('./iconService')
 
@@ -57,7 +57,7 @@ describe.skipIf(process.platform === 'darwin')('getApplicationIcon', () => {
     expect(await getApplicationIcon('C:\\some\\app.exe')).toBeNull()
   })
 
-  it('caches by normalized path — only calls the OS once for the same file', async () => {
+  it('caches by normalized path; only calls the OS once for the same file', async () => {
     getFileIcon.mockResolvedValue(fakeNativeImage('data:image/png;base64,BBBB'))
 
     await getApplicationIcon('C:\\Apps\\Thing.EXE')

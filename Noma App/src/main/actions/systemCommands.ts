@@ -4,7 +4,7 @@ import { KEYEVENTF_KEYUP, KeybdEvent } from './win32'
 import { isMac } from '../platform'
 
 /**
- * A closed allowlist — never an arbitrary shell command, even though
+ * A closed allowlist; never an arbitrary shell command, even though
  * ControlAction's `systemCommand` field is typed as a free string. Only
  * these exact names execute anything; everything else is refused. This is
  * the same "closed vocabulary, fail closed" posture as key-name execution
@@ -33,7 +33,7 @@ export function isKnownSystemCommand(command: string): boolean {
 
 /**
  * Sends one of the standard Windows multimedia virtual keys via
- * keybd_event. These are handled by the OS audio subsystem globally —
+ * keybd_event. These are handled by the OS audio subsystem globally
  * unlike a shortcut, no window needs to be focused first.
  */
 export function executeSystemCommand(command: string): boolean {

@@ -30,6 +30,7 @@ export function GettingStartedCard({ flowEnabled, savedWorkflows }: { flowEnable
   const { state, hasRunAction } = useGlideStore()
   const setActivePage = useUiStore((s) => s.setActivePage)
   const [hidden, setHidden] = useState(readHidden)
+  const [closing, setClosing] = useState(false)
 
   const glideAvailable = state?.platformSupported !== false
   const steps: Step[] = [
@@ -61,10 +62,13 @@ export function GettingStartedCard({ flowEnabled, savedWorkflows }: { flowEnable
     } catch {
       // Storage blocked: hidden until restart.
     }
-    setHidden(true)
+    setClosing(true)
+    window.setTimeout(() => setHidden(true), 200)
   }
 
   return (
+    <div className="noma-collapse" data-closing={closing}>
+    <div className="min-h-0 overflow-hidden">
     <section className={`mb-12 p-5 ${CARD}`} aria-labelledby="getting-started-title">
       <div className="mb-3 flex items-center justify-between">
         <h2 id="getting-started-title" className="font-display text-base font-semibold text-neutral-100">
@@ -79,11 +83,15 @@ export function GettingStartedCard({ flowEnabled, savedWorkflows }: { flowEnable
           <li key={step.label} className="flex items-start gap-3">
             <span
               aria-hidden
-              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] ${
-                step.done ? 'border-accent bg-accent text-white' : 'border-base-600 text-transparent'
+              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                step.done ? 'mc-pop border-accent bg-accent' : 'border-base-600'
               }`}
             >
-              ✓
+              {step.done && (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mc-check h-3 w-3 text-white">
+                  <path d="M20 6L9 17l-5-5" />
+                </svg>
+              )}
             </span>
             <span className="min-w-0 flex-1">
               <span className={`text-sm ${step.done ? 'text-neutral-500 line-through' : 'text-neutral-100'}`}>
@@ -105,5 +113,7 @@ export function GettingStartedCard({ flowEnabled, savedWorkflows }: { flowEnable
         ))}
       </ol>
     </section>
+    </div>
+    </div>
   )
 }

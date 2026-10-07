@@ -76,11 +76,11 @@ interface ShortcutUsageRow {
 
 /**
  * Every shortcut Flow has ever captured, aggregated by the exact combo +
- * application it happened in — over *all* recorded history, unlike
+ * application it happened in; over *all* recorded history, unlike
  * `getWorkflowEventsSince` which every other caller uses for a "since X"
  * window. Grouping on the raw `combo_keys` JSON string (rather than
  * re-parsing and re-joining it) is safe because a given combo is always
- * serialized in the same key order — `comboFromKeydownEvent` builds it
+ * serialized in the same key order: `comboFromKeydownEvent` builds it
  * deterministically, and patternDetection.ts already relies on the same
  * assumption for its own per-combo grouping.
  */
@@ -123,9 +123,9 @@ interface ControlUsageRow {
 
 /**
  * Every control Noma has ever recorded a real press for, aggregated by
- * `controlId` across all history — the Controls page's "Used N times" line.
- * A control with no rows here simply hasn't been pressed yet (via
- * `pressControl`/the virtual device — not the same as being newly created),
+ * `controlId` across all history: the Controls page's "Used N times" line.
+ * A control with no rows here hasn't been pressed yet (via
+ * `pressControl`/the virtual device; not the same as being newly created),
  * which callers should treat as "0 uses," not missing data.
  */
 export function getControlUsageStats(): ControlUsageStat[] {
@@ -178,7 +178,7 @@ export function getDailyActivityCounts(days: number): DailyActivityCount[] {
     const key = localDateKey(new Date(row.timestamp))
     // A row's timestamp can't fall before rangeStart (the query already
     // filters that), but it CAN land on a future local day than expected in
-    // theory (clock changes) — ignore anything that doesn't match one of
+    // theory (clock changes); ignore anything that doesn't match one of
     // the pre-seeded buckets rather than silently growing the map.
     if (counts.has(key)) counts.set(key, (counts.get(key) ?? 0) + 1)
   }

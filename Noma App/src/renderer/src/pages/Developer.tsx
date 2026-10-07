@@ -11,9 +11,12 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { useDeveloperStore } from '../stores/developerStore'
 import { DeviceLogRow } from '../components/DeviceLogRow'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
+import { useStoreSync } from '../lib/useStoreSync'
 
 function describeAction(action: ControlAction): string {
   switch (action.type) {
+    case 'none':
+      return 'none'
     case 'shortcut':
       return `shortcut: ${action.keys.join('+')}`
     case 'macro':
@@ -57,8 +60,8 @@ function DevToolButton({
 
 /** A generic on/off pill for a software toggle (Workflow Monitoring,
  *  Keystroke Execution). Hardware connection has its own dedicated
- *  HardwareStatusPill — a real device-connection state (gold, matching the
- *  app-wide "gold = real hardware contact" rule) isn't the same kind of
+ *  HardwareStatusPill (a real device-connection state, gold, matching the
+ *  app-wide "gold = real hardware contact" rule). This isn't the same kind of
  *  fact as an interface toggle, and unlike this pill it needs its own live
  *  hardwareStore subscription rather than a caller-supplied `ok` boolean. */
 function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; offLabel: string }) {
@@ -82,22 +85,12 @@ export function Developer() {
   const [selectedControlId, setSelectedControlId] = useState<string>('')
   const [selectedModuleType, setSelectedModuleType] = useState(MODULE_CATALOG[0].type)
 
-  useEffect(() => {
-    hardware.refresh()
-    flow.refresh()
-    workflow.refresh()
-    developer.refresh()
-
-    const unsubscribeHardware = hardware.subscribe()
-    const unsubscribeContext = flow.subscribeToContext()
-    const unsubscribeDeveloper = developer.subscribe()
-    return () => {
-      unsubscribeHardware()
-      unsubscribeContext()
-      unsubscribeDeveloper()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useStoreSync(
+    hardware,
+    { refresh: flow.refresh, subscribe: flow.subscribeToContext },
+    workflow,
+    developer
+  )
 
   const { status } = hardware
   const { context } = flow
@@ -165,7 +158,7 @@ export function Developer() {
         <p className="mb-3 text-[11px] text-neutral-600">
           Puts a real workflow notice on screen now, instead of waiting for Flow to see the same
           workflow {WORKFLOW_NOTIFICATION_THRESHOLD} times. It replays the demo workflow through the
-          real detection pipeline and surfaces the real suggestion that comes out — only the
+          real detection pipeline and surfaces the real suggestion that comes out. Only the
           repetition threshold and the {Math.round(WORKFLOW_NOTIFICATION_COOLDOWN_MS / 60000)}-minute
           cooldown are bypassed. Minimize Noma first: the point is that it appears over whatever
           you're actually working in.

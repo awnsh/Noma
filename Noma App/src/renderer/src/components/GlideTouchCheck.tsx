@@ -47,7 +47,7 @@ export function GlideTouchCheck() {
       <p className="max-w-xl">
         Optional. If swipe-ins are often missed, or fire when you didn&apos;t mean them to, run this: swipe in from each
         side for 15 seconds, then use the trackpad normally for 20. Steps move on by themselves. You&apos;ll see how
-        many swipes Glide would have caught. Finger positions are saved only on this computer.
+        many swipes Glide would have caught.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button

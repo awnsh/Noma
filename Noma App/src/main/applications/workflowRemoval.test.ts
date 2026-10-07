@@ -84,7 +84,7 @@ describe('previewSuggestion', () => {
       `Screenshot (${isMacRun ? 'Cmd' : 'Win'}+Shift+S)`,
       'Switch to Claude Code (it has to be open already)',
       'Paste (Ctrl+V)',
-      'Press Enter, to send what was just pasted'
+      'Press Enter, to send what was pasted'
     ])
     expect(preview.steps[3].added).toBe(true)
     expect(preview.replayable).toBe(true)

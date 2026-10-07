@@ -7,18 +7,18 @@ interface HardwareStatusPillProps {
 
 /**
  * One shared "is Noma's keyboard connected" indicator, used anywhere that
- * needs it (Dashboard, Virtual Keyboard, Developer) — previously each of
+ * needs it (Dashboard, Virtual Keyboard, Developer); previously each of
  * those pages built its own slightly different dot+label treatment.
  * Self-contained (refreshes and subscribes itself) so it's a true drop-in,
  * not something the host page has to wire up.
  *
  * `deviceType !== 'virtual'` is the same "is this actually real hardware,
  * not just the on-screen simulator" check onboarding's Hardware screen
- * uses — see src/main/hardware/virtualDevice.ts's doc comment for why
+ * uses. See src/main/hardware/virtualDevice.ts's doc comment for why
  * that's currently always false (no real transport is wired in yet, so
  * this honestly reads "Virtual Noma" everywhere today, exactly as it
  * should until real hardware exists). Gold, not accent blue, for a real
- * connection — matches the app-wide rule that gold means "real hardware
+ * connection; matches the app-wide rule that gold means "real hardware
  * made contact" (see tailwind.config.js).
  */
 export function HardwareStatusPill({ className = '' }: HardwareStatusPillProps) {

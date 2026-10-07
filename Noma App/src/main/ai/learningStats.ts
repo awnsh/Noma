@@ -7,9 +7,9 @@ import {
 } from '../workflow/patternDetection'
 
 /** What generates a `getHistory` callback needs to know about a pattern
- *  kind — same shape as suggestionsRepository's SuggestionHistory, restated
+ *  kind; same shape as suggestionsRepository's SuggestionHistory, restated
  *  here so this file doesn't import across the main-process/database
- *  boundary just for a type (same reasoning as localProvider.ts's
+ *  boundary for a type (same reasoning as localProvider.ts's
  *  PatternHistory). */
 interface PatternHistory {
   accepted: number
@@ -19,7 +19,7 @@ interface PatternHistory {
 
 /**
  * The static "how it works" half of the Flow Learning Center's per-kind
- * cards — kept here (not derived from patternDetection.ts's exports alone)
+ * cards; kept here (not derived from patternDetection.ts's exports alone)
  * because the human-readable label/description belongs with the feature
  * that displays them, not with the pure pattern-detection math.
  * `frequentControl` is deliberately excluded: it never produces a
@@ -61,7 +61,7 @@ const ACTIONABLE_KIND_INFO: Array<{
 ]
 
 /**
- * Builds the Flow Learning Center's stats — pure and injected with a
+ * Builds the Flow Learning Center's stats; pure and injected with a
  * history lookup (same pattern as LocalRuleBasedProvider) so it's testable
  * without a database.
  */

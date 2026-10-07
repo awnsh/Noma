@@ -5,7 +5,7 @@ import { elementAtPoint } from '../actions/macos'
 import { isMac } from '../platform'
 
 /** What the helper reports about the control under a screen point. `name`
- *  is the RAW accessible name — it never leaves the main process unsanitized
+ *  is the RAW accessible name; it never leaves the main process unsanitized
  *  (clickTarget.ts's clickTargetFor is the only consumer). */
 export interface ClickInspection extends RawClickInspection {
   processId: number | null
@@ -31,7 +31,7 @@ const MAX_PENDING = 4
  *
  * Honest limits: UI Automation only sees what an app chooses to expose.
  * Win32/WPF/UWP apps and browsers/Electron apps generally do; custom-drawn
- * UIs (many media/creative tools) often expose only a window — the caller
+ * UIs (many media/creative tools) often expose only a window: the caller
  * falls back to a window grid zone for those (clickTarget.ts).
  *
  * Nothing here is stored or logged: this class only relays one answer per
@@ -74,7 +74,7 @@ while ($true) {
     # looked for, so this can't widen what's recorded; clickTarget.ts still
     # decides what may be kept.
     if ($el -ne $null -and $containerNames -contains $el.Current.ControlType.ProgrammaticName) {
-      # Search the whole top-level window the point is in, not just the
+      # Search the whole top-level window the point is in, not the
       # container: an app like Notepad hosts its menu bar in one island and
       # its document in another, and the hit-test can land on either.
       $scope = $el

@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
 import { insertSuggestionIfNew, getSuggestionById } from '../database/repositories/suggestionsRepository'
-import { assignSuggestionToControl } from './suggestionResolution'
+import { assignSuggestionToControl, buildWorkflowMacroSteps } from './suggestionResolution'
 import type { Suggestion } from '@shared/types'
 
 function seedProfile(): void {
@@ -74,7 +74,7 @@ beforeEach(() => {
   seedProfile()
 })
 
-describe('assignSuggestionToControl — repeatedShortcut', () => {
+describe('assignSuggestionToControl; repeatedShortcut', () => {
   it('overwrites the chosen slot, marks the suggestion accepted, and returns the updated profile', () => {
     insertSuggestionIfNew(shortcutSuggestion())
 
@@ -94,7 +94,7 @@ describe('assignSuggestionToControl — repeatedShortcut', () => {
   })
 })
 
-describe('assignSuggestionToControl — repeatedSequence', () => {
+describe('assignSuggestionToControl; repeatedSequence', () => {
   it('creates a macro and assigns it to the chosen slot', () => {
     insertSuggestionIfNew(sequenceSuggestion())
 
@@ -138,8 +138,8 @@ function workflowSuggestion(overrides: Partial<Suggestion> = {}): Suggestion {
   }
 }
 
-describe('assignSuggestionToControl — multiStepWorkflow (WORKFLOW LEARNING)', () => {
-  it('creates a real macro — focus, paste, and an appended submit — and assigns it to the chosen slot', () => {
+describe('assignSuggestionToControl; multiStepWorkflow (WORKFLOW LEARNING)', () => {
+  it('creates a real macro; focus, paste, and an appended submit; and assigns it to the chosen slot', () => {
     insertSuggestionIfNew(workflowSuggestion())
 
     const result = assignSuggestionToControl(
@@ -200,7 +200,7 @@ describe('assignSuggestionToControl — multiStepWorkflow (WORKFLOW LEARNING)', 
     }
   })
 
-  it('turns a click step into a real click MacroStep — never silently folded into focusApplication', () => {
+  it('turns a click step into a real click MacroStep; never silently folded into focusApplication', () => {
     insertSuggestionIfNew(
       workflowSuggestion({
         id: 'suggestion:multistep:click',
@@ -242,7 +242,7 @@ describe('assignSuggestionToControl — multiStepWorkflow (WORKFLOW LEARNING)', 
           ],
           // [0] is a placeholder; [1] is a real 5s gap (clamped down to the
           // 2s replay ceiling); [2] is a real but tiny 120ms gap, under the
-          // floor natural pacing already covers — no explicit delay for it.
+          // floor natural pacing already covers; no explicit delay for it.
           stepDelaysMs: [0, 5000, 120]
         }
       })
@@ -266,7 +266,7 @@ describe('assignSuggestionToControl — multiStepWorkflow (WORKFLOW LEARNING)', 
   })
 })
 
-describe('assignSuggestionToControl — failure cases (fail closed, never guess)', () => {
+describe('assignSuggestionToControl; failure cases (fail closed, never guess)', () => {
   it('returns null for a suggestion that does not exist', () => {
     expect(assignSuggestionToControl('does-not-exist', 1)).toBeNull()
   })
@@ -295,5 +295,67 @@ describe('assignSuggestionToControl — failure cases (fail closed, never guess)
     insertSuggestionIfNew(shortcutSuggestion())
     assignSuggestionToControl('suggestion:shortcut:code::Control+S', 99)
     expect(getSuggestionById('suggestion:shortcut:code::Control+S')?.status).toBe('pending')
+  })
+})
+
+describe('buildWorkflowMacroSteps', () => {
+  it('keeps a workflow made only of app switches instead of trimming it to nothing', () => {
+    const steps = buildWorkflowMacroSteps(
+      [
+        { type: 'appSwitch', applicationId: 'code' },
+        { type: 'appSwitch', applicationId: 'githubdesktop' }
+      ],
+      [0, 10528]
+    )
+    expect(steps).toEqual([
+      { type: 'focusApplication', applicationId: 'code' },
+      { type: 'delay', ms: 2000 },
+      { type: 'focusApplication', applicationId: 'githubdesktop' }
+    ])
+  })
+})
+
+describe('assignSuggestionToControl; workflows that must do something', () => {
+  it('names an app-switch-only workflow after the real application names and labels the control for its destination', () => {
+    insertSuggestionIfNew(
+      workflowSuggestion({
+        id: 'suggestion:switch-only',
+        chainApplicationNames: { code: 'Visual Studio Code', githubdesktop: 'GitHub Desktop' },
+        action: {
+          kind: 'createWorkflowMacroAndAssignToControl',
+          steps: [
+            { type: 'appSwitch', applicationId: 'code' },
+            { type: 'appSwitch', applicationId: 'githubdesktop' }
+          ]
+        }
+      })
+    )
+
+    const result = assignSuggestionToControl('suggestion:switch-only', 1)
+    const control = result?.profile.controls.find((c) => c.slot === 1)
+    expect(control?.label).toBe('GitHub Desk…')
+    if (control?.action.type === 'macro') {
+      const row = getDatabase().prepare('SELECT name FROM macros WHERE id = ?').get(control.action.macroId) as { name: string }
+      expect(row.name).toBe('Visual Studio Code → GitHub Desktop')
+    }
+  })
+
+  it('fails closed, leaving the suggestion pending, when no step would do anything', () => {
+    insertSuggestionIfNew(
+      workflowSuggestion({
+        id: 'suggestion:inert',
+        action: {
+          kind: 'createWorkflowMacroAndAssignToControl',
+          steps: [
+            { type: 'appSwitch', applicationId: '' },
+            { type: 'appSwitch', applicationId: '' }
+          ]
+        }
+      })
+    )
+
+    expect(assignSuggestionToControl('suggestion:inert', 1)).toBeNull()
+    expect(getSuggestionById('suggestion:inert')?.status).toBe('pending')
+    expect(getDatabase().prepare('SELECT COUNT(*) AS n FROM macros').get()).toEqual({ n: 0 })
   })
 })

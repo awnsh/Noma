@@ -6,20 +6,20 @@ import type { HardwareDevice } from './types'
 const MAX_LOG_ENTRIES = 100
 
 /**
- * VirtualHardwareDevice — the Phase 3 hardware simulator
+ * VirtualHardwareDevice: the Phase 3 hardware simulator
  * (brainstorm.md section 8).
  *
  * This is the software-only stand-in for the physical keyboard. It holds
  * real state (connected, controls, displays, modules) and raises real
  * DEVICE → HOST events when the Virtual Keyboard page is interacted with,
- * so the rest of the app — and later, a real STM32HardwareDevice — is
+ * so the rest of the app; and later, a real STM32HardwareDevice; is
  * exercised identically. Nothing here is hardcoded UI state; the renderer
  * only ever reflects what this class reports via getStatus()/onStatusChanged.
  *
  * Every HOST->DEVICE call and DEVICE->HOST event is also recorded to an
  * in-memory log (`getLog()`/`onLogEntry()`) for Developer Mode
  * (brainstorm.md section 20), using the same message names the future
- * STM32 wire protocol uses (docs/hardware-protocol.md) — this is meant to
+ * STM32 wire protocol uses (docs/hardware-protocol.md): this is meant to
  * be a rehearsal of that log, not a separate thing.
  */
 export class VirtualHardwareDevice implements HardwareDevice {
@@ -65,7 +65,7 @@ export class VirtualHardwareDevice implements HardwareDevice {
   }
 
   async sendCommand(command: string, _payload?: unknown): Promise<void> {
-    // No commands are defined to send to the virtual device yet — this
+    // No commands are defined to send to the virtual device yet: this
     // exists so callers can depend on the full HardwareDevice interface
     // now. See docs/hardware-protocol.md (Phase 7) once real commands exist.
     this.pushLog('toDevice', 'COMMAND', command)
@@ -109,11 +109,11 @@ export class VirtualHardwareDevice implements HardwareDevice {
   }
 
   /**
-   * Simulates a physical button press for the given control — called when
+   * Simulates a physical button press for the given control; called when
    * the user clicks a tile on the Virtual Keyboard page. This class itself
    * never sends real input; it only reports "button N was pressed", the
    * same DEVICE -> HOST fact a real STM32 device will eventually report
-   * over serial. What that press *means* — and actually executing it — is
+   * over serial. What that press *means*; and actually executing it; is
    * decided by a layer above (main/index.ts's device-event listener,
    * dispatching to actionExecutor.ts), which is deliberate: the hardware
    * layer shouldn't need to know what a "shortcut" or "macro" is, and a
@@ -157,8 +157,8 @@ export class VirtualHardwareDevice implements HardwareDevice {
 
   /**
    * Assigns real, executable actions to a module's capability functions
-   * (brainstorm.md section 10 — e.g. a Rotary Encoder's turn/press). This
-   * only stores configuration; it never executes anything itself — the
+   * (brainstorm.md section 10; e.g. a Rotary Encoder's turn/press). This
+   * only stores configuration; it never executes anything itself: the
    * renderer runs a configured action via the existing testControlAction
    * path, the same "Test" mechanism the Control Mapping Editor already
    * uses, so there is exactly one execution path in the app, not two.
@@ -177,7 +177,7 @@ export class VirtualHardwareDevice implements HardwareDevice {
   }
 
   /**
-   * Simulates a physical encoder turn — the exact ENCODER_ROTATE
+   * Simulates a physical encoder turn: the exact ENCODER_ROTATE
    * DeviceEvent a real Rotary Encoder Module will one day raise. No-op if
    * the module doesn't exist or isn't a rotate-capable module, mirroring
    * pressControl's fail-safe behavior for an unknown control.
@@ -189,7 +189,7 @@ export class VirtualHardwareDevice implements HardwareDevice {
   }
 
   /**
-   * Round-trips a PING/PONG through the hardware layer — Developer Mode's
+   * Round-trips a PING/PONG through the hardware layer. Developer Mode's
    * "Ping" tool. Real, measured latency (near-zero in-process today; a
    * meaningful number once a real serial/USB transport exists), not a
    * hardcoded value.
@@ -202,7 +202,7 @@ export class VirtualHardwareDevice implements HardwareDevice {
     return { ok: this.connected, latencyMs }
   }
 
-  /** Cycles the device through disconnect -> connect — a real state
+  /** Cycles the device through disconnect -> connect: a real state
    *  transition, visible in the HOST<->DEVICE log, that a firmware bring-up
    *  engineer can trigger on demand from Developer Mode. */
   async reset(): Promise<void> {

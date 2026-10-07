@@ -1,5 +1,5 @@
 /**
- * Distinguishes a real user click from Flow's own synthetic one — the click
+ * Distinguishes a real user click from Flow's own synthetic one: the click
  * counterpart to selfInjectedKeys.ts, same reason: click.ts's executeClick()
  * calls SendInput to actually fire a mouse-down/up, and clickCaptureService.ts
  * watches the same OS-level mouse hook that synthetic click also fires
@@ -7,7 +7,7 @@
  * captured as if the user had clicked it, manufacturing a fake repeated
  * pattern purely from Flow replaying its own workflow.
  *
- * A click has no "combo" identity to match, so each mark is just an expiry
+ * A click has no "combo" identity to match, so each mark is an expiry
  * time: markSelfInjectedClick() is called immediately before the synthetic
  * press, and each mousedown the hook sees within the TTL consumes one mark.
  * One mark per click, not a single flag: with a single flag, two synthetic

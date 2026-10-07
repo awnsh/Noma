@@ -18,7 +18,7 @@ interface RawForegroundWindowEvent {
  * foreground process, or the foreground window within it, changes.
  *
  * Why PowerShell instead of a native Node addon: a real native module
- * (the originally-planned approach — see docs/architecture.md) needs a
+ * (the originally-planned approach: see docs/architecture.md) needs a
  * C++ toolchain (node-gyp + Python + MSVC build tools) to compile, which
  * this machine doesn't have, and no actively-maintained npm package ships
  * a working prebuilt binary for this exact call. Shelling out to a single
@@ -27,7 +27,7 @@ interface RawForegroundWindowEvent {
  * spawned for the lifetime of the adapter).
  *
  * Honesty about "event-driven": this is polling (every 400ms) inside the
- * helper process, not a true Win32 SetWinEventHook subscription — but
+ * helper process, not a true Win32 SetWinEventHook subscription; but
  * Node's side of the interface (`onActiveApplicationChanged`) is a real
  * push callback, so callers don't know or care. A future optimization can
  * replace the polling loop in POLL_SCRIPT with a SetWinEventHook + message
@@ -35,7 +35,7 @@ interface RawForegroundWindowEvent {
  *
  * Flow's own window is deliberately excluded from detection (see
  * `${flowProcessId}` below). Without this, clicking anything in the Flow
- * app itself — including a Virtual Keyboard control — would make Flow the
+ * app itself; including a Virtual Keyboard control; would make Flow the
  * "active application", flipping Current Application/Controls to nothing
  * every time the user touches the app. A real physical keyboard doesn't
  * have this problem (pressing a button doesn't steal window focus), so
@@ -60,17 +60,17 @@ public class FlowWin32 {
 
 # $proc.Path (.NET's Process.MainModule under the hood) comes back empty
 # for some processes (explorer.exe reliably, occasionally others) without
-# throwing — a real, observed gap, not a hypothetical one, and path is
+# throwing: a real, observed gap, not a hypothetical one, and path is
 # what toApplication() below falls back to a plain processName-plus-
 # ".exe" guess from when it's missing. Get-CimInstance against Win32_Process is
 # the safe fallback: a managed WMI query, not a raw native call, so a
 # resolution failure here is an empty/null property or a normal catchable
 # exception, never a memory-corrupting native crash. (An earlier version
 # of this function used raw OpenProcess + QueryFullProcessImageName
-# P/Invoke calls for this — that approach was reverted after it produced
+# P/Invoke calls for this: that approach was reverted after it produced
 # an uncatchable AccessViolationException that killed this entire poller
 # process outright. Do not reintroduce raw native calls here without very
-# deliberate, isolated testing — a crash here silently kills ALL
+# deliberate, isolated testing: a crash here silently kills ALL
 # foreground-application detection.)
 function Get-ExecutablePathFallback([uint32]$procId) {
   try {
@@ -134,7 +134,7 @@ function toApplication(raw: RawForegroundWindowEvent): Application {
     processName: fileName,
     // The full path, when PowerShell actually resolved one (see the poll
     // script's own comment on $proc.Path coming back empty for some
-    // processes) — this is the one field real OS-icon extraction needs
+    // processes): this is the one field real OS-icon extraction needs
     // (iconService.ts). Absent, not a guessed path, when raw.path is null.
     executablePath: raw.path ?? undefined
   }
@@ -160,7 +160,7 @@ export class WindowsOSAdapter implements OSAdapter {
   }
 
   /** The window handle of the most recent real (non-Flow) foreground
-   *  application — used to refocus that window before synthesizing a
+   *  application; used to refocus that window before synthesizing a
    *  keystroke for it. Null until some real application has been seen. */
   getLastKnownWindowHandle(): number | null {
     return this.lastKnownHwnd
@@ -205,7 +205,7 @@ export class WindowsOSAdapter implements OSAdapter {
         try {
           this.handleForegroundEvent(JSON.parse(trimmed) as RawForegroundWindowEvent)
         } catch {
-          // Malformed/partial line — ignore, next line will resync.
+          // Malformed/partial line; ignore, next line will resync.
         }
       })
     }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { DailyActivityCount } from '@shared/types'
 
 /**
- * A minimal bar chart of shortcut presses per day — single series (there's
+ * A minimal bar chart of shortcut presses per day; single series (there's
  * only one metric here), so no legend is needed and the app's own accent
  * blue carries the whole thing; identity is never in question the way it
  * would be with multiple series. Hand-rolled div bars rather than a
@@ -20,12 +20,12 @@ export function DailyActivityChart({ data }: { data: DailyActivityCount[] }) {
       </div>
       <div className="flex h-24 items-end gap-[3px]">
         {data.map((day, index) => {
-          // A floor so a genuine zero day still renders a visible sliver —
-          // an invisible 0px bar reads as "missing data," not "no activity."
+          // A floor so a genuine zero day still renders a visible sliver.
+          // An invisible 0px bar reads as "missing data," not "no activity."
           const heightPercent = Math.max(4, (day.count / max) * 100)
           const isHovered = hoveredIndex === index
           return (
-            // Full height of the row, with the bar pinned to its bottom: the
+            // Full height of the row, with the bar pinned to its bottom. The
             // bar's height is a percentage, and a percentage of a wrapper
             // that is only as tall as its contents is zero, which left every
             // bar invisible.
@@ -44,10 +44,10 @@ export function DailyActivityChart({ data }: { data: DailyActivityCount[] }) {
                 </div>
               )}
               <div
-                className={`w-full rounded-t-[3px] transition-colors ${
+                className={`mc-bar w-full rounded-t-[3px] transition-colors ${
                   day.count === 0 ? 'bg-white/[0.08]' : isHovered ? 'bg-accent' : 'bg-accent/70'
                 }`}
-                style={{ height: `${heightPercent}%` }}
+                style={{ height: `${heightPercent}%`, ['--mc-delay' as string]: `${Math.min(index, 14) * 15}ms` }}
               />
             </div>
           )

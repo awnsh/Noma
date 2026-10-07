@@ -4,7 +4,7 @@ import { NomaMoment } from './NomaMoment'
 import { EmptyState } from './EmptyState'
 
 /**
- * The list form of the Noma Moment — every pending suggestion, most recent
+ * The list form of the Noma Moment: every pending suggestion, most recent
  * first, in `compact` presentation. Home shows only the single most
  * important one (see `pages/Home.tsx`); this is the fuller list, used on
  * the Controls page where more than one might be pending at once.
@@ -18,7 +18,7 @@ export function SuggestionsPanel() {
     return unsubscribe
   }, [refresh, subscribe])
 
-  // Nothing to show yet, either way — but never mid-fetch: a "hasn't
+  // Nothing to show yet, either way. But never mid-fetch: a "hasn't
   // noticed a pattern yet" that flashes into a real suggestion a moment
   // later reads as broken, not calm.
   if (isLoading) {
@@ -29,8 +29,7 @@ export function SuggestionsPanel() {
     <section>
       {suggestions.length === 0 ? (
         <EmptyState
-          title="Noma hasn't noticed a pattern yet."
-          hint="Keep working normally. Noma will surface a workflow here as soon as it sees one repeat."
+          hint="A workflow appears here once Noma sees one repeat."
         />
       ) : (
         <div className="divide-y divide-base-700">

@@ -12,7 +12,7 @@ type WireMessage = { type: string; payload?: unknown }
 
 /**
  * Queues every message from the moment the socket is created, not from
- * whenever a test happens to call `next()` — the server can (and does, by
+ * whenever a test happens to call `next()`: the server can (and does, by
  * design) send the initial DEVICE_STATUS the instant the connection opens,
  * which can otherwise race a `once('message', ...)` attached only after
  * `await`ing the 'open' event.
@@ -50,7 +50,7 @@ describe('DeviceTransportServer', () => {
     device = new VirtualHardwareDevice()
     await device.setControls(CONTROLS)
     transport = new DeviceTransportServer(device)
-    await transport.start(0) // OS-assigned port — never the real shared one
+    await transport.start(0) // OS-assigned port; never the real shared one
     sockets = []
   })
 
@@ -64,7 +64,7 @@ describe('DeviceTransportServer', () => {
     if (!port) throw new Error('server did not report a bound port')
     const socket = new WebSocket(`ws://127.0.0.1:${port}`)
     sockets.push(socket)
-    const queue = new MessageQueue(socket) // attached before 'open' — see MessageQueue's doc comment
+    const queue = new MessageQueue(socket) // attached before 'open': see MessageQueue's doc comment
     await waitForOpen(socket)
     return { socket, queue }
   }
@@ -113,7 +113,7 @@ describe('DeviceTransportServer', () => {
     transport.notifyActionExecuted({
       controlId: 'ctrl-run',
       ok: false,
-      reason: 'Refused: Control+Q can close a window or quit an application — window-closing shortcuts are never auto-executed'
+      reason: 'Refused: Control+Q can close a window or quit an application; window-closing shortcuts are never auto-executed'
     })
 
     const message = await queue.next()
@@ -122,7 +122,7 @@ describe('DeviceTransportServer', () => {
       payload: {
         controlId: 'ctrl-run',
         ok: false,
-        reason: 'Refused: Control+Q can close a window or quit an application — window-closing shortcuts are never auto-executed'
+        reason: 'Refused: Control+Q can close a window or quit an application; window-closing shortcuts are never auto-executed'
       }
     })
   })

@@ -61,10 +61,10 @@ for (const event of events) {
   )
 }
 
-// The detector runs over a full day of history in the app; over just this
+// The detector runs over a full day of history in the app; over this
 // window it shows exactly what this test produced.
 const patterns = detectPatterns(events)
-console.log(`\n== detected from just this window: ${patterns.length} patterns`)
+console.log(`\n== detected from this window: ${patterns.length} patterns`)
 for (const pattern of patterns) {
   const steps =
     'steps' in pattern && pattern.steps

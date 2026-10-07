@@ -10,6 +10,8 @@ import { ControlEditorModal } from '../components/ControlEditorModal'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
 import { AppIcon } from '../components/AppIcon'
 import { GLASS_PANEL } from '../lib/surfaces'
+import { CONTROL_SLOTS } from '@shared/constants'
+import { useStoreSync } from '../lib/useStoreSync'
 
 function describeEvent(event: { type: string } & Record<string, unknown>): string {
   switch (event.type) {
@@ -45,21 +47,12 @@ export function VirtualKeyboard() {
   const [flashingKeys, setFlashingKeys] = useState<Set<string>>(new Set())
   const flashTimeoutRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    refresh()
-    refreshContext()
-    const unsubscribeHardware = subscribe()
-    const unsubscribeContext = subscribeToContext()
-    return () => {
-      unsubscribeHardware()
-      unsubscribeContext()
-    }
-  }, [refresh, subscribe, refreshContext, subscribeToContext])
+  useStoreSync({ refresh, subscribe }, { refresh: refreshContext, subscribe: subscribeToContext })
 
   useEffect(() => {
     const unsubscribe = window.flow.onWorkflowComboCaptured((comboKeys) => {
-      // A new combo replaces whatever was flashing, and resets the clock —
-      // without this, an in-flight timeout from a *previous* combo could
+      // A new combo replaces whatever was flashing, and resets the clock.
+      // Without this, an in-flight timeout from a *previous* combo could
       // fire mid-way through this one and clear it early.
       if (flashTimeoutRef.current !== null) window.clearTimeout(flashTimeoutRef.current)
       setFlashingKeys(new Set(comboKeys))
@@ -96,7 +89,7 @@ export function VirtualKeyboard() {
         <HardwareStatusPill />
       </div>
 
-      {/* The deck — the single most literal "real hardware" surface in the
+      {/* The deck: the single most literal "real hardware" surface in the
           app, so it gets the full glass-panel material treatment. */}
       <div className={`p-6 ${GLASS_PANEL}`}>
         <KeyboardLayout flashingKeys={flashingKeys} />
@@ -127,7 +120,7 @@ export function VirtualKeyboard() {
           </button>
         </div>
         <div className="mb-3 grid grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((slot) => (
+          {CONTROL_SLOTS.map((slot) => (
             <VirtualControlButton
               key={slot}
               slot={slot}

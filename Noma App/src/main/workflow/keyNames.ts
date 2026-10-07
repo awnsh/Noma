@@ -3,7 +3,7 @@ import { UiohookKey } from 'uiohook-napi'
 /**
  * The single source of truth for translating between uiohook-napi's raw
  * keycodes and the canonical key-name vocabulary Flow stores everywhere
- * else — captured combos (workflow_events), configured control actions
+ * else; captured combos (workflow_events), configured control actions
  * (controls.action_payload), and macros (macros.actions). Used in both
  * directions: captureService.ts reads an incoming keydown's code and
  * needs its name; actionExecutor.ts has a stored name and needs the code
@@ -26,7 +26,7 @@ export const MODIFIER_KEYCODES: Partial<Record<number, CommandModifierName>> = {
 }
 
 /** The single keycode used when *sending* a modifier (always the left-hand
- *  variant — good enough for synthesizing a configured shortcut). */
+ *  variant; good enough for synthesizing a configured shortcut). */
 const MODIFIER_NAME_TO_KEYCODE: Record<CommandModifierName, number> = {
   Control: UiohookKey.Ctrl,
   Alt: UiohookKey.Alt,
@@ -48,7 +48,7 @@ export function keyNameForCode(code: number): string | undefined {
  * Resolves a canonical key/modifier name (as stored in a Control's
  * ControlAction or a Macro's actions) back to the UiohookKey code needed
  * to synthesize it. Returns undefined for anything not in the vocabulary
- * — callers must treat that as "refuse to execute", never guess.
+ *; callers must treat that as "refuse to execute", never guess.
  */
 export function keyCodeForName(name: string): number | undefined {
   if (name in MODIFIER_NAME_TO_KEYCODE) {

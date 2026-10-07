@@ -30,7 +30,7 @@ export function getMacroById(id: string): Macro | null {
   return row ? rowToMacro(row) : null
 }
 
-/** All macros, newest first — used by the Control Mapping Editor's macro
+/** All macros, newest first; used by the Control Mapping Editor's macro
  *  picker (and, later, the Macro Studio's list view). */
 export function getAllMacros(): Macro[] {
   const db = getDatabase()
@@ -60,7 +60,7 @@ export function createMacro(input: Omit<Macro, 'id'>): Macro {
 
 /**
  * Overwrites the given fields of an existing macro and returns the updated
- * row, or null if no macro has that id — the Macro Studio's Save button for
+ * row, or null if no macro has that id: the Macro Studio's Save button for
  * an already-created macro (createMacro is only for a brand-new one).
  */
 export function updateMacro(
@@ -96,8 +96,8 @@ export function updateMacro(
 
 /** Deletes a macro outright. Returns whether a row actually existed to
  *  delete. Any control still pointing at this macro id will fail closed
- *  the next time it's pressed ("Macro not found") — the same fail path
- *  already covered by actionExecutor.test.ts — rather than silently doing
+ *  the next time it's pressed ("Macro not found"): the same fail path
+ *  already covered by actionExecutor.test.ts; rather than silently doing
  *  nothing; see getControlsReferencingMacro for warning the user first. */
 export function deleteMacro(id: string): boolean {
   const result = getDatabase().prepare('DELETE FROM macros WHERE id = ?').run(id)

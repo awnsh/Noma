@@ -1,18 +1,37 @@
-import { useEffect, useState } from 'react'
-import type { Application, Macro } from '@shared/types'
+import { useEffect, useMemo, useState } from 'react'
+import type { Macro } from '@shared/types'
 import { useMacrosStore } from '../stores/macrosStore'
+import { useUiStore } from '../stores/uiStore'
+import { useApplicationsStore } from '../stores/applicationsStore'
+import { useStoreSync } from '../lib/useStoreSync'
 import { MacroEditor } from '../components/MacroEditor'
+import { useMacroDraftsStore } from '../stores/macroDraftsStore'
+import { plural } from '../lib/plural'
 
 export function MacroStudio() {
   const { macros, isLoading, refresh } = useMacrosStore()
-  const [applications, setApplications] = useState<Application[]>([])
+  const { byId: applicationsById, refresh: refreshApplications } = useApplicationsStore()
+  const applications = useMemo(() => Object.values(applicationsById), [applicationsById])
   const [selectedMacroId, setSelectedMacroId] = useState<string | null>(null)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
+  // Unsaved edits, kept in a store so switching macros (or pages) never discards them.
+  const drafts = useMacroDraftsStore((state) => state.drafts)
+  const setDraft = useMacroDraftsStore((state) => state.setDraft)
 
+  const pendingMacroId = useUiStore((state) => state.pendingMacroId)
+  const clearPendingMacro = useUiStore((state) => state.clearPendingMacro)
+
+  // Jump to a macro requested from elsewhere (Workflows) once macros load.
   useEffect(() => {
-    refresh()
-    window.flow.getAllApplications().then(setApplications)
-  }, [refresh])
+    if (!pendingMacroId || isLoading) return
+    if (macros.some((macro) => macro.id === pendingMacroId)) {
+      setIsCreatingNew(false)
+      setSelectedMacroId(pendingMacroId)
+    }
+    clearPendingMacro()
+  }, [pendingMacroId, isLoading, macros, clearPendingMacro])
+
+  useStoreSync({ refresh }, { refresh: refreshApplications })
 
   const selectedMacro = macros.find((macro) => macro.id === selectedMacroId) ?? null
   const applicationNameById = new Map(applications.map((application) => [application.id, application.name]))
@@ -28,12 +47,14 @@ export function MacroStudio() {
   }
 
   const handleSaved = (macro: Macro): void => {
+    setDraft('new', null)
     setIsCreatingNew(false)
     setSelectedMacroId(macro.id)
     refresh()
   }
 
   const handleDeleted = (): void => {
+    if (selectedMacroId) setDraft(selectedMacroId, null)
     setSelectedMacroId(null)
     refresh()
   }
@@ -50,7 +71,7 @@ export function MacroStudio() {
           onClick={handleNew}
           className="mb-4 rounded-md border border-accent-muted bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
         >
-          + New Macro
+          + New Macro{drafts.new && !isCreatingNew ? ' (draft)' : ''}
         </button>
 
         {isLoading ? (
@@ -72,13 +93,17 @@ export function MacroStudio() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate">{macro.name}</span>
-                    {!macro.enabled && (
-                      <span className="text-[10px] uppercase tracking-widest text-neutral-700">Off</span>
+                    {drafts[macro.id] ? (
+                      <span className="text-[10px] uppercase tracking-widest text-accent">Unsaved</span>
+                    ) : (
+                      !macro.enabled && (
+                        <span className="text-[10px] uppercase tracking-widest text-neutral-700">Off</span>
+                      )
                     )}
                   </div>
                   <div className="text-[11px] text-neutral-600">
-                    {macro.actions.length} step{macro.actions.length === 1 ? '' : 's'}
-                    {/* Which application this macro was scoped to — set
+                    {macro.actions.length} {plural(macro.actions.length, 'step')}
+                    {/* Which application this macro was scoped to: set
                         automatically when Flow creates a macro from an
                         accepted sequence suggestion (suggestionResolution.ts),
                         or left unset for a macro built from scratch here. */}
@@ -96,16 +121,23 @@ export function MacroStudio() {
       {isCreatingNew ? (
         <MacroEditor
           macro={null}
+          draft={drafts.new}
+          onDraftChange={(draft) => setDraft('new', draft)}
           applications={applications}
           allMacros={macros}
           onSaved={handleSaved}
           onDeleted={handleDeleted}
-          onDiscardNew={() => setIsCreatingNew(false)}
+          onDiscardNew={() => {
+            setDraft('new', null)
+            setIsCreatingNew(false)
+          }}
         />
       ) : selectedMacro ? (
         <MacroEditor
           key={selectedMacro.id}
           macro={selectedMacro}
+          draft={drafts[selectedMacro.id]}
+          onDraftChange={(draft) => setDraft(selectedMacro.id, draft)}
           applications={applications}
           allMacros={macros}
           onSaved={handleSaved}

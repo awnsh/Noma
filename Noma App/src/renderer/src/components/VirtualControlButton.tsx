@@ -8,7 +8,7 @@ interface VirtualControlButtonProps {
   control: Control | undefined
   onPress: (controlId: string) => void
   /** When true, clicking opens the Control Mapping Editor for this slot
-   *  instead of pressing it — see VirtualKeyboard.tsx's "Edit Controls"
+   *  instead of pressing it. See VirtualKeyboard.tsx's "Edit Controls"
    *  toggle. */
   editMode?: boolean
   onEdit?: (slot: number) => void
@@ -49,7 +49,7 @@ export function VirtualControlButton({
             : 'cursor-default border-base-700 bg-base-900'
       } ${
         // A real press gets a brief, real feedback flash in the signature
-        // brand blue — this is the one moment a colored glow belongs here:
+        // brand blue. This is the one moment a colored glow belongs here:
         // an actual interaction just happened, not ambient decoration.
         isPressed ? 'border-accent/60 shadow-[0_4px_16px_-6px_rgba(76,126,255,0.45)]' : ''
       }`}
@@ -62,7 +62,7 @@ export function VirtualControlButton({
       </div>
       <div>
         <div className="text-lg font-medium text-neutral-100">
-          {control?.label ?? <span className="text-neutral-600">–</span>}
+          {control?.label || <span className="text-neutral-600">–</span>}
         </div>
         {!editMode && caption && (
           <div className="mt-0.5 font-mono text-[11px] text-neutral-500">{caption}</div>

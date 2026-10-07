@@ -61,7 +61,7 @@ describe('saveOnboardingState', () => {
     expect(getOnboardingState()).toEqual(result)
   })
 
-  it('returns the update it just persisted, not a stale copy', () => {
+  it('returns the update it persisted, not a stale copy', () => {
     const result = saveOnboardingState({ step: 'flow' })
     expect(result.step).toBe('flow')
   })

@@ -10,8 +10,8 @@ import { isSelfInjected } from './selfInjectedKeys'
  * if this event shouldn't be captured at all (see docs/privacy-and-legal.md
  * and captureFilter.ts for the policy this enforces).
  *
- * This only ever fires on the "trigger" key of a chord — the non-modifier
- * key pressed while one or more of Control/Alt/Meta is already held —
+ * This only ever fires on the "trigger" key of a chord: the non-modifier
+ * key pressed while one or more of Control/Alt/Meta is already held
  * never on a bare modifier keydown by itself. That means a lone Ctrl press
  * never reaches shouldCaptureKeyCombo, and a chord like Ctrl+Shift+P is
  * reported exactly once (when P completes it), not once per modifier.
@@ -41,12 +41,12 @@ export function comboFromKeydownEvent(event: UiohookKeyboardEvent): string[] | n
 }
 
 /**
- * Owns the actual global keyboard hook (uiohook-napi, N-API — no C++
+ * Owns the actual global keyboard hook (uiohook-napi, N-API; no C++
  * toolchain needed, see the note in windowsAdapter.ts for why that
  * matters on this machine). The hook is only ever engaged while `start()`
- * has been called — i.e. only while the user has explicitly enabled
+ * has been called; i.e. only while the user has explicitly enabled
  * workflow monitoring. When disabled (the default), no OS-level hook is
- * installed at all, not merely "installed but ignored" — see
+ * installed at all, not merely "installed but ignored": see
  * docs/privacy-and-legal.md.
  */
 export class CaptureService {
@@ -84,7 +84,7 @@ export class CaptureService {
     const combo = comboFromKeydownEvent(event)
     if (!combo) return
     // Flow's own controls/macros/Test buttons send real shortcuts via this
-    // exact same global hook (see selfInjectedKeys.ts) — never mistake that
+    // exact same global hook (see selfInjectedKeys.ts); never mistake that
     // echo for the user having typed it themselves.
     if (isSelfInjected(combo)) return
     this.onCombo({

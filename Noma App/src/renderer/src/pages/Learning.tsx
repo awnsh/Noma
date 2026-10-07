@@ -7,12 +7,13 @@ import { EmptyState } from '../components/EmptyState'
 import { workflowStepPlainText } from '../lib/insights'
 import { patternChainSteps } from '../lib/workflowChain'
 import { CARD } from '../lib/surfaces'
+import { plural } from '../lib/plural'
 
 /**
- * Learning — "what Noma is learning": a plain-language read of the
+ * Learning: "what Noma is learning", a plain-language read of the
  * behavioral model behind every suggestion, told as large observations,
  * not an analytics dashboard. Every sentence here is derived straight from
- * real, already-captured data — nothing here is generated copy.
+ * real, already-captured data. Nothing here is generated copy.
  */
 export function Learning() {
   const { context } = useFlowStore()
@@ -40,8 +41,8 @@ export function Learning() {
       const maxCount = Math.max(...counts.map((c) => c.count))
       const min = counts.reduce((lowest, c) => (c.count < lowest.count ? c : lowest), counts[0])
       // Only worth mentioning once there's enough real activity to compare
-      // against, and the gap is genuinely lopsided — not on a handful of
-      // presses where the difference is just noise.
+      // against, and the gap is genuinely lopsided (not on a handful of
+      // presses where the difference is just noise).
       if (maxCount >= 10 && min.count <= maxCount / 5) {
         setUnderused({ label: min.label, count: min.count, maxCount })
       } else {
@@ -65,10 +66,7 @@ export function Learning() {
     <div className="mx-auto max-w-2xl px-12 py-16">
       <div className="mb-12">
         <h1 className="font-display text-2xl font-semibold text-neutral-100">What Noma is learning</h1>
-        <p className="mt-2 text-sm text-neutral-600">
-          Real patterns, counted from real activity. Never a guess.
-        </p>
-      </div>
+              </div>
 
       <section className="mb-12">
         {patterns === null ? (
@@ -79,7 +77,7 @@ export function Learning() {
             hint="Once you repeat a workflow, Noma will describe what it noticed here."
           />
         ) : (
-          <div className={`${CARD} px-5`}>
+          <div className={`${CARD} px-5 mc-stagger`}>
             {crossAppInsights.map((pattern) => {
               const patternApplicationId =
                 pattern.kind === 'multiStepWorkflow' ? pattern.contextApplicationId : (pattern.applicationIds[0] ?? null)
@@ -96,8 +94,8 @@ export function Learning() {
             {underused && (
               <InsightCard
                 text={`You rarely use ${underused.label}.`}
-                hint={`${underused.count} use${underused.count === 1 ? '' : 's'}, far less than your other controls. Noma may eventually recommend replacing it.`}
-                action={{ label: 'Review', onClick: () => setActivePage('controls') }}
+                hint={`${underused.count} ${plural(underused.count, 'use')}, far less than your other controls. Noma may eventually recommend replacing it.`}
+                action={{ label: 'Review', onClick: () => setActivePage('holo') }}
               />
             )}
           </div>
@@ -124,7 +122,7 @@ export function Learning() {
                   hint={
                     total === 0
                       ? "Noma hasn't suggested this yet."
-                      : `You've said yes ${kind.accepted} time${kind.accepted === 1 ? '' : 's'} and no ${kind.rejected} time${kind.rejected === 1 ? '' : 's'} to a suggestion like this.`
+                      : `You've said yes ${kind.accepted} ${plural(kind.accepted, 'time')} and no ${kind.rejected} ${plural(kind.rejected, 'time')} to a suggestion like this.`
                   }
                 />
               )

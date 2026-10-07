@@ -1,0 +1,27 @@
+/* Content motion (mc-*): transform/opacity only, plays once on mount. */
+:root { --mc-ease: var(--ease-out-expo); }
+
+@keyframes mc-bar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes mc-check { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes mc-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+
+.mc-rise { animation: noma-rise-in 320ms var(--mc-ease) backwards; animation-delay: var(--mc-delay, 0ms); }
+.mc-fade { animation: noma-fade-in 300ms ease-out backwards; animation-delay: var(--mc-delay, 0ms); }
+
+.mc-stagger > * { animation: noma-rise-in 320ms var(--mc-ease) backwards; }
+.mc-stagger > :nth-child(2) { animation-delay: 40ms; }
+.mc-stagger > :nth-child(3) { animation-delay: 80ms; }
+.mc-stagger > :nth-child(4) { animation-delay: 120ms; }
+.mc-stagger > :nth-child(5) { animation-delay: 160ms; }
+.mc-stagger > :nth-child(6) { animation-delay: 200ms; }
+.mc-stagger > :nth-child(7) { animation-delay: 240ms; }
+.mc-stagger > :nth-child(n+8) { animation-delay: 280ms; }
+
+.mc-bar { transform-origin: bottom; animation: mc-bar 420ms var(--mc-ease) backwards; animation-delay: var(--mc-delay, 0ms); }
+.mc-check path { stroke-dasharray: 24; animation: mc-check 260ms ease-out backwards; }
+.mc-pop { animation: mc-pop 220ms var(--mc-ease) backwards; }
+
+.mc-lift { transition: transform 180ms var(--mc-ease), border-color 150ms ease-out; }
+.mc-lift:hover { transform: translateY(-2px); }
+.mc-lift:active { transform: translateY(0) scale(0.995); }
+

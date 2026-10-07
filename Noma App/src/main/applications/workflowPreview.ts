@@ -89,7 +89,7 @@ export function previewSuggestion(suggestion: Suggestion): WorkflowPreview | nul
   ) {
     described[described.length - 1] = {
       kind: 'shortcut',
-      description: 'Press Enter, to send what was just pasted',
+      description: 'Press Enter, to send what was pasted',
       added: true
     }
   }

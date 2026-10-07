@@ -34,7 +34,7 @@ import type { DetectedPattern } from '@shared/types'
  *   a slightly different step chain (a rotated loop, a drifted "typical
  *   shape", a pair already covered by a fuller chain).
  *
- * Safe to call repeatedly and often — `insertSuggestionIfNew` is still a
+ * Safe to call repeatedly and often: `insertSuggestionIfNew` is still a
  * no-op for an exact id already suggested (any status), so this never
  * resurrects a decision the user already made.
  */
@@ -64,7 +64,7 @@ export class SuggestionEngine {
       if (!fingerprint) {
         // Row from before fingerprints existed: backfill it if its pattern
         // is being detected right now, otherwise it can't take part in
-        // dedupe (and is simply left alone).
+        // dedupe (and is left alone).
         const pattern = patternsById.get(stored.id)
         if (!pattern) continue
         fingerprint = patternFingerprint(pattern)

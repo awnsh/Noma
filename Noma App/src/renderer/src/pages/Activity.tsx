@@ -5,9 +5,9 @@ import { EmptyState } from '../components/EmptyState'
 import { activityEventsFromSuggestions } from '../lib/activityEvents'
 
 /**
- * Activity — a quiet timeline of what Noma has actually done: when it
+ * Activity: a quiet timeline of what Noma has actually done: when it
  * noticed a pattern, when that became a real action. Not a log of every
- * captured keystroke or app switch (see the privacy note at the bottom) —
+ * captured keystroke or app switch (see the privacy note at the bottom),
  * only the moments a user would recognize as Noma doing something.
  */
 export function Activity() {
@@ -28,16 +28,14 @@ export function Activity() {
     <div className="mx-auto max-w-2xl px-12 py-16">
       <div className="mb-12">
         <h1 className="font-display text-2xl font-semibold text-neutral-100">Activity</h1>
-        <p className="mt-2 text-sm text-neutral-600">What Noma has noticed and done, most recent first.</p>
       </div>
-
       <section className="mb-12">
         {events === null ? (
           <p className="text-sm text-neutral-600">Loading…</p>
         ) : events.length === 0 ? (
           <EmptyState
-            title="Nothing here yet."
-            hint="Keep working normally. Noma will log what it notices and creates here as it happens."
+            title="No activity yet."
+            hint="Noma logs what it notices and creates here."
           />
         ) : (
           <div>

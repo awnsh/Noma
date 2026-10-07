@@ -15,7 +15,7 @@ export const RELEASE_NOTES: Record<string, string[]> = {
     'Found a bug or have an idea? Tell us at nomashift.com/feedback.'
   ],
   '0.1.9': [
-    'After an update, Noma now shows what changed, like this note.'
+    'After an update, Noma shows what changed.'
   ],
   '0.1.8': [
     'Settings has a new Updates section: check for a new version any time, and restart to install it once it has downloaded.'

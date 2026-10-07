@@ -1,5 +1,5 @@
 /**
- * The sidebar's icon set — hand-drawn inline SVGs rather than an icon
+ * The sidebar's icon set: hand-drawn inline SVGs rather than an icon
  * library dependency, matching the rest of the app's "no unnecessary
  * dependency" posture. One shared stroke style (round caps/joins,
  * currentColor) so they read as one consistent set, not eight different
@@ -29,20 +29,7 @@ export function HomeIcon({ className }: IconProps) {
   )
 }
 
-/** Controls — a simple 2x2 button grid, distinct from KeyboardIcon's full
- *  keyboard (that's the Virtual Keyboard page's own, busier icon). */
-export function ControlsIcon({ className }: IconProps) {
-  return (
-    <svg {...BASE_PROPS} className={className}>
-      <rect x="4" y="4" width="7" height="7" rx="1.5" />
-      <rect x="13" y="4" width="7" height="7" rx="1.5" />
-      <rect x="4" y="13" width="7" height="7" rx="1.5" />
-      <rect x="13" y="13" width="7" height="7" rx="1.5" />
-    </svg>
-  )
-}
-
-/** Activity — a short timeline of events, distinct from StatsIcon's bar
+/** Activity: a short timeline of events, distinct from StatsIcon's bar
  *  chart (Usage Stats' own icon). */
 export function ActivityIcon({ className }: IconProps) {
   return (
@@ -81,7 +68,7 @@ export function MacroIcon({ className }: IconProps) {
   )
 }
 
-/** Workflows — three connected nodes, echoing the app-icon chain
+/** Workflows: three connected nodes, echoing the app-icon chain
  *  (`WorkflowChain`) the Workflows page is built around, distinct from
  *  ActivityIcon's timeline (dots on one line) and MacroIcon's bolt. */
 export function WorkflowsIcon({ className }: IconProps) {
@@ -148,10 +135,10 @@ export function DeveloperIcon({ className }: IconProps) {
 }
 
 /**
- * The "Noma learned/noticed something" mark — a small four-point sparkle,
+ * The "Noma learned/noticed something" mark: a small four-point sparkle,
  * always paired with gold (see tailwind.config.js's color philosophy
  * comment). Reserved for genuine intelligence moments (NomaMoment,
- * LearnedActionCard) — never sprinkled next to every feature just because
+ * LearnedActionCard). Never sprinkled next to every feature just because
  * it's software.
  */
 export function SparkleIcon({ className }: IconProps) {
@@ -162,7 +149,7 @@ export function SparkleIcon({ className }: IconProps) {
   )
 }
 
-/** Holo — a tap's ripple, since there's no hardware to draw: concentric
+/** Holo: a tap's ripple, since there's no hardware to draw. Concentric
  *  rings expanding from a point, echoing a desk-tap's own physical effect. */
 /** Glide: a fingertip that has just slid onto the trackpad from beside it,
  *  speed lines behind it. (Not an arrow into a box: that reads as "sign in".) */
@@ -177,18 +164,18 @@ export function GlideIcon({ className }: IconProps) {
 }
 
 /**
- * The application icon set — one consistent, hand-drawn glyph per known
+ * The application icon set: one consistent, hand-drawn glyph per known
  * application *category* (a code editor, a browser, an AI assistant, a
  * terminal...), all in this file's shared stroke language, deliberately
  * replacing an earlier attempt at showing each app's own real logo/OS
  * icon. Real logos are different weights, different fills, different
- * silhouette complexity from four different brand systems side by side —
- * next to this app's restrained line-icon language they read as visual
+ * silhouette complexity from four different brand systems side by side.
+ * Next to this app's restrained line-icon language they read as visual
  * noise, not "alive." This set trades brand recognition for evenness:
  * every application Noma shows gets a same-weight, same-style glyph, so a
  * workflow chain or a control grid reads as one considered object instead
- * of a logo soup. `AppGlyphIcon` is the deliberate catch-all — every
- * application has *some* icon here, never a bare monogram letter — see
+ * of a logo soup. `AppGlyphIcon` is the deliberate catch-all. Every
+ * application has *some* icon here, never a bare monogram letter. See
  * `lib/appIcons.ts`'s registry for the applicationId -> icon mapping.
  */
 export function TerminalGlyphIcon({ className }: IconProps) {
@@ -208,7 +195,7 @@ export function FolderGlyphIcon({ className }: IconProps) {
   )
 }
 
-/** A code editor (VS Code and friends) — the classic "code" bracket pair. */
+/** A code editor (VS Code and friends): the classic "code" bracket pair. */
 export function CodeGlyphIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>
@@ -217,7 +204,7 @@ export function CodeGlyphIcon({ className }: IconProps) {
   )
 }
 
-/** A browser (Chrome and friends) — a globe: a circle, an equator, and one
+/** A browser (Chrome and friends): a globe. A circle, an equator, and one
  *  meridian, the universal "the web" pictogram. */
 export function BrowserGlyphIcon({ className }: IconProps) {
   return (
@@ -228,7 +215,7 @@ export function BrowserGlyphIcon({ className }: IconProps) {
   )
 }
 
-/** A conversational AI assistant (Claude and friends) — a speech bubble,
+/** A conversational AI assistant (Claude and friends): a speech bubble,
  *  never a sparkle (see `SparkleIcon`'s own doc comment on why sparkles
  *  are reserved elsewhere, not a generic "this is AI" marker). */
 export function AssistantGlyphIcon({ className }: IconProps) {
@@ -239,7 +226,7 @@ export function AssistantGlyphIcon({ className }: IconProps) {
   )
 }
 
-/** A music app (Spotify and friends) — a paired eighth note. */
+/** A music app (Spotify and friends): a paired eighth note. */
 export function MusicGlyphIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>
@@ -250,7 +237,7 @@ export function MusicGlyphIcon({ className }: IconProps) {
   )
 }
 
-/** Source-code hosting (GitHub and friends) — a branch/fork glyph. */
+/** Source-code hosting (GitHub and friends): a branch/fork glyph. */
 export function BranchGlyphIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>
@@ -263,7 +250,7 @@ export function BranchGlyphIcon({ className }: IconProps) {
 }
 
 /** The catch-all for any application Noma doesn't recognize a category
- *  for — a plain, neutral window, never blank and never a text initial. */
+ *  for. A plain, neutral window, never blank and never a text initial. */
 export function AppGlyphIcon({ className }: IconProps) {
   return (
     <svg {...BASE_PROPS} className={className}>

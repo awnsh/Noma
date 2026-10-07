@@ -10,9 +10,9 @@ export interface ActivityEvent {
 }
 
 /**
- * One row in the Activity timeline — a small timestamp plus a plain
+ * One row in the Activity timeline: a small timestamp plus a plain
  * sentence. Carries only what a user needs to understand *that Noma did
- * something*, never raw per-keystroke detail — see Activity's own privacy
+ * something*, never raw per-keystroke detail. See Activity's own privacy
  * note. Shows the real application mark when the event has one, the same
  * `AppIcon` every other surface uses.
  */

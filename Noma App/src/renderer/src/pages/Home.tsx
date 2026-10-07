@@ -6,7 +6,6 @@ import { useUiStore } from '../stores/uiStore'
 import { ControlTile } from '../components/ControlTile'
 import { NomaMoment } from '../components/NomaMoment'
 import { EmptyState } from '../components/EmptyState'
-import { StatusIndicator } from '../components/StatusIndicator'
 import { CreateProfileModal } from '../components/CreateProfileModal'
 import { HomeSidePanel } from '../components/HomeSidePanel'
 import { AppIcon } from '../components/AppIcon'
@@ -16,17 +15,19 @@ import { GettingStartedCard } from '../components/GettingStartedCard'
 import { useGlideStore } from '../stores/glideStore'
 import { useActionRunStore } from '../stores/actionRunStore'
 import { glideActivityMessage, glideStatusLine } from '../lib/glideMessages'
+import { CONTROL_SLOTS } from '@shared/constants'
+import { useStoreSync } from '../lib/useStoreSync'
 
 /** How many learned actions Home previews before pointing to the full list
- *  on Controls — a taste, not the whole catalog; keeps this section from
+ *  on Controls (a taste, not the whole catalog); keeps this section from
  *  competing with Noma Notice/Your Noma for the page's attention. */
 const HOME_LEARNED_ACTIONS_PREVIEW_COUNT = 2
 
 /**
- * Home — the most important screen in the app. A workspace, not a
- * dashboard: a greeting, the one most important thing Noma noticed (the
- * Noma Moment), and the interface Noma has built for whatever you're
- * working in right now. Everything else lives one click away.
+ * Home: the most important screen in the app. A workspace, not a
+ * dashboard (a greeting, the one most important thing Noma noticed, the
+ * Noma Moment, and the interface Noma has built for whatever you're
+ * working in right now). Everything else lives one click away.
  */
 
 function greeting(): string {
@@ -40,7 +41,7 @@ function greeting(): string {
 export function Home() {
   const { context, isLoading, refresh, subscribeToContext } = useFlowStore()
   const { enabled: monitoringEnabled, refresh: refreshWorkflow } = useWorkflowStore()
-  const { suggestions, isLoading: suggestionsLoading, refresh: refreshSuggestions, subscribe, resolve } =
+  const { suggestions, refresh: refreshSuggestions, subscribe, resolve } =
     useSuggestionsStore()
   const setActivePage = useUiStore((state) => state.setActivePage)
   const [isCreatingProfile, setIsCreatingProfile] = useState(false)
@@ -48,23 +49,16 @@ export function Home() {
   const { state: glide, lastActivity, refresh: refreshGlide } = useGlideStore()
   const lastResult = useActionRunStore((state) => state.lastResult)
 
-  useEffect(() => {
-    refresh()
-    refreshWorkflow()
-    refreshSuggestions()
-    void refreshGlide()
-    const unsubscribeContext = subscribeToContext()
-    const unsubscribeSuggestions = subscribe()
-    return () => {
-      unsubscribeContext()
-      unsubscribeSuggestions()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useStoreSync(
+    { refresh, subscribe: subscribeToContext },
+    { refresh: refreshWorkflow },
+    { refresh: refreshSuggestions, subscribe },
+    { refresh: refreshGlide }
+  )
 
   const { application, profile } = context
   const controls = profile?.controls ?? []
-  // The single most important thing to show — most recent first, since
+  // The single most important thing to show: most recent first, since
   // that's the workflow Noma most recently confirmed is real.
   const topSuggestion = suggestions[0]
   const learnedActionsPreview = learnedActions?.slice(0, HOME_LEARNED_ACTIONS_PREVIEW_COUNT) ?? []
@@ -78,13 +72,13 @@ export function Home() {
               {greeting().replace('.', '')}
             </p>
             <h1 className="mt-1.5 font-display text-3xl font-semibold leading-tight text-neutral-100">
-              {glide?.enabled ? 'Glide is ready.' : monitoringEnabled ? 'Noma is learning your workflow.' : 'Welcome to Noma.'}
+              {glide?.enabled ? 'Glide is ready.' : monitoringEnabled ? 'Noma is learning your workflow.' : 'Noma'}
             </h1>
-            <p className="mt-2.5 max-w-md text-sm text-neutral-500">
-              Glide: {glideStatusLine(glide).text.replace(/^On, /, 'on, ')}. Flow: {monitoringEnabled ? 'learning' : 'off'}.
-            </p>
+            {glideStatusLine(glide).tone === 'problem' && (
+              <p className="mt-2.5 max-w-md text-sm text-error">{glideStatusLine(glide).text}</p>
+            )}
             {lastActivity && glide?.enabled && glide.zoneCount && (
-              <p className="mt-1 max-w-md text-xs text-neutral-500">
+              <p className="mt-3 max-w-md text-xs leading-relaxed text-neutral-500">
                 Last swipe: {glideActivityMessage(lastActivity, glide.zoneCount)}
                 {lastResult && !lastResult.ok && lastResult.at >= lastActivity.at && lastActivity.type === 'fire' && lastActivity.outcome === 'pressed'
                   ? ` It didn't finish: ${lastResult.reason ?? 'unknown reason'}.`
@@ -92,37 +86,35 @@ export function Home() {
               </p>
             )}
           </div>
-          {/* Understated on purpose — a status signal, not a second
-              headline competing with the one above it. */}
-          <div className="shrink-0 pt-1.5">
-            <StatusIndicator active={monitoringEnabled} label={monitoringEnabled ? 'Learning' : 'Off'} />
-          </div>
         </div>
 
         <GettingStartedCard flowEnabled={monitoringEnabled} savedWorkflows={learnedActions?.length ?? 0} />
 
-        <section className="mb-12">
-          {!monitoringEnabled ? (
-            <EmptyState
-              title="Flow is off."
-              hint="Turn on Flow (Workflows page) and Noma starts noticing the shortcut sequences you repeat, so you can save them to a Glide zone."
-            />
-          ) : suggestionsLoading ? null : topSuggestion ? (
-            <NomaMoment
-              suggestion={topSuggestion}
-              variant="hero"
-              onReject={(id) => resolve(id, 'rejected')}
-              onDismiss={(id) => resolve(id, 'dismissed')}
-            />
-          ) : (
-            <EmptyState
-              title="Keep working normally."
-              hint="Noma will surface a pattern here as soon as it notices you repeating something."
-            />
-          )}
-        </section>
+        {/* No pattern yet means nothing to show: the section only appears
+            when Flow is off (with how to turn it on) or Noma has a suggestion. */}
+        {(!monitoringEnabled || topSuggestion) && (
+          <>
+            <section className="mb-12">
+              {!monitoringEnabled ? (
+                <EmptyState
+                  title="Flow is off."
+                  hint="Turn on Flow (Workflows page) and Noma starts noticing the shortcut sequences you repeat, so you can save them to a Glide zone."
+                />
+              ) : (
+                topSuggestion && (
+                  <NomaMoment
+                    suggestion={topSuggestion}
+                    variant="hero"
+                    onReject={(id) => resolve(id, 'rejected')}
+                    onDismiss={(id) => resolve(id, 'dismissed')}
+                  />
+                )
+              )}
+            </section>
 
-        <div className="mb-12 h-px bg-base-700" />
+            <div className="mb-12 h-px bg-base-700" />
+          </>
+        )}
 
         <section>
           <div className="mb-1 flex items-center justify-between">
@@ -142,12 +134,11 @@ export function Home() {
               'Detecting the active application…'
             ) : application ? (
               <>
-                <span>Adapts to how you work, right now, for</span>
-                <AppIcon applicationId={application.id} name={application.name} size={16} />
-                <span className="font-medium text-neutral-100">{application.name}.</span>
+                <AppIcon applicationId={application.id} name={application.name} size={20} />
+                <span className="font-medium text-neutral-100">{application.name}</span>
               </>
             ) : (
-              'Adapts to how you work. Open an application Noma knows to see it in action.'
+              'Open an application Noma knows to see its controls.'
             )}
           </p>
 
@@ -164,8 +155,8 @@ export function Home() {
 
           {profile ? (
             <>
-              <div className="grid grid-cols-4 gap-3">
-                {[1, 2, 3, 4].map((slot) => {
+              <div className="grid grid-cols-4 gap-3 mc-stagger">
+                {CONTROL_SLOTS.map((slot) => {
                   const control = controls.find((item) => item.slot === slot)
                   return <ControlTile key={slot} slot={slot} control={control} application={application} />
                 })}
@@ -178,12 +169,9 @@ export function Home() {
                 Change what each zone does →
               </button>
             </>
-          ) : (
-            <EmptyState
-              title="Noma will build your interface as it learns."
-              hint="Keep working normally. Controls appear here once Noma has something to put on them."
-            />
-          )}
+          ) : application ? (
+            <EmptyState hint="Controls appear once Noma has something to put on them." />
+          ) : null}
         </section>
 
         {learnedActionsPreview.length > 0 && (
@@ -202,9 +190,6 @@ export function Home() {
                   </button>
                 )}
               </div>
-              <p className="mb-5 text-sm text-neutral-600">
-                Every action Noma created from a workflow it noticed you repeat.
-              </p>
               <div>
                 {learnedActionsPreview.map(({ macro, chain, usageCount, applicationId, applicationName }) => (
                   <LearnedActionCard

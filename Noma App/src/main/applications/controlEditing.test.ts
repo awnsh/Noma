@@ -2,7 +2,8 @@ import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
 import { seedDefaultProfiles } from '../database/seed'
-import { updateControl, resetControlToDefault } from './controlEditing'
+import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { updateControl, clearControl } from './controlEditing'
 
 beforeEach(() => {
   const db = new Database(':memory:')
@@ -20,7 +21,7 @@ describe('updateControl', () => {
     expect(control?.label).toBe('Ctrl+S')
     expect(control?.action).toEqual({ type: 'shortcut', keys: ['Control', 'S'] })
 
-    // Persisted, not just returned — reading fresh confirms it stuck.
+    // Persisted, not returned; reading fresh confirms it stuck.
     const reread = getDatabase()
       .prepare(
         `SELECT label FROM controls WHERE profile_id = 'code-default' AND slot = 1`
@@ -47,18 +48,20 @@ describe('updateControl', () => {
   })
 })
 
-describe('resetControlToDefault', () => {
-  it('restores a seeded control back to its original configuration', () => {
-    updateControl('code', 1, 'Changed', { type: 'shortcut', keys: ['Control', 'Z'] })
+describe('clearControl', () => {
+  it('empties only the chosen zone and leaves the others alone', () => {
+    const before = getProfileForApplicationId('code')!.controls
+    const profile = clearControl('code', 1)!
 
-    const profile = resetControlToDefault('code', 1)
-    const control = profile?.controls.find((c) => c.slot === 1)
-
-    expect(control?.label).toBe('RUN')
-    expect(control?.action).toEqual({ type: 'shortcut', keys: ['Control', 'F5'] })
+    const cleared = profile.controls.find((c) => c.slot === 1)
+    expect(cleared?.label).toBe('')
+    expect(cleared?.action).toEqual({ type: 'none' })
+    for (const control of before.filter((c) => c.slot !== 1)) {
+      expect(profile.controls.find((c) => c.slot === control.slot)).toEqual(control)
+    }
   })
 
-  it('returns null for an application that was never seeded', () => {
-    expect(resetControlToDefault('never-seeded-app', 1)).toBeNull()
+  it('returns null for an application with no profile', () => {
+    expect(clearControl('never-seeded-app', 1)).toBeNull()
   })
 })

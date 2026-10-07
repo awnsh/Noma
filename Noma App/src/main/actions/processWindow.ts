@@ -1,28 +1,29 @@
 import { execFile, spawn } from 'child_process'
 import { isMac } from '../platform'
+import { MAC_FIND_APP_TIMEOUT_MS } from './timings'
 
 /**
- * Resolves a running process's main window handle by process name — the
+ * Resolves a running process's main window handle by process name: the
  * lookup `focusApplication` (actionExecutor.ts) needs but the existing
  * foreground-window watcher (windowsAdapter.ts) can't give it: that watcher
  * only ever knows the *current* foreground process, never "is Application X
  * running somewhere, and if so, which window." Deliberately narrow and
- * read-only: it finds an existing window, it never starts a process — see
+ * read-only: it finds an existing window, it never starts a process: see
  * the `focusApplication` ControlAction's own doc comment in shared/types
  * for why that's a deliberate line, not a missing feature.
  *
  * Same "one-shot PowerShell helper" approach windowsAdapter.ts's polling
- * watcher already uses (no native module, no C++ toolchain — see that
- * file's doc comment), just a single query instead of a long-lived poll.
+ * watcher already uses (no native module, no C++ toolchain: see that
+ * file's doc comment), a single query instead of a long-lived poll.
  */
 
-/** Exe-name-shaped strings only — see `toPowerShellSingleQuotedLiteral`. */
+/** Exe-name-shaped strings only: see `toPowerShellSingleQuotedLiteral`. */
 const VALID_PROCESS_NAME = /^[A-Za-z0-9 _.-]{1,64}$/
 
 /** Strips a trailing ".exe" (case-insensitive) if present, or returns the
- *  input unchanged — `Get-Process -Name` takes the bare process name, not
+ *  input unchanged: `Get-Process -Name` takes the bare process name, not
  *  the filename. Returns null (refuse, fail closed) for anything outside
- *  the closed character set a real Windows exe name uses — this string
+ *  the closed character set a real Windows exe name uses: this string
  *  ends up inside a PowerShell command, so it's validated before it's ever
  *  allowed near one, the same "closed vocabulary, fail closed" posture
  *  systemCommands.ts and keyNames.ts already use for execution input. */
@@ -32,7 +33,7 @@ export function normalizeProcessNameForLookup(processName: string): string | nul
 }
 
 /** A safe PowerShell single-quoted string literal for an already-validated
- *  bare name — doubling any embedded single quote is defense in depth on
+ *  bare name; doubling any embedded single quote is defense in depth on
  *  top of the regex above, not the only thing standing between this and
  *  injection. */
 function toPowerShellSingleQuotedLiteral(value: string): string {
@@ -42,7 +43,7 @@ function toPowerShellSingleQuotedLiteral(value: string): string {
 /**
  * Finds the main window handle of a running process by name, or null if no
  * matching process has a visible main window (not running, or running with
- * no window yet — e.g. still starting up). Never throws; any failure
+ * no window yet; e.g. still starting up). Never throws; any failure
  * (invalid name, no PowerShell, nothing found) resolves to null so a caller
  * can fail closed exactly the way every other execution primitive here does.
  */
@@ -110,7 +111,7 @@ function findMacAppPid(processName: string): Promise<number | null> {
     execFile(
       'osascript',
       ['-l', 'JavaScript', '-e', MAC_FIND_APP_SCRIPT, processName],
-      { timeout: 5000 },
+      { timeout: MAC_FIND_APP_TIMEOUT_MS },
       (error, stdout) => {
         const value = Number(String(stdout).trim())
         resolve(!error && Number.isInteger(value) && value > 0 ? value : null)

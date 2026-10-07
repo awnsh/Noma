@@ -22,7 +22,7 @@ import type { HoloTrackpadEvent, HoloTrackpadZone, HoloTrackpadZoneCount } from 
  *   sideways (MAX_SLOPE). A slow drift from the edge is someone moving the
  *   pointer; a mostly vertical stroke is someone scrolling along the side.
  * - One finger, the pad not pressed down (a click), not flagged as a palm.
- * - No typing just before or during it. A hand moving from the keyboard
+ * - No typing before or during it. A hand moving from the keyboard
  *   brushes the pad's edge more than anything else does.
  * - Once per touch, then a short cooldown.
  *
@@ -54,7 +54,7 @@ export const MAX_SWIPE_MS = 150
 export const MAX_SLOPE = 0.9
 /** No key presses for this long before the finger arrives. */
 export const TYPING_QUIET_MS = 600
-/** After firing, ignore new swipes for this long: just enough that one
+/** After firing, ignore new swipes for this long: enough that one
  *  flick can't fire twice. At 600 ms it swallowed every second swipe of
  *  someone swiping about twice a second (9 of 19 caught; 18 of 19 at 250). */
 export const COOLDOWN_MS = 250

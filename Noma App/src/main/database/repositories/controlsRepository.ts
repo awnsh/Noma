@@ -11,7 +11,7 @@ export function toDisplayLabel(text: string): string {
 
 /**
  * Overwrites the control at `profileId`/`slot` with a new label and
- * action — the one place a suggestion's accepted action actually lands on
+ * action: the one place a suggestion's accepted action actually lands on
  * a physical (or virtual) button. Only ever called with a slot the user
  * explicitly picked; see suggestionResolution.ts.
  */
@@ -48,7 +48,7 @@ interface ReferencingControlRow {
 }
 
 /** Every control (across every application) currently assigned a
- *  `{type: 'macro', macroId}` action pointing at this macro — used by the
+ *  `{type: 'macro', macroId}` action pointing at this macro; used by the
  *  Macro Studio to warn before deleting a macro that's still in use, and by
  *  the Controls page to show a learned action's current context and (via
  *  `controlId` + `getControlUsageStats`) its real usage count. Deliberately

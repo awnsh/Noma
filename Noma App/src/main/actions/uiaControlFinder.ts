@@ -15,7 +15,7 @@ function normalizeControlName(name: string): string {
 
 /**
  * Finds a named command control (button, menu item, check/radio box) in a
- * running app, for replaying a learned `label:` click — the replay-side
+ * running app, for replaying a learned `label:` click: the replay-side
  * counterpart of uiaInspector.ts, which reads the name at capture time.
  *
  * It only *finds*; it never invokes. click.ts then clicks the point it
@@ -33,7 +33,7 @@ function normalizeControlName(name: string): string {
  * base64-encoded, so no text from a stored workflow ever becomes part of a
  * PowerShell command.
  *
- * Searches every top-level window of the process, not just the foreground
+ * Searches every top-level window of the process, not the foreground
  * one: an open menu or a dialog is its own top-level window.
  */
 const HELPER_SCRIPT = `

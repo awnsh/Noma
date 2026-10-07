@@ -13,33 +13,33 @@ import { AppIcon } from './AppIcon'
 import { HERO_CARD } from '../lib/surfaces'
 
 /**
- * The Noma Moment — the single most important component in the app: "Noma
+ * The Noma Moment: the single most important component in the app. "Noma
  * noticed something you do repeatedly." One reusable component for every
  * learned-workflow suggestion, wherever it needs to appear (Home's hero
  * slot, the Controls page's suggestion list, Demo Mode).
  *
  * `variant="hero"` gets the app's one hero-tier surface (`HERO_CARD`, see
- * `lib/surfaces.ts`) — a restrained, mostly-solid card, deliberately with
+ * `lib/surfaces.ts`): a restrained, mostly-solid card, deliberately with
  * no colored glow (an earlier version had a blue/violet ambient wash here;
  * real feedback was that it read as "glowing because it's AI," not a
  * physical product). What makes this card outrank the ones around it is
  * the real workflow inside it (`WorkflowChain`'s large application-icon
  * nodes), not its own background. `compact` stays undecorated (it already
  * sits inside a list container of its own, e.g. `SuggestionsPanel`'s
- * divided rows) — no card, no glow, no icon marking it as "AI." Either way
+ * divided rows). No card, no glow, no icon marking it as "AI." Either way
  * the emphasis comes from typography
  * and spacing, and the workflow sequence itself is the one visually
  * interesting element (see `WorkflowChain`). The primary row is a
  * confident, two-choice moment
  * (Create action / Not now); the feedback/explain affordances a person
  * only wants occasionally ("Why?", "Not useful") sit behind a single quiet
- * "More" toggle rather than crowding the main decision — see product
- * brief section 6, "remove prototype-like copy."
+ * "More" toggle rather than crowding the main decision (see product
+ * brief section 6, "remove prototype-like copy").
  *
  * `variant="hero"` is the large Home-page presentation; `variant="compact"`
  * is the same component sized down for a list context. Internal state
  * machine: idle -> picking (choosing which control slot) -> success
- * (confirms what was actually created) — `picking`'s slot choice is a real
+ * (confirms what was actually created). `picking`'s slot choice is a real
  * `assignSuggestionToControl` call, and `success` only renders once that
  * call actually returns a control.
  */
@@ -49,7 +49,7 @@ interface NomaMomentProps {
   onReject: (id: string) => void
   onDismiss: (id: string) => void
   /** Fires once an action was actually created (or, for an informational
-   *  suggestion, actually acknowledged) — after the real IPC call
+   *  suggestion, actually acknowledged). After the real IPC call
    *  succeeds, never speculatively. Optional; Demo Mode uses it to advance
    *  its own scripted narrative once the real assignment lands. */
   onCreated?: (label: string) => void
@@ -179,7 +179,7 @@ export function NomaMoment({
   }
 
   return (
-    <div className={isHero ? `${HERO_CARD} p-8` : ''}>
+    <div className={isHero ? `${HERO_CARD} p-6` : ''}>
       <div className="flex items-start justify-between gap-4">
         <p
           className={
@@ -210,46 +210,48 @@ export function NomaMoment({
         {isHero && (!chain || chain.length <= 1) && suggestion.applicationId && (
           <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={28} variant="tile" className="mt-0.5" />
         )}
-        <p className={isHero ? 'font-display text-2xl font-semibold leading-snug' : 'text-sm text-neutral-600'}>
+        <p className={isHero ? 'font-display text-xl font-semibold leading-snug' : 'text-sm text-neutral-600'}>
           {occurrenceSentence(suggestion)}
         </p>
       </div>
 
       {chain && chain.length > 1 && (
         <div className={isHero ? 'mt-6' : 'mt-3'}>
-          <WorkflowChain steps={chain} size={isHero ? 'lg' : 'md'} />
+          <WorkflowChain steps={chain} size={isHero ? 'lg' : 'md'} centered />
         </div>
       )}
 
       {!isPicking ? (
         <>
-          <p className={`text-neutral-100 ${isHero ? 'mt-6 text-base' : 'mt-3 text-sm'}`}>
-            {suggestion.action ? 'Turn this into one Glide action?' : 'Worth remembering for next time?'}
-          </p>
-          <div className={`flex items-center gap-4 ${isHero ? 'mt-3' : 'mt-2'}`}>
-            <button
-              type="button"
-              onClick={() => void startPicking()}
-              className={`rounded-md bg-accent font-medium text-white shadow-[0_2px_8px_-2px_rgba(76,126,255,0.35)] transition-colors duration-150 hover:bg-accent/90 active:opacity-90 ${
-                isHero ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
-              }`}
-            >
-              {suggestion.action ? 'Review steps' : 'Sounds right'}
-            </button>
-            <button
-              type="button"
-              onClick={() => onDismiss(suggestion.id)}
-              className={`text-neutral-500 hover:text-neutral-100 ${isHero ? 'text-sm' : 'text-xs'}`}
-            >
-              Not now
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowMore((prev) => !prev)}
-              className="ml-auto text-[11px] text-neutral-400 hover:text-neutral-600"
-            >
-              More
-            </button>
+          <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 ${isHero ? 'mt-6' : 'mt-3'}`}>
+            <p className={`text-neutral-100 ${isHero ? 'text-base' : 'text-sm'}`}>
+              {suggestion.action ? 'Turn this into one Glide action?' : 'Worth remembering for next time?'}
+            </p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => void startPicking()}
+                className={`rounded-md bg-accent font-medium text-white shadow-[0_2px_8px_-2px_rgba(76,126,255,0.35)] transition-colors duration-150 hover:bg-accent/90 active:opacity-90 ${
+                  isHero ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
+                }`}
+              >
+                {suggestion.action ? 'Review steps' : 'Sounds right'}
+              </button>
+              <button
+                type="button"
+                onClick={() => onDismiss(suggestion.id)}
+                className={`text-neutral-500 hover:text-neutral-100 ${isHero ? 'text-sm' : 'text-xs'}`}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMore((prev) => !prev)}
+                className="text-[11px] text-neutral-400 hover:text-neutral-600"
+              >
+                More
+              </button>
+            </div>
           </div>
 
           {showMore && (
@@ -339,7 +341,7 @@ export function NomaMoment({
                       className="rounded-md border border-base-700 px-2 py-2 text-center text-xs text-neutral-500 transition-colors hover:border-violet hover:text-neutral-100"
                     >
                       <div className="text-[10px] text-neutral-500">{zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : `Control ${slot}`}</div>
-                      <div className="mt-0.5 truncate text-neutral-100">{control?.label ?? '–'}</div>
+                      <div className="mt-0.5 truncate text-neutral-100">{control?.label || '–'}</div>
                     </button>
                   )
                 })}

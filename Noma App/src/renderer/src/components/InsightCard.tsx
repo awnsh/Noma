@@ -3,24 +3,24 @@ import { AppIcon } from './AppIcon'
 import { WorkflowChain } from './WorkflowChain'
 
 interface InsightCardProps {
-  /** The insight itself, in plain language — "You use SEARCH 31 times this
+  /** The insight itself, in plain language; "You use SEARCH 31 times this
    *  week," never a raw stat tile. */
   text: string
-  /** An optional secondary line — the reasoning or extra context behind
+  /** An optional secondary line; the reasoning or extra context behind
    *  the insight, kept visually quieter than `text`. */
   hint?: string
-  /** An optional single recommended action — never more than one; this is
+  /** An optional single recommended action; never more than one. This is
    *  a suggestion to consider, not a menu. */
   action?: { label: string; onClick: () => void }
   /** The application this insight is about, when the underlying pattern
-   *  has one (a workflow insight does; a control-usage insight doesn't) —
+   *  has one (a workflow insight does; a control-usage insight doesn't);
    *  shown as a real `AppIcon` beside the text. Only used when `chain`
-   *  isn't a real multi-step chain — once there is one, its own nodes
+   *  isn't a real multi-step chain. Once there is one, its own nodes
    *  already carry every application's icon, so a second standalone one
    *  next to the text would just repeat the first node. */
   applicationId?: string | null
   applicationName?: string | null
-  /** The pattern's own visual workflow, when it has one — same node
+  /** The pattern's own visual workflow, when it has one; same node
    *  language as the Noma Moment and Learned Actions (see
    *  `lib/workflowChain.ts`'s `patternChainSteps`), so a multi-app pattern
    *  reads as a real workflow here too, not just a sentence. */
@@ -28,7 +28,7 @@ interface InsightCardProps {
 }
 
 /**
- * One large behavioral observation on the Learning page — a plain
+ * One large behavioral observation on the Learning page; a plain
  * sentence, not a metric tile, now paired with the same real-icon workflow
  * visualization the rest of the app uses whenever the pattern actually has
  * a chain worth showing. A thin rule separates rows; nothing here is

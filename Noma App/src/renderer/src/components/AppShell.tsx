@@ -15,7 +15,6 @@ import {
   LearningIcon,
   ActivityIcon,
   StatsIcon,
-  ControlsIcon,
   ProfilesIcon,
   SettingsIcon,
   DeveloperIcon,
@@ -35,7 +34,6 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
 
 // Real, working pages for people who want more detail or control.
 const MORE_NAV_ITEMS: NavItem[] = [
-  { label: 'Controls', page: 'controls', Icon: ControlsIcon },
   { label: 'Learning', page: 'learning', Icon: LearningIcon },
   { label: 'Activity', page: 'activity', Icon: ActivityIcon },
   { label: 'Macro Studio', page: 'macros', Icon: MacroIcon },
@@ -60,7 +58,7 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
       type="button"
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-colors duration-150 ${
+      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.98] ${
         isActive
           ? 'border border-accent/25 bg-accent/[0.12] font-medium text-accent'
           : 'border border-transparent text-neutral-400 hover:text-neutral-100'
@@ -82,10 +80,10 @@ function NavGroupLabel({ children }: { children: ReactNode }) {
 
 /**
  * The app's one persistent chrome element, deliberately quiet: a fixed
- * left column of smoked glass floating over the page behind it — plain
+ * left column of smoked glass floating over the page behind it. Plain
  * text labels (small icons alongside them, never icon-only), no
  * card-within-a-card, no second glass recipe (see `CARD` in
- * `lib/surfaces.ts` — this uses a lighter hand-rolled variant since it's
+ * `lib/surfaces.ts`; this uses a lighter hand-rolled variant since it's
  * full-height chrome, not a content card). Its whole job is to stay out
  * of the way of the content pane, just with real material this time
  * instead of a flat panel.
@@ -97,7 +95,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const refreshApplications = useApplicationsStore((state) => state.refresh)
   const subscribeApplications = useApplicationsStore((state) => state.subscribe)
 
-  // Loaded once, app-wide — every `AppIcon` anywhere in the tree resolves
+  // Loaded once, app-wide; every `AppIcon` anywhere in the tree resolves
   // its executable path from this store (see applicationsStore.ts), not a
   // per-page fetch, since a workflow chain or Learning Center entry can
   // reference an application that isn't the one currently focused.
@@ -109,7 +107,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex h-screen w-screen overflow-hidden bg-base-950 text-neutral-100">
-      {/* v4: a single, extremely low-opacity cool wash — not the two
+      {/* v4: a single, extremely low-opacity cool wash; not the two
           80-160px-blur violet/blue "AI glow" blobs a prior version had.
           Real feedback was that even a restrained version of that reads
           as decoration; this is deliberately close to invisible, the way

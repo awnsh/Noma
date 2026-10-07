@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AppShell } from './components/AppShell'
 import { Home } from './pages/Home'
-import { Controls } from './pages/Controls'
 import { Workflows } from './pages/Workflows'
 import { Demo } from './pages/Demo'
 import { VirtualKeyboard } from './pages/VirtualKeyboard'
@@ -22,8 +21,22 @@ import { useOnboardingStore } from './stores/onboardingStore'
 import './stores/glideStore'
 import './stores/actionRunStore'
 
+const PAGE_EXIT_MS = 120
+
 function App() {
   const activePage = useUiStore((state) => state.activePage)
+  // Page shown on screen. Lags activePage by the exit duration so the old page
+  // can fade out; a newer navigation simply restarts the timer (latest wins).
+  const [shownPage, setShownPage] = useState(activePage)
+  const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const leaving = shownPage !== activePage
+  useEffect(() => {
+    if (shownPage === activePage) return
+    exitTimer.current = setTimeout(() => setShownPage(activePage), PAGE_EXIT_MS)
+    return () => {
+      if (exitTimer.current) clearTimeout(exitTimer.current)
+    }
+  }, [activePage, shownPage])
   const setActivePage = useUiStore((state) => state.setActivePage)
   const onboardingState = useOnboardingStore((state) => state.state)
   const isOnboardingLoading = useOnboardingStore((state) => state.isLoading)
@@ -35,22 +48,22 @@ function App() {
 
   // Noma Notice's "Review" finishes here: accepting a workflow ends in
   // picking a control slot, which the floating card is deliberately too
-  // small to ask for. Workflows — not Home — is where the user lands: Home
+  // small to ask for. Workflows (not Home) is where the user lands: Home
   // only ever shows a single "most important" suggestion (`suggestions[0]`),
   // so the one just reviewed could easily not be it and effectively
-  // disappear. Workflows' "Noma noticed" section lists every pending
+  // disappear. Workflows' "Suggestions" section lists every pending
   // suggestion, so the reviewed one is guaranteed to actually be there.
   useEffect(() => window.flow.onOpenSuggestionInApp(() => setActivePage('workflows')), [setActivePage])
 
   // Blank instead of a spinner while the very first IPC round-trip is in
-  // flight — same background as every other state below, so there's no
+  // flight. Same background as every other state below, so there's no
   // visible flash before we know whether to show onboarding or the app.
   if (isOnboardingLoading || !onboardingState) {
     return <div className="h-screen w-screen bg-base-950" />
   }
 
   // Onboarding replaces the whole app shell (no sidebar, no normal
-  // navigation) until it's completed — never shown again after that on a
+  // navigation) until it's completed. Never shown again after that on a
   // normal launch, since `completed` is persisted (see onboardingStore).
   if (!onboardingState.completed) {
     return <Onboarding />
@@ -58,19 +71,20 @@ function App() {
 
   return (
     <AppShell>
-      {activePage === 'home' && <Home />}
-      {activePage === 'controls' && <Controls />}
-      {activePage === 'workflows' && <Workflows />}
-      {activePage === 'learning' && <Learning />}
-      {activePage === 'activity' && <Activity />}
-      {activePage === 'settings' && <Settings />}
-      {activePage === 'demo' && <Demo />}
-      {activePage === 'virtual-keyboard' && <VirtualKeyboard />}
-      {activePage === 'holo' && <Glide />}
-      {activePage === 'macros' && <MacroStudio />}
-      {activePage === 'usage-stats' && <UsageStats />}
-      {activePage === 'profiles' && <Profiles />}
-      {activePage === 'developer' && <Developer />}
+      <div key={shownPage} className={`${leaving ? 'noma-page-out' : 'noma-page-in'} min-h-full`}>
+      {shownPage === 'home' && <Home />}
+      {shownPage === 'workflows' && <Workflows />}
+      {shownPage === 'learning' && <Learning />}
+      {shownPage === 'activity' && <Activity />}
+      {shownPage === 'settings' && <Settings />}
+      {shownPage === 'demo' && <Demo />}
+      {shownPage === 'virtual-keyboard' && <VirtualKeyboard />}
+      {shownPage === 'holo' && <Glide />}
+      {shownPage === 'macros' && <MacroStudio />}
+      {shownPage === 'usage-stats' && <UsageStats />}
+      {shownPage === 'profiles' && <Profiles />}
+      {shownPage === 'developer' && <Developer />}
+      </div>
       <WhatsNewModal />
     </AppShell>
   )

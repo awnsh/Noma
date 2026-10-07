@@ -1,4 +1,5 @@
 import type { BrowserWindow } from 'electron'
+import { isWindows } from '../platform'
 import {
   HID_USAGE_DIGITIZER_TOUCH_PAD,
   HID_USAGE_PAGE_DIGITIZER,
@@ -36,7 +37,7 @@ function register(flags: number, hwnd: number): boolean {
 /** Starts delivering WM_INPUT handles to `listener`. Returns the
  *  unsubscribe function, or null when registration failed. */
 export function subscribeDigitizerInput(window: BrowserWindow, listener: Listener): (() => void) | null {
-  if (process.platform !== 'win32') return null
+  if (!isWindows) return null
   if (!target) {
     if (!register(RIDEV_INPUTSINK, readHandle(window.getNativeWindowHandle()))) return null
     window.hookWindowMessage(WM_INPUT, (_wParam, lParam) => {

@@ -1,13 +1,13 @@
 interface LayoutKey {
   /** Canonical key name (matches src/main/workflow/keyNames.ts /
-   *  shared/constants/domKeyCodes.ts) — what a captured combo's entries
+   *  shared/constants/domKeyCodes.ts); what a captured combo's entries
    *  actually look like, so this is exactly what a flash has to match
    *  against. Undefined for a purely visual spacer. */
   name?: string
   /** Shorter display text when the canonical name is too long for a key
    *  cap (e.g. "Control" -> "Ctrl"). Defaults to `name`. */
   label?: string
-  /** A literal, static Tailwind width class — not computed, so the JIT
+  /** A literal, static Tailwind width class; not computed, so the JIT
    *  compiler can see it in this file's source. */
   width?: string
 }
@@ -81,19 +81,19 @@ function Key({ layoutKey, isFlashing }: { layoutKey: LayoutKey; isFlashing: bool
 }
 
 interface KeyboardLayoutProps {
-  /** Canonical key names currently lit up — see onWorkflowComboCaptured.
+  /** Canonical key names currently lit up; see onWorkflowComboCaptured.
    *  Empty by default so this stays purely decorative until a real combo
    *  is captured at least once. */
   flashingKeys?: Set<string>
 }
 
 /**
- * A decorative full keyboard layout — the "digital twin" framing for the
+ * A decorative full keyboard layout; the "digital twin" framing for the
  * eventual physical keyboard's base deck. These keys are not interactive
  * (only the 4 contextual controls and the modular slots below actually do
  * anything), but they do react: when workflow monitoring captures a real
  * Ctrl/Alt/Win shortcut, its exact keys flash here for a moment. That's the
- * only thing that ever lights a key — ordinary typing is never captured or
+ * only thing that ever lights a key. Ordinary typing is never captured or
  * reflected here at all (see docs/privacy-and-legal.md); a bare letter
  * never lights up on its own, only as part of an already-privacy-filtered
  * command combo.

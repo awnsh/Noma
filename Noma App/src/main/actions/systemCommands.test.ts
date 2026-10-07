@@ -8,7 +8,7 @@ describe('isKnownSystemCommand', () => {
     expect(isKnownSystemCommand('volumeDown')).toBe(true)
   })
 
-  it('rejects anything not on the allowlist — never an arbitrary command', () => {
+  it('rejects anything not on the allowlist; never an arbitrary command', () => {
     expect(isKnownSystemCommand('shutdown')).toBe(false)
     expect(isKnownSystemCommand('rm -rf /')).toBe(false)
     expect(isKnownSystemCommand('')).toBe(false)

@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from '
 import { optimizer, is } from '@electron-toolkit/utils'
 
 /**
- * Isolated test profile — set NOMA_TEST_USER_DATA_DIR to point Electron's
+ * Isolated test profile; set NOMA_TEST_USER_DATA_DIR to point Electron's
  * userData (and therefore db.ts's noma.db) at a throwaway directory instead
  * of the real, actively-used profile.
  *
@@ -13,13 +13,13 @@ import { optimizer, is } from '@electron-toolkit/utils'
  * developer's actual daily-use Noma installation uses, and ended up
  * overwriting two real control slots with demo data before anyone noticed.
  * That should be structurally impossible, not something a future session
- * has to remember not to do — hence a hard switch, checked before anything
+ * has to remember not to do; hence a hard switch, checked before anything
  * else in this file touches `app`, rather than a convention documented
  * somewhere and hoped for.
  *
  * Must run before `initDatabase()` (db.ts reads `app.getPath('userData')`
  * the moment it's called) and before anything else that could touch real
- * user state — so this sits at the very top of the file, ahead of every
+ * user state; so this sits at the very top of the file, ahead of every
  * other import's side effects that might run first.
  */
 const TEST_USER_DATA_DIR = process.env.NOMA_TEST_USER_DATA_DIR
@@ -38,13 +38,17 @@ import iconMac from '../../resources/icon-mac.png?asset'
 // The website favicon's 32px artwork, whose strokes are drawn heavier to
 // stay legible at tray size (downscaling the big icon makes them too thin).
 import trayIconPath from '../../resources/tray.png?asset'
+// macOS menu bar: black-on-alpha template image (the OS tints it for light/dark).
+import trayTemplatePath from '../../resources/trayIconTemplate.png?asset'
+import trayTemplate2xPath from '../../resources/trayIconTemplate@2x.png?asset'
 import { APP_DISPLAY_NAME, IPC_CHANNELS, ISSUE_PAGE_URL } from '@shared/constants'
 import { buildDiagnosticsReport } from './diagnostics'
 import type { HoloTrackpadZoneCount } from '@shared/types'
 import { initDatabase } from './database/db'
 import { registerIpcHandlers } from './ipc/handlers'
 import { createOSAdapter } from './os/createOSAdapter'
-import { isMac } from './platform'
+import { isMac, isWindows } from './platform'
+import { platformIcon } from './platformIcon'
 import { runSmokeTest } from './smokeTest'
 import { captureNotice } from './captureNotice'
 import { captureApp } from './captureApp'
@@ -64,6 +68,7 @@ import { CaptureService } from './workflow/captureService'
 import { ClickCaptureService } from './workflow/clickCaptureService'
 import { createClickInspector } from './workflow/uiaInspector'
 import { GlideController } from './holo/glideController'
+import { getMacEdgeSwipe, setMacEdgeSwipe } from './holo/macEdgeSwipe'
 import { latestTouchCheckAt, openRecordingsFolder } from './holo/recordingStore'
 import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
 import { getClickCaptureEnabled, getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
@@ -89,12 +94,12 @@ import {
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 /** False until a real quit is underway (tray "Quit Noma", OS shutdown, or
- *  Cmd+Q) — while false, the window's own close button hides it instead of
+ *  Cmd+Q); while false, the window's own close button hides it instead of
  *  exiting the app. See `createTray` and `createMainWindow`'s `close`
  *  handler. */
 let isQuitting = false
 /** The last application a genuine appSwitch WorkflowEvent was recorded for
- *  (see contextService.onContextChanged below) — distinct from
+ *  (see contextService.onContextChanged below); distinct from
  *  contextService's own `current`, which also updates for reasons that
  *  aren't a real switch (a control reassignment's same-app context
  *  refresh, Demo Mode handing control back to the real OS adapter). Lets
@@ -129,7 +134,7 @@ const aiProvider = new LocalRuleBasedProvider(
 const suggestionEngine = new SuggestionEngine(aiProvider)
 
 /**
- * Noma Notice. Nothing about detection changed to add this — the notifier
+ * Noma Notice. Nothing about detection changed to add this: the notifier
  * only reads the suggestions the engine already produced and decides whether
  * one of them has been seen often enough to be worth saying out loud while
  * the user is working somewhere else.
@@ -140,12 +145,12 @@ const workflowNotifier = new WorkflowNotifier(() => {
 
 /** Re-runs pattern detection -> suggestion generation, then pushes the
  *  (possibly updated) pending list to the renderer. Called after every
- *  captured workflow event — see docs/architecture.md's learning loop. */
+ *  captured workflow event: see docs/architecture.md's learning loop. */
 async function refreshSuggestions(): Promise<void> {
   const patterns = await suggestionEngine.refresh()
   mainWindow?.webContents.send(IPC_CHANNELS.SUGGESTIONS_CHANGED, getPendingSuggestions())
   // Reuses the patterns that pass already detected rather than running
-  // detection again — and runs after the push, so the app is never showing
+  // detection again; and runs after the push, so the app is never showing
   // a stale list behind a notice that's already on screen.
   workflowNotifier.review(patterns)
 }
@@ -159,15 +164,14 @@ const captureService = new CaptureService((event) => {
   })
   void refreshSuggestions()
   // Improved Virtual Keyboard: let the decorative layout flash the real
-  // keys of this real captured combo. Nothing new is exposed here — this
-  // is exactly the already-sanitized combo insertWorkflowEvent just
-  // persisted, not a raw keystroke.
+  // keys of this real captured combo. Nothing new is exposed here: this
+  // is exactly the already-sanitized combo insertWorkflowEvent // persisted, not a raw keystroke.
   mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, event.comboKeys)
 })
 
 /** Opt-in (settingsRepository's clickCaptureEnabled, off by default) and only
  *  ever engaged alongside workflow monitoring: records which on-screen
- *  control was clicked, sanitized to a label or a coarse window zone — see
+ *  control was clicked, sanitized to a label or a coarse window zone: see
  *  workflow/clickTarget.ts and docs/privacy-and-legal.md. */
 const clickCaptureService = new ClickCaptureService((event) => {
   insertWorkflowEvent({
@@ -230,14 +234,14 @@ function createMainWindow(): void {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#08080a',
-    title: TEST_USER_DATA_DIR ? `${APP_DISPLAY_NAME} — TEST PROFILE` : APP_DISPLAY_NAME,
+    title: TEST_USER_DATA_DIR ? `${APP_DISPLAY_NAME}. TEST PROFILE` : APP_DISPLAY_NAME,
     // Windows/Linux taskbar + window icon. macOS instead uses the app
-    // bundle's icon (set at packaging time), which doesn't exist yet — see
+    // bundle's icon (set at packaging time), which doesn't exist yet: see
     // "Prepare for STM32"/packaging notes; this only affects the
     // dev/unpackaged window on this machine.
     // .ico on Windows: the format the taskbar actually uses (a 1254 px PNG
     // has to be scaled on the fly and isn't always picked up).
-    icon: process.platform === 'win32' ? iconIco : icon,
+    icon: platformIcon(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       // Explicit, not relied-on-as-default: no Node access in the
@@ -259,7 +263,7 @@ function createMainWindow(): void {
   // Start Menu instead, which in development raced with the shortcut being
   // written and often came back with electron.exe's icon. With all three
   // set, the button is Noma's no matter what the shortcut lookup finds.
-  if (process.platform === 'win32') {
+  if (isWindows) {
     mainWindow.setAppDetails({
       appId: APP_USER_MODEL_ID,
       appIconPath: iconIco,
@@ -274,7 +278,7 @@ function createMainWindow(): void {
   })
 
   // The renderer's own <title>Noma</title> would otherwise overwrite the
-  // constructor's `title` option the instant the page loads — this is the
+  // constructor's `title` option the instant the page loads: this is the
   // one place that's allowed to win, so "Noma Beta" (and "TEST PROFILE")
   // actually stay visible rather than flashing briefly on launch.
   mainWindow.on('page-title-updated', (event) => {
@@ -284,12 +288,12 @@ function createMainWindow(): void {
   // Noma is meant to run in the background (see PRODUCT.md's "infrastructure
   // that is always present," and Flow/Holo both keep working with no window
   // open at all). The minimize button and the close button both hide the
-  // window instead of minimizing/quitting — reopening happens from the tray
+  // window instead of minimizing/quitting; reopening happens from the tray
   // icon's "Open Noma" (or a click on the icon itself), same as any other
   // background-utility app. A real quit only happens via the tray's "Quit
   // Noma" or the OS shutting the app down, both of which set `isQuitting`
   // first.
-  // 'minimize' itself isn't cancelable (no `event` to preventDefault — see
+  // 'minimize' itself isn't cancelable (no `event` to preventDefault: see
   // Electron's typings), so this rides along right after: the taskbar entry
   // blinks for an instant, then `hide()` removes it entirely and the window
   // is reachable only from the tray from here on.
@@ -306,10 +310,10 @@ function createMainWindow(): void {
   mainWindow.on('closed', () => {
     mainWindow = null
     // The notice window is hidden rather than closed between notices, so it
-    // would otherwise still be in getAllWindows() here — 'window-all-closed'
+    // would otherwise still be in getAllWindows() here. 'window-all-closed'
     // would never fire and Noma would linger invisibly after a real quit.
     // Only reached now once `isQuitting` is true (see the `close` handler
-    // above) — an ordinary close hides the window instead of destroying it.
+    // above): an ordinary close hides the window instead of destroying it.
     closeWorkflowNoticeWindow()
   })
 
@@ -326,7 +330,7 @@ function createMainWindow(): void {
 }
 
 /** Un-hides the main window, creating it first if it was never opened this
- *  run — the one path both the tray icon and Noma Notice's "Review" use. */
+ *  run: the one path both the tray icon and Noma Notice's "Review" use. */
 function showMainWindow(): void {
   if (!mainWindow) createMainWindow()
   mainWindow?.show()
@@ -334,14 +338,22 @@ function showMainWindow(): void {
 }
 
 /**
- * The reopen path for a minimized/closed Noma — see the `minimize`/`close`
+ * The reopen path for a minimized/closed Noma: see the `minimize`/`close`
  * handlers above. A left-click toggles (matches most Windows tray icons:
  * Discord, Slack); the context menu (right-click, or Electron's own
  * left-click fallback on Linux) spells the same action out in words, plus
  * the only real way left to quit the app.
  */
 function createTray(): void {
-  const trayIcon = nativeImage.createFromPath(trayIconPath).resize({ width: 16, height: 16 })
+  let trayIcon: Electron.NativeImage
+  if (process.platform === 'darwin') {
+    // ?asset renames files, so the @2x sibling isn't auto-discovered: add it explicitly.
+    trayIcon = nativeImage.createFromPath(trayTemplatePath)
+    trayIcon.addRepresentation({ scaleFactor: 2, buffer: readFileSync(trayTemplate2xPath) })
+    trayIcon.setTemplateImage(true)
+  } else {
+    trayIcon = nativeImage.createFromPath(trayIconPath).resize({ width: 16, height: 16 })
+  }
   tray = new Tray(trayIcon)
   tray.setToolTip(
     TEST_USER_DATA_DIR
@@ -390,8 +402,8 @@ function updateTrayMenu(): void {
         : []),
       { type: 'separator' },
       // Flips `isQuitting` via the app-wide `before-quit` listener, not
-      // here directly — the same flag has to be true for an OS shutdown or
-      // Cmd+Q to actually exit too, not just this menu item.
+      // here directly: the same flag has to be true for an OS shutdown or
+      // Cmd+Q to actually exit too, not this menu item.
       { label: 'Quit Noma', click: () => app.quit() }
     ])
   )
@@ -454,7 +466,7 @@ const TOAST_ACTIVATOR_CLSID = '{626CBF99-529D-4081-8378-0FC2340DD9A4}'
 function registerAppIdentity(): void {
   // Windows-only Electron APIs: on macOS setToastActivatorCLSID doesn't
   // exist, and calling it threw before Noma's window or tray was created.
-  if (process.platform !== 'win32') return
+  if (!isWindows) return
   app.setToastActivatorCLSID(TOAST_ACTIVATOR_CLSID)
   app.setAppUserModelId(APP_USER_MODEL_ID)
   if (!is.dev) return
@@ -510,7 +522,7 @@ function shortcutMatches(path: string, wanted: Electron.ShortcutDetails): boolea
  * One Noma at a time (per profile: the lock is per userData folder, so the
  * test profile still runs beside the real one). A second copy would add a
  * second tray icon, a second set of input hooks and a second trackpad
- * listener pressing every control twice; launching Noma again just brings
+ * listener pressing every control twice; launching Noma again brings
  * the running one forward instead.
  */
 const isPrimaryInstance = app.requestSingleInstanceLock()
@@ -533,6 +545,8 @@ app.whenReady().then(() => {
   initWhatsNew()
   ipcMain.handle(IPC_CHANNELS.HOLO_OPEN_RECORDINGS, () => openRecordingsFolder())
   ipcMain.handle(IPC_CHANNELS.GLIDE_GET_STATE, () => glide.getState())
+  ipcMain.handle(IPC_CHANNELS.MAC_EDGE_SWIPE_GET, () => getMacEdgeSwipe())
+  ipcMain.handle(IPC_CHANNELS.MAC_EDGE_SWIPE_SET, (_event, enabled: boolean) => setMacEdgeSwipe(enabled === true))
   ipcMain.handle(IPC_CHANNELS.GLIDE_SET_ENABLED, (_event, enabled: boolean) => glide.setEnabled(enabled === true))
   ipcMain.handle(IPC_CHANNELS.GLIDE_SET_ZONE_COUNT, (_event, zoneCount: HoloTrackpadZoneCount) =>
     glide.setZoneCount(zoneCount === 2 ? 2 : 4)
@@ -578,21 +592,21 @@ app.whenReady().then(() => {
     // Accepting ends in choosing which control slot the workflow lives on,
     // and a 400px card floating over someone's work is the wrong place to
     // ask that. This is the one interaction that deliberately brings the
-    // main window forward — because the user just asked for it.
+    // main window forward; because the user asked for it.
     workflowNotifier.dismiss(suggestionId, 'reviewed')
     showMainWindow()
     mainWindow?.webContents.send(IPC_CHANNELS.OPEN_SUGGESTION_IN_APP, suggestionId)
   })
   ipcMain.handle(IPC_CHANNELS.SIMULATE_WORKFLOW_NOTICE, async () => {
     // Demo Mode: replay the real demo workflow through the real pipeline,
-    // then put its real suggestion on screen — the threshold and cooldown
+    // then put its real suggestion on screen: the threshold and cooldown
     // are the only things bypassed, so what appears is the production
     // surface with production data, not a mock.
     simulateDemoMultiStepWorkflow()
     await refreshSuggestions()
     markDemoSuggestions()
     // The most-repeated multi-application workflow, which after that replay
-    // is the demo one — picked by the same "which workflow matters most"
+    // is the demo one; picked by the same "which workflow matters most"
     // rule the real policy uses, rather than by hardcoding the demo's id.
     const workflow = getPendingSuggestions()
       .filter((suggestion) => suggestion.chainApplicationNames)
@@ -605,11 +619,11 @@ app.whenReady().then(() => {
     clickCaptureService,
     suggestionEngine,
     (applicationId) => {
-      // A control was just reassigned (e.g. accepting a suggestion, or
+      // A control was reassigned (e.g. accepting a suggestion, or
       // saving an edit in the Control Mapping Editor). If it belongs to
       // whichever application is currently focused, the onContextChanged
       // listener below (hardware controls + IPC push) fires the same way
-      // it would for a normal app switch — the user doesn't have to
+      // it would for a normal app switch: the user doesn't have to
       // Alt-Tab away and back to see their own change.
       contextService.refreshIfCurrentApplication(applicationId)
     },
@@ -628,15 +642,15 @@ app.whenReady().then(() => {
     captureService.setCurrentApplicationId(context.application?.id ?? null)
     clickCaptureService.setCurrentApplicationId(context.application?.id ?? null)
 
-    // Which app the user just moved into is workflow metadata like any
-    // other captured event — Flow needs it to recognize workflows that
+    // Which app the user moved into is workflow metadata like any
+    // other captured event. Flow needs it to recognize workflows that
     // span multiple applications (e.g. a screenshot tool -> an editor -> a
     // git client), not only the shortcuts pressed within one. Only
     // recorded on a genuine change (this listener also re-fires for a
     // same-app profile refresh and Demo Mode's hand-back-to-real-OS
-    // resync — neither is a real switch) so one real switch is one row,
+    // resync; neither is a real switch) so one real switch is one row,
     // the same way a control activation is logged once per press. Still
-    // exactly `{ applicationId, timestamp }` — see docs/privacy-and-legal.md.
+    // exactly `{ applicationId, timestamp }`: see docs/privacy-and-legal.md.
     const newApplicationId = context.application?.id ?? null
     if (getWorkflowMonitoringEnabled() && newApplicationId !== lastRecordedApplicationId) {
       insertWorkflowEvent({ applicationId: newApplicationId, eventType: 'appSwitch', timestamp: Date.now() })
@@ -658,7 +672,7 @@ app.whenReady().then(() => {
     mainWindow?.webContents.send(IPC_CHANNELS.DEVICE_EVENT, event)
 
     if (event.type === 'buttonPress') {
-      // A control activation is workflow metadata like any other — log it
+      // A control activation is workflow metadata like any other; log it
       // under the same enabled/disabled toggle as shortcut capture, tagged
       // with whichever application was active when it happened.
       if (getWorkflowMonitoringEnabled()) {
@@ -671,11 +685,11 @@ app.whenReady().then(() => {
         void refreshSuggestions()
       }
 
-      // This is the "not just a pretty animation" step: actually run
+      // This is the "not a pretty animation" step: actually run
       // whatever this control is configured to do, against whichever real
       // application was last focused (Flow's own window is excluded from
       // detection specifically so this handle always points at that real
-      // target — see windowsAdapter.ts).
+      // target: see windowsAdapter.ts).
       const control = contextService
         .getContext()
         .profile?.controls.find((item) => item.id === event.controlId)
@@ -695,18 +709,18 @@ app.whenReady().then(() => {
               reason: result.reason
             })
 
-            // Flash the decorative keyboard layout's keys — the same
+            // Flash the decorative keyboard layout's keys: the same
             // "digital twin reacts to real input" feedback a genuinely
             // captured shortcut gets, driven directly from the control's
             // own configured keys. This used to happen "for free" because
             // captureService's global hook picked up the control's own
-            // synthetic keystroke and echoed it back as a captured combo —
+            // synthetic keystroke and echoed it back as a captured combo
             // exactly the double-counting selfInjectedKeys.ts was written
             // to stop (see docs/architecture.md's "Real execution"
             // section), which correctly silenced that echo and, as a side
             // effect, silently took this cosmetic flash down with it. Only
             // fires on a real successful send (`result.ok`), matching what
-            // the old accidental path actually did — a failed send never
+            // the old accidental path actually did: a failed send never
             // reaches uIOhook.keyTap, so it never flashed either.
             if (result.ok && control.action.type === 'shortcut' && control.action.keys.length > 0) {
               mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, control.action.keys)
@@ -716,7 +730,7 @@ app.whenReady().then(() => {
       }
     }
   })
-  // The device no longer auto-connects here — it starts disconnected
+  // The device no longer auto-connects here; it starts disconnected
   // ("no keyboard attached") and DeviceTransportServer connects/
   // disconnects it as the standalone Noma Virtual Device app actually
   // attaches/detaches, the same way a real USB keyboard would.
@@ -775,7 +789,7 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     // Minimizing/closing now hides the window rather than destroying it
     // (see createMainWindow's `minimize`/`close` handlers), so on macOS a
-    // dock click most often finds one already open, just hidden — show it
+    // dock click most often finds one already open, hidden; show it
     // instead of leaving `getAllWindows().length === 0` as the only check,
     // which would never fire again once the first window exists.
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
@@ -801,7 +815,7 @@ app.on('window-all-closed', () => {
   contextService.stop()
   deviceTransportServer.stop()
   osAdapter.dispose()
-  if (process.platform !== 'darwin') {
+  if (!isMac) {
     app.quit()
   }
 })

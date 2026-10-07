@@ -5,24 +5,24 @@ import type { VirtualHardwareDevice } from './virtualDevice'
 
 /**
  * The real transport for docs/hardware-protocol.md's HOST<->DEVICE
- * messages — a loopback-only WebSocket server, so an external process
+ * messages: a loopback-only WebSocket server, so an external process
  * (the standalone `Noma Virtual Device` app, a real OLED+4-button module
  * rendered as its own native window) can drive the exact same
  * VirtualHardwareDevice the in-app Virtual Keyboard page already uses.
  *
  * This is deliberately NOT the future USB/serial firmware transport that
- * doc describes for real STM32 hardware (still not built) — it's a
+ * doc describes for real STM32 hardware (still not built); it's a
  * software-only stand-in for testing pre-hardware, speaking the identical
  * message vocabulary so nothing here needs to change when a real
  * transport eventually replaces it.
  *
- * Bound to 127.0.0.1 only, never 0.0.0.0 — a connected client can trigger
+ * Bound to 127.0.0.1 only, never 0.0.0.0: a connected client can trigger
  * real keystrokes via BUTTON_PRESS, so this must never be reachable from
  * outside this machine. See docs/security-review.md.
  *
  * Owns the plugged-in/unplugged lifecycle: the underlying
  * VirtualHardwareDevice only reports `connected: true` while at least one
- * external client (the virtual device app) is actually attached — see
+ * external client (the virtual device app) is actually attached: see
  * main/index.ts, which no longer calls hardwareDevice.connect() itself.
  */
 export class DeviceTransportServer {
@@ -35,7 +35,7 @@ export class DeviceTransportServer {
 
   /** `port` defaults to the shared constant; tests pass 0 for an
    *  OS-assigned ephemeral port instead of colliding on the real one.
-   *  Returns a promise that resolves once the port is actually bound —
+   *  Returns a promise that resolves once the port is actually bound
    *  `main/index.ts` doesn't need to await it, but tests do (`.address`
    *  isn't valid until then). */
   start(port: number = DEVICE_TRANSPORT_PORT): Promise<void> {
@@ -51,10 +51,10 @@ export class DeviceTransportServer {
     this.server.on('connection', (socket) => {
       this.clients.add(socket)
       if (this.clients.size === 1) {
-        // First real client attached — the keyboard just got plugged in.
+        // First real client attached: the keyboard got plugged in.
         void this.device.connect()
       } else {
-        // A later client (e.g. a second window) just wants the current
+        // A later client (e.g. a second window) wants the current
         // state, not a redundant CONNECT log entry.
         void this.device.getStatus().then((status) => {
           this.send(socket, { type: 'DEVICE_STATUS', payload: status })
@@ -66,13 +66,13 @@ export class DeviceTransportServer {
       socket.on('close', () => {
         this.clients.delete(socket)
         if (this.clients.size === 0) {
-          // Last client gone — the keyboard just got unplugged.
+          // Last client gone: the keyboard got unplugged.
           void this.device.disconnect()
         }
       })
 
       // Swallow socket-level errors so one misbehaving client can't crash
-      // the host process — 'close' still fires afterward, cleaning it up.
+      // the host process. 'close' still fires afterward, cleaning it up.
       socket.on('error', () => {})
     })
 
@@ -89,14 +89,14 @@ export class DeviceTransportServer {
   }
 
   /**
-   * Tells attached clients whether a press they just sent actually did
-   * anything — the same `ActionExecutionEvent` Noma App's own in-app
+   * Tells attached clients whether a press they sent actually did
+   * anything: the same `ActionExecutionEvent` Noma App's own in-app
    * Virtual Keyboard page already shows (`ACTION_EXECUTED` over IPC,
    * `main/index.ts`). Without this, a refused press (e.g. a control
-   * mapped to Ctrl+Q — permanently blocked, see actionExecutor.ts's
+   * mapped to Ctrl+Q; permanently blocked, see actionExecutor.ts's
    * BLOCKED_COMBOS, since it can quit an application) looks identical to a
    * button that silently does nothing, from the standalone device's point
-   * of view. Not part of docs/hardware-protocol.md's device-event table —
+   * of view. Not part of docs/hardware-protocol.md's device-event table
    * a real physical button can't know whether its press "worked" any more
    * than this software one inherently can; this is host-side knowledge
    * relayed back down purely for this transport's own on-screen feedback.
@@ -105,7 +105,7 @@ export class DeviceTransportServer {
     this.broadcast({ type: 'ACTION_EXECUTED', payload: event })
   }
 
-  /** The actual bound port — differs from the requested one when `start(0)`
+  /** The actual bound port; differs from the requested one when `start(0)`
    *  asked for an OS-assigned port (used by tests). */
   get address(): { port: number } | null {
     const addr = this.server?.address()

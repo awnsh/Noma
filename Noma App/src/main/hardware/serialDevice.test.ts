@@ -8,7 +8,7 @@ const CONTROLS: Control[] = [
   { id: 'ctrl-debug', slot: 2, label: 'DEBUG', action: { type: 'shortcut', keys: ['F5'] } }
 ]
 
-/** An in-memory stand-in for a real serial port — captures every written
+/** An in-memory stand-in for a real serial port; captures every written
  *  line and lets a test simulate the device's side of the conversation by
  *  feeding lines back in, without a real port or the `serialport` package.
  *  See serialTransport.ts's doc comment for why that split exists. */
@@ -32,7 +32,7 @@ class FakeLineTransport implements LineTransport {
     this.closed = true
   }
 
-  /** Test helper: simulates a raw line arriving from the device — used
+  /** Test helper: simulates a raw line arriving from the device; used
    *  directly (rather than through `emit`) to exercise malformed input. */
   emitLine(raw: string): void {
     for (const listener of this.listeners) listener(raw)
@@ -169,7 +169,7 @@ describe('SerialHardwareDevice', () => {
       device.onDeviceEvent((event) => events.push(event))
 
       expect(() => transport.emitLine('{not valid json')).not.toThrow()
-      expect(() => transport.emitLine('"just a string"')).not.toThrow()
+      expect(() => transport.emitLine('"a string"')).not.toThrow()
       expect(() => transport.emitLine('')).not.toThrow()
 
       expect(events).toHaveLength(0)
@@ -216,7 +216,7 @@ describe('SerialHardwareDevice', () => {
       const resetPromise = device.reset()
       // reset() awaits disconnect() first, which needs one microtask tick
       // to resolve before connect() actually resubscribes and sends its
-      // own fresh GET_STATUS — emitting before that would answer no one.
+      // own fresh GET_STATUS; emitting before that would answer no one.
       await Promise.resolve()
       transport.emit({ type: 'DEVICE_STATUS', payload: deviceStatus() })
       await resetPromise

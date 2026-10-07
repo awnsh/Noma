@@ -9,7 +9,7 @@ describe('sanitizeControlLabel', () => {
     expect(sanitizeControlLabel(BUTTON, 'Delete')).toBe('Delete')
     expect(sanitizeControlLabel(BUTTON, '&Save As...')).toBe('Save As')
     expect(sanitizeControlLabel('ControlType.MenuItem', 'Ripple Delete')).toBe('Ripple Delete')
-    // A tab is named after its page in a browser — never kept as a label.
+    // A tab is named after its page in a browser; never kept as a label.
     expect(sanitizeControlLabel('ControlType.TabItem', 'Inbox')).toBeNull()
   })
 

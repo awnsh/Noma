@@ -3,15 +3,14 @@ import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { IPC_CHANNELS } from '@shared/constants'
 import type { WorkflowNotice } from '@shared/types'
-import icon from '../../../resources/icon.png?asset'
-import iconIco from '../../../resources/icon.ico?asset'
+import { platformIcon } from '../platformIcon'
 
 /**
  * Noma Notice's own window: a small, frameless, transparent surface that
  * floats in the bottom-right corner over whatever the user is actually doing.
  *
  * It is a second window rather than a panel inside the main one because the
- * whole premise is that Noma is *not* on screen — the main window is
+ * whole premise is that Noma is *not* on screen: the main window is
  * minimized, behind something, or on another monitor. Forcing it forward to
  * say "I noticed something" would be exactly the interruption this feature
  * is supposed to avoid.
@@ -23,22 +22,22 @@ import iconIco from '../../../resources/icon.ico?asset'
  *
  * Three properties matter more than anything visual here:
  *
- * - `focusable: false` — the user is typing in another application. A
- *   notification that takes keyboard focus doesn't just annoy, it swallows
+ * - `focusable: false`: the user is typing in another application. A
+ *   notification that takes keyboard focus doesn't annoy, it swallows
  *   keystrokes and can fire the wrong shortcut in whatever had focus. On
  *   Windows this maps to WS_EX_NOACTIVATE: the window still receives clicks,
- *   it just never activates.
- * - `setIgnoreMouseEvents(true, { forward: true })` — by default every click
+ *   it never activates.
+ * - `setIgnoreMouseEvents(true, { forward: true })`; by default every click
  *   passes straight through to the application underneath, so the notice
  *   can't block a button it happens to be sitting on. `forward: true` still
  *   delivers *move* events to the renderer, which is how it knows the
  *   pointer is over the card and asks (via setInteractive) to take clicks
  *   for as long as it is.
- * - `transparent: true` — the card is smaller than the window, leaving room
+ * - `transparent: true`: the card is smaller than the window, leaving room
  *   for its shadow and its enter animation to happen outside its own edges.
  *
  * On the glass: a transparent Electron window composites its semi-opaque
- * pixels directly over the desktop, so the card is genuinely translucent —
+ * pixels directly over the desktop, so the card is genuinely translucent
  * but `backdrop-filter` inside it has no desktop content to sample and so
  * cannot frost what is behind it. Real frosting would mean Windows 11's
  * `backgroundMaterial: 'acrylic'`, which applies to the whole window
@@ -49,7 +48,7 @@ import iconIco from '../../../resources/icon.ico?asset'
 
 /** Big enough for the expanded review state, with room around the card for
  *  its shadow and the 12px it travels on entry. The card itself is smaller
- *  still (300px wide) and sits in this window's bottom-right — see
+ *  still (300px wide) and sits in this window's bottom-right: see
  *  WorkflowNotice. */
 const NOTICE_WIDTH = 340
 // Taller than the card needs, because the window is transparent and
@@ -57,7 +56,7 @@ const NOTICE_WIDTH = 340
 // a long explanation has to fit without ever being clipped by the window
 // edge. It grows upward from the corner, so the card doesn't move.
 const NOTICE_HEIGHT = 330
-/** Gap from the edges of the work area — so the notice clears the taskbar,
+/** Gap from the edges of the work area; so the notice clears the taskbar,
  *  and sits where Windows' own notifications do rather than in the middle of
  *  what the user is looking at. */
 const EDGE_MARGIN = 20
@@ -65,7 +64,7 @@ const EDGE_MARGIN = 20
 let noticeWindow: BrowserWindow | null = null
 /** What the notice window should be showing. Held here as well as pushed,
  *  because the push can win the race against React mounting in a freshly
- *  created window — the surface asks for this on mount and the two agree. */
+ *  created window: the surface asks for this on mount and the two agree. */
 let currentNotice: WorkflowNotice | null = null
 
 function positionInCorner(window: BrowserWindow): void {
@@ -97,13 +96,13 @@ function createNoticeWindow(): BrowserWindow {
     focusable: false,
     // Its own icon, so nothing that lists windows (Alt+Tab, Task View) falls
     // back to Electron's.
-    icon: process.platform === 'win32' ? iconIco : icon,
+    icon: platformIcon(),
     // The card draws its own shadow in CSS; an OS shadow would frame the
     // transparent window rectangle, not the card inside it.
     hasShadow: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      // Same hardening as the main window — see docs/security-review.md.
+      // Same hardening as the main window: see docs/security-review.md.
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -144,7 +143,7 @@ export function showWorkflowNotice(notice: WorkflowNotice): void {
   const window = noticeWindow
 
   // Placed and shown straight away, never behind the load. The window is
-  // transparent, so an empty one is invisible — but a window that is only
+  // transparent, so an empty one is invisible; but a window that is only
   // positioned once its renderer is ready sits at Electron's default centred
   // bounds until then, which on the very first notice of a session is long
   // enough to matter. Separating the two also means the corner placement
@@ -154,7 +153,7 @@ export function showWorkflowNotice(notice: WorkflowNotice): void {
   // window, which is the one thing this surface must never do.
   window.showInactive()
 
-  // The content, on the other hand, does have to wait — and if it misses the
+  // The content, on the other hand, does have to wait; and if it misses the
   // push anyway (React still mounting), the surface asks for `currentNotice`
   // itself on mount, so the two paths cover each other.
   const send = (): void => window.webContents.send(IPC_CHANNELS.WORKFLOW_NOTICE_SHOWN, notice)
@@ -189,7 +188,7 @@ export function closeWorkflowNoticeWindow(): void {
   currentNotice = null
 }
 
-/** Testing seam only — lets a test observe what the window layer was asked
+/** Testing seam only; lets a test observe what the window layer was asked
  *  to do without an Electron display. */
 export function isWorkflowNoticeOpen(): boolean {
   return noticeWindow !== null && !noticeWindow.isDestroyed() && noticeWindow.isVisible()

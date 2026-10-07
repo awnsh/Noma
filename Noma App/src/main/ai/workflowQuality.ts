@@ -7,17 +7,17 @@ import { chainPlausibility, inAppCoherence, matchRealisticWorkflow } from '../wo
  * learns that from the user. Two jobs, both pure/DB-free (persistence lives in
  * qualityModelRepository.ts and suggestionsRepository.ts):
  *
- * 1. DEDUPLICATION — a pattern's `id` embeds its exact step chain, which
+ * 1. DEDUPLICATION: a pattern's `id` embeds its exact step chain, which
  *    drifts as data accrues (the cluster's "typical shape" changes, a periodic
  *    loop A→B→C→A shows up once per rotation, a 2-step pair is contained in a
- *    3-step chain). Id-based dedupe treats each as new. A *fingerprint* — the
- *    sorted set of step signatures — is stable across all of those, so
+ *    3-step chain). Id-based dedupe treats each as new. A *fingerprint*: the
+ *    sorted set of step signatures; is stable across all of those, so
  *    "same workflow" is decided on it instead.
  *
- * 2. LEARNING — a small online logistic-regression model over pattern
+ * 2. LEARNING: a small online logistic-regression model over pattern
  *    features. It starts from hand-set priors (single-burst and inconsistent
  *    patterns look like noise; repeats across separate sittings look like
- *    habits — no user input needed) and is nudged by every accept / reject /
+ *    habits; no user input needed) and is nudged by every accept / reject /
  *    dismiss, including per-app and per-step weights so "anything in
  *    Explorer is noise for me" is something it can actually learn.
  */
@@ -92,7 +92,7 @@ export type DuplicateVerdict =
 /**
  * Decides what to do with a new workflow-kind suggestion given everything
  * already suggested. Anything already resolved (accepted, rejected,
- * dismissed) that matches — or already covers — the new one blocks it, so a
+ * dismissed) that matches; or already covers: the new one blocks it, so a
  * decision is never resurrected under a slightly different shape. A
  * genuinely fuller chain than a resolved one is allowed through; a fuller
  * chain than a *pending* one replaces it, so the user sees one card.
@@ -202,7 +202,7 @@ export function emptyModel(): QualityModel {
   return { weights: {}, examples: 0 }
 }
 
-/** Specific features (this app, this step) learn fast — "no to Explorer" is
+/** Specific features (this app, this step) learn fast: "no to Explorer" is
  *  the lesson being taught. Shared features (bias, length, consistency…)
  *  learn slowly, so rejecting one pattern doesn't drag every unrelated
  *  workflow down with it; they only shift meaningfully over many labels. */

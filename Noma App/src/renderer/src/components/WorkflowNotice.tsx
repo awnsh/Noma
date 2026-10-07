@@ -8,13 +8,13 @@ import logo from '../assets/logo.png'
 import wordmark from '../assets/noma-wordmark.png'
 
 /**
- * Noma Notice — the card itself.
+ * Noma Notice: the card itself.
  *
  * Everything about it is an argument for not being looked at for long. It
  * states who is talking, what was noticed, and what it was, in that order,
  * and then offers exactly one thing to do. There is no headline, no
  * exclamation, no "AI" anywhere, and the only coloured pixel is the accent
- * on the single action — because the workflow's own application icons are
+ * on the single action. Because the workflow's own application icons are
  * the thing worth seeing, and anything else competing with them is noise.
  *
  * Reviewing expands the same card in place instead of opening a window.
@@ -23,7 +23,7 @@ import wordmark from '../assets/noma-wordmark.png'
  *
  * The close button is not a verdict on the workflow, and is deliberately not
  * treated as one. Someone shutting a card that appeared over their work is
- * saying "not now, I'm busy" — not "this is a bad idea" — so the suggestion
+ * saying "not now, I'm busy" (not "this is a bad idea"). So the suggestion
  * is left exactly where it was, waiting in the app. Rejecting it is what
  * "Not now" under Review is for, and that takes a deliberate second click.
  */
@@ -32,8 +32,8 @@ export type NoticeDismissReason = 'timeout' | 'closed' | 'dismissed' | 'reviewed
 
 export interface WorkflowNoticeProps {
   notice: WorkflowNoticeData
-  /** Closes the notice. The reason decides what happens to the workflow —
-   *  see WorkflowNotifier.dismiss. */
+  /** Closes the notice. The reason decides what happens to the workflow.
+   *  See WorkflowNotifier.dismiss. */
   onDismiss: (reason: NoticeDismissReason) => void
   /** Accepts the workflow, or opens the app when accepting needs a control
    *  slot picked (which this card deliberately doesn't try to do). */
@@ -67,7 +67,7 @@ export function WorkflowNotice({
   const { suggestion, occurrenceCount } = notice
   const chain = workflowChainSteps(suggestion)
 
-  /** Plays the exit, then reports it — so the card is never yanked off
+  /** Plays the exit, then reports it. So the card is never yanked off
    *  screen mid-animation. */
   const close = useCallback(
     (reason: NoticeDismissReason) => {
@@ -122,7 +122,7 @@ export function WorkflowNotice({
       >
         <div className="flex items-center gap-1.5">
           {/* The real lockup, at the same mark-then-wordmark proportions the
-              sidebar uses — scaled down rather than redrawn, so the identity
+              sidebar uses. Scaled down rather than redrawn, so the identity
               on someone's desktop is the identity in the app. `alt` sits on
               the wordmark only: the two images are one logo, and a screen
               reader saying "Noma" twice would be worse than saying it once. */}
@@ -130,16 +130,18 @@ export function WorkflowNotice({
           <img src={wordmark} alt="Noma" className="h-[9px] w-auto opacity-75" />
           <span className="ml-auto font-mono text-[10px] text-neutral-600">{occurrenceCount}x</span>
           {/* Quiet until wanted: at rest it reads as part of the chrome, and
-              only resolves into a control once the pointer is on the card —
-              which, given the window is click-through until then, is exactly
+              only resolves into a control once the pointer is on the card.
+              Given the window is click-through until then, this is exactly
               when it becomes usable. */}
           <button
             type="button"
             aria-label="Close"
             onClick={() => close('closed')}
-            className="-mr-0.5 flex h-4 w-4 items-center justify-center rounded text-[13px] leading-none text-neutral-600 transition-colors duration-150 hover:bg-white/[0.06] hover:text-neutral-200"
+            className="-mr-0.5 flex h-4 w-4 items-center justify-center rounded transition-colors duration-150 text-neutral-600 hover:bg-white/[0.06] hover:text-neutral-200"
           >
-            ×
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
           </button>
         </div>
 
@@ -182,9 +184,12 @@ export function WorkflowNotice({
           <button
             type="button"
             onClick={() => setReviewing(true)}
-            className="mt-2 text-[11px] font-medium text-accent transition-colors duration-150 hover:text-accent/80"
+            className="mt-2 flex items-center gap-1 text-[11px] font-medium text-accent transition-colors duration-150 hover:text-accent/80"
           >
-            Review →
+            Review
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
           </button>
         )}
       </div>

@@ -4,7 +4,7 @@ import { getDatabase } from '../database/db'
 import { getAllApplications, upsertApplication } from '../database/repositories/applicationsRepository'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
 
-/** New profiles start with 4 unconfigured slots — the same 12-char
+/** New profiles start with 4 unconfigured slots: the same 12-char
  *  display-label constraint as every other label in the app. The user
  *  fills these in with the Control Mapping Editor (Phase 1); an empty
  *  `keys` array is already a safe no-op (actionExecutor.ts refuses to send
@@ -14,12 +14,12 @@ const DEFAULT_SLOT_LABELS = ['SLOT 1', 'SLOT 2', 'SLOT 3', 'SLOT 4']
 
 /**
  * Bootstraps a brand-new profile for an application that doesn't have one
- * yet — closes the gap flagged since Phase 1 (Control Mapping Editor could
+ * yet; closes the gap flagged since Phase 1 (Control Mapping Editor could
  * edit an existing profile's controls but had no way to create the profile
  * itself; brainstorm.md's "extensible profile system" was only extensible
  * via seed data or accepting a suggestion until now).
  *
- * Returns null if this application already has an active profile — this
+ * Returns null if this application already has an active profile: this
  * never silently creates a second, competing one; use updateControl to
  * change an existing profile instead.
  */
@@ -79,7 +79,7 @@ export function deleteApplicationProfile(applicationId: string): boolean {
   return true
 }
 
-/** Every known application and whether it has a profile yet — the
+/** Every known application and whether it has a profile yet: the
  *  Profiles page's list. Small, N+1-query approach is fine here: this
  *  reads the applications table, which only ever holds a handful of rows
  *  in a single-user desktop app. */

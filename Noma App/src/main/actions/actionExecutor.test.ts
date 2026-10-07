@@ -26,7 +26,7 @@ import {
 
 // uIOhook.keyTap is the one real Win32-affecting call a *successful*
 // shortcut send makes (see the "marks the combo as self-injected" tests
-// below, which deliberately do reach it) — mocked so this suite never
+// below, which deliberately do reach it); mocked so this suite never
 // actually sends a synthetic keystroke to whatever window happens to have
 // focus while it runs. Every other test here is chosen to return before
 // reaching it at all (invalid handles, unrecognized keys, blocked/unknown
@@ -37,13 +37,13 @@ vi.mock('uiohook-napi', async (importOriginal) => {
 })
 
 // findMainWindowHandleForProcess spawns a real PowerShell process to query
-// running windows — mocked here so `focusApplication` tests are fast and
+// running windows; mocked here so `focusApplication` tests are fast and
 // deterministic instead of depending on what's actually running on the
 // machine running this suite. processWindow.test.ts covers the real thing.
 vi.mock('./processWindow', () => ({ findMainWindowHandleForProcess: vi.fn() }))
 
 // focusWindowAndVerify itself is real Win32 I/O that windowFocus.test.ts
-// already covers directly (fails closed for a made-up handle — see that
+// already covers directly (fails closed for a made-up handle: see that
 // file). Wrapped (not replaced) here so every existing test keeps exercising
 // the real fail-closed behavior by default; only the one test below that
 // needs a genuine "focus succeeded" path overrides it for that case.
@@ -54,7 +54,7 @@ vi.mock('./windowFocus', async (importOriginal) => {
 
 // click.ts's own real behavior (zone math, GetWindowRect/SendInput) is
 // Win32 I/O with no meaningful headless-test story (there's no real window
-// to click) — mocked here so this suite only has to verify that a `click`
+// to click); mocked here so this suite only has to verify that a `click`
 // MacroStep actually dispatches to it and that its result is honored,
 // exactly the same shape as the findMainWindowHandleForProcess mock above.
 vi.mock('./click', () => ({ executeClick: vi.fn() }))
@@ -137,24 +137,24 @@ describe('isBlockedShortcut', () => {
     expect(isBlockedShortcut(['Control', 'T'])).toBe(false)
   })
 
-  it('no longer blocks plain Control+W — deliberately removed by explicit user request (2026-09-07), see the comment at BLOCKED_COMBOS', () => {
+  it('no longer blocks plain Control+W; deliberately removed by explicit user request (2026-09-07), see the comment at BLOCKED_COMBOS', () => {
     expect(isBlockedShortcut(['Control', 'W'])).toBe(false)
   })
 })
 
-describe('executeControlAction — shortcut', () => {
+describe('executeControlAction; shortcut', () => {
   it('refuses a window-closing combo without attempting to focus anything', async () => {
     const result = await executeControlAction(
       { type: 'shortcut', keys: ['Control', 'Q'] },
       // Even a plausible-looking handle must never be touched for a
-      // blocked combo — the block is checked before any focus attempt.
+      // blocked combo: the block is checked before any focus attempt.
       999999999
     )
     expect(result.ok).toBe(false)
     expect(result.reason).toContain('Control+Q')
   })
 
-  it('sends plain Control+W as a real keystroke — deliberately unblocked (2026-09-07), see BLOCKED_COMBOS', async () => {
+  it('sends plain Control+W as a real keystroke; deliberately unblocked (2026-09-07), see BLOCKED_COMBOS', async () => {
     const result = await executeControlAction({ type: 'shortcut', keys: ['Control', 'W'] }, null)
     expect(result.ok).toBe(true)
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(1)
@@ -162,7 +162,7 @@ describe('executeControlAction — shortcut', () => {
 
   it('fails closed when the target window handle is invalid', async () => {
     // A made-up handle is guaranteed not to be a real window. IsWindow()
-    // returns false for it — a safe, read-only query — and execution
+    // returns false for it: a safe, read-only query; and execution
     // must refuse rather than send anywhere.
     const result = await executeControlAction(
       { type: 'shortcut', keys: ['Control', 'S'] },
@@ -188,13 +188,13 @@ describe('executeControlAction — shortcut', () => {
   })
 
   it('marks the combo as self-injected right before actually sending it', async () => {
-    // No target window (null) — the same path a control press without a
-    // real focused application takes — so this reaches the real send.
+    // No target window (null): the same path a control press without a
+    // real focused application takes; so this reaches the real send.
     const result = await executeControlAction({ type: 'shortcut', keys: ['Control', 'S'] }, null)
 
     expect(result.ok).toBe(true)
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(1)
-    // captureService.ts's hook would see this exact combo next — confirm
+    // captureService.ts's hook would see this exact combo next; confirm
     // it's already marked so that echo gets ignored, not logged as real
     // user input. See selfInjectedKeys.ts.
     expect(isSelfInjected(['Control', 'S'])).toBe(true)
@@ -207,7 +207,7 @@ describe('executeControlAction — shortcut', () => {
   })
 })
 
-describe('executeControlAction — macro', () => {
+describe('executeControlAction; macro', () => {
   it('refuses when the macro does not exist', async () => {
     const result = await executeControlAction({ type: 'macro', macroId: 'does-not-exist' }, null)
     expect(result.ok).toBe(false)
@@ -296,7 +296,7 @@ describe('executeMacroSteps', () => {
     expect(result.reason).toContain('Control+Q')
   })
 
-  it('marks each shortcut step as self-injected too, not just a direct control press', async () => {
+  it('marks each shortcut step as self-injected too, not a direct control press', async () => {
     const steps: MacroStep[] = [{ type: 'shortcut', keys: ['Control', 'T'] }]
     const result = await executeMacroSteps(steps, null)
     expect(result.ok).toBe(true)
@@ -331,7 +331,7 @@ describe('executeMacroSteps', () => {
 
   it('refuses a macro step that references itself directly', async () => {
     const db = getDatabase()
-    // Hand-construct a self-referencing macro directly in the DB — createMacro's
+    // Hand-construct a self-referencing macro directly in the DB; createMacro's
     // generated id isn't known until after the row exists.
     db.prepare(
       `INSERT INTO macros (id, name, trigger, actions, delay_ms, enabled)
@@ -348,7 +348,7 @@ describe('executeMacroSteps', () => {
   })
 
   it('refuses nesting deeper than the max depth', async () => {
-    // Build a chain of 5 macros, each referencing the next — deeper than
+    // Build a chain of 5 macros, each referencing the next; deeper than
     // MAX_MACRO_NESTING_DEPTH (3), so this must be refused rather than
     // silently truncated or left to recurse indefinitely.
     const last = createMacro({
@@ -387,7 +387,7 @@ describe('isKnownFlowAction', () => {
   })
 })
 
-describe('executeControlAction — flowAction: closeWindow', () => {
+describe('executeControlAction; flowAction: closeWindow', () => {
   it('refuses to close when there is no known target window', async () => {
     const result = await executeControlAction({ type: 'flowAction', action: 'closeWindow' }, null)
     expect(result.ok).toBe(false)
@@ -404,7 +404,7 @@ describe('executeControlAction — flowAction: closeWindow', () => {
   })
 })
 
-describe('focusApplication (WORKFLOW LEARNING — switching to an already-running app)', () => {
+describe('focusApplication (WORKFLOW LEARNING; switching to an already-running app)', () => {
   it('fails closed for an unknown application id', async () => {
     const result = await executeControlAction({ type: 'focusApplication', applicationId: 'nope' }, null)
     expect(result.ok).toBe(false)
@@ -425,7 +425,7 @@ describe('focusApplication (WORKFLOW LEARNING — switching to an already-runnin
 
   it('fails closed when a window handle is found but focus cannot be confirmed', async () => {
     insertApplication('claude', 'Claude Code', 'Claude.exe')
-    // A made-up handle — guaranteed not to be a real window, so
+    // A made-up handle; guaranteed not to be a real window, so
     // IsWindow()/SetForegroundWindow() can never actually confirm focus.
     vi.mocked(findMainWindowHandleForProcess).mockResolvedValue(999999999)
 
@@ -434,7 +434,7 @@ describe('focusApplication (WORKFLOW LEARNING — switching to an already-runnin
     expect(result.reason).toContain('Could not confirm focus')
   })
 
-  it('never sends a keystroke when focusApplication fails inside a macro — stops at the failed step', async () => {
+  it('never sends a keystroke when focusApplication fails inside a macro; stops at the failed step', async () => {
     insertApplication('claude', 'Claude Code', 'Claude.exe')
     vi.mocked(findMainWindowHandleForProcess).mockResolvedValue(null)
 
@@ -464,7 +464,7 @@ describe('focusApplication (WORKFLOW LEARNING — switching to an already-runnin
     expect(result.ok).toBe(true)
     expect(findMainWindowHandleForProcess).toHaveBeenCalledWith('Claude.exe')
     expect(focusWindowAndVerify).toHaveBeenCalledWith(4242)
-    // 3 shortcut steps: screenshot, paste, enter — focusApplication itself
+    // 3 shortcut steps: screenshot, paste, enter; focusApplication itself
     // sends no keystroke.
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(3)
   })

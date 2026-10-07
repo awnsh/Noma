@@ -14,7 +14,7 @@ function mockFlow(overrides: Partial<FlowApi> = {}): FlowApi {
 }
 
 beforeEach(() => {
-  // The store is a module-level singleton (see applicationsStore.ts) —
+  // The store is a module-level singleton (see applicationsStore.ts);
   // reset it between tests so one test's seeded application can't leak
   // into the next.
   useApplicationsStore.setState({ byId: {} })
@@ -22,7 +22,7 @@ beforeEach(() => {
 
 /**
  * These tests exist to prove the full renderer-side chain actually wires
- * together — `applicationId` -> `useApplicationsStore` (executablePath) ->
+ * together: `applicationId` -> `useApplicationsStore` (executablePath) ->
  * `useOsIcon` (the IPC call to the main process's real `app.getFileIcon`
  * result, mocked here at the `window.flow` boundary) -> a real `<img
  * src>` in the DOM. `iconService.test.ts` already proves the main-process
@@ -30,7 +30,7 @@ beforeEach(() => {
  * renderer doesn't silently drop that value anywhere between the IPC
  * response and the pixel on screen.
  */
-describe('AppIcon — real OS icon end to end', () => {
+describe('AppIcon: real OS icon end to end', () => {
   it('renders a real <img> whose src is exactly the data URL the main process returned', async () => {
     useApplicationsStore.setState({
       byId: { chrome: { id: 'chrome', name: 'Google Chrome', processName: 'chrome.exe', executablePath: CHROME_PATH } }
@@ -40,8 +40,8 @@ describe('AppIcon — real OS icon end to end', () => {
 
     const { container } = render(<AppIcon applicationId="chrome" name="Google Chrome" />)
 
-    // Before the (mocked) IPC round trip resolves, there's no real icon yet
-    // — the hand-drawn fallback glyph renders instead, never a blank icon.
+    // Before the (mocked) IPC round trip resolves, there's no real icon yet.
+    // The hand-drawn fallback glyph renders instead, never a blank icon.
     expect(container.querySelector('img')).not.toBeInTheDocument()
 
     const img = await waitFor(() => {

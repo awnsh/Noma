@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 /** Shared focus-visible ring for every custom interactive element in
- *  onboarding (buttons, selectable tiles) — the dark background means the
+ *  onboarding (buttons, selectable tiles). The dark background means the
  *  browser's default focus outline can be too faint to rely on. */
 export const ONBOARDING_FOCUS_RING =
   'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
@@ -9,10 +9,10 @@ export const ONBOARDING_FOCUS_RING =
 interface OnboardingButtonProps {
   onClick: () => void
   children: ReactNode
-  /** 'primary' is the one clear call-to-action per screen (solid fill —
-   *  deliberately bolder than the app's usual muted-outline buttons, since
+  /** 'primary' is the one clear call-to-action per screen (solid fill).
+   *  Deliberately bolder than the app's usual muted-outline buttons, since
    *  onboarding is meant to read as its own premium moment, not another
-   *  dashboard panel). 'secondary' is a plain-text action alongside it. */
+   *  dashboard panel. 'secondary' is a plain-text action alongside it. */
   variant?: 'primary' | 'secondary'
   disabled?: boolean
 }

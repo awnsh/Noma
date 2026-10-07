@@ -121,7 +121,7 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
     insertSuggestionIfNew(makeSuggestion({ title: 'A different title' }))
     const pending = getPendingSuggestions()
     expect(pending).toHaveLength(1)
-    // The original insert wins — ON CONFLICT DO NOTHING.
+    // The original insert wins. ON CONFLICT DO NOTHING.
     expect(pending[0].title).toBe('Assign Control+S to a Flow control?')
   })
 
@@ -135,7 +135,7 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
 })
 
 describe('getAllSuggestions', () => {
-  it('returns suggestions of every status, not just pending', () => {
+  it('returns suggestions of every status, not pending', () => {
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+S' }))
     insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:code::Control+D' }))
     resolveSuggestion('suggestion:shortcut:code::Control+D', 'rejected')

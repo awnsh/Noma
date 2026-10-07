@@ -8,14 +8,14 @@ import { getPendingSuggestions, markSuggestionsDemo } from '../database/reposito
 import { removeLearnedWorkflow } from '../applications/workflowRemoval'
 
 /**
- * Demo Mode — "the Noma Moment" (Product Development Phase 2). A polished,
+ * Demo Mode: "the Noma Moment" (Product Development Phase 2). A polished,
  * deterministic, repeatable walkthrough of the core adaptive-interface
  * story (contextual controls -> repeated workflow -> explainable
  * suggestion -> one-click control update) for presentations and user
  * testing, without depending on random AI output or the presenter actually
  * Alt-Tabbing between real windows.
  *
- * Deliberately reuses the exact same pipeline real usage does — this file
+ * Deliberately reuses the exact same pipeline real usage does: this file
  * has no code path that bypasses insertWorkflowEvent, pattern detection, or
  * the suggestion engine. The only thing "simulated" is the *origin* of the
  * events (a scripted call instead of a real OS hook or a real Alt-Tab),
@@ -29,7 +29,7 @@ export type DemoApplicationId = 'code' | 'chrome' | 'claude'
 /** The seeded applications Demo Mode switches between. 'code' and 'chrome'
  *  already have real, seeded profiles (see database/seed.ts), so the
  *  control changes the demo shows are the product's actual configured
- *  behavior, not demo-only fake data. 'claude' (Claude Code — the flagship
+ *  behavior, not demo-only fake data. 'claude' (Claude Code: the flagship
  *  WORKFLOW LEARNING story's destination app) deliberately has no seeded
  *  profile: the demo never actually switches the *live* context into it
  *  (see simulateDemoMultiStepWorkflow's doc comment), it only appears as an
@@ -55,7 +55,7 @@ const DEMO_WORKFLOW_APPLICATION_ID: DemoApplicationId = 'chrome'
  *   is generated.
  * - 4 is < REPEATED_SHORTCUT_THRESHOLD (5), so neither Control+D nor
  *   Control+W alone crosses the "assign this shortcut to a control?"
- *   threshold — the demo shows exactly one clean suggestion, not three.
+ *   threshold: the demo shows exactly one clean suggestion, not three.
  * - Each Bookmark/Close pair is 500ms apart (comfortably inside the 15s
  *   sequence window); each repetition starts 20s after the last (safely
  *   outside that window), so Close -> next-Bookmark is never itself counted as
@@ -71,7 +71,7 @@ const CLOSE_DELAY_MS = 500
  * workflow_events via the same `insertWorkflowEvent` real capture uses, then
  * leaves pattern detection / suggestion generation to the caller (via
  * whatever already re-runs `SuggestionEngine.refresh()` after a real
- * capture — see main/index.ts's `refreshSuggestions`), so the "Flow
+ * capture: see main/index.ts's `refreshSuggestions`), so the "Flow
  * noticed something" suggestion that appears is genuinely computed from
  * these rows, not hardcoded copy.
  */
@@ -100,15 +100,15 @@ export function simulateDemoWorkflow(): void {
 }
 
 /**
- * WORKFLOW LEARNING's flagship demo — "the Noma Moment," v2 (Product
+ * WORKFLOW LEARNING's flagship demo: "the Noma Moment," v2 (Product
  * Development Phase 3). Inserts a deterministic, backdated repetition of
  * the exact story this feature exists to demonstrate: screenshot -> switch
- * to Claude Code -> paste -> switch back, repeated — tuned to produce
+ * to Claude Code -> paste -> switch back, repeated; tuned to produce
  * exactly one `multiStepWorkflow` suggestion once pattern detection re-runs.
  *
  * Deliberately does NOT call `setDemoApplication('claude')` anywhere: the
  * live "Current Application" context stays on VS Code throughout, matching
- * the real framing this feature is built for — you're working in one app,
+ * the real framing this feature is built for; you're working in one app,
  * and Noma notices a workflow that happens *around* it, in the background,
  * without needing you to actually Alt-Tab into Claude Code for the demo to
  * work. `upsertApplication` gives 'claude' a real row so the suggestion's

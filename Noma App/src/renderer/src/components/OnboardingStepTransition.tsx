@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
 
 interface OnboardingStepTransitionProps {
-  /** Changing this key re-triggers the enter transition — pass the current
+  /** Changing this key re-triggers the enter transition. Pass the current
    *  onboarding step id. */
   stepKey: string
   children: ReactNode

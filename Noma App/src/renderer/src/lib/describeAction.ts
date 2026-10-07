@@ -27,6 +27,8 @@ export function formatShortcutCaption(keys: string[]): string {
 export function actionGlyph(action: ControlAction | undefined): string {
   if (!action) return '–'
   switch (action.type) {
+    case 'none':
+      return ''
     case 'shortcut':
       return '⌨'
     case 'macro':
@@ -49,6 +51,8 @@ export function actionGlyph(action: ControlAction | undefined): string {
 export function actionCaption(action: ControlAction | undefined): string | null {
   if (!action) return null
   switch (action.type) {
+    case 'none':
+      return null
     case 'shortcut':
       return action.keys.length > 0 ? formatShortcutCaption(action.keys) : null
     case 'systemCommand':

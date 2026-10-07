@@ -42,7 +42,6 @@ export function Settings() {
     <div className="mx-auto max-w-3xl px-10 py-10">
       <div className="mb-8">
         <h1 className="font-display text-xl font-semibold text-neutral-100">Settings</h1>
-        <p className="mt-1 text-sm text-neutral-500">Glide, Flow learning, your data, updates, and getting help.</p>
       </div>
 
       <section className={`mb-8 px-5 py-4 ${CARD}`}>
@@ -64,10 +63,6 @@ export function Settings() {
 
       <section className={`mb-8 px-5 py-4 ${CARD}`}>
         <div className="text-xs uppercase tracking-widest text-neutral-500">Flow Learning</div>
-        <p className="mt-2 max-w-md text-sm text-neutral-400">
-          Flow learns from interaction metadata to identify repetitive workflows, never from what
-          you actually type or see.
-        </p>
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div>
             <div className="mb-1.5 text-[10px] uppercase tracking-widest text-neutral-600">
@@ -113,8 +108,7 @@ export function Settings() {
           <div>
             <div className="text-xs uppercase tracking-widest text-neutral-500">Developer tools</div>
             <p className="mt-2 max-w-md text-sm text-neutral-400">
-              Shows the Noma Device simulator page, Demo Mode and the device log in the sidebar. Demo Mode adds scripted,
-              clearly labelled example data; its reset removes only that.
+              Adds the device simulator, Demo Mode and the device log to the sidebar.
             </p>
             {developerTools && (
               <button

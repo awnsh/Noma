@@ -37,7 +37,7 @@ describe('toFrame', () => {
     expect(toFrame(0, [touch(1, 0.5, 0.5, 5, 45)]).contacts[0].confident).toBe(false)
   })
 
-  it('clamps positions just outside the pad', () => {
+  it('clamps positions outside the pad', () => {
     expect(toFrame(0, [touch(1, -0.01, 1.02)]).contacts[0]).toMatchObject({ x: 0, y: 0 })
   })
 

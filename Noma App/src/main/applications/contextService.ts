@@ -14,7 +14,7 @@ export class ApplicationContextService {
   private current: ApplicationContext = { application: null, profile: null }
   private listeners = new Set<(context: ApplicationContext) => void>()
   private unsubscribeOsAdapter: (() => void) | null = null
-  /** True while Demo Mode has overridden the live application — see
+  /** True while Demo Mode has overridden the live application: see
    *  setDemoApplication below. */
   private demoOverrideActive = false
 
@@ -25,7 +25,7 @@ export class ApplicationContextService {
     this.unsubscribeOsAdapter = this.osAdapter.onActiveApplicationChanged((application) => {
       // While Demo Mode is driving the context, ignore whatever the real OS
       // adapter reports (e.g. the presenter's cursor grazing another
-      // window) — the demo's own script is the only thing allowed to move
+      // window): the demo's own script is the only thing allowed to move
       // the context until it explicitly hands control back (see
       // setDemoApplication(null) below).
       if (this.demoOverrideActive) return
@@ -44,9 +44,8 @@ export class ApplicationContextService {
 
   /**
    * Re-resolves the current application's profile from the database and
-   * re-emits the context — for when a control mapping changed out from
-   * under the currently-focused application (e.g. a suggestion was just
-   * accepted) so listeners don't have to wait for the next app switch to
+   * re-emits the context; for when a control mapping changed out from
+   * under the currently-focused application (e.g. a suggestion was * accepted) so listeners don't have to wait for the next app switch to
    * see it. No-op if a different application is now focused.
    */
   refreshIfCurrentApplication(applicationId: string): void {
@@ -58,7 +57,7 @@ export class ApplicationContextService {
    * Demo Mode (Product Development Phase 2, "the Noma Moment"): drives the
    * live context from a scripted step instead of a real Alt-Tab, through
    * the exact same updateContext path a real foreground-window change
-   * uses — so every downstream listener (hardware simulator, capture
+   * uses; so every downstream listener (hardware simulator, capture
    * service, renderer push) reacts exactly as it would to a genuine
    * switch. Passing null hands control back to the real OS adapter,
    * re-synced immediately from its current reading rather than left stale
@@ -84,8 +83,8 @@ export class ApplicationContextService {
   }
 
   private updateContext(application: Application | null): void {
-    // Durably records *every* detected application, not just ones with a
-    // profile — this is what makes real OS-icon lookup (iconService.ts)
+    // Durably records *every* detected application, not ones with a
+    // profile: this is what makes real OS-icon lookup (iconService.ts)
     // work for "arbitrary installed applications" later, e.g. from the
     // Learning Center's history, after the app itself has closed and its
     // live executablePath is no longer available from anywhere else.

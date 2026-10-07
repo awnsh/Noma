@@ -7,13 +7,13 @@ interface ShortcutRecorderProps {
 }
 
 /**
- * A real "press the keys you want" recorder — not a text field where you
+ * A real "press the keys you want" recorder. Not a text field where you
  * type out "Control+Shift+P" by hand. This only needs a plain DOM
  * `keydown` listener (Electron's renderer is an ordinary Chromium page),
  * no native hook: recording a shortcut for *configuration* is a much
  * lower-stakes operation than capturing one from ambient typing
- * (captureFilter.ts's policy) or sending one for real (actionExecutor.ts)
- * — this only ever runs while the user has explicitly clicked "Record".
+ * (captureFilter.ts's policy) or sending one for real (actionExecutor.ts).
+ * This only ever runs while the user has explicitly clicked "Record".
  */
 export function ShortcutRecorder({ value, onChange }: ShortcutRecorderProps) {
   const [isRecording, setIsRecording] = useState(false)
@@ -30,11 +30,11 @@ export function ShortcutRecorder({ value, onChange }: ShortcutRecorderProps) {
         return
       }
 
-      // Still building the chord — wait for the non-modifier trigger key.
+      // Still building the chord. Wait for the non-modifier trigger key.
       if (DOM_MODIFIER_CODE_TO_NAME[event.code]) return
 
       const triggerName = DOM_CODE_TO_KEY_NAME[event.code]
-      if (!triggerName) return // Unrecognized key — ignore, keep recording.
+      if (!triggerName) return // Unrecognized key. Ignore, keep recording.
 
       const modifiers: string[] = []
       if (event.ctrlKey) modifiers.push('Control')

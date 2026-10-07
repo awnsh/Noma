@@ -163,3 +163,33 @@ html.noma-notice-surface #root {
 @media (prefers-reduced-motion: reduce) {
   .glide-finger-left, .glide-finger-right, .glide-zone-left, .glide-zone-right { animation: none; }
 }
+
+/* Shared motion primitives. Transform/opacity only, ease-out, no looping. */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+@keyframes noma-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes noma-rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes noma-scale-in { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+.noma-fade-in { animation: noma-fade-in 180ms var(--ease-out-quart) both; }
+.noma-rise-in { animation: noma-rise-in 220ms var(--ease-out-expo) both; }
+.noma-scale-in { animation: noma-scale-in 240ms var(--ease-out-expo) both; }
+.noma-page-in { animation: noma-rise-in 220ms var(--ease-out-expo) both; }
+/* Exits: shorter than the matching enter, ease-in so they leave quickly. */
+@keyframes noma-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes noma-scale-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(6px) scale(0.98); } }
+@keyframes noma-drop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(4px); } }
+.noma-fade-out { animation: noma-fade-out 160ms ease-in both; }
+.noma-scale-out { animation: noma-scale-out 160ms cubic-bezier(0.4, 0, 1, 1) both; }
+.noma-page-out { animation: noma-drop-out 120ms ease-in both; pointer-events: none; }
+/* Collapse a dismissed block: wrap content in an overflow-hidden child. */
+.noma-collapse { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 180ms ease-in, opacity 150ms ease-in; }
+.noma-collapse[data-closing='true'] { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+.noma-press { transition: transform 150ms var(--ease-out-quart), background-color 150ms, border-color 150ms, color 150ms, opacity 150ms; }
+.noma-press:active:not(:disabled) { transform: scale(0.98); }
+/* Stagger helper: style={{ animationDelay: `${i * 40}ms` }} with noma-rise-in. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+  .mc-lift, .mc-lift:hover, .mc-lift:active { transform: none; }
+}
