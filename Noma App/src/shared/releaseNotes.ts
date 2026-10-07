@@ -7,6 +7,12 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.13': [
+    'Mac: Flow now starts learning as soon as you allow Accessibility, without restarting Noma.',
+    'Mac: if Accessibility is off (or macOS stopped trusting Noma after an update), Noma tells you and opens the right settings page.',
+    'Mac: Option+letter is typing, so Flow never records it.',
+    'Mac: shortcuts read the way your keyboard does: Cmd and Option, and Cmd+V shows as Paste.'
+  ],
   '0.1.12': [
     'Glide: "Clear zone" empties a zone, and the new App shortcut option picks from built-in shortcuts for 22 popular apps.',
     'Macro Studio: add a "Switch window" step, and unsaved edits stay put when you move between macros.',
