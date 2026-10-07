@@ -19,27 +19,18 @@ Then push, with GitHub Desktop's **Push origin** or `git push --follow-tags`.
 
 Pushing the `vX.Y.Z` tag starts **Noma App release** in GitHub Actions:
 
-1. Typecheck and tests (Windows and macOS).
-2. The Windows installer and the macOS builds (Apple silicon and Intel),
-   uploaded to Cloudflare R2 (bucket `noma-downloads`, served at
-   **https://downloads.nomashift.com**), with copies under stable names
-   (`Noma-Setup.exe`, `Noma-arm64.dmg`, `Noma-x64.dmg`) and the update files
-   (`latest.yml`, `latest-mac.yml`) uploaded last.
-3. `latest.json`, written once both platforms are up. The website's download
-   buttons and version label read it, so the site hands out the new version
-   as soon as the release finishes: no website edit or redeploy. The same
-   job then deletes every version but the newest 3 (tracked in the bucket's
-   `versions.json`), which keeps storage inside R2's free 10 GB.
-4. Transitional: the same files attached to a GitHub release, for copies at
-   0.1.10 and older, which still look for updates on GitHub. Drop the
-   `release` job and the "Attach to the GitHub release" step once the repo
-   is private.
+1. Typecheck and tests (Windows).
+2. A GitHub release named after the tag.
+3. The Windows installer and the macOS builds (Apple silicon and Intel),
+   uploaded to that release.
 
-The workflow needs two repository secrets (GitHub → Settings → Secrets and
-variables → Actions): `CLOUDFLARE_API_TOKEN`, a Cloudflare API token with
-**Workers R2 Storage: Edit**, and `CLOUDFLARE_ACCOUNT_ID`.
+4. Copies of the three installers under stable names (`Noma-Setup.exe`,
+   `Noma-arm64.dmg`, `Noma-x64.dmg`), added by **Noma App release aliases**
+   right after. The website's download buttons link to
+   `releases/latest/download/<those names>`, so the site hands out the new
+   version as soon as the release finishes: no website edit or redeploy.
 
-Installed copies check downloads.nomashift.com every 4 hours and at launch:
+Installed copies check that release every 4 hours and at launch:
 
 - **Windows** downloads in the background and installs when Noma quits, or
   right away from the tray menu ("Restart to update to …").
@@ -54,8 +45,7 @@ one platform shows up before you release it.
 
 ## What to send pilot users
 
-The website's download section: https://nomashift.com/#beta, or the files
-directly from https://downloads.nomashift.com:
+The latest release page: https://github.com/awnsh/Noma/releases/latest
 
 - **Windows:** `Noma-Setup-X.Y.Z.exe`. The installer isn't code-signed yet,
   so SmartScreen says "Windows protected your PC": **More info → Run anyway**.

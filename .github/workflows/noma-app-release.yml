@@ -1,16 +1,7 @@
-# Builds Noma for Windows and macOS from one tag and publishes the installers
-# and update files to Cloudflare R2 (bucket noma-downloads, served at
-# https://downloads.nomashift.com). Installed copies check that address for
-# updates (Noma App/src/main/updater.ts, electron-builder.yml's `publish`),
-# and the website's download buttons read latest.json from it. Start one
-# with `npm run release` in Noma App, then push. See Noma App/RELEASING.md.
-#
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN (an API token with
-# "Workers R2 Storage: Edit") and CLOUDFLARE_ACCOUNT_ID.
-#
-# Transitional (2026-10-07): each release is also attached to a GitHub
-# release, because copies at 0.1.10 and older look for updates there. Once
-# the repo is private they can't reach it, so this can be removed then.
+# Builds Noma for Windows and macOS from one tag and publishes both to the
+# same GitHub release. Installed copies check that release for updates
+# (Noma App/src/main/updater.ts). Start one with `npm run release` in
+# Noma App, then push. See Noma App/RELEASING.md.
 name: Noma App release
 
 on:
@@ -19,9 +10,6 @@ on:
 
 permissions:
   contents: write
-
-env:
-  R2_BUCKET: noma-downloads
 
 defaults:
   run:
@@ -52,7 +40,7 @@ jobs:
         run: npm test || { echo "::warning::Tests failed once; retrying to rule out a runner hiccup"; npm test; }
 
   # Created once up front, so the two packaging jobs upload into the same
-  # release instead of racing to create it. Transitional, see the top.
+  # release instead of racing to create it.
   release:
     needs: test
     runs-on: ubuntu-latest
@@ -88,140 +76,30 @@ jobs:
           npm install --no-save --force --ignore-scripts "@koromix/koffi-darwin-x64@$KOFFI_VERSION" "@koromix/koffi-darwin-arm64@$KOFFI_VERSION"
       - run: npm run build
 
-      # Built only (--publish never); the steps below do the uploading.
-      - name: Package (Windows)
+      - name: Package and publish (Windows)
         if: runner.os == 'Windows'
-        run: npx electron-builder --win --publish never
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Signed + notarized when the Apple secrets exist (see RELEASING.md);
       # otherwise ad-hoc signed, which runs after "Open Anyway" but can't
       # update itself.
-      - name: Package (macOS)
+      - name: Package and publish (macOS)
         if: runner.os == 'macOS'
         shell: bash
         run: |
           if [ -n "$CSC_LINK" ]; then
-            npx electron-builder --mac --publish never -c.mac.notarize=true
+            npx electron-builder --mac --publish always -c.mac.notarize=true
           else
             unset CSC_LINK CSC_KEY_PASSWORD
             export CSC_IDENTITY_AUTO_DISCOVERY=false
-            npx electron-builder --mac --publish never -c.mac.identity=-
+            npx electron-builder --mac --publish always -c.mac.identity=-
           fi
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_LINK: ${{ secrets.MAC_CERTIFICATE_P12_BASE64 }}
           CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-
-      # Installers and blockmaps first, the latest*.yml update files last, so
-      # an installed copy never sees a new version before its files exist.
-      # Versioned files never change, so they cache forever; the update files
-      # and the stable-name copies must always be fetched fresh.
-      - name: Upload to R2
-        shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          VERSION=${GITHUB_REF_NAME#v}
-          # Explicit types: R2 stores none for .dmg otherwise, and browsers
-          # handle an untyped download less predictably.
-          type_of() {
-            case "$1" in
-              *.exe) echo application/vnd.microsoft.portable-executable ;;
-              *.dmg) echo application/x-apple-diskimage ;;
-              *.zip) echo application/zip ;;
-              *.yml) echo text/yaml ;;
-              *) echo application/octet-stream ;;
-            esac
-          }
-          put() { npx --yes wrangler@4 r2 object put "$R2_BUCKET/$2" --file "$1" --remote --cache-control "$3" --content-type "$(type_of "$2")"; }
-          shopt -s nullglob
-          for f in dist/*.exe dist/*.dmg dist/*.zip dist/*.blockmap; do
-            put "$f" "$(basename "$f")" "public, max-age=31536000, immutable"
-          done
-          # Stable names, so a link that doesn't know the version still works.
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            put "dist/Noma-Setup-$VERSION.exe" "Noma-Setup.exe" "no-cache"
-          else
-            put "dist/Noma-$VERSION-arm64.dmg" "Noma-arm64.dmg" "no-cache"
-            put "dist/Noma-$VERSION-x64.dmg" "Noma-x64.dmg" "no-cache"
-          fi
-          for f in dist/latest*.yml; do
-            put "$f" "$(basename "$f")" "no-cache"
-          done
-
-      # Transitional, see the top.
-      - name: Attach to the GitHub release
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          shopt -s nullglob
-          gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber \
-            dist/*.exe dist/*.dmg dist/*.zip dist/*.blockmap dist/latest*.yml
-
-  # Written once both platforms are up, so the website never offers a
-  # version whose installers aren't all there yet (it reads this file).
-  manifest:
-    needs: package
-    runs-on: ubuntu-latest
-    steps:
-      - name: Write latest.json
-        working-directory: .
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          VERSION=${GITHUB_REF_NAME#v}
-          cat > latest.json <<EOF
-          {
-            "version": "$VERSION",
-            "releasedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "windows": "Noma-Setup-$VERSION.exe",
-            "macAppleSilicon": "Noma-$VERSION-arm64.dmg",
-            "macIntel": "Noma-$VERSION-x64.dmg"
-          }
-          EOF
-          cat latest.json
-          npx --yes wrangler@4 r2 object put "$R2_BUCKET/latest.json" --file latest.json --remote \
-            --content-type application/json --cache-control "no-cache"
-
-      # Keeps the bucket inside R2's free 10 GB: only the newest 3 versions'
-      # files stay (each version is about 1.2 GB). Nothing needs older ones:
-      # the website and the updater only ever fetch the newest. versions.json
-      # (in the bucket) lists published versions in release order; the file
-      # names follow from the version, so nothing has to list the bucket.
-      - name: Remove all but the newest 3 versions
-        working-directory: .
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          KEEP: 3
-        run: |
-          set -euo pipefail
-          VERSION=${GITHUB_REF_NAME#v}
-          curl -sf https://downloads.nomashift.com/versions.json -o versions.json || echo '[]' > versions.json
-          python3 - "$VERSION" "$KEEP" <<'PY'
-          import json, sys
-          version, keep = sys.argv[1], int(sys.argv[2])
-          versions = [v for v in json.load(open('versions.json')) if v != version] + [version]
-          old, kept = versions[:-keep], versions[-keep:]
-          json.dump(kept, open('versions.json', 'w'))
-          names = []
-          for v in old:
-              for f in (f'Noma-Setup-{v}.exe', f'Noma-{v}-arm64.dmg', f'Noma-{v}-x64.dmg',
-                        f'Noma-{v}-arm64-mac.zip', f'Noma-{v}-mac.zip'):
-                  names += [f, f + '.blockmap']
-          open('to-delete.txt', 'w').write('\n'.join(names))
-          print('keeping', kept, 'removing', old)
-          PY
-          npx --yes wrangler@4 r2 object put "$R2_BUCKET/versions.json" --file versions.json --remote \
-            --content-type application/json --cache-control "no-cache"
-          while read -r name; do
-            [ -n "$name" ] || continue
-            npx --yes wrangler@4 r2 object delete "$R2_BUCKET/$name" --remote || echo "::warning::could not delete $name"
-          done < to-delete.txt

@@ -1,0 +1,42 @@
+# Gives the newest release's installers stable, versionless names
+# (Noma-Setup.exe, Noma-arm64.dmg, Noma-x64.dmg), so the website can link to
+#   https://github.com/awnsh/Noma/releases/latest/download/<name>
+# and always hand out the current version, with no website change per
+# release. Runs after every "Noma App release", and when this file changes
+# (which also backfills the release that is current when it is added).
+name: Noma App release aliases
+
+on:
+  workflow_run:
+    workflows: ['Noma App release']
+    types: [completed]
+  push:
+    branches: [main]
+    paths: ['.github/workflows/noma-app-release-aliases.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aliases:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy the latest installers under stable names
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          VERSION=${TAG#v}
+          echo "Latest release: $TAG"
+          mkdir -p aliases && cd aliases
+          gh release download "$TAG" --repo "$REPO" \
+            -p "Noma-Setup-$VERSION.exe" -p "Noma-$VERSION-arm64.dmg" -p "Noma-$VERSION-x64.dmg"
+          mv "Noma-Setup-$VERSION.exe" Noma-Setup.exe
+          mv "Noma-$VERSION-arm64.dmg" Noma-arm64.dmg
+          mv "Noma-$VERSION-x64.dmg" Noma-x64.dmg
+          gh release upload "$TAG" --repo "$REPO" --clobber Noma-Setup.exe Noma-arm64.dmg Noma-x64.dmg
+          ls -la

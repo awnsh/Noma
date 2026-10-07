@@ -5,9 +5,8 @@ import { autoUpdater } from 'electron-updater'
 import type { UpdateStatus } from '@shared/types'
 import { isMac } from './platform'
 
-/** Where people download Noma: the website's download section. The update
- *  files themselves come from electron-builder.yml's `publish` address. */
-const DOWNLOAD_PAGE_URL = 'https://nomashift.com/#beta'
+/** Where pilot builds are published (electron-builder.yml's `publish`). */
+const RELEASES_URL = 'https://github.com/awnsh/Noma/releases/latest'
 const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
 
 let status: UpdateStatus = {
@@ -34,9 +33,8 @@ function foundUpdate(): boolean {
 }
 
 /**
- * Keeps installed pilot/beta copies up to date from
- * https://downloads.nomashift.com, which CI fills for Windows and macOS from
- * the same tag (see RELEASING.md).
+ * Keeps installed pilot/beta copies up to date from GitHub Releases, which
+ * CI fills for Windows and macOS from the same tag (see RELEASING.md).
  *
  * Windows: downloads in the background and installs when Noma quits (or
  * right away from the tray's "Restart to update" or Settings).
@@ -56,7 +54,7 @@ export function startAutoUpdates(onReadyToInstall: (version: string) => void): v
   ready = canSelfUpdate().then((selfUpdate) => {
     autoUpdater.autoDownload = selfUpdate
     autoUpdater.autoInstallOnAppQuit = selfUpdate
-    // Background failures (offline, server unreachable) are retried at the
+    // Background failures (offline, GitHub rate limit) are retried at the
     // next check and never shown; checkNow() reports its own.
     autoUpdater.on('error', () => {
       if (status.phase === 'downloading') setStatus({ phase: 'idle', percent: null })
@@ -141,7 +139,7 @@ export function installUpdateNow(): void {
 }
 
 export function openDownloadPage(): void {
-  void shell.openExternal(DOWNLOAD_PAGE_URL)
+  void shell.openExternal(RELEASES_URL)
 }
 
 /** Windows always can; macOS only when the app carries a Developer ID

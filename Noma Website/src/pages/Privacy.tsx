@@ -5,7 +5,7 @@ import LegalSection from '../components/ui/LegalSection'
 // is checked against its code and `Noma App/docs/privacy-and-legal.md`
 // (capture filter, click-target rules, Glide, updater, diagnostics), and
 // every claim about the site against this repo (no cookies, storage or
-// analytics; downloads.nomashift.com (Cloudflare R2) for downloads and the version label; Formspree for the
+// analytics; GitHub for downloads and the version label; Formspree for the
 // email form and the /feedback issue form; Cloudflare hosting). Not legal advice: worth a lawyer's
 // review before Noma leaves beta.
 const LAST_UPDATED = 'October 7, 2026'
@@ -83,9 +83,9 @@ export default function Privacy() {
           <LegalSection title="When the app goes online">
             <ul className="list-disc space-y-2 pl-5">
               <li>
-                <span className="text-base-200">Updates.</span> Noma checks downloads.nomashift.com for a newer
-                version at launch and every few hours, and downloads it from there. That request is handled like
-                any download: it carries your IP address and nothing about how you use Noma.
+                <span className="text-base-200">Updates.</span> Noma checks GitHub for a newer version at launch
+                and every few hours, and downloads it from there. GitHub sees that request the way it sees any
+                download.
               </li>
               <li>
                 <span className="text-base-200">Reporting a problem.</span> This opens the report form on this
@@ -117,7 +117,7 @@ export default function Privacy() {
               The site uses no cookies, no analytics, and no advertising trackers. It&rsquo;s hosted by
               Cloudflare, which handles basic request information (such as your IP address and browser) to
               deliver pages and protect against abuse. The download buttons and the version number come from
-              downloads.nomashift.com, which is also hosted by Cloudflare.
+              GitHub, which sees those requests.
             </p>
           </LegalSection>
 

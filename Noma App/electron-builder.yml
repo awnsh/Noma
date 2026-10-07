@@ -1,7 +1,7 @@
 # Packaging for Windows and macOS. One codebase, one version number: CI
-# builds both installers from the same tag and uploads them to Cloudflare R2,
-# served at https://downloads.nomashift.com, which is also where installed
-# copies look for updates (src/main/updater.ts). See RELEASING.md.
+# builds both installers from the same tag and publishes them to the same
+# GitHub release, which is also where installed copies look for updates
+# (src/main/updater.ts). See RELEASING.md.
 appId: com.noma.app
 productName: Noma
 copyright: Copyright © 2026 Noma
@@ -53,9 +53,8 @@ mac:
 dmg:
   artifactName: Noma-${version}-${arch}.${ext}
 
-# A plain web address (2026-10-07), so updates don't depend on the GitHub
-# repo being public. CI uploads to it; electron-builder only reads this to
-# write latest.yml and the app's update config.
 publish:
-  provider: generic
-  url: https://downloads.nomashift.com
+  provider: github
+  owner: awnsh
+  repo: Noma
+  releaseType: release

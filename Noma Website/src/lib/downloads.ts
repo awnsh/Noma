@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react'
 
 /**
- * Where the beta's installers live (2026-10-07): Cloudflare R2, served at
- * downloads.nomashift.com, so downloads don't depend on the GitHub repo
- * being public. Every link points at the installer file itself, so clicking
- * a button downloads it straight away.
+ * Where the beta's installers live: the app's GitHub releases. Every link
+ * points at the installer file itself, which GitHub serves as a download, so
+ * clicking a button downloads it straight away and the visitor never lands
+ * on a GitHub page.
  *
- * The release workflow (.github/workflows/noma-app-release.yml) writes
- * latest.json only after every installer for a version is uploaded, so the
- * version it names is always complete. Until it answers, or if it can't be
- * reached, the buttons use the stable-name copies each release also gets.
+ * The page looks up the newest release that actually has each installer and
+ * links to that exact file. It has to check the files, not just take the
+ * newest release: a release is published a few minutes before its installers
+ * finish uploading, and in that gap a "latest" link would hit GitHub's
+ * not-found page (seen with v0.1.7). Until the lookup answers, or if GitHub
+ * can't be reached, the buttons use the stable-name copies every release
+ * gets (.github/workflows/noma-app-release-aliases.yml).
  */
-export const DOWNLOADS_BASE = 'https://downloads.nomashift.com'
-const MANIFEST_URL = `${DOWNLOADS_BASE}/latest.json`
+const LATEST = 'https://github.com/awnsh/Noma/releases/latest/download'
+const RELEASES_API = 'https://api.github.com/repos/awnsh/Noma/releases?per_page=10'
 
 export interface Downloads {
   version: string | null
@@ -26,32 +29,53 @@ export interface Downloads {
 const FALLBACK: Downloads = {
   version: null,
   releasedAt: null,
-  windows: `${DOWNLOADS_BASE}/Noma-Setup.exe`,
-  macAppleSilicon: `${DOWNLOADS_BASE}/Noma-arm64.dmg`,
-  macIntel: `${DOWNLOADS_BASE}/Noma-x64.dmg`,
+  windows: `${LATEST}/Noma-Setup.exe`,
+  macAppleSilicon: `${LATEST}/Noma-arm64.dmg`,
+  macIntel: `${LATEST}/Noma-x64.dmg`,
 }
 
-/** latest.json, as the release workflow writes it. */
-interface Manifest {
-  version: string
-  releasedAt?: string
-  windows: string
-  macAppleSilicon: string
-  macIntel: string
+/** Each installer's versioned file name, as electron-builder names it. */
+const INSTALLERS = {
+  windows: /^Noma-Setup-[\d.]+\.exe$/,
+  macAppleSilicon: /^Noma-[\d.]+-arm64\.dmg$/,
+  macIntel: /^Noma-[\d.]+-x64\.dmg$/,
+} as const
+
+interface Release {
+  tag_name: string
+  draft: boolean
+  prerelease: boolean
+  published_at?: string
+  assets: { name: string; browser_download_url: string }[]
 }
 
-/** Turns the manifest's file names into links, keeping the fallback for
- *  anything missing or malformed. */
-export function fromManifest(manifest: Partial<Manifest> | null): Downloads {
-  if (!manifest || typeof manifest.version !== 'string') return FALLBACK
-  const file = (name: unknown, fallback: string) =>
-    typeof name === 'string' && /^[\w.-]+$/.test(name) ? `${DOWNLOADS_BASE}/${name}` : fallback
+/** Picks, per installer, the newest published release that has it. */
+export function pickDownloads(releases: Release[]): Downloads {
+  const published = releases.filter((release) => !release.draft && !release.prerelease)
+  const find = (pattern: RegExp) => {
+    for (const release of published) {
+      const asset = release.assets.find((candidate) => pattern.test(candidate.name))
+      if (asset)
+        return {
+          url: asset.browser_download_url,
+          version: release.tag_name.replace(/^v/, ''),
+          releasedAt: release.published_at ?? null,
+        }
+    }
+    return null
+  }
+  const windows = find(INSTALLERS.windows)
+  const macAppleSilicon = find(INSTALLERS.macAppleSilicon)
+  const macIntel = find(INSTALLERS.macIntel)
+  const shown = windows ?? macAppleSilicon
   return {
-    version: manifest.version,
-    releasedAt: typeof manifest.releasedAt === 'string' ? manifest.releasedAt : null,
-    windows: file(manifest.windows, FALLBACK.windows),
-    macAppleSilicon: file(manifest.macAppleSilicon, FALLBACK.macAppleSilicon),
-    macIntel: file(manifest.macIntel, FALLBACK.macIntel),
+    // The version shown is the one the visitor's likely download has; the
+    // Windows build is checked first because it's uploaded alongside the Macs.
+    version: shown?.version ?? null,
+    releasedAt: shown?.releasedAt ?? null,
+    windows: windows?.url ?? FALLBACK.windows,
+    macAppleSilicon: macAppleSilicon?.url ?? FALLBACK.macAppleSilicon,
+    macIntel: macIntel?.url ?? FALLBACK.macIntel,
   }
 }
 
@@ -59,11 +83,13 @@ export function useLatestDownloads(): Downloads {
   const [downloads, setDownloads] = useState<Downloads>(FALLBACK)
   useEffect(() => {
     const controller = new AbortController()
-    fetch(MANIFEST_URL, { signal: controller.signal, cache: 'no-store' })
+    fetch(RELEASES_API, { signal: controller.signal, headers: { Accept: 'application/vnd.github+json' } })
       .then((response) => (response.ok ? response.json() : null))
-      .then((manifest: Partial<Manifest> | null) => setDownloads(fromManifest(manifest)))
+      .then((releases: Release[] | null) => {
+        if (Array.isArray(releases)) setDownloads(pickDownloads(releases))
+      })
       .catch(() => {
-        // Offline or aborted: the fallback links stay.
+        // Offline, rate-limited or aborted: the fallback links stay.
       })
     return () => controller.abort()
   }, [])
