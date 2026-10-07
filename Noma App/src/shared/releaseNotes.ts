@@ -7,7 +7,12 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
-  '0.1.11': [
+  '0.1.12': [
+    'Glide: "Clear zone" empties a zone, and the new App shortcut option picks from built-in shortcuts for 22 popular apps.',
+    'Macro Studio: add a "Switch window" step, and unsaved edits stay put when you move between macros.',
+    'Workflows made only of switching between apps now save and run properly.',
+    'The Controls page is gone: edit zones on the Glide page, and open a saved workflow in Macro Studio.',
+    'Popups close with Escape or a click outside them.',
     'Report a problem now opens the report form on nomashift.com.'
   ],
   '0.1.10': [
