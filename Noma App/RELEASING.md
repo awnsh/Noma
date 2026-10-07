@@ -118,9 +118,24 @@ silicon one and an Intel one):
       ⌘T) runs in the app you're in.
 - [ ] Chrome's CLOSE WINDOW control closes the window.
 - [ ] Spotify's MUTE control toggles the Mac's sound.
-- [ ] Workflow monitoring on: ⌘-shortcuts show up in Activity.
+- [ ] Before allowing Accessibility, the app shows "Flow needs Accessibility
+      access". Allow it in System Settings *without quitting Noma*: within a
+      few seconds the notice goes away and Flow starts seeing shortcuts.
+      (Settings → Report a problem → the diagnostics line "Input listener"
+      should read "running, Accessibility allowed".)
+- [ ] Workflow monitoring on: ⌘-shortcuts show up in Activity. Option+letter
+      (typing é, ©) never does.
+- [ ] Repeat ⌘C in one app, switch app, ⌘V a few times: Flow offers the
+      workflow, and its steps read "Copy"/"Paste", not "Meta+C".
+- [ ] Accept it and press the control: it switches apps and pastes.
 - [ ] Click capture on: clicking a named button in an app records its name.
-      A learned workflow with that click replays it.
+      A learned workflow with that click replays it. Clicking around inside
+      Noma's own window stays instant (no half-second stalls).
+- [ ] With Flow learning on, typing anywhere feels normal (uiohook waits on
+      Noma's main thread for every key on macOS, so a busy Noma would show up
+      as typing lag).
+- [ ] After installing an update (unsigned build): the Accessibility notice
+      comes back, and removing + re-adding Noma in System Settings clears it.
 - [ ] Glide: turn it on (Glide page). It says "On, watching your trackpad".
       Rest a fingertip on the palm rest beside the trackpad and flick it on:
       the activity list shows the zone, and in Chrome the zone's action runs.

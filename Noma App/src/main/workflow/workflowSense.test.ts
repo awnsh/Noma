@@ -32,6 +32,19 @@ describe('shortcutRole', () => {
     expect(isTrivialShortcut(['Control', 'Shift', 'T'])).toBe(false)
     expect(isTrivialShortcut(['Meta', 'Shift', 'S'])).toBe(false)
   })
+
+  it('reads Command combos the way a Mac means them', () => {
+    expect(shortcutRole(['Meta', 'D'], false)).toBe('navigation')
+    expect(shortcutRole(['Meta', 'D'], true)).toBe('action')
+    expect(shortcutRole(['Meta', 'Space'], true)).toBe('navigation')
+    expect(shortcutRole(['Meta', 'H'], true)).toBe('navigation')
+    expect(shortcutRole(['Meta', 'Z'], true)).toBe('undo')
+    expect(shortcutRole(['Meta', 'Shift', 'Z'], true)).toBe('redo')
+    expect(shortcutRole(['Control', 'Y'], true)).toBe('action')
+    expect(shortcutRole(['Meta', 'C'], true)).toBe('copy')
+    expect(shortcutRole(['Meta', 'V'], true)).toBe('paste')
+    expect(shortcutRole(['Control', 'Meta', 'Shift', '4'], true)).toBe('screenshot')
+  })
 })
 
 describe('chainMakesSense; workflows the user accepted still pass', () => {

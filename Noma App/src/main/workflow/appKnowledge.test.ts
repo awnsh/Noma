@@ -6,7 +6,8 @@ import {
   inAppLabel,
   isAmbientApp,
   matchRealisticWorkflow,
-  pairPlausibility
+  pairPlausibility,
+  windowsEquivalentCombo
 } from './appKnowledge'
 
 describe('appKnowledge', () => {
@@ -55,5 +56,16 @@ describe('appKnowledge', () => {
     expect(inAppCoherence('adobe premiere pro', 'Control+K', 'Control+M')).toBeLessThan(0.5)
     expect(inAppCoherence('code', 'Control+A', 'Control+C')).toBe(0.5)
     expect(inAppCoherence('unknown-app', 'Control+J', 'Control+T')).toBe(0.5)
+  })
+})
+
+describe('windowsEquivalentCombo', () => {
+  it('reads a Mac Command combo as its Windows Control twin', () => {
+    expect(windowsEquivalentCombo('Meta+Shift+P', true)).toBe('Control+Shift+P')
+  })
+
+  it('leaves combos that already hold Control, and every combo on Windows, alone', () => {
+    expect(windowsEquivalentCombo('Control+Meta+F', true)).toBe('Control+Meta+F')
+    expect(windowsEquivalentCombo('Meta+D', false)).toBe('Meta+D')
   })
 })

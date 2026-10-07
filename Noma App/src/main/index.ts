@@ -43,6 +43,7 @@ import trayTemplatePath from '../../resources/trayIconTemplate.png?asset'
 import trayTemplate2xPath from '../../resources/trayIconTemplate@2x.png?asset'
 import { APP_DISPLAY_NAME, IPC_CHANNELS, ISSUE_PAGE_URL } from '@shared/constants'
 import { buildDiagnosticsReport } from './diagnostics'
+import { ACCESSIBILITY_SETTINGS_URL, flowPermissionState } from './flowPermission'
 import type { HoloTrackpadZoneCount } from '@shared/types'
 import { initDatabase } from './database/db'
 import { registerIpcHandlers } from './ipc/handlers'
@@ -560,6 +561,10 @@ app.whenReady().then(() => {
   )
   ipcMain.handle(IPC_CHANNELS.GET_DIAGNOSTICS_REPORT, () => buildDiagnosticsReport(glide.getState(), latestTouchCheckAt()))
   ipcMain.handle(IPC_CHANNELS.OPEN_ISSUE_PAGE, () => shell.openExternal(ISSUE_PAGE_URL))
+  ipcMain.handle(IPC_CHANNELS.GET_FLOW_PERMISSION, () => flowPermissionState())
+  ipcMain.handle(IPC_CHANNELS.OPEN_ACCESSIBILITY_SETTINGS, () =>
+    isMac ? shell.openExternal(ACCESSIBILITY_SETTINGS_URL) : undefined
+  )
   ipcMain.handle(IPC_CHANNELS.UPDATE_GET_STATUS, () => getUpdateStatus())
   ipcMain.handle(IPC_CHANNELS.UPDATE_CHECK, () => checkForUpdatesNow())
   ipcMain.handle(IPC_CHANNELS.UPDATE_INSTALL, () => installUpdateNow())

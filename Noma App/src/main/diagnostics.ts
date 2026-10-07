@@ -6,6 +6,7 @@ import type { GlideState } from '@shared/types'
 import { getDatabase } from './database/db'
 import { getClickCaptureEnabled, getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
 import { APP_DISPLAY_NAME } from '@shared/constants'
+import { flowPermissionState } from './flowPermission'
 
 /** How many recent control presses the report lists. */
 const RECENT_ACTIONS = 15
@@ -34,6 +35,12 @@ function recentActions(): string[] {
   } catch {
     return ['  (could not read the action log)']
   }
+}
+
+function listenerLine(): string {
+  const state = flowPermissionState()
+  const listener = state.listening ? 'running' : state.listenerWanted ? 'NOT running' : 'not needed (Flow and Glide off)'
+  return state.needed ? `${listener}, Accessibility ${state.accessibility ? 'allowed' : 'NOT allowed'}` : listener
 }
 
 function count(sql: string): number {
@@ -65,6 +72,7 @@ export function buildDiagnosticsReport(glide: GlideState, touchCheckAt: number |
     `Touch check: ${touchCheckAt ? new Date(touchCheckAt).toISOString() : 'never run'}`,
     '',
     `Flow learning: ${getWorkflowMonitoringEnabled() ? 'on' : 'off'}, button clicks: ${getClickCaptureEnabled() ? 'on' : 'off'}`,
+    `Input listener: ${listenerLine()}`,
     `Suggestions waiting: ${count("SELECT COUNT(*) AS count FROM suggestions WHERE status = 'pending'")}`,
     `Saved workflows: ${count("SELECT COUNT(*) AS count FROM macros WHERE trigger = 'flow-control'")}`,
     `Apps with controls: ${count('SELECT COUNT(*) AS count FROM profiles')}`,

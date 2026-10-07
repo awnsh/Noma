@@ -1,4 +1,5 @@
 import type { ControlAction } from '@shared/types'
+import { isMacRenderer } from './platform'
 
 /**
  * Short, physical-display-safe captions and glyphs for a control's action —
@@ -10,6 +11,9 @@ import type { ControlAction } from '@shared/types'
 
 const KEY_ABBREVIATIONS: Record<string, string> = {
   Control: 'Ctrl',
+  // The keys as this OS's keyboard labels them.
+  Meta: isMacRenderer ? 'Cmd' : 'Win',
+  Alt: isMacRenderer ? 'Option' : 'Alt',
   ArrowLeft: '←',
   ArrowRight: '→',
   ArrowUp: '↑',

@@ -90,6 +90,9 @@ export const IPC_CHANNELS = {
   REMOVE_WORKFLOW: 'flow:remove-workflow',
   PREVIEW_SUGGESTION_ACTION: 'flow:preview-suggestion-action',
   GET_DIAGNOSTICS_REPORT: 'flow:get-diagnostics-report',
+  /** macOS: whether Flow has the Accessibility access it needs. */
+  GET_FLOW_PERMISSION: 'flow:get-flow-permission',
+  OPEN_ACCESSIBILITY_SETTINGS: 'flow:open-accessibility-settings',
   OPEN_ISSUE_PAGE: 'flow:open-issue-page',
   /** Software updates (main/updater.ts): Settings' "Check for updates". */
   UPDATE_GET_STATUS: 'flow:update-get-status',

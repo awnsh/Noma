@@ -988,6 +988,10 @@ export interface FlowApi {
    *  touchpad, settings, recent action results, never what was typed or
    *  clicked) for the tester to read and paste themselves. Never sent. */
   getDiagnosticsReport(): Promise<string>
+  /** macOS: whether Flow can see and send shortcuts yet. */
+  getFlowPermission(): Promise<FlowPermissionState>
+  /** macOS: opens System Settings at Privacy & Security → Accessibility. */
+  openAccessibilitySettings(): Promise<void>
   /** Opens the website's report form in the browser, with nothing attached. */
   openIssuePage(): Promise<void>
   /** Software updates. Updates are also checked on their own every few
@@ -1039,4 +1043,19 @@ export interface FlowApi {
   /** Main window only: fires when a notice's "Add to Noma" needs the
    *  full review UI (picking a control slot). */
   onOpenSuggestionInApp(callback: (suggestionId: string) => void): () => void
+}
+
+/**
+ * macOS gates Flow behind Accessibility permission: without it Noma can't see
+ * shortcuts, press them, or click. `needed` is false on Windows, where
+ * nothing has to be granted.
+ */
+export interface FlowPermissionState {
+  needed: boolean
+  /** macOS currently trusts Noma (AXIsProcessTrusted). */
+  accessibility: boolean
+  /** The global keyboard/mouse listener is actually installed. */
+  listening: boolean
+  /** Something (Flow learning or Glide) wants that listener running. */
+  listenerWanted: boolean
 }

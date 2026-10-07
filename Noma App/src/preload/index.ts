@@ -190,6 +190,8 @@ const flowApi: FlowApi = {
   previewSuggestionAction: (suggestionId) =>
     ipcRenderer.invoke(IPC_CHANNELS.PREVIEW_SUGGESTION_ACTION, suggestionId),
   getDiagnosticsReport: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DIAGNOSTICS_REPORT),
+  getFlowPermission: () => ipcRenderer.invoke(IPC_CHANNELS.GET_FLOW_PERMISSION),
+  openAccessibilitySettings: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_ACCESSIBILITY_SETTINGS),
   openIssuePage: () => ipcRenderer.invoke(IPC_CHANNELS.OPEN_ISSUE_PAGE),
   getUpdateStatus: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_GET_STATUS),
   checkForUpdates: () => ipcRenderer.invoke(IPC_CHANNELS.UPDATE_CHECK),

@@ -1,3 +1,5 @@
+import { isMacRenderer } from '../lib/platform'
+
 interface LayoutKey {
   /** Canonical key name (matches src/main/workflow/keyNames.ts /
    *  shared/constants/domKeyCodes.ts); what a captured combo's entries
@@ -43,15 +45,26 @@ const ROWS: LayoutKey[][] = [
     { name: 'Period', label: '.', width: 'w-7' },
     { name: 'Shift', label: 'Shift', width: 'w-16' }
   ],
-  [
-    { name: 'Control', label: 'Ctrl', width: 'w-10' },
-    { name: 'Meta', label: 'Win', width: 'w-9' },
-    { name: 'Alt', label: 'Alt', width: 'w-9' },
-    { name: 'Space', label: '', width: 'w-40' },
-    { name: 'Alt', label: 'Alt', width: 'w-9' },
-    { name: 'Meta', label: 'Win', width: 'w-9' },
-    { name: 'Control', label: 'Ctrl', width: 'w-10' }
-  ]
+  // A Mac's bottom row: Control, Option, Command either side of the space bar.
+  isMacRenderer
+    ? [
+        { name: 'Control', label: 'Ctrl', width: 'w-10' },
+        { name: 'Alt', label: 'Opt', width: 'w-9' },
+        { name: 'Meta', label: 'Cmd', width: 'w-9' },
+        { name: 'Space', label: '', width: 'w-40' },
+        { name: 'Meta', label: 'Cmd', width: 'w-9' },
+        { name: 'Alt', label: 'Opt', width: 'w-9' },
+        { name: 'Control', label: 'Ctrl', width: 'w-10' }
+      ]
+    : [
+        { name: 'Control', label: 'Ctrl', width: 'w-10' },
+        { name: 'Meta', label: 'Win', width: 'w-9' },
+        { name: 'Alt', label: 'Alt', width: 'w-9' },
+        { name: 'Space', label: '', width: 'w-40' },
+        { name: 'Alt', label: 'Alt', width: 'w-9' },
+        { name: 'Meta', label: 'Win', width: 'w-9' },
+        { name: 'Control', label: 'Ctrl', width: 'w-10' }
+      ]
 ]
 
 const ARROW_ROWS: LayoutKey[][] = [

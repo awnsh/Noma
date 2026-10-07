@@ -1,5 +1,6 @@
 import type { WorkflowStep } from '@shared/types'
 import { isAmbientApp, isSystemSurface, matchRealisticWorkflow } from './appKnowledge'
+import { isMac } from '../platform'
 
 /**
  * Does a repeated chain actually make sense as a workflow? Repetition alone
@@ -51,7 +52,9 @@ const NAVIGATION_KEYS = new Set([
   'Backquote'
 ])
 
-export function shortcutRole(comboKeys: string[]): ShortcutRole {
+/** `mac` picks which OS's meaning a combo has: Command+D is Bookmark or
+ *  Duplicate on a Mac, not the Windows key's Show desktop. */
+export function shortcutRole(comboKeys: string[], mac: boolean = isMac): ShortcutRole {
   const modifiers = new Set(comboKeys.filter((key) => MODIFIERS.has(key)))
   const keys = comboKeys.filter((key) => !MODIFIERS.has(key))
   if (keys.length !== 1) return 'action'
@@ -61,10 +64,15 @@ export function shortcutRole(comboKeys: string[]): ShortcutRole {
     modifiers.size === names.length && names.every((name) => modifiers.has(name))
 
   if (NAVIGATION_KEYS.has(key)) return 'navigation'
-  if (only('Meta') && key === 'D') return 'navigation' // show desktop
+  if (!mac && only('Meta') && key === 'D') return 'navigation' // show desktop
+  // macOS: Spotlight, switching input source, hiding or minimizing the app.
+  if (mac && (only('Meta') || only('Control')) && key === 'Space') return 'navigation'
+  if (mac && only('Meta') && (key === 'H' || key === 'M')) return 'navigation'
   if (command && key === 'Z') return modifiers.has('Shift') ? 'redo' : 'undo'
-  if (only('Control') && key === 'Y') return 'redo'
+  if (!mac && only('Control') && key === 'Y') return 'redo'
   if (only('Meta', 'Shift') && (key === 'S' || key === '3' || key === '4' || key === '5')) return 'screenshot'
+  // macOS: the same screenshots, to the clipboard instead of a file.
+  if (only('Meta', 'Shift', 'Control') && (key === '3' || key === '4' || key === '5')) return 'screenshot'
   if (command && !modifiers.has('Alt')) {
     if ((key === 'C' || key === 'X') && !modifiers.has('Shift')) return 'copy'
     if (key === 'V') return 'paste'

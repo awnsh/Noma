@@ -11,6 +11,8 @@
  * macAdapter.ts maps well-known bundle ids onto these same names.
  */
 
+import { isMac } from '../platform'
+
 export type AppCategory =
   | 'browser'
   | 'editor'
@@ -365,9 +367,21 @@ function profileFor(applicationId: string | null): InAppProfile | null {
   )
 }
 
+/** The profiles are written with Windows shortcuts. A Mac app uses Command
+ *  where Windows uses Control (Cmd+Shift+P is VS Code's Command palette),
+ *  so on a Mac a Command combo is looked up as its Control twin. A combo
+ *  that already holds Control means something else there and isn't. */
+export function windowsEquivalentCombo(combo: string, mac: boolean = isMac): string {
+  if (!mac) return combo
+  const keys = combo.split('+')
+  if (keys.includes('Control') || !keys.includes('Meta')) return combo
+  return keys.map((key) => (key === 'Meta' ? 'Control' : key)).join('+')
+}
+
 function findGroup(profile: InAppProfile, combo: string): { group: string; label: string } | null {
+  const lookup = windowsEquivalentCombo(combo)
   for (const [group, actions] of Object.entries(profile.groups)) {
-    if (actions[combo]) return { group, label: actions[combo] }
+    if (actions[lookup]) return { group, label: actions[lookup] }
   }
   return null
 }

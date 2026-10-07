@@ -14,6 +14,7 @@ import { Settings } from './pages/Settings'
 import { Developer } from './pages/Developer'
 import { Onboarding } from './pages/Onboarding'
 import { WhatsNewModal } from './components/WhatsNewModal'
+import { MacAccessibilityNotice } from './components/MacAccessibilityNotice'
 import { useUiStore } from './stores/uiStore'
 import { useOnboardingStore } from './stores/onboardingStore'
 // Imported for their side effect: both subscribe to main's pushes at load,
@@ -71,6 +72,7 @@ function App() {
 
   return (
     <AppShell>
+      <MacAccessibilityNotice />
       <div key={shownPage} className={`${leaving ? 'noma-page-out' : 'noma-page-in'} min-h-full`}>
       {shownPage === 'home' && <Home />}
       {shownPage === 'workflows' && <Workflows />}

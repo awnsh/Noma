@@ -1,5 +1,6 @@
 import type { DetectedPattern, MacroStep, Suggestion, WorkflowStep } from '@shared/types'
 import { formatShortcutCaption } from './describeAction'
+import { isMacRenderer } from './platform'
 
 /**
  * One step in a visualized workflow chain — "Screenshot → Claude Code →
@@ -35,9 +36,25 @@ const SHORTCUT_STEP_LABELS: Record<string, string> = {
   Enter: 'Enter'
 }
 
+/** The same, as a Mac spells them (mirrors MAC_SHORTCUT_DISPLAY_LABELS). */
+const MAC_SHORTCUT_STEP_LABELS: Record<string, string> = {
+  'Meta+V': 'Paste',
+  'Meta+C': 'Copy',
+  'Meta+X': 'Cut',
+  'Meta+Shift+3': 'Screenshot',
+  'Meta+Shift+4': 'Screenshot',
+  'Meta+Shift+5': 'Screenshot',
+  'Control+Meta+Shift+3': 'Screenshot',
+  'Control+Meta+Shift+4': 'Screenshot'
+}
+
 export function shortcutStepLabel(comboKeys: string[]): string {
   const combo = comboKeys.join('+')
-  return SHORTCUT_STEP_LABELS[combo] ?? formatShortcutCaption(comboKeys)
+  return (
+    (isMacRenderer ? MAC_SHORTCUT_STEP_LABELS[combo] : undefined) ??
+    SHORTCUT_STEP_LABELS[combo] ??
+    formatShortcutCaption(comboKeys)
+  )
 }
 
 function appStepLabel(applicationId: string | null, names: Record<string, string | null> | undefined): string {

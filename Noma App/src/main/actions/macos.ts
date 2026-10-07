@@ -251,8 +251,10 @@ interface WindowListApi {
   CFDictionaryGetValue: NativeFunction
   CFNumberGetValue: NativeFunction
   CFRelease: NativeFunction
+  CGRectMakeWithDictionaryRepresentation: NativeFunction
   layerKey: Pointer
   ownerPidKey: Pointer
+  boundsKey: Pointer
 }
 
 let windowListApi: WindowListApi | null | undefined
@@ -272,8 +274,10 @@ function loadWindowList(): WindowListApi | null {
       CFDictionaryGetValue: cf.func('void *CFDictionaryGetValue(void *theDict, void *key)'),
       CFNumberGetValue: cf.func('bool CFNumberGetValue(void *number, int32_t theType, _Out_ int32_t *valuePtr)'),
       CFRelease: cf.func('void CFRelease(void *cf)'),
+      CGRectMakeWithDictionaryRepresentation: cg.func('bool CGRectMakeWithDictionaryRepresentation(void *dict, void *rect)'),
       layerKey: koffi.decode(cg.symbol('kCGWindowLayer'), 'void *') as Pointer,
-      ownerPidKey: koffi.decode(cg.symbol('kCGWindowOwnerPID'), 'void *') as Pointer
+      ownerPidKey: koffi.decode(cg.symbol('kCGWindowOwnerPID'), 'void *') as Pointer,
+      boundsKey: koffi.decode(cg.symbol('kCGWindowBounds'), 'void *') as Pointer
     }
   } catch {
     windowListApi = null
@@ -317,6 +321,47 @@ export function frontWindowOwnerPid(): number | null {
         if (isNull(window) || read(window, api.layerKey) !== 0) continue
         const pid = read(window, api.ownerPidKey)
         if (pid && pid > 0) return pid
+      }
+      return null
+    } finally {
+      api.CFRelease(list)
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The pid owning the topmost on-screen window under a point, from the window
+ * server (no permission, no Accessibility round trip), or null if unsure.
+ * Click capture uses it to skip Noma's own windows before asking the
+ * Accessibility API: an AX question about Noma, asked from Noma's main
+ * thread, can't be answered until it times out, freezing Noma meanwhile.
+ */
+export function windowOwnerAtPoint(x: number, y: number): number | null {
+  const api = loadWindowList()
+  if (!api) return null
+  try {
+    const list = api.CGWindowListCopyWindowInfo(
+      kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements,
+      0
+    ) as Pointer
+    if (isNull(list)) return null
+    try {
+      const count = Number(api.CFArrayGetCount(list))
+      const rect = Buffer.alloc(32)
+      for (let index = 0; index < count; index++) {
+        const window = api.CFArrayGetValueAtIndex(list, index) as Pointer
+        if (isNull(window)) continue
+        const bounds = api.CFDictionaryGetValue(window, api.boundsKey) as Pointer
+        if (isNull(bounds) || !api.CGRectMakeWithDictionaryRepresentation(bounds, rect)) continue
+        const left = rect.readDoubleLE(0)
+        const top = rect.readDoubleLE(8)
+        if (x < left || y < top || x >= left + rect.readDoubleLE(16) || y >= top + rect.readDoubleLE(24)) continue
+        const pidValue = api.CFDictionaryGetValue(window, api.ownerPidKey) as Pointer
+        if (isNull(pidValue)) return null
+        const out = [0]
+        return api.CFNumberGetValue(pidValue, kCFNumberSInt32Type, out) && out[0] > 0 ? out[0] : null
       }
       return null
     } finally {

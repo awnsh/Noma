@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'child_process'
 import { createInterface } from 'readline'
 import type { RawClickInspection } from './clickTarget'
-import { elementAtPoint } from '../actions/macos'
+import { elementAtPoint, windowOwnerAtPoint } from '../actions/macos'
 import { isMac } from '../platform'
 
 /** What the helper reports about the control under a screen point. `name`
@@ -134,7 +134,12 @@ interface HelperAnswer {
  * Automation control-type names, so clickTarget.ts's rules apply unchanged.
  */
 export class MacAxClickInspector implements ClickInspector {
+  constructor(private readonly ownProcessId: number = process.pid) {}
+
   async inspect(x: number, y: number): Promise<ClickInspection | null> {
+    // Noma's own window: never recorded anyway, and asking the Accessibility
+    // API about Noma from Noma's main thread stalls until it times out.
+    if (windowOwnerAtPoint(x, y) === this.ownProcessId) return null
     const element = elementAtPoint(x, y)
     if (!element) return null
     return { controlType: element.controlType, name: element.name, processId: element.pid, window: element.window }

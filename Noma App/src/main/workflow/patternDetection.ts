@@ -1,4 +1,5 @@
 import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types'
+import { isMac } from '../platform'
 import { inAppLabel } from './appKnowledge'
 import { describeClickTarget } from './clickTarget'
 import { chainMakesSense, isIgnoredApp, isNoiseShortcut, isTrivialShortcut, shortcutRole } from './workflowSense'
@@ -397,12 +398,29 @@ const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Control+X': 'Cut'
 }
 
+/** The same, as a Mac spells them (Command, and its own screenshot keys). */
+const MAC_SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
+  'Meta+V': 'Paste',
+  'Meta+C': 'Copy',
+  'Meta+X': 'Cut',
+  'Meta+Shift+3': 'Screenshot',
+  'Meta+Shift+4': 'Screenshot',
+  'Meta+Shift+5': 'Screenshot',
+  'Control+Meta+Shift+3': 'Screenshot',
+  'Control+Meta+Shift+4': 'Screenshot'
+}
+
 /** e.g. ['Control', 'V'] -> "Paste", ['Control', 'K'] -> "Control+K". When
  *  the application is known, an app-specific name wins ("Blade" for Ctrl+B
  *  in DaVinci Resolve): see appKnowledge.ts. */
 export function shortcutDisplayLabel(comboKeys: string[], applicationId: string | null = null): string {
   const combo = comboKeys.join('+')
-  return inAppLabel(applicationId, comboKeys) ?? SHORTCUT_DISPLAY_LABELS[combo] ?? combo
+  return (
+    inAppLabel(applicationId, comboKeys) ??
+    (isMac ? MAC_SHORTCUT_DISPLAY_LABELS[combo] : undefined) ??
+    SHORTCUT_DISPLAY_LABELS[combo] ??
+    combo
+  )
 }
 
 export function describeStep(step: WorkflowStep): string {
