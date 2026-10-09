@@ -40,14 +40,18 @@ jobs:
         run: npm test || { echo "::warning::Tests failed once; retrying to rule out a runner hiccup"; npm test; }
 
   # Created once up front, so the two packaging jobs upload into the same
-  # release instead of racing to create it.
+  # release instead of racing to create it. As a draft: a published release
+  # becomes "latest" at once, and installed copies would then look for its
+  # latest.yml before it's uploaded, get a 404, and say they couldn't reach
+  # the update server (seen with v0.1.16). The `publish` job below makes it
+  # public once both platforms are in.
   release:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Create the GitHub release
+      - name: Create the GitHub release (draft)
         working-directory: .
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "Noma $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --title "Noma $GITHUB_REF_NAME" --generate-notes --draft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -103,3 +107,15 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+  # Only when both platforms uploaded: a half-filled release must never
+  # become the one installed copies and the website read.
+  publish:
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish the release
+        working-directory: .
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
