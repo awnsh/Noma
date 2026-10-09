@@ -74,6 +74,8 @@ vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { warmUp: vi.fn(), find
 // Real screen capture and the clipboard; screenshot.ts's own logic is covered
 // by screenshotRegions.test.ts. Here: only that the step goes there.
 vi.mock('./screenshot', () => ({ runScreenshotStep: vi.fn(async () => ({ ok: true })) }))
+/** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
+const REGION_SCREENSHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
 function insertApplication(id: string, name: string, processName: string): void {
   getDatabase()
@@ -559,7 +561,7 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     vi.mocked(focusWindowAndVerify).mockResolvedValue(true) // simulates a real, confirmed focus switch
 
     const steps: MacroStep[] = [
-      { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] }, // screenshot
+      { type: 'shortcut', keys: REGION_SCREENSHOT }, // screenshot
       { type: 'focusApplication', applicationId: 'claude' },
       { type: 'shortcut', keys: ['Control', 'V'] }, // paste
       { type: 'shortcut', keys: ['Enter'] } // submit
@@ -572,21 +574,21 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     // The screenshot is taken by screenshot.ts, not left as a bare keystroke
     // opening an overlay; paste and enter are keystrokes. focusApplication
     // itself sends no keystroke.
-    expect(runScreenshotStep).toHaveBeenCalledWith(['Meta', 'Shift', 'S'], expect.any(Function), expect.any(Function))
+    expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, expect.any(Function), expect.any(Function))
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(2)
   })
 
   it('stops at the screenshot when it was never taken, and skips the drag pause after one that was', async () => {
     vi.mocked(runScreenshotStep).mockResolvedValueOnce({ ok: false, reason: 'not taken' })
     const failed = await executeMacroSteps(
-      [{ type: 'shortcut', keys: ['Meta', 'Shift', 'S'] }, { type: 'shortcut', keys: ['Control', 'V'] }],
+      [{ type: 'shortcut', keys: REGION_SCREENSHOT }, { type: 'shortcut', keys: ['Control', 'V'] }],
       null
     )
     expect(failed).toEqual({ ok: false, reason: 'Stopped at step 1 of 2: not taken' })
 
     const started = Date.now()
     const result = await executeMacroSteps(
-      [{ type: 'shortcut', keys: ['Meta', 'Shift', 'S'] }, { type: 'delay', ms: 2000 }, { type: 'shortcut', keys: ['Control', 'V'] }],
+      [{ type: 'shortcut', keys: REGION_SCREENSHOT }, { type: 'delay', ms: 2000 }, { type: 'shortcut', keys: ['Control', 'V'] }],
       null
     )
     expect(result.ok).toBe(true)
