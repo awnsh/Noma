@@ -7,6 +7,11 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.17': [
+    'Screenshot workflows remember their own area: the first run opens the snipping overlay, you pick the area once, and every run after that takes it for you.',
+    'Macro Studio shows the area a screenshot step takes, with Pick again to choose a new one.',
+    'A tiny accidental snip is no longer remembered as the area.'
+  ],
   '0.1.16': [
     'Screenshot workflows: the first run waits for you to drag the area once (a tap no longer cancels it), then every later run takes that screenshot for you.',
     'Workflows saved with a screenshot no longer stop after it trying to switch to the snipping overlay.'
