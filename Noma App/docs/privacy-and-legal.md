@@ -226,6 +226,20 @@ app's buttons and menu items to find the one that matches, in memory, and
 keeps nothing: no name it sees is stored, logged or sent anywhere, and it
 only runs when the user presses a control whose macro contains such a step.
 
+## Screenshot areas (for replaying a screenshot step)
+
+Right after Flow sees a region-screenshot shortcut (Win+Shift+S, or
+Cmd+Shift+4 on a Mac), it watches the next mouse drag and keeps only that
+drag's rectangle: four numbers (position and size), the last 10 of them, in
+the local `settings` table under `screenshotRegions`. Never what was inside
+the area, and nothing is captured at that point. When a saved workflow
+replays its screenshot step, Noma takes that screenshot itself, of the area
+the person usually drags, and puts it on the clipboard (or, for a Mac's
+Cmd+Shift+4, in the Mac's own screenshot folder), exactly where the
+person's own screenshot would have gone. Noma does not keep, read or send
+the image. See main/workflow/screenshotRegions.ts and
+main/actions/screenshot.ts.
+
 ## Disclaimer
 
 This document is engineering reasoning intended to keep the *architecture*

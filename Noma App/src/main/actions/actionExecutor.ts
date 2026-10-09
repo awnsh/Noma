@@ -13,6 +13,8 @@ import { findMainWindowHandleForProcess } from './processWindow'
 import { launchApplicationById } from './launchApplication'
 import { executeClick } from './click'
 import { uiaControlFinder } from './uiaControlFinder'
+import { runScreenshotStep } from './screenshot'
+import { isRegionScreenshotShortcut } from '../workflow/screenshotRegions'
 import { sleep } from '../util'
 
 /**
@@ -325,8 +327,14 @@ async function runMacroSteps(
   const actions = steps.filter((step) => step.type !== 'delay').length
   let actionIndex = 0
   if (steps.some((step) => step.type === 'click' && step.target.startsWith('label:'))) uiaControlFinder.warmUp()
+  let previous: MacroStep | null = null
   for (const step of steps) {
     if (step.type !== 'delay') actionIndex++
+    // The pause recorded after a screenshot was the person dragging out the
+    // area; replay already has the picture by now (see screenshot.ts).
+    const afterScreenshot = previous?.type === 'shortcut' && isRegionScreenshotShortcut(previous.keys)
+    previous = step
+    if (step.type === 'delay' && afterScreenshot) continue
     // Checked before every step, so a stop lands between steps: never
     // halfway through a shortcut or a click, and nothing already done is
     // undone. The message says exactly where it stopped.
@@ -373,8 +381,13 @@ async function executeMacroStep(
         ? { ok: true }
         : { ok: false, reason: ACTION_CANCELLED_REASON }
 
-    case 'shortcut':
-      return sendShortcut(step.keys)
+    case 'shortcut': {
+      // Sending Win+Shift+S alone opens the snipping overlay and leaves it
+      // waiting for a drag, so the rest of the workflow would stop there.
+      if (!isRegionScreenshotShortcut(step.keys)) return sendShortcut(step.keys)
+      const shot = await runScreenshotStep(step.keys, sendShortcut, () => cancelRequested)
+      return !shot.ok && cancelRequested ? { ok: false, reason: ACTION_CANCELLED_REASON } : shot
+    }
 
     case 'systemCommand':
       if (!isKnownSystemCommand(step.command)) {

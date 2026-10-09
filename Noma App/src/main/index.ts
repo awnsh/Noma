@@ -68,6 +68,7 @@ import { ApplicationContextService } from './applications/contextService'
 import { getDefaultHardwareDevice } from './hardware/virtualDevice'
 import { DeviceTransportServer } from './hardware/deviceTransportServer'
 import { CaptureService } from './workflow/captureService'
+import { isRegionScreenshotShortcut, watchForScreenshotSelection } from './workflow/screenshotRegions'
 import { ClickCaptureService } from './workflow/clickCaptureService'
 import { createClickInspector } from './workflow/uiaInspector'
 import { GlideController } from './holo/glideController'
@@ -168,6 +169,9 @@ const captureService = new CaptureService((event) => {
     comboKeys: event.comboKeys,
     timestamp: event.timestamp
   })
+  // Remember the area dragged out next, so replaying this screenshot can
+  // take it without the overlay (actions/screenshot.ts). Only the rectangle.
+  if (isRegionScreenshotShortcut(event.comboKeys)) watchForScreenshotSelection()
   void refreshSuggestions()
   // Improved Virtual Keyboard: let the decorative layout flash the real
   // keys of this real captured combo. Nothing new is exposed here: this

@@ -215,3 +215,33 @@ export const SM_CYVIRTUALSCREEN = 79
 export const MOUSEEVENTF_MOVE = 0x0001
 export const MOUSEEVENTF_ABSOLUTE = 0x8000
 export const MOUSEEVENTF_VIRTUALDESK = 0x4000
+
+/**
+ * Replay's region screenshot (actions/screenshot.ts): copies an area of the
+ * screen into a bitmap, the same GDI path any screen-capture tool uses.
+ * Screen DC coordinates match the input hook's (both physical pixels in a
+ * per-monitor DPI aware process like Electron), so a remembered drag maps
+ * straight back to the pixels it covered.
+ */
+const gdi32 = isWindows ? koffi.load('gdi32.dll') : null
+export const GetDC = declare(user32, 'intptr_t __stdcall GetDC(intptr_t hwnd)')
+export const ReleaseDC = declare(user32, 'int __stdcall ReleaseDC(intptr_t hwnd, intptr_t hdc)')
+export const CreateCompatibleDC = declare(gdi32, 'intptr_t __stdcall CreateCompatibleDC(intptr_t hdc)')
+export const CreateCompatibleBitmap = declare(gdi32,
+  'intptr_t __stdcall CreateCompatibleBitmap(intptr_t hdc, int cx, int cy)'
+)
+export const SelectObject = declare(gdi32, 'intptr_t __stdcall SelectObject(intptr_t hdc, intptr_t h)')
+export const BitBlt = declare(gdi32,
+  'bool __stdcall BitBlt(intptr_t hdc, int x, int y, int cx, int cy, intptr_t hdcSrc, int x1, int y1, uint32_t rop)'
+)
+/** Buffer-based BITMAPINFO, like the raw-input buffers above. */
+export const GetDIBits = declare(gdi32,
+  'int __stdcall GetDIBits(intptr_t hdc, intptr_t hbm, uint32_t start, uint32_t cLines, void *lpvBits, void *lpbmi, uint32_t usage)'
+)
+export const DeleteObject = declare(gdi32, 'bool __stdcall DeleteObject(intptr_t ho)')
+export const DeleteDC = declare(gdi32, 'bool __stdcall DeleteDC(intptr_t hdc)')
+export const SRCCOPY = 0x00cc0020
+/** Includes layered (translucent) windows, which most modern apps are. */
+export const CAPTUREBLT = 0x40000000
+export const DIB_RGB_COLORS = 0
+export const BITMAPINFOHEADER_SIZE = 40

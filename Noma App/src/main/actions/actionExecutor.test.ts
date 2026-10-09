@@ -9,6 +9,7 @@ import { findMainWindowHandleForProcess } from './processWindow'
 import { focusWindowAndVerify } from './windowFocus'
 import { executeClick } from './click'
 import { executeSystemCommand } from './systemCommands'
+import { runScreenshotStep } from './screenshot'
 import { clearExpectedAppSwitches, consumeExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
 import {
   ACTION_BUSY_REASON,
@@ -70,6 +71,9 @@ vi.mock('./systemCommands', async (importOriginal) => {
   return { ...actual, executeSystemCommand: vi.fn(actual.executeSystemCommand) }
 })
 vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { warmUp: vi.fn(), find: vi.fn() } }))
+// Real screen capture and the clipboard; screenshot.ts's own logic is covered
+// by screenshotRegions.test.ts. Here: only that the step goes there.
+vi.mock('./screenshot', () => ({ runScreenshotStep: vi.fn(async () => ({ ok: true })) }))
 
 function insertApplication(id: string, name: string, processName: string): void {
   getDatabase()
@@ -565,9 +569,28 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     expect(result.ok).toBe(true)
     expect(findMainWindowHandleForProcess).toHaveBeenCalledWith('Claude.exe')
     expect(focusWindowAndVerify).toHaveBeenCalledWith(4242)
-    // 3 shortcut steps: screenshot, paste, enter; focusApplication itself
-    // sends no keystroke.
-    expect(uIOhook.keyTap).toHaveBeenCalledTimes(3)
+    // The screenshot is taken by screenshot.ts, not left as a bare keystroke
+    // opening an overlay; paste and enter are keystrokes. focusApplication
+    // itself sends no keystroke.
+    expect(runScreenshotStep).toHaveBeenCalledWith(['Meta', 'Shift', 'S'], expect.any(Function), expect.any(Function))
+    expect(uIOhook.keyTap).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops at the screenshot when it was never taken, and skips the drag pause after one that was', async () => {
+    vi.mocked(runScreenshotStep).mockResolvedValueOnce({ ok: false, reason: 'not taken' })
+    const failed = await executeMacroSteps(
+      [{ type: 'shortcut', keys: ['Meta', 'Shift', 'S'] }, { type: 'shortcut', keys: ['Control', 'V'] }],
+      null
+    )
+    expect(failed).toEqual({ ok: false, reason: 'Stopped at step 1 of 2: not taken' })
+
+    const started = Date.now()
+    const result = await executeMacroSteps(
+      [{ type: 'shortcut', keys: ['Meta', 'Shift', 'S'] }, { type: 'delay', ms: 2000 }, { type: 'shortcut', keys: ['Control', 'V'] }],
+      null
+    )
+    expect(result.ok).toBe(true)
+    expect(Date.now() - started).toBeLessThan(1000)
   })
 
   it('marks its own switch as expected, so it is not learned as the user switching apps', async () => {
