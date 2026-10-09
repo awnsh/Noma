@@ -7,6 +7,10 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.15': [
+    'Workflows that start with a screenshot now take it for you, of the area you usually pick, and carry on instead of stopping at the snipping overlay. The first run asks you to drag the area once.',
+    'Checking for updates no longer spins forever when the connection stalls.'
+  ],
   '0.1.14': [
     'Settings: export your zones, profiles and macros to a file, and import them on another computer. Noma shows what will change before anything does.',
     'Macro Studio: a new "Open app" step opens an app, or switches to it if it is already open.',
