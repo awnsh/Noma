@@ -4,12 +4,8 @@ import { homedir } from 'os'
 import { join } from 'path'
 import { promisify } from 'util'
 import { isMac, isWindows } from '../platform'
-import {
-  getUsualScreenshotRegion,
-  watchForScreenshotSelection,
-  SELECTION_WINDOW_MS,
-  type ScreenRegion
-} from '../workflow/screenshotRegions'
+import type { ScreenRegion } from '@shared/types'
+import { watchScreenshotDrags, SELECTION_WINDOW_MS } from '../workflow/screenshotRegions'
 import {
   BITMAPINFOHEADER_SIZE,
   BitBlt,
@@ -22,17 +18,22 @@ import {
   GetClipboardSequenceNumber,
   GetDC,
   GetDIBits,
+  GetForegroundWindow,
   ReleaseDC,
   SRCCOPY,
   SelectObject
 } from './win32'
 import { sleep } from '../util'
+import { processForWindow } from './windowProcess'
+import { categoryOf } from '../workflow/appKnowledge'
 
 const execFileAsync = promisify(execFile)
 
 export interface ScreenshotResult {
   ok: boolean
   reason?: string
+  /** The area the person just picked, for the caller to save on the step. */
+  pickedRegion?: ScreenRegion
 }
 
 /** Shown when the overlay was left open with nothing selected. */
@@ -122,46 +123,62 @@ export async function captureRegion(region: ScreenRegion, comboKeys: string[]): 
   }
 }
 
+/** Gave up waiting: close the overlay (Escape) rather than leave it covering
+ *  the screen, but only if it really is what's in front. */
+function closeLeftOverOverlay(sendShortcut: (keys: string[]) => { ok: boolean }): void {
+  if (!isWindows) return
+  const front = processForWindow(GetForegroundWindow())
+  if (front && categoryOf(front.processName.replace(/\.exe$/i, '').toLowerCase()) === 'capture') sendShortcut(['Escape'])
+}
+
 /**
  * A region-screenshot step inside a replayed workflow.
  *
- * Known area (the person has dragged one since this existed): capture it
- * directly, no overlay, and the workflow carries straight on.
+ * With `region` (this workflow's saved area): capture it directly, no
+ * overlay, and the workflow carries straight on.
  *
- * Not known yet: send the shortcut as before, but instead of moving on while
- * the overlay is still up (the next step then fails, and the workflow stops
- * there), wait for the person to take the screenshot once. Done means the
- * clipboard changed on Windows (the overlay copies as the mouse is
- * released), or a drag finished on a Mac. The drag is remembered, so every
+ * Without one (its first run): send the shortcut so the snipping overlay
+ * opens, and wait for the person to take the screenshot, instead of moving
+ * on while the overlay is still up (the next step would fail behind it).
+ * Done means the clipboard changed on Windows (the overlay copies as the
+ * mouse is released), or a drag finished on a Mac. The drag they made comes
+ * back as `pickedRegion` for actionExecutor.ts to save on the step, so every
  * later run is automatic. `sendShortcut` and `shouldStop` come from
  * actionExecutor.ts (passed in to avoid a cycle), which also words the
  * result when the person pressed Stop.
  */
 export async function runScreenshotStep(
   comboKeys: string[],
+  region: ScreenRegion | undefined,
   sendShortcut: (keys: string[]) => { ok: boolean; reason?: string },
   shouldStop: () => boolean
 ): Promise<ScreenshotResult> {
-  const known = getUsualScreenshotRegion()
-  if (known) return captureRegion(known, comboKeys)
+  if (region) return captureRegion(region, comboKeys)
 
-  let dragged = false
-  watchForScreenshotSelection((region) => {
-    if (region) dragged = true
-  })
-  const clipboardBefore = isWindows ? GetClipboardSequenceNumber() : 0
-  const sent = sendShortcut(comboKeys)
-  if (!sent.ok) return sent
+  let picked: ScreenRegion | null = null
+  const stopWatching = watchScreenshotDrags((drag) => (picked = drag))
+  try {
+    const clipboardBefore = isWindows ? GetClipboardSequenceNumber() : 0
+    const sent = sendShortcut(comboKeys)
+    if (!sent.ok) return sent
 
-  const done = (): boolean => (isWindows ? GetClipboardSequenceNumber() !== clipboardBefore : dragged)
-  const until = Date.now() + SELECTION_WINDOW_MS
-  while (!done()) {
-    if (shouldStop()) return { ok: false }
-    if (Date.now() >= until) return { ok: false, reason: SCREENSHOT_NOT_TAKEN_REASON }
-    await sleep(50)
+    const done = (): boolean => (isWindows ? GetClipboardSequenceNumber() !== clipboardBefore : picked !== null)
+    const until = Date.now() + SELECTION_WINDOW_MS
+    while (!done()) {
+      if (shouldStop()) return { ok: false }
+      if (Date.now() >= until) {
+        closeLeftOverOverlay(sendShortcut)
+        return { ok: false, reason: SCREENSHOT_NOT_TAKEN_REASON }
+      }
+      await sleep(50)
+    }
+    // Let the clipboard settle (and, on a Mac, the file land) before the next
+    // step pastes.
+    await sleep(300)
+    // No drag (a window or full-screen snip, picked with a click): this run
+    // still worked, there's just no area to keep, so the next run asks again.
+    return picked ? { ok: true, pickedRegion: picked } : { ok: true }
+  } finally {
+    stopWatching()
   }
-  // Let the clipboard settle (and, on a Mac, the file land) before the next
-  // step pastes.
-  await sleep(300)
-  return { ok: true }
 }

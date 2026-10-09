@@ -1,10 +1,10 @@
 import { uIOhook } from 'uiohook-napi'
 import { FLOW_ACTION_CATALOG } from '@shared/constants'
-import type { ActionRunState, ControlAction, MacroStep } from '@shared/types'
+import type { ActionRunState, ControlAction, MacroStep, ScreenRegion } from '@shared/types'
 import { keyCodeForName } from '../workflow/keyNames'
 import { markSelfInjected } from '../workflow/selfInjectedKeys'
 import { markExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
-import { getMacroById } from '../database/repositories/macrosRepository'
+import { getMacroById, updateMacro } from '../database/repositories/macrosRepository'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { focusWindowAndVerify } from './windowFocus'
 import { closeWindowGracefully } from './windowClose'
@@ -325,17 +325,23 @@ async function runMacroSteps(
   depth: number
 ): Promise<ExecutionResult> {
   const steps = withoutScreenshotOverlaySteps(recordedSteps)
+  // The saved macro these steps belong to (the most recent one entered), or
+  // none for the Macro Studio's Test of unsaved steps.
+  const macroId = [...visitedMacroIds].pop()
   const actions = steps.filter((step) => step.type !== 'delay').length
   let actionIndex = 0
   if (steps.some((step) => step.type === 'click' && step.target.startsWith('label:'))) uiaControlFinder.warmUp()
   for (const step of steps) {
     if (step.type !== 'delay') actionIndex++
+    const saveRegion = macroId
+      ? (region: ScreenRegion) => saveScreenshotRegion(macroId, recordedSteps.indexOf(step), region)
+      : undefined
     // Checked before every step, so a stop lands between steps: never
     // halfway through a shortcut or a click, and nothing already done is
     // undone. The message says exactly where it stopped.
     const result = cancelRequested
       ? { ok: false, reason: ACTION_CANCELLED_REASON }
-      : await executeMacroStep(step, targetHwnd, visitedMacroIds, depth)
+      : await executeMacroStep(step, targetHwnd, visitedMacroIds, depth, saveRegion)
     if (!result.ok) {
       // Say where it stopped, so a half-run workflow is never a mystery:
       // "Stopped at step 3 of 5: ..." tells the user exactly what did and
@@ -361,11 +367,24 @@ async function runMacroSteps(
   return { ok: true }
 }
 
+/**
+ * Keeps the area the person just picked on that macro's screenshot step, so
+ * the next run takes it without the overlay. Re-read and checked first: the
+ * macro may have been edited while the overlay was open.
+ */
+function saveScreenshotRegion(macroId: string, stepIndex: number, region: ScreenRegion): void {
+  const macro = getMacroById(macroId)
+  const step = macro?.actions[stepIndex]
+  if (!macro || step?.type !== 'shortcut' || !isRegionScreenshotShortcut(step.keys)) return
+  updateMacro(macroId, { actions: macro.actions.map((other, index) => (index === stepIndex ? { ...step, region } : other)) })
+}
+
 async function executeMacroStep(
   step: MacroStep,
   targetHwnd: number | null,
   visitedMacroIds: Set<string>,
-  depth: number
+  depth: number,
+  saveRegion?: (region: ScreenRegion) => void
 ): Promise<ExecutionResult> {
   switch (step.type) {
     case 'none':
@@ -380,8 +399,10 @@ async function executeMacroStep(
       // Sending Win+Shift+S alone opens the snipping overlay and leaves it
       // waiting for a drag, so the rest of the workflow would stop there.
       if (!isRegionScreenshotShortcut(step.keys)) return sendShortcut(step.keys)
-      const shot = await runScreenshotStep(step.keys, sendShortcut, () => cancelRequested)
-      return !shot.ok && cancelRequested ? { ok: false, reason: ACTION_CANCELLED_REASON } : shot
+      const shot = await runScreenshotStep(step.keys, step.region, sendShortcut, () => cancelRequested)
+      if (shot.pickedRegion) saveRegion?.(shot.pickedRegion)
+      if (!shot.ok) return { ok: false, reason: cancelRequested ? ACTION_CANCELLED_REASON : shot.reason }
+      return { ok: true }
     }
 
     case 'systemCommand':

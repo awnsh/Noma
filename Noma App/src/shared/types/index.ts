@@ -22,10 +22,26 @@ export interface Application {
   icon?: string
 }
 
+/** An area of the screen, in the input hook's screen coordinates (physical
+ *  pixels on Windows, points on a Mac). Only ever the rectangle, never what
+ *  was in it. */
+export interface ScreenRegion {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export type ControlAction =
   /** An empty zone: nothing assigned, nothing runs. What "Clear" in the control editor leaves behind. */
   | { type: 'none' }
-  | { type: 'shortcut'; keys: string[] }
+  /**
+   * `region` is only for a region screenshot (Win+Shift+S, Cmd+Shift+4)
+   * inside a macro: the area of the screen this workflow captures, saved
+   * the first time it runs (main/actions/screenshot.ts). With it, replay
+   * takes the screenshot itself instead of opening the snipping overlay.
+   */
+  | { type: 'shortcut'; keys: string[]; region?: ScreenRegion }
   | { type: 'macro'; macroId: string }
   | { type: 'launchApplication'; applicationId: string }
   | { type: 'systemCommand'; command: string }

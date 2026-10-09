@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MacroStep } from '@shared/types'
-import { isRegionScreenshotShortcut, regionFromDrag, usualRegion, withoutScreenshotOverlaySteps } from './screenshotRegions'
+import { isRegionScreenshotShortcut, regionFromDrag, withoutScreenshotOverlaySteps } from './screenshotRegions'
 
 const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
@@ -28,24 +28,9 @@ describe('regionFromDrag', () => {
   it('ignores a click (window or full-screen snip modes)', () => {
     expect(regionFromDrag(100, 100, 103, 102)).toBeNull()
   })
-})
 
-describe('usualRegion', () => {
-  const a = { x: 100, y: 100, width: 800, height: 600 }
-  const aAgain = { x: 110, y: 95, width: 795, height: 610 }
-  const b = { x: 0, y: 0, width: 300, height: 200 }
-
-  it('is null before any drag', () => {
-    expect(usualRegion([])).toBeNull()
-  })
-
-  it('picks the area dragged most often, as its latest drag', () => {
-    expect(usualRegion([a, b, aAgain])).toEqual(aAgain)
-    expect(usualRegion([a, aAgain, b])).toEqual(aAgain)
-  })
-
-  it('breaks a tie toward the most recent', () => {
-    expect(usualRegion([a, b])).toEqual(b)
+  it('ignores a sliver no one means to capture (a real one was 763 x 9)', () => {
+    expect(regionFromDrag(984, 933, 1747, 942)).toBeNull()
   })
 })
 

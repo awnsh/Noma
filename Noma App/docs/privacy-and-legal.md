@@ -228,16 +228,17 @@ only runs when the user presses a control whose macro contains such a step.
 
 ## Screenshot areas (for replaying a screenshot step)
 
-Right after Flow sees a region-screenshot shortcut (Win+Shift+S, or
-Cmd+Shift+4 on a Mac), it watches the next mouse drag and keeps only that
-drag's rectangle: four numbers (position and size), the last 10 of them, in
-the local `settings` table under `screenshotRegions`. Never what was inside
-the area, and nothing is captured at that point. When a saved workflow
-replays its screenshot step, Noma takes that screenshot itself, of the area
-the person usually drags, and puts it on the clipboard (or, for a Mac's
-Cmd+Shift+4, in the Mac's own screenshot folder), exactly where the
-person's own screenshot would have gone. Noma does not keep, read or send
-the image. See main/workflow/screenshotRegions.ts and
+A saved workflow that starts with a region screenshot (Win+Shift+S, or
+Cmd+Shift+4 on a Mac) opens the snipping overlay the first time it runs.
+While it's open, Noma watches the mouse for the drag that picks the area and
+saves only that drag's rectangle (four numbers: position and size) on that
+workflow's screenshot step, in the local database. Never what was inside
+the area. Later runs take that screenshot themselves and put it on the
+clipboard (or, for a Mac's Cmd+Shift+4, in the Mac's own screenshot
+folder), exactly where the person's own screenshot would have gone. Noma
+does not keep, read or send the image. Macro Studio shows the saved area
+and can clear it ("Pick again"). Nothing is watched outside a workflow's
+own first run. See main/workflow/screenshotRegions.ts and
 main/actions/screenshot.ts.
 
 ## Disclaimer

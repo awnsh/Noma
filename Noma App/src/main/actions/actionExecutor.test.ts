@@ -574,8 +574,35 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     // The screenshot is taken by screenshot.ts, not left as a bare keystroke
     // opening an overlay; paste and enter are keystrokes. focusApplication
     // itself sends no keystroke.
-    expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, expect.any(Function), expect.any(Function))
+    expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, undefined, expect.any(Function), expect.any(Function))
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(2)
+  })
+
+  it('saves the area picked on a first run onto that macro, and uses it from then on', async () => {
+    const picked = { x: 100, y: 200, width: 800, height: 450 }
+    vi.mocked(runScreenshotStep).mockResolvedValueOnce({ ok: true, pickedRegion: picked })
+    const macro = createMacro({
+      name: 'Screenshot to Chrome',
+      trigger: 'manual',
+      actions: [
+        { type: 'shortcut', keys: REGION_SCREENSHOT },
+        { type: 'delay', ms: 800 },
+        { type: 'focusApplication', applicationId: 'snippingtool' },
+        { type: 'click', target: 'zone:3x2', applicationId: 'snippingtool' },
+        { type: 'shortcut', keys: ['Control', 'V'] }
+      ],
+      delayMs: 0,
+      enabled: true
+    })
+
+    expect((await executeControlAction({ type: 'macro', macroId: macro.id }, null)).ok).toBe(true)
+    expect(getMacroById(macro.id)?.actions[0]).toEqual({ type: 'shortcut', keys: REGION_SCREENSHOT, region: picked })
+    // The rest of the macro is untouched.
+    expect(getMacroById(macro.id)?.actions.slice(1)).toEqual(macro.actions.slice(1))
+
+    vi.mocked(runScreenshotStep).mockClear()
+    await executeControlAction({ type: 'macro', macroId: macro.id }, null)
+    expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, picked, expect.any(Function), expect.any(Function))
   })
 
   it('stops at the screenshot when it was never taken, and skips the drag pause after one that was', async () => {

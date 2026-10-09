@@ -165,6 +165,23 @@ export function MacroStepRow({
           <ShortcutRecorder value={step.keys} onChange={(keys) => onChange({ type: 'shortcut', keys })} />
         )}
 
+        {/* A screenshot step's saved area (main/actions/screenshot.ts).
+            Clearing it makes the next run open the overlay to pick again. */}
+        {step.type === 'shortcut' && step.region && (
+          <div className="mt-2 flex items-center justify-between gap-2 text-xs text-neutral-400">
+            <span>
+              Takes the area you picked: {Math.round(step.region.width)} × {Math.round(step.region.height)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onChange({ type: 'shortcut', keys: step.keys })}
+              className="rounded-md px-2 py-1 text-neutral-300 hover:bg-white/5 hover:text-neutral-100"
+            >
+              Pick again
+            </button>
+          </div>
+        )}
+
         {step.type === 'delay' && (
           <div className="flex items-center gap-2">
             <input
