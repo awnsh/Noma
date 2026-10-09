@@ -7,7 +7,8 @@ import { isMac } from './platform'
 
 /** Where pilot builds are published (electron-builder.yml's `publish`). */
 const RELEASES_URL = 'https://github.com/awnsh/Noma/releases/latest'
-const CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
+/** Hourly, so the in-app prompt (UpdatePrompt.tsx) shows up soon after a release. */
+const CHECK_INTERVAL_MS = 60 * 60 * 1000
 
 let status: UpdateStatus = {
   phase: 'unavailable',

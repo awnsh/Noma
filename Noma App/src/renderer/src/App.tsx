@@ -14,6 +14,7 @@ import { Settings } from './pages/Settings'
 import { Developer } from './pages/Developer'
 import { Onboarding } from './pages/Onboarding'
 import { WhatsNewModal } from './components/WhatsNewModal'
+import { UpdatePrompt } from './components/UpdatePrompt'
 import { MacAccessibilityNotice } from './components/MacAccessibilityNotice'
 import { useUiStore } from './stores/uiStore'
 import { useOnboardingStore } from './stores/onboardingStore'
@@ -88,6 +89,7 @@ function App() {
       {shownPage === 'developer' && <Developer />}
       </div>
       <WhatsNewModal />
+      <UpdatePrompt />
     </AppShell>
   )
 }
