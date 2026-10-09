@@ -7,6 +7,14 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.14': [
+    'Settings: export your zones, profiles and macros to a file, and import them on another computer. Noma shows what will change before anything does.',
+    'Macro Studio: a new "Open app" step opens an app, or switches to it if it is already open.',
+    'System actions now include Play/Pause, Next track and Previous track.',
+    'Workflows show when their last run failed, and why.',
+    'Zone names can be up to 16 characters, and a zone renames itself when you change its action.',
+    'Swiping over an empty Glide zone no longer pops up a notification.'
+  ],
   '0.1.13': [
     'Mac: Flow now starts learning as soon as you allow Accessibility, without restarting Noma.',
     'Mac: if Accessibility is off (or macOS stopped trusting Noma after an update), Noma tells you and opens the right settings page.',
