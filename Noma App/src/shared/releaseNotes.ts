@@ -7,6 +7,11 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.18': [
+    'Screenshot workflows take the same area you screenshot when you do it yourself, with no snipping overlay.',
+    'Chrome and other browsers: a workflow goes back to the tab you screenshot and the tab you paste into, and stops instead of pasting into the wrong one. Noma keeps only a scrambled fingerprint of each tab, never its title.',
+    'Workflows you already saved pick these up after you do them by hand a few more times.'
+  ],
   '0.1.17': [
     'Screenshot workflows remember their own area: the first run opens the snipping overlay, you pick the area once, and every run after that takes it for you.',
     'Macro Studio shows the area a screenshot step takes, with Pick again to choose a new one.',
