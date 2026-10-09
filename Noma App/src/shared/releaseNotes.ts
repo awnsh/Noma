@@ -7,6 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.19': [
+    'Saved screenshot workflows now pick up the tab you paste into after you do them by hand a few times, even if you also did them earlier the same day before updating.'
+  ],
   '0.1.18': [
     'Screenshot workflows take the same area you screenshot when you do it yourself, with no snipping overlay.',
     'Chrome and other browsers: a workflow goes back to the tab you screenshot and the tab you paste into, and stops instead of pasting into the wrong one. Noma keeps only a scrambled fingerprint of each tab, never its title.',
