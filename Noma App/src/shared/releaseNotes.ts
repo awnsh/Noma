@@ -7,6 +7,10 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.16': [
+    'Screenshot workflows: the first run waits for you to drag the area once (a tap no longer cancels it), then every later run takes that screenshot for you.',
+    'Workflows saved with a screenshot no longer stop after it trying to switch to the snipping overlay.'
+  ],
   '0.1.15': [
     'Workflows that start with a screenshot now take it for you, of the area you usually pick, and carry on instead of stopping at the snipping overlay. The first run asks you to drag the area once.',
     'Checking for updates no longer spins forever when the connection stalls.'
