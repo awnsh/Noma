@@ -6,6 +6,9 @@ import { __setDatabaseForTesting, runMigrations } from '../database/db'
 import { createMacro, getMacroById, updateMacro } from '../database/repositories/macrosRepository'
 import { refreshLearnedMacros } from './learnedMacroRefresh'
 
+/** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
+const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
+
 beforeEach(() => {
   const db = new Database(':memory:')
   runMigrations(db)
@@ -24,7 +27,7 @@ function pattern(): DetectedPattern {
     contextApplicationId: 'chrome',
     steps: [
       { type: 'appSwitch', applicationId: 'chrome', tab: 'page' },
-      { type: 'shortcut', applicationId: 'chrome', comboKeys: ['Meta', 'Shift', 'S'], region: area },
+      { type: 'shortcut', applicationId: 'chrome', comboKeys: SHOT, region: area },
       { type: 'appSwitch', applicationId: 'snippingtool' },
       { type: 'appSwitch', applicationId: 'chrome' },
       { type: 'shortcut', applicationId: 'chrome', comboKeys: ['Control', 'V'], tab: 'chat' }
@@ -46,7 +49,7 @@ function savedWorkflow(trigger = LEARNED_MACRO_TRIGGER) {
     actions: [
       { type: 'focusApplication', applicationId: 'chrome' },
       { type: 'delay', ms: 689 },
-      { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
+      { type: 'shortcut', keys: SHOT },
       { type: 'focusApplication', applicationId: 'chrome' },
       { type: 'delay', ms: 1297 },
       { type: 'shortcut', keys: ['Control', 'V'] },
@@ -62,7 +65,7 @@ describe('refreshLearnedMacros', () => {
     expect(getMacroById(macro.id)?.actions).toEqual([
       { type: 'focusApplication', applicationId: 'chrome', tab: 'page' },
       { type: 'delay', ms: 689 },
-      { type: 'shortcut', keys: ['Meta', 'Shift', 'S'], region: area },
+      { type: 'shortcut', keys: SHOT, region: area },
       { type: 'focusApplication', applicationId: 'chrome' },
       { type: 'delay', ms: 1297 },
       { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' },
@@ -79,7 +82,7 @@ describe('refreshLearnedMacros', () => {
     updateMacro(learned.id, { actions })
     const authored = savedWorkflow('manual')
     refreshLearnedMacros([pattern()])
-    expect(getMacroById(learned.id)?.actions[2]).toEqual({ type: 'shortcut', keys: ['Meta', 'Shift', 'S'], region: picked })
-    expect(getMacroById(authored.id)?.actions[2]).toEqual({ type: 'shortcut', keys: ['Meta', 'Shift', 'S'] })
+    expect(getMacroById(learned.id)?.actions[2]).toEqual({ type: 'shortcut', keys: SHOT, region: picked })
+    expect(getMacroById(authored.id)?.actions[2]).toEqual({ type: 'shortcut', keys: SHOT })
   })
 })
