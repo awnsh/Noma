@@ -7,6 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.20': [
+    'When a new version is ready, Noma asks in the app: restart to update, or later. It checks every hour.'
+  ],
   '0.1.19': [
     'Saved screenshot workflows now pick up the tab you paste into after you do them by hand a few times, even if you also did them earlier the same day before updating.'
   ],
