@@ -7,6 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.22': [
+    'Glide: after a swipe, a small note in the bottom-left corner says what ran, so you know it worked without switching to Noma.'
+  ],
   '0.1.21': [
     'Pages no longer slide or ripple in as they open: they simply appear.'
   ],
