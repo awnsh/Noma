@@ -2,6 +2,8 @@ import { uIOhook, type UiohookMouseEvent } from 'uiohook-napi'
 import { getJsonSetting, setJsonSetting } from '../database/repositories/settingsRepository'
 import { acquireHook, releaseHook } from './sharedHook'
 import { isMac } from '../platform'
+import { categoryOf } from './appKnowledge'
+import type { MacroStep } from '@shared/types'
 
 /**
  * The area of the screen a person drags out after a region-screenshot
@@ -107,8 +109,8 @@ let disarm: (() => void) | null = null
 /**
  * Called right after a region-screenshot shortcut: watches for the drag
  * that follows (left button down, then up) and remembers its rectangle.
- * One drag per shortcut; gives up after SELECTION_WINDOW_MS or on a plain
- * click. Holds the shared input hook while it waits, so it also works when
+ * One drag per shortcut; gives up after SELECTION_WINDOW_MS. Plain clicks
+ * are ignored. Holds the shared input hook while it waits, so it also works when
  * replay sends the shortcut and Flow learning happens to be off.
  *
  * `onRegion` is told the rectangle (or null if no drag came) once it's over.
@@ -127,7 +129,12 @@ export function watchForScreenshotSelection(onRegion?: (region: ScreenRegion | n
   }
   const handleUp = (event: UiohookMouseEvent): void => {
     if (event.button !== LEFT_BUTTON || !start) return
-    finish(regionFromDrag(start.x, start.y, event.x, event.y))
+    const region = regionFromDrag(start.x, start.y, event.x, event.y)
+    start = null
+    // A plain click isn't the selection: a trackpad's tap before
+    // tap-and-drag, picking a mode on the overlay's toolbar, or the click
+    // that fired the workflow. Keep waiting for the drag.
+    if (region) finish(region)
   }
   const timer = setTimeout(() => finish(null), SELECTION_WINDOW_MS)
   const cleanup = (): void => {
@@ -145,4 +152,29 @@ export function watchForScreenshotSelection(onRegion?: (region: ScreenRegion | n
     cleanup()
     onRegion?.(null)
   }
+}
+
+/** Switching to the snipping overlay or clicking in it (where the drag began). */
+function isScreenshotOverlayStep(step: MacroStep): boolean {
+  if (step.type !== 'focusApplication' && step.type !== 'click') return false
+  return categoryOf(step.applicationId ?? null) === 'capture'
+}
+
+/**
+ * Drops what the person did by hand after a region-screenshot shortcut:
+ * the pauses while they dragged, switching to the snipping overlay, and the
+ * click where the drag began. A learned workflow records all of that, but
+ * replay takes the screenshot itself (actions/screenshot.ts), so there's no
+ * overlay left to switch to and the workflow would stop there. Used when a
+ * workflow runs (so ones saved before this work too) and when one is saved.
+ */
+export function withoutScreenshotOverlaySteps(steps: MacroStep[]): MacroStep[] {
+  const kept: MacroStep[] = []
+  let afterScreenshot = false
+  for (const step of steps) {
+    if (afterScreenshot && (step.type === 'delay' || isScreenshotOverlayStep(step))) continue
+    afterScreenshot = step.type === 'shortcut' && isRegionScreenshotShortcut(step.keys)
+    kept.push(step)
+  }
+  return kept
 }

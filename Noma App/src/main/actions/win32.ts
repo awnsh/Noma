@@ -245,3 +245,6 @@ export const SRCCOPY = 0x00cc0020
 export const CAPTUREBLT = 0x40000000
 export const DIB_RGB_COLORS = 0
 export const BITMAPINFOHEADER_SIZE = 40
+/** Goes up every time anything is put on the clipboard: how replay knows the
+ *  snipping overlay has finished, without reading what's on it. */
+export const GetClipboardSequenceNumber = declare(user32, 'uint32_t __stdcall GetClipboardSequenceNumber()')

@@ -1,4 +1,5 @@
 import type { MacroStep, WorkflowStep } from '@shared/types'
+import { withoutScreenshotOverlaySteps } from './screenshotRegions'
 
 /** A chain the same shortcut a paste uses, by combo; kept as a constant
  *  rather than reaching for shortcutDisplayLabel's "Paste" copy, which is
@@ -98,7 +99,7 @@ export function buildWorkflowMacroSteps(steps: WorkflowStep[], stepDelaysMs?: nu
     macroSteps.push({ type: 'shortcut', keys: ['Enter'] })
   }
 
-  return macroSteps
+  return withoutScreenshotOverlaySteps(macroSteps)
 }
 
 /**

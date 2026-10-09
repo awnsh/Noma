@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { isRegionScreenshotShortcut, regionFromDrag, usualRegion } from './screenshotRegions'
+import type { MacroStep } from '@shared/types'
+import { isRegionScreenshotShortcut, regionFromDrag, usualRegion, withoutScreenshotOverlaySteps } from './screenshotRegions'
+
+const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
 describe('isRegionScreenshotShortcut', () => {
   it('is Win+Shift+S on Windows, in any key order', () => {
@@ -43,5 +46,39 @@ describe('usualRegion', () => {
 
   it('breaks a tie toward the most recent', () => {
     expect(usualRegion([a, b])).toEqual(b)
+  })
+})
+
+describe('withoutScreenshotOverlaySteps', () => {
+  it('drops the hand-worked snipping overlay a learned workflow recorded after the screenshot', () => {
+    // A real saved workflow: the snip, switching to the overlay, the click
+    // where the drag began, then the part replay actually needs.
+    const recorded: MacroStep[] = [
+      { type: 'shortcut', keys: SHOT },
+      { type: 'delay', ms: 814 },
+      { type: 'focusApplication', applicationId: 'snippingtool' },
+      { type: 'delay', ms: 942 },
+      { type: 'click', target: 'zone:3x2', applicationId: 'snippingtool' },
+      { type: 'delay', ms: 2000 },
+      { type: 'focusApplication', applicationId: 'chrome' },
+      { type: 'delay', ms: 2000 },
+      { type: 'shortcut', keys: ['Control', 'V'] },
+      { type: 'shortcut', keys: ['Enter'] }
+    ]
+    expect(withoutScreenshotOverlaySteps(recorded)).toEqual([
+      { type: 'shortcut', keys: SHOT },
+      { type: 'focusApplication', applicationId: 'chrome' },
+      { type: 'delay', ms: 2000 },
+      { type: 'shortcut', keys: ['Control', 'V'] },
+      { type: 'shortcut', keys: ['Enter'] }
+    ])
+  })
+
+  it('keeps Snipping Tool steps that do not follow a screenshot', () => {
+    const steps: MacroStep[] = [
+      { type: 'focusApplication', applicationId: 'snippingtool' },
+      { type: 'click', target: 'label:Save', applicationId: 'snippingtool' }
+    ]
+    expect(withoutScreenshotOverlaySteps(steps)).toEqual(steps)
   })
 })

@@ -19,6 +19,7 @@ import {
   DIB_RGB_COLORS,
   DeleteDC,
   DeleteObject,
+  GetClipboardSequenceNumber,
   GetDC,
   GetDIBits,
   ReleaseDC,
@@ -129,10 +130,12 @@ export async function captureRegion(region: ScreenRegion, comboKeys: string[]): 
  *
  * Not known yet: send the shortcut as before, but instead of moving on while
  * the overlay is still up (the next step then fails, and the workflow stops
- * there), wait for the person to drag the area once. That drag is
- * remembered, so every later run is automatic. `sendShortcut` and
- * `shouldStop` come from actionExecutor.ts (passed in to avoid a cycle),
- * which also words the result when the person pressed Stop.
+ * there), wait for the person to take the screenshot once. Done means the
+ * clipboard changed on Windows (the overlay copies as the mouse is
+ * released), or a drag finished on a Mac. The drag is remembered, so every
+ * later run is automatic. `sendShortcut` and `shouldStop` come from
+ * actionExecutor.ts (passed in to avoid a cycle), which also words the
+ * result when the person pressed Stop.
  */
 export async function runScreenshotStep(
   comboKeys: string[],
@@ -142,19 +145,23 @@ export async function runScreenshotStep(
   const known = getUsualScreenshotRegion()
   if (known) return captureRegion(known, comboKeys)
 
-  let selection: ScreenRegion | null | undefined
-  watchForScreenshotSelection((region) => (selection = region))
+  let dragged = false
+  watchForScreenshotSelection((region) => {
+    if (region) dragged = true
+  })
+  const clipboardBefore = isWindows ? GetClipboardSequenceNumber() : 0
   const sent = sendShortcut(comboKeys)
   if (!sent.ok) return sent
 
+  const done = (): boolean => (isWindows ? GetClipboardSequenceNumber() !== clipboardBefore : dragged)
   const until = Date.now() + SELECTION_WINDOW_MS
-  while (selection === undefined && Date.now() < until) {
+  while (!done()) {
     if (shouldStop()) return { ok: false }
+    if (Date.now() >= until) return { ok: false, reason: SCREENSHOT_NOT_TAKEN_REASON }
     await sleep(50)
   }
-  if (!selection) return { ok: false, reason: SCREENSHOT_NOT_TAKEN_REASON }
-  // The overlay copies the area to the clipboard as the mouse is released;
-  // give it a moment before the next step pastes.
-  await sleep(400)
+  // Let the clipboard settle (and, on a Mac, the file land) before the next
+  // step pastes.
+  await sleep(300)
   return { ok: true }
 }

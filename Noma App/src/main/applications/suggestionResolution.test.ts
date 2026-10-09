@@ -239,7 +239,7 @@ describe('assignSuggestionToControl; multiStepWorkflow (WORKFLOW LEARNING)', () 
         action: {
           kind: 'createWorkflowMacroAndAssignToControl',
           steps: [
-            { type: 'shortcut', applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
+            { type: 'shortcut', applicationId: 'code', comboKeys: ['Control', 'Shift', 'P'] },
             { type: 'appSwitch', applicationId: 'claude' },
             { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'Shift', 'L'] }
           ],
@@ -258,7 +258,7 @@ describe('assignSuggestionToControl; multiStepWorkflow (WORKFLOW LEARNING)', () 
         .prepare('SELECT * FROM macros WHERE id = ?')
         .get(updatedControl.action.macroId) as { actions: string }
       expect(JSON.parse(macroRow.actions)).toEqual([
-        { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
+        { type: 'shortcut', keys: ['Control', 'Shift', 'P'] },
         { type: 'delay', ms: 2000 },
         { type: 'focusApplication', applicationId: 'claude' },
         { type: 'shortcut', keys: ['Control', 'Shift', 'L'] }
