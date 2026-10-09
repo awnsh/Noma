@@ -387,6 +387,20 @@ describe('detectPatterns; multi-step workflow learning', () => {
     expect(workflow?.steps[2]).toEqual({ type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'], tab: 'chat' })
   })
 
+  it('still pins a tab when earlier occurrences were recorded before tabs were', () => {
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 5; i++) {
+      const base = i * 30_000
+      const recordedTabs = i >= 2 // the first two happened before the update
+      events.push(shortcutEvent(['Meta', 'Shift', 'S'], base, 'chrome'))
+      events.push(appSwitchEvent('claude', base + 2_000))
+      events.push({ ...shortcutEvent(['Control', 'V'], base + 4_000, 'claude'), ...(recordedTabs ? { tab: 'chat' } : {}) })
+      events.push(appSwitchEvent('chrome', base + 6_000))
+    }
+    const workflow = detectPatterns(events).find((p) => p.kind === 'multiStepWorkflow')
+    expect(workflow?.steps[2]).toMatchObject({ comboKeys: ['Control', 'V'], tab: 'chat' })
+  })
+
   it('drops the redundant crossAppWorkflow pairs once the fuller chain subsumes them', () => {
     // Every 2-step pair inside the flagship chain (screenshot->claude,
     // claude->paste, paste->code) also clears CROSS_APP_WORKFLOW_THRESHOLD

@@ -907,7 +907,8 @@ const MIN_TAB_AGREEMENT = 2
  * The tab and screenshot area each step should replay with, from every
  * occurrence of exactly this chain (`occurrences`, which all share its
  * shape). A tab is kept only when it was the same one every time it was
- * recorded, and seen at least twice: someone who screenshots a different
+ * recorded (occurrences from before tabs were recorded don't count either
+ * way), and seen at least twice: someone who screenshots a different
  * page each time but always pastes into the same chat gets the chat pinned
  * and the page left as "whatever tab is open". An area is the one dragged
  * most often (usualRegion). Neither is part of a step's identity, so this
@@ -917,12 +918,11 @@ export function withAgreedDetails(steps: WorkflowStep[], occurrences: Array<{ st
   return steps.map((step, index) => {
     if (step.type === 'click') return step
     const seen = occurrences.map((occurrence) => occurrence.steps[index]).filter((other) => other?.type === step.type)
-    const tabs = seen.map((other) => (other.type === 'click' ? undefined : other.tab))
-    const recordedTabs = tabs.filter((tab): tab is string => !!tab)
-    const tab =
-      recordedTabs.length >= MIN_TAB_AGREEMENT && recordedTabs.length === tabs.length && new Set(recordedTabs).size === 1
-        ? recordedTabs[0]
-        : undefined
+    const recordedTabs = seen.flatMap((other) => (other.type !== 'click' && other.tab ? [other.tab] : []))
+    // A missing tab is an occurrence recorded before tabs were (or one whose
+    // title couldn't be read), not a different tab, so it doesn't count
+    // against the others.
+    const tab = recordedTabs.length >= MIN_TAB_AGREEMENT && new Set(recordedTabs).size === 1 ? recordedTabs[0] : undefined
 
     if (step.type === 'appSwitch') {
       const { tab: _ignored, ...rest } = step
