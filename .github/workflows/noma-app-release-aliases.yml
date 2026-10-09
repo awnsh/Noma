@@ -27,9 +27,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          # The tag the release run just built. Asking GitHub for "latest"
+          # right after it's published can still answer the previous one
+          # (v0.1.22's copies went to v0.1.21 that way).
+          RELEASED_TAG: ${{ github.event.workflow_run.head_branch }}
         run: |
           set -euo pipefail
-          TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          if [ -n "${RELEASED_TAG:-}" ]; then
+            TAG="$RELEASED_TAG"
+          else
+            TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName)
+          fi
           VERSION=${TAG#v}
           echo "Latest release: $TAG"
           mkdir -p aliases && cd aliases
