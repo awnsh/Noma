@@ -14,7 +14,9 @@ import { launchApplicationById } from './launchApplication'
 import { executeClick } from './click'
 import { uiaControlFinder } from './uiaControlFinder'
 import { runScreenshotStep } from './screenshot'
-import { isRegionScreenshotShortcut, withoutScreenshotOverlaySteps } from '../workflow/screenshotRegions'
+import { isRegionScreenshotShortcut, usualRegion, withoutScreenshotOverlaySteps } from '../workflow/screenshotRegions'
+import { currentTabFingerprint } from '../workflow/tabFingerprint'
+import { getScreenshotRegionsSince } from '../database/repositories/workflowEventsRepository'
 import { sleep } from '../util'
 
 /**
@@ -367,6 +369,52 @@ async function runMacroSteps(
   return { ok: true }
 }
 
+/** How far back recorded screenshots count toward "the area you usually take". */
+const RECORDED_REGION_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
+
+function usualRecordedScreenshotRegion(): ScreenRegion | undefined {
+  return usualRegion(getScreenshotRegionsSince(Date.now() - RECORDED_REGION_WINDOW_MS)) ?? undefined
+}
+
+/** Shown when a browser step's tab can't be found among the open tabs. */
+export const TAB_NOT_FOUND_REASON = "The browser tab this step used isn't open"
+/** Enough for anyone's tab strip; a full lap ends the search sooner. */
+const MAX_TAB_HOPS = 60
+/** How long a tab switch gets to show in the window title. */
+const TAB_SWITCH_WAIT_MS = 500
+
+/**
+ * Brings the browser tab with fingerprint `tab` (workflow/tabFingerprint.ts)
+ * to the front of the browser window that's in front, by stepping through
+ * its tabs with Ctrl+Tab and checking each one's fingerprint, the same way
+ * it was recorded. Fails closed when no open tab matches: pasting into the
+ * wrong tab (and pressing Enter) is worse than stopping.
+ */
+async function switchToTab(tab: string): Promise<ExecutionResult> {
+  const start = currentTabFingerprint()
+  if (start === tab) return { ok: true }
+  if (start === null) return { ok: false, reason: TAB_NOT_FOUND_REASON }
+  let current: string | null = start
+  for (let hop = 0; hop < MAX_TAB_HOPS; hop++) {
+    if (cancelRequested) return { ok: false, reason: ACTION_CANCELLED_REASON }
+    const previous: string | null = current
+    const sent = sendShortcut(['Control', 'Tab'])
+    if (!sent.ok) return sent
+    const until = Date.now() + TAB_SWITCH_WAIT_MS
+    do {
+      await sleep(25)
+      current = currentTabFingerprint()
+    } while (current === previous && Date.now() < until)
+    if (current === tab) {
+      // Let the page paint before a screenshot or a paste lands on it.
+      await sleep(250)
+      return { ok: true }
+    }
+    if (current === start || current === null) break
+  }
+  return { ok: false, reason: TAB_NOT_FOUND_REASON }
+}
+
 /**
  * Keeps the area the person just picked on that macro's screenshot step, so
  * the next run takes it without the overlay. Re-read and checked first: the
@@ -396,12 +444,20 @@ async function executeMacroStep(
         : { ok: false, reason: ACTION_CANCELLED_REASON }
 
     case 'shortcut': {
+      if (step.tab) {
+        const onTab = await switchToTab(step.tab)
+        if (!onTab.ok) return onTab
+      }
       // Sending Win+Shift+S alone opens the snipping overlay and leaves it
       // waiting for a drag, so the rest of the workflow would stop there.
       if (!isRegionScreenshotShortcut(step.keys)) return sendShortcut(step.keys)
-      const shot = await runScreenshotStep(step.keys, step.region, sendShortcut, () => cancelRequested)
-      if (shot.pickedRegion) saveRegion?.(shot.pickedRegion)
+      // A workflow saved before areas were recorded with it: the area this
+      // person's own recent screenshots usually cover.
+      const recorded = step.region ? undefined : usualRecordedScreenshotRegion()
+      const shot = await runScreenshotStep(step.keys, step.region ?? recorded, sendShortcut, () => cancelRequested)
       if (!shot.ok) return { ok: false, reason: cancelRequested ? ACTION_CANCELLED_REASON : shot.reason }
+      const keep = shot.pickedRegion ?? recorded
+      if (keep) saveRegion?.(keep)
       return { ok: true }
     }
 
@@ -429,8 +485,11 @@ async function executeMacroStep(
     case 'launchApplication':
       return launchApplicationById(step.applicationId)
 
-    case 'focusApplication':
-      return focusApplicationById(step.applicationId)
+    case 'focusApplication': {
+      const focused = await focusApplicationById(step.applicationId)
+      if (!focused.ok || !step.tab) return focused
+      return switchToTab(step.tab)
+    }
 
     case 'click':
       return executeClick(step.target, step.applicationId)

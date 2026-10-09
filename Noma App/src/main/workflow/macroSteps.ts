@@ -79,7 +79,12 @@ export function buildWorkflowMacroSteps(steps: WorkflowStep[], stepDelaysMs?: nu
 
     switch (step.type) {
       case 'shortcut':
-        macroSteps.push({ type: 'shortcut', keys: step.comboKeys })
+        macroSteps.push({
+          type: 'shortcut',
+          keys: step.comboKeys,
+          ...(step.region ? { region: step.region } : {}),
+          ...(step.tab ? { tab: step.tab } : {})
+        })
         break
       case 'click':
         macroSteps.push({
@@ -89,7 +94,11 @@ export function buildWorkflowMacroSteps(steps: WorkflowStep[], stepDelaysMs?: nu
         })
         break
       case 'appSwitch':
-        macroSteps.push({ type: 'focusApplication', applicationId: step.applicationId ?? '' })
+        macroSteps.push({
+          type: 'focusApplication',
+          applicationId: step.applicationId ?? '',
+          ...(step.tab ? { tab: step.tab } : {})
+        })
         break
     }
   })

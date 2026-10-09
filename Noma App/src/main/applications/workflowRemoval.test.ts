@@ -114,7 +114,8 @@ describe('previewSuggestion', () => {
       })
     )!
     expect(preview.steps.map((step) => step.description)).toEqual([
-      `Screenshot (${isMacRun ? 'Cmd' : 'Win'}+Shift+S)`,
+      // Win+Shift+S is a region screenshot only on Windows (a Mac's is Cmd+Shift+4).
+      isMacRun ? 'Screenshot (Cmd+Shift+S)' : 'Screenshot (Win+Shift+S): the first time, drag the area once and Noma keeps it',
       'Switch to Claude Code (it has to be open already)',
       'Paste (Ctrl+V)',
       'Press Enter, to send what was pasted'

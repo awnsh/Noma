@@ -361,6 +361,32 @@ describe('detectPatterns; multi-step workflow learning', () => {
     }
   })
 
+  it('keeps the tab a step always happened in and the area usually screenshotted, not a tab that varied', () => {
+    // Screenshot a different page each time, always paste into the same chat.
+    const events: WorkflowEvent[] = []
+    const areas = [
+      { x: 100, y: 100, width: 800, height: 600 },
+      { x: 0, y: 0, width: 300, height: 200 },
+      { x: 110, y: 95, width: 795, height: 610 },
+      { x: 104, y: 98, width: 798, height: 604 }
+    ]
+    for (let i = 0; i < 4; i++) {
+      const base = i * 30_000
+      events.push({ ...shortcutEvent(['Meta', 'Shift', 'S'], base, 'chrome'), tab: `page-${i}`, screenshotRegion: areas[i] })
+      events.push(appSwitchEvent('claude', base + 2_000))
+      events.push({ ...shortcutEvent(['Control', 'V'], base + 4_000, 'claude'), tab: 'chat' })
+      events.push(appSwitchEvent('chrome', base + 6_000))
+    }
+    const workflow = detectPatterns(events).find((p) => p.kind === 'multiStepWorkflow')
+    expect(workflow?.steps[0]).toEqual({
+      type: 'shortcut',
+      applicationId: 'chrome',
+      comboKeys: ['Meta', 'Shift', 'S'],
+      region: areas[3]
+    })
+    expect(workflow?.steps[2]).toEqual({ type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'], tab: 'chat' })
+  })
+
   it('drops the redundant crossAppWorkflow pairs once the fuller chain subsumes them', () => {
     // Every 2-step pair inside the flagship chain (screenshot->claude,
     // claude->paste, paste->code) also clears CROSS_APP_WORKFLOW_THRESHOLD

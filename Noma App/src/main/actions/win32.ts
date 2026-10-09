@@ -248,3 +248,6 @@ export const BITMAPINFOHEADER_SIZE = 40
 /** Goes up every time anything is put on the clipboard: how replay knows the
  *  snipping overlay has finished, without reading what's on it. */
 export const GetClipboardSequenceNumber = declare(user32, 'uint32_t __stdcall GetClipboardSequenceNumber()')
+/** A window's title: for a browser, the active tab's page title. Read only
+ *  to fingerprint it (workflow/tabFingerprint.ts), never stored. */
+export const GetWindowTextW = declare(user32, 'int __stdcall GetWindowTextW(intptr_t hwnd, void *lpString, int nMaxCount)')

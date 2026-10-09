@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { MacroStep } from '@shared/types'
-import { isRegionScreenshotShortcut, regionFromDrag, withoutScreenshotOverlaySteps } from './screenshotRegions'
+import { isRegionScreenshotShortcut, regionFromDrag, usualRegion, withoutScreenshotOverlaySteps } from './screenshotRegions'
 
 const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
@@ -65,5 +65,23 @@ describe('withoutScreenshotOverlaySteps', () => {
       { type: 'click', target: 'label:Save', applicationId: 'snippingtool' }
     ]
     expect(withoutScreenshotOverlaySteps(steps)).toEqual(steps)
+  })
+})
+
+describe('usualRegion', () => {
+  const a = { x: 100, y: 100, width: 800, height: 600 }
+  const aAgain = { x: 110, y: 95, width: 795, height: 610 }
+  const b = { x: 0, y: 0, width: 300, height: 200 }
+
+  it('is null with nothing recorded', () => {
+    expect(usualRegion([])).toBeNull()
+  })
+
+  it('picks the area dragged most often, as its latest drag', () => {
+    expect(usualRegion([a, b, aAgain])).toEqual(aAgain)
+  })
+
+  it('breaks a tie toward the most recent', () => {
+    expect(usualRegion([a, b])).toEqual(b)
   })
 })

@@ -9,6 +9,7 @@ import {
 import { loadQualityModel } from '../database/repositories/qualityModelRepository'
 import { startOfTodayMs } from '../workflow/timeWindows'
 import { storedSuggestionMakesSense } from '../workflow/workflowSense'
+import { refreshLearnedMacros } from '../workflow/learnedMacroRefresh'
 import {
   extractFeatures,
   isWorkflowKind,
@@ -112,6 +113,11 @@ export class SuggestionEngine {
       insertSuggestionIfNew(suggestion, { fingerprint, features })
       known.push({ id: suggestion.id, status: 'pending', fingerprint })
     }
+
+    // A workflow already saved never gets suggested again, so new details
+    // seen doing it (its browser tabs, its screenshot area) go straight onto
+    // the saved one.
+    refreshLearnedMacros(patterns)
 
     return patterns
   }

@@ -1,4 +1,5 @@
 import type {
+  ScreenRegion,
   ControlUsageStat,
   DailyActivityCount,
   ShortcutUsageStat,
@@ -16,6 +17,20 @@ interface WorkflowEventRow {
   control_id: string | null
   click_target: string | null
   timestamp: number
+  tab_fingerprint: string | null
+  screenshot_region: string | null
+}
+
+function parseRegion(raw: string | null): ScreenRegion | undefined {
+  if (!raw) return undefined
+  try {
+    const value = JSON.parse(raw) as ScreenRegion
+    return [value.x, value.y, value.width, value.height].every((n) => typeof n === 'number' && Number.isFinite(n))
+      ? value
+      : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function insertWorkflowEvent(event: {
@@ -25,14 +40,16 @@ export function insertWorkflowEvent(event: {
   controlId?: string
   clickTarget?: string
   timestamp: number
+  tab?: string
   /** Scripted by Demo Mode, not observed (see demoService.ts). */
   isDemo?: boolean
-}): void {
+}): number {
   const db = getDatabase()
-  db.prepare(
-    `INSERT INTO workflow_events (application_id, event_type, combo_keys, control_id, click_target, timestamp, is_demo)
-     VALUES (@applicationId, @eventType, @comboKeys, @controlId, @clickTarget, @timestamp, @isDemo)`
+  const result = db.prepare(
+    `INSERT INTO workflow_events (application_id, event_type, combo_keys, control_id, click_target, timestamp, is_demo, tab_fingerprint)
+     VALUES (@applicationId, @eventType, @comboKeys, @controlId, @clickTarget, @timestamp, @isDemo, @tab)`
   ).run({
+    tab: event.tab ?? null,
     isDemo: event.isDemo ? 1 : 0,
     applicationId: event.applicationId,
     eventType: event.eventType,
@@ -41,13 +58,35 @@ export function insertWorkflowEvent(event: {
     clickTarget: event.clickTarget ?? null,
     timestamp: event.timestamp
   })
+  return Number(result.lastInsertRowid)
+}
+
+/** The area of a screenshot the person just finished (see
+ *  actions/screenshot.ts' waitForSnip), on the event of its shortcut. */
+export function setWorkflowEventScreenshotRegion(id: number, region: ScreenRegion): void {
+  getDatabase()
+    .prepare('UPDATE workflow_events SET screenshot_region = ? WHERE id = ?')
+    .run(JSON.stringify(region), id)
+}
+
+/** Areas of region screenshots recorded since `sinceTimestamp`, oldest first. */
+export function getScreenshotRegionsSince(sinceTimestamp: number): ScreenRegion[] {
+  const rows = getDatabase()
+    .prepare(
+      `SELECT screenshot_region FROM workflow_events
+       WHERE screenshot_region IS NOT NULL AND timestamp >= ? AND is_demo = 0
+       ORDER BY timestamp ASC`
+    )
+    .all(sinceTimestamp) as Array<{ screenshot_region: string }>
+  return rows.map((row) => parseRegion(row.screenshot_region)).filter((region): region is ScreenRegion => !!region)
 }
 
 export function getWorkflowEventsSince(sinceTimestamp: number): WorkflowEvent[] {
   const db = getDatabase()
   const rows = db
     .prepare(
-      `SELECT id, application_id, event_type, combo_keys, control_id, click_target, timestamp
+      `SELECT id, application_id, event_type, combo_keys, control_id, click_target, timestamp,
+              tab_fingerprint, screenshot_region
        FROM workflow_events
        WHERE timestamp >= ?
        ORDER BY timestamp ASC`
@@ -61,7 +100,9 @@ export function getWorkflowEventsSince(sinceTimestamp: number): WorkflowEvent[] 
     comboKeys: row.combo_keys ? (JSON.parse(row.combo_keys) as string[]) : undefined,
     controlId: row.control_id ?? undefined,
     clickTarget: row.click_target ?? undefined,
-    timestamp: row.timestamp
+    timestamp: row.timestamp,
+    ...(row.tab_fingerprint ? { tab: row.tab_fingerprint } : {}),
+    ...(parseRegion(row.screenshot_region) ? { screenshotRegion: parseRegion(row.screenshot_region) } : {})
   }))
 }
 

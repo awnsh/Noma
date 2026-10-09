@@ -40,8 +40,13 @@ export type ControlAction =
    * inside a macro: the area of the screen this workflow captures, saved
    * the first time it runs (main/actions/screenshot.ts). With it, replay
    * takes the screenshot itself instead of opening the snipping overlay.
+   *
+   * `tab` (here and on `focusApplication`), only inside a learned macro: the
+   * browser tab the step happened in, as a scrambled fingerprint of its
+   * title (workflow/tabFingerprint.ts), never the title. Replay switches to
+   * the matching tab first.
    */
-  | { type: 'shortcut'; keys: string[]; region?: ScreenRegion }
+  | { type: 'shortcut'; keys: string[]; region?: ScreenRegion; tab?: string }
   | { type: 'macro'; macroId: string }
   | { type: 'launchApplication'; applicationId: string }
   | { type: 'systemCommand'; command: string }
@@ -57,7 +62,7 @@ export type ControlAction =
    * Added for learned multi-step workflows (see `multiStepWorkflow`
    * below) whose steps include switching into another app.
    */
-  | { type: 'focusApplication'; applicationId: string }
+  | { type: 'focusApplication'; applicationId: string; tab?: string }
   /**
    * Clicks inside the currently-focused window — the executable counterpart
    * to `WorkflowStep`'s own `click` (same `target` format: `label:<name>` or
@@ -134,6 +139,12 @@ export interface WorkflowEvent {
    *  See workflow/clickTarget.ts and docs/privacy-and-legal.md. */
   clickTarget?: string
   timestamp: number
+  /** Browser steps only: scrambled fingerprint of the tab's title (see
+   *  workflow/tabFingerprint.ts). Never the title itself. */
+  tab?: string
+  /** A region screenshot the person took: the area they dragged, recorded
+   *  only once the snip really landed on the clipboard. Only the rectangle. */
+  screenshotRegion?: ScreenRegion
 }
 
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'dismissed'
@@ -574,8 +585,10 @@ export interface HoloTouchCheckSummary {
  * detectCrossAppWorkflows) — never anything richer, e.g. no window title.
  */
 export type WorkflowStep =
-  | { type: 'appSwitch'; applicationId: string | null }
-  | { type: 'shortcut'; applicationId: string | null; comboKeys: string[] }
+  /** `tab` / `region`: see WorkflowEvent. Not part of a step's identity
+   *  (stepSignature); filled in from the occurrences that agree on them. */
+  | { type: 'appSwitch'; applicationId: string | null; tab?: string }
+  | { type: 'shortcut'; applicationId: string | null; comboKeys: string[]; tab?: string; region?: ScreenRegion }
   /** A click on an on-screen control inside the application — `target` is
    *  `label:<name>` or `zone:<col>x<row>` (WorkflowEvent.clickTarget). */
   | { type: 'click'; applicationId: string | null; target: string }

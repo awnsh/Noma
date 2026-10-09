@@ -68,12 +68,15 @@ import { ApplicationContextService } from './applications/contextService'
 import { getDefaultHardwareDevice } from './hardware/virtualDevice'
 import { DeviceTransportServer } from './hardware/deviceTransportServer'
 import { CaptureService } from './workflow/captureService'
+import { isRegionScreenshotShortcut } from './workflow/screenshotRegions'
+import { currentTabFingerprint, isBrowserApp } from './workflow/tabFingerprint'
+import { watchForSnip } from './actions/screenshot'
 import { ClickCaptureService } from './workflow/clickCaptureService'
 import { createClickInspector } from './workflow/uiaInspector'
 import { GlideController } from './holo/glideController'
 import { getMacEdgeSwipe, setMacEdgeSwipe } from './holo/macEdgeSwipe'
 import { latestTouchCheckAt, openRecordingsFolder } from './holo/recordingStore'
-import { insertWorkflowEvent } from './database/repositories/workflowEventsRepository'
+import { insertWorkflowEvent, setWorkflowEventScreenshotRegion } from './database/repositories/workflowEventsRepository'
 import { getClickCaptureEnabled, getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
 import { getSuggestionHistoryForKind, getPendingSuggestions } from './database/repositories/suggestionsRepository'
 import { markDemoSuggestions, simulateDemoMultiStepWorkflow } from './demo/demoService'
@@ -161,13 +164,30 @@ async function refreshSuggestions(): Promise<void> {
   workflowNotifier.review(patterns)
 }
 
+/** In a browser, which tab: a scrambled fingerprint of its title, never the
+ *  title (workflow/tabFingerprint.ts). Nothing for any other app. */
+function browserTab(applicationId: string | null): { tab?: string } {
+  if (!isBrowserApp(applicationId)) return {}
+  const tab = currentTabFingerprint()
+  return tab ? { tab } : {}
+}
+
 const captureService = new CaptureService((event) => {
-  insertWorkflowEvent({
+  const eventId = insertWorkflowEvent({
     applicationId: event.applicationId,
     eventType: 'shortcut',
     comboKeys: event.comboKeys,
-    timestamp: event.timestamp
+    timestamp: event.timestamp,
+    ...browserTab(event.applicationId)
   })
+  // A region screenshot: once it really lands, keep the area that was
+  // dragged on this event, so a workflow learned from it can take the same
+  // screenshot by itself (actions/screenshot.ts). Only the rectangle.
+  if (isRegionScreenshotShortcut(event.comboKeys)) {
+    void watchForSnip()().then(({ outcome, region }) => {
+      if (outcome === 'taken' && region) setWorkflowEventScreenshotRegion(eventId, region)
+    })
+  }
   void refreshSuggestions()
   // Improved Virtual Keyboard: let the decorative layout flash the real
   // keys of this real captured combo. Nothing new is exposed here: this
@@ -687,7 +707,12 @@ app.whenReady().then(() => {
     if (newApplicationId !== lastRecordedApplicationId) {
       const switchedByNoma = consumeExpectedAppSwitch(newApplicationId)
       if (!switchedByNoma && getWorkflowMonitoringEnabled()) {
-        insertWorkflowEvent({ applicationId: newApplicationId, eventType: 'appSwitch', timestamp: Date.now() })
+        insertWorkflowEvent({
+          applicationId: newApplicationId,
+          eventType: 'appSwitch',
+          timestamp: Date.now(),
+          ...browserTab(newApplicationId)
+        })
         void refreshSuggestions()
       }
     }

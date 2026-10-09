@@ -226,19 +226,32 @@ app's buttons and menu items to find the one that matches, in memory, and
 keeps nothing: no name it sees is stored, logged or sent anywhere, and it
 only runs when the user presses a control whose macro contains such a step.
 
-## Screenshot areas (for replaying a screenshot step)
+## Screenshot areas and browser tabs (for replaying screenshot workflows)
 
-A saved workflow that starts with a region screenshot (Win+Shift+S, or
-Cmd+Shift+4 on a Mac) opens the snipping overlay the first time it runs.
-While it's open, Noma watches the mouse for the drag that picks the area and
-saves only that drag's rectangle (four numbers: position and size) on that
-workflow's screenshot step, in the local database. Never what was inside
-the area. Later runs take that screenshot themselves and put it on the
-clipboard (or, for a Mac's Cmd+Shift+4, in the Mac's own screenshot
-folder), exactly where the person's own screenshot would have gone. Noma
-does not keep, read or send the image. Macro Studio shows the saved area
-and can clear it ("Pick again"). Nothing is watched outside a workflow's
-own first run. See main/workflow/screenshotRegions.ts and
+**Screenshot areas.** While workflow monitoring is on, when the person takes
+a region screenshot themselves (Win+Shift+S, or Cmd+Shift+4 on a Mac), Noma
+watches the mouse until the snip lands on the clipboard and stores only the
+rectangle that was dragged (four numbers: position and size) on that
+shortcut's event, and only if the snip really happened and the area is at
+least 24 px each way. A workflow learned from those events, or a saved one
+that has none, takes the area the person usually screenshots. Replay takes
+that screenshot itself and puts it on the clipboard (or, for a Mac's
+Cmd+Shift+4, in the Mac's own screenshot folder), exactly where the
+person's own screenshot would have gone. Noma never keeps, reads or sends
+the image. Macro Studio shows the area and can clear it ("Pick again").
+
+**Browser tabs.** For steps in a browser (Chrome, Edge, Firefox, ...), Noma
+reads the browser window's title (the active tab's page title) at the
+moment of the step and stores only a fingerprint of it: SHA-256 of the
+title mixed with a random secret made once per install (settings key
+`tabFingerprintSalt`), cut to 16 hex characters. The title itself is never
+stored, logged or sent. A fingerprint can only be compared with another
+tab's on the same computer. Replay steps through the browser's tabs
+(Ctrl+Tab), fingerprinting each title the same way, to find the matching
+one; it stops rather than paste into a tab it can't find. The user chose
+this over storing titles (2026-10-09). Windows only for now.
+
+See main/workflow/screenshotRegions.ts, main/workflow/tabFingerprint.ts and
 main/actions/screenshot.ts.
 
 ## Disclaimer

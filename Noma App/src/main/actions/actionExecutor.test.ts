@@ -10,9 +10,12 @@ import { focusWindowAndVerify } from './windowFocus'
 import { executeClick } from './click'
 import { executeSystemCommand } from './systemCommands'
 import { runScreenshotStep } from './screenshot'
+import { currentTabFingerprint } from '../workflow/tabFingerprint'
+import { insertWorkflowEvent, setWorkflowEventScreenshotRegion } from '../database/repositories/workflowEventsRepository'
 import { clearExpectedAppSwitches, consumeExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
 import {
   ACTION_BUSY_REASON,
+  TAB_NOT_FOUND_REASON,
   EMPTY_ZONE_REASON,
   NO_SHORTCUT_SET_REASON,
   isSilentFailureReason,
@@ -74,6 +77,8 @@ vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { warmUp: vi.fn(), find
 // Real screen capture and the clipboard; screenshot.ts's own logic is covered
 // by screenshotRegions.test.ts. Here: only that the step goes there.
 vi.mock('./screenshot', () => ({ runScreenshotStep: vi.fn(async () => ({ ok: true })) }))
+// Real window titles; here, a scripted sequence of "which tab is in front".
+vi.mock('../workflow/tabFingerprint', () => ({ currentTabFingerprint: vi.fn(() => null) }))
 /** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
 const REGION_SCREENSHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
@@ -603,6 +608,51 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     vi.mocked(runScreenshotStep).mockClear()
     await executeControlAction({ type: 'macro', macroId: macro.id }, null)
     expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, picked, expect.any(Function), expect.any(Function))
+  })
+
+  it('uses the area of recorded screenshots for a workflow saved without one, and keeps it', async () => {
+    const usual = { x: 50, y: 60, width: 700, height: 400 }
+    for (let i = 0; i < 2; i++) {
+      const id = insertWorkflowEvent({ applicationId: 'chrome', eventType: 'shortcut', comboKeys: REGION_SCREENSHOT, timestamp: Date.now() - i * 1000 })
+      setWorkflowEventScreenshotRegion(id, usual)
+    }
+    const macro = createMacro({
+      name: 'Older screenshot workflow',
+      trigger: 'manual',
+      actions: [{ type: 'shortcut', keys: REGION_SCREENSHOT }],
+      delayMs: 0,
+      enabled: true
+    })
+    vi.mocked(runScreenshotStep).mockClear()
+    expect((await executeControlAction({ type: 'macro', macroId: macro.id }, null)).ok).toBe(true)
+    expect(runScreenshotStep).toHaveBeenCalledWith(REGION_SCREENSHOT, usual, expect.any(Function), expect.any(Function))
+    expect(getMacroById(macro.id)?.actions[0]).toEqual({ type: 'shortcut', keys: REGION_SCREENSHOT, region: usual })
+  })
+
+  it('steps through browser tabs to the one a step happened in before pressing its keys', async () => {
+    vi.mocked(currentTabFingerprint)
+      .mockReturnValueOnce('page') // in front at the start
+      .mockReturnValueOnce('page') // still switching
+      .mockReturnValue('chat') // after one Ctrl+Tab
+    vi.mocked(uIOhook.keyTap).mockClear()
+    const result = await executeMacroSteps([{ type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }], null)
+    expect(result.ok).toBe(true)
+    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(1, UiohookKey.Tab, [UiohookKey.Ctrl])
+    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(2, UiohookKey.V, [UiohookKey.Ctrl])
+  })
+
+  it('stops instead of pasting when the tab is not open (a full lap of the tabs)', async () => {
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint)
+      .mockReturnValueOnce('page')
+      .mockReturnValueOnce('other')
+      .mockReturnValue('page')
+    vi.mocked(uIOhook.keyTap).mockClear()
+    const result = await executeMacroSteps([{ type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }], null)
+    expect(result).toEqual({ ok: false, reason: TAB_NOT_FOUND_REASON })
+    expect(uIOhook.keyTap).not.toHaveBeenCalledWith(UiohookKey.V, [UiohookKey.Ctrl])
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint).mockReturnValue(null)
   })
 
   it('stops at the screenshot when it was never taken, and skips the drag pause after one that was', async () => {

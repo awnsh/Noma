@@ -147,6 +147,10 @@ export function runMigrations(database: Database.Database): void {
   // single real event or suggestion.
   ensureColumn(database, 'workflow_events', 'is_demo', 'is_demo INTEGER NOT NULL DEFAULT 0')
   ensureColumn(database, 'suggestions', 'is_demo', 'is_demo INTEGER NOT NULL DEFAULT 0')
+  // Screenshot workflows: the browser tab a step happened in (a scrambled
+  // fingerprint, never the title) and the area a region screenshot took.
+  ensureColumn(database, 'workflow_events', 'tab_fingerprint', 'tab_fingerprint TEXT')
+  ensureColumn(database, 'workflow_events', 'screenshot_region', 'screenshot_region TEXT')
 }
 
 /**
