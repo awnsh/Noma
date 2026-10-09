@@ -55,7 +55,7 @@ export function startAutoUpdates(onReadyToInstall: (version: string) => void): v
     autoUpdater.autoDownload = selfUpdate
     autoUpdater.autoInstallOnAppQuit = selfUpdate
     // Background failures (offline, GitHub rate limit) are retried at the
-    // next check and never shown; checkNow() reports its own.
+    // next check and never shown; checkForUpdatesNow() reports its own.
     autoUpdater.on('error', () => {
       if (status.phase === 'downloading') setStatus({ phase: 'idle', percent: null })
     })
@@ -93,13 +93,38 @@ export function startAutoUpdates(onReadyToInstall: (version: string) => void): v
   })
 }
 
+/**
+ * How long a check may take before it's given up on. A normal one takes
+ * about a second. electron-updater's own 60 s timeout never fires in
+ * Electron (it waits for a 'socket' event that net.request doesn't emit),
+ * so a connection that stalls (Wi-Fi dropping, waking from sleep) would
+ * otherwise hang the check forever.
+ */
+const CHECK_TIMEOUT_MS = 30 * 1000
+
 function runCheck(): Promise<void> {
   if (!inFlight) {
     if (!foundUpdate()) setStatus({ phase: 'checking' })
-    inFlight = autoUpdater
-      .checkForUpdates()
-      .then(() => undefined)
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => {
+        // electron-updater hands every later checkForUpdates() the same
+        // pending promise, so a stalled one would block every check for
+        // the rest of the session. Drop it so the next check starts fresh.
+        ;(autoUpdater as unknown as { checkForUpdatesPromise: unknown }).checkForUpdatesPromise = null
+        reject(new Error('Update check timed out'))
+      }, CHECK_TIMEOUT_MS)
+    })
+    inFlight = Promise.race([autoUpdater.checkForUpdates().then(() => undefined), timeout])
+      .catch((error: unknown) => {
+        // Never leave "Checking…" up (with its button disabled) after a
+        // failed check. A background failure just goes quiet; Settings'
+        // checkForUpdatesNow turns it into an error message.
+        if (status.phase === 'checking') setStatus({ phase: 'idle' })
+        throw error
+      })
       .finally(() => {
+        clearTimeout(timer)
         inFlight = null
         setStatus({ lastCheckedAt: Date.now() })
       })
