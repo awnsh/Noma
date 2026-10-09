@@ -16,6 +16,7 @@ import {
   setGlideEnabled,
   setGlideZoneCount
 } from '../database/repositories/settingsRepository'
+import { getMacroById } from '../database/repositories/macrosRepository'
 import { isMac, isWindows } from '../platform'
 import { TrackpadGestureService } from './trackpadGestureService'
 import { resolveGlidePress } from './glidePress'
@@ -201,6 +202,12 @@ export class GlideController {
     })
     if (decision.control) this.host.press(decision.control)
     const control = decision.control ?? context.profile?.controls.find((item) => item.slot === decision.slot)
+    // A control's label is kept to ~12 characters for the hardware's small
+    // screen; a macro's own name is what the user actually called it.
+    const actionName = decision.control
+      ? (decision.control.action.type === 'macro' && getMacroById(decision.control.action.macroId)?.name) ||
+        decision.control.label
+      : undefined
     this.host.emitActivity({
       type: 'fire',
       zone: event.zone,
@@ -208,6 +215,7 @@ export class GlideController {
       at: event.at,
       outcome: decision.outcome,
       controlLabel: control?.label,
+      actionName,
       applicationName: context.application?.name
     })
   }

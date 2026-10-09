@@ -130,6 +130,29 @@ html.noma-notice-surface #root {
 }
 
 
+/* Glide's toast (GlideToastSurface): rises in, holds, fades out over the
+   one duration main keeps the window up for. Reduced motion keeps the fade
+   and drops the travel. */
+@keyframes noma-glide-toast {
+  0% { opacity: 0; transform: translateY(8px); }
+  12% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(4px); }
+}
+@keyframes noma-glide-toast-fade {
+  0% { opacity: 0; }
+  12%, 82% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.noma-glide-toast {
+  animation-name: noma-glide-toast;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .noma-glide-toast { animation-name: noma-glide-toast-fade; }
+}
+
 /* Glide's gesture demonstration (GlideGestureDemo.tsx): a fingertip resting
    on the palm rest slides onto the trackpad, first on the left, then on the
    right, and the zone it lands in lights up. Plain transforms and opacity;

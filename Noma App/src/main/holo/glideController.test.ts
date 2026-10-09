@@ -131,7 +131,12 @@ describe.runIf(onWindows)('GlideController', () => {
     fake.emit?.({ type: 'fire', zone: 'topLeft', at: 5 })
     expect(host.press).toHaveBeenCalledWith(chrome.profile!.controls[0])
     expect(host.emitActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ outcome: 'pressed', controlLabel: 'NEW TAB', applicationName: 'Google Chrome' })
+      expect.objectContaining({
+        outcome: 'pressed',
+        controlLabel: 'NEW TAB',
+        actionName: 'NEW TAB',
+        applicationName: 'Google Chrome'
+      })
     )
   })
 
@@ -140,7 +145,9 @@ describe.runIf(onWindows)('GlideController', () => {
     controller.setEnabled(true)
     fake.emit?.({ type: 'fire', zone: 'topLeft', at: 5 })
     expect(host.press).not.toHaveBeenCalled()
-    expect(host.emitActivity).toHaveBeenCalledWith(expect.objectContaining({ outcome: 'practice' }))
+    expect(host.emitActivity).toHaveBeenCalledWith(
+      expect.objectContaining({ outcome: 'practice', actionName: undefined })
+    )
   })
 
   it('passes misses through for feedback without pressing anything', () => {

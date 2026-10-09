@@ -90,6 +90,8 @@ export const IPC_CHANNELS = {
   MAC_EDGE_SWIPE_SET: 'flow:mac-edge-swipe-set',
   GLIDE_STATE_CHANGED: 'flow:glide-state-changed',
   GLIDE_ACTIVITY: 'flow:glide-activity',
+  GLIDE_TOAST_SHOWN: 'flow:glide-toast-shown',
+  GLIDE_TOAST_PENDING: 'flow:glide-toast-pending',
   ACTION_RUN_STATE: 'flow:action-run-state',
   GET_ACTION_RUN_STATE: 'flow:get-action-run-state',
   CANCEL_RUNNING_ACTION: 'flow:cancel-running-action',

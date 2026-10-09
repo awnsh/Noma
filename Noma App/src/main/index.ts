@@ -99,6 +99,12 @@ import {
   getPendingWorkflowNotice,
   setWorkflowNoticeInteractive
 } from './notifications/notificationWindow'
+import {
+  closeGlideToastWindow,
+  getPendingGlideToast,
+  prepareGlideToastWindow,
+  showGlideToast
+} from './notifications/glideToastWindow'
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -132,8 +138,15 @@ const glide = new GlideController({
   emitState: (state) => {
     mainWindow?.webContents.send(IPC_CHANNELS.GLIDE_STATE_CHANGED, state)
     updateTrayMenu()
+    if (state.enabled) prepareGlideToastWindow()
   },
-  emitActivity: (activity) => mainWindow?.webContents.send(IPC_CHANNELS.GLIDE_ACTIVITY, activity)
+  emitActivity: (activity) => {
+    mainWindow?.webContents.send(IPC_CHANNELS.GLIDE_ACTIVITY, activity)
+    // Name what ran, in the corner, since the user is looking at another app.
+    if (activity.type === 'fire' && activity.outcome === 'pressed' && activity.actionName) {
+      showGlideToast({ name: activity.actionName, applicationName: activity.applicationName, at: activity.at })
+    }
+  }
 })
 const deviceTransportServer = new DeviceTransportServer(hardwareDevice)
 const aiProvider = new LocalRuleBasedProvider(
@@ -340,6 +353,7 @@ function createMainWindow(): void {
     // Only reached now once `isQuitting` is true (see the `close` handler
     // above): an ordinary close hides the window instead of destroying it.
     closeWorkflowNoticeWindow()
+    closeGlideToastWindow()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -614,6 +628,7 @@ app.whenReady().then(() => {
     }
   )
   ipcMain.handle(IPC_CHANNELS.WORKFLOW_NOTICE_PENDING, () => getPendingWorkflowNotice())
+  ipcMain.handle(IPC_CHANNELS.GLIDE_TOAST_PENDING, () => getPendingGlideToast())
   ipcMain.handle(IPC_CHANNELS.WORKFLOW_NOTICE_SET_INTERACTIVE, (_event, interactive: boolean) => {
     setWorkflowNoticeInteractive(interactive)
   })

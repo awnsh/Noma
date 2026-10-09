@@ -10,6 +10,7 @@ import type {
   FlowApi,
   ActionRunState,
   GlideActivity,
+  GlideToast,
   GlideState,
   MacroStep,
   ModuleFunctionConfig,
@@ -180,6 +181,14 @@ const flowApi: FlowApi = {
       ipcRenderer.removeListener(IPC_CHANNELS.GLIDE_ACTIVITY, listener)
     }
   },
+  onGlideToastShown: (callback) => {
+    const listener = (_event: IpcRendererEvent, value: GlideToast): void => callback(value)
+    ipcRenderer.on(IPC_CHANNELS.GLIDE_TOAST_SHOWN, listener)
+    return () => {
+      ipcRenderer.removeListener(IPC_CHANNELS.GLIDE_TOAST_SHOWN, listener)
+    }
+  },
+  getPendingGlideToast: () => ipcRenderer.invoke(IPC_CHANNELS.GLIDE_TOAST_PENDING),
 
   getActionRunState: () => ipcRenderer.invoke(IPC_CHANNELS.GET_ACTION_RUN_STATE),
   onActionRunState: (callback) => {

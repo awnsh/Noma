@@ -517,9 +517,20 @@ export type GlideActivity =
       at: number
       outcome: GlideOutcome
       controlLabel?: string
+      /** What actually ran: the macro's own name for a macro, otherwise the
+       *  control's label. Only set when `outcome` is 'pressed'. */
+      actionName?: string
       applicationName?: string
     }
   | Extract<HoloTrackpadEvent, { type: 'miss' }>
+
+/** The small bottom-left toast that names what a Glide swipe just ran. */
+export interface GlideToast {
+  name: string
+  applicationName?: string
+  /** When the swipe fired; also tells two toasts for the same name apart. */
+  at: number
+}
 
 /** Whether an action (a control press or an editor Test) is running now. */
 export interface ActionRunState {
@@ -1084,6 +1095,9 @@ export interface FlowApi {
   setGlideZoneCount(zoneCount: HoloTrackpadZoneCount): Promise<GlideState>
   onGlideState(callback: (state: GlideState) => void): () => void
   onGlideActivity(callback: (activity: GlideActivity) => void): () => void
+  /** Glide's toast window only: what to show, pushed and asked on mount. */
+  onGlideToastShown(callback: (toast: GlideToast) => void): () => void
+  getPendingGlideToast(): Promise<GlideToast | null>
 
   /** The action running right now, if any, and a way to stop it between
    *  steps. Stopping never undoes steps that already ran. */
