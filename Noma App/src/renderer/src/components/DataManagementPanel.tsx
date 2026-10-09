@@ -3,13 +3,14 @@ import { usePrivacyStore } from '../stores/privacyStore'
 import { useWorkflowStore } from '../stores/workflowStore'
 import { useFlowStore } from '../stores/flowStore'
 import { useOnboardingStore } from '../stores/onboardingStore'
+import { ConfigTransferControls } from './ConfigTransferControls'
 
 type PendingAction = 'clear' | 'delete' | null
 
 /**
- * Clear/Export/Delete data (this phase's section 13). "Export" isn't built;
- * there's nothing yet worth exporting beyond what Clear/Delete already
- * make legible on this same page (see README's "what remains incomplete").
+ * Clear/Export/Delete data (this phase's section 13). Export and import of
+ * the user's configuration live in ConfigTransferControls, below the
+ * clear/delete actions.
  * Each destructive action requires an explicit second click (inline, not a
  * separate modal) before it runs; mirrors the "warns first" pattern the
  * Macro Studio already uses for deleting a referenced macro.
@@ -97,6 +98,8 @@ export function DataManagementPanel() {
           />
         )}
       </div>
+
+      <ConfigTransferControls />
     </section>
   )
 }

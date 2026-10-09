@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification, systemPreferences } from 'electron'
 import { dirname, join } from 'path'
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'fs'
+import { existsSync, readFileSync, unlinkSync } from 'fs'
 import { optimizer, is } from '@electron-toolkit/utils'
 
 /**
@@ -47,6 +47,8 @@ import { ACCESSIBILITY_SETTINGS_URL, flowPermissionState } from './flowPermissio
 import type { HoloTrackpadZoneCount } from '@shared/types'
 import { initDatabase } from './database/db'
 import { registerIpcHandlers } from './ipc/handlers'
+import { registerFeatureHandlers } from './ipc/featureHandlers'
+import { registerHistoryHandlers } from './ipc/historyHandlers'
 import { createOSAdapter } from './os/createOSAdapter'
 import { isMac, isWindows } from './platform'
 import { platformIcon } from './platformIcon'
@@ -83,8 +85,11 @@ import {
   executeControlActionExclusively,
   getActionRunState,
   isActionRunning,
+  isSilentFailureReason,
   onActionRunState
 } from './actions/actionExecutor'
+import { clearExpectedAppSwitches, consumeExpectedAppSwitch } from './workflow/selfInjectedSwitches'
+import { ActionLog } from './actionLog'
 import { WorkflowNotifier } from './notifications/workflowNotifier'
 import {
   closeWorkflowNoticeWindow,
@@ -199,22 +204,21 @@ const clickCaptureService = new ClickCaptureService((event) => {
  * at. For diagnosing replay ("it stops at Select all, sometimes") from what
  * actually happened rather than from memory. Never what was typed or
  * clicked on, and never leaves this computer; trimmed to the last ~500
- * presses. %APPDATA%/noma/logs/actions.jsonl.
+ * presses. %APPDATA%/noma/logs/actions.jsonl. Written asynchronously and
+ * trimmed only occasionally, so it never blocks a press: see actionLog.ts.
  */
+const actionLog = new ActionLog(() => join(app.getPath('userData'), 'logs', 'actions.jsonl'))
+
 function logActionResult(controlLabel: string, actionType: string, result: { ok: boolean; reason?: string }): void {
-  try {
-    const folder = join(app.getPath('userData'), 'logs')
-    mkdirSync(folder, { recursive: true })
-    const file = join(folder, 'actions.jsonl')
-    const line = JSON.stringify({ at: new Date().toISOString(), control: controlLabel, actionType, ok: result.ok, reason: result.reason })
-    const previous = existsSync(file) ? readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean).slice(-499) : []
-    writeFileSync(file, [...previous, line, ''].join('\n'))
-  } catch {
-    // Diagnostics only: never let logging break a press.
-  }
+  void actionLog.append({ at: new Date().toISOString(), control: controlLabel, actionType, ok: result.ok, reason: result.reason })
 }
 
 function notifyActionFailed(controlLabel: string, reason: string | undefined): void {
+  // "Nothing assigned here" isn't a failure worth interrupting someone for:
+  // an accidental Glide swipe over an empty zone would otherwise pop a
+  // "Noma couldn't finish…" toast. Still logged and still sent to the
+  // renderer by the caller; only the OS notification is skipped.
+  if (isSilentFailureReason(reason)) return
   if (mainWindow?.isVisible() && mainWindow.isFocused()) return
   if (!Notification.isSupported()) return
   new Notification({
@@ -618,6 +622,8 @@ app.whenReady().then(() => {
       .sort((a, b) => (b.occurrenceCount ?? 0) - (a.occurrenceCount ?? 0) || b.confidence - a.confidence)[0]
     if (workflow) workflowNotifier.simulate(workflow, workflow.occurrenceCount ?? 0)
   })
+  registerFeatureHandlers({ getWindow: () => mainWindow, contextService })
+  registerHistoryHandlers()
   registerIpcHandlers(
     contextService,
     captureService,
@@ -634,7 +640,20 @@ app.whenReady().then(() => {
     },
     () => osAdapter.getLastKnownWindowHandle(),
     refreshSuggestions,
-    () => glide.setEnabled(false)
+    // Factory reset ("Delete all data") wiped the database; this clears the
+    // runtime state that was built from it or would otherwise outlive it:
+    // Glide off, the last-recorded app (so the next switch is recorded fresh
+    // rather than compared against an app from the deleted history), Noma
+    // Notice's cooldown and on-screen notice, any pending "Noma switched
+    // apps itself" marks, and the virtual device's in-memory modules (their
+    // `modules` table rows are gone).
+    () => {
+      glide.setEnabled(false)
+      lastRecordedApplicationId = null
+      clearExpectedAppSwitches()
+      workflowNotifier.reset()
+      hardwareDevice.resetModules()
+    }
   )
 
   // Application context -> hardware simulator + capture service: whenever
@@ -656,10 +675,21 @@ app.whenReady().then(() => {
     // resync; neither is a real switch) so one real switch is one row,
     // the same way a control activation is logged once per press. Still
     // exactly `{ applicationId, timestamp }`: see docs/privacy-and-legal.md.
+    //
+    // A switch Noma made itself (a macro's focusApplication step) is
+    // skipped: it's Noma replaying a workflow, not the user doing one, and
+    // recording it would let Flow learn its own replays (see
+    // selfInjectedSwitches.ts). The mark is consumed whether or not
+    // monitoring is on, so a stale one can't swallow a later real switch,
+    // and lastRecordedApplicationId still moves, so switching back by hand
+    // afterwards is compared against where the user actually is.
     const newApplicationId = context.application?.id ?? null
-    if (getWorkflowMonitoringEnabled() && newApplicationId !== lastRecordedApplicationId) {
-      insertWorkflowEvent({ applicationId: newApplicationId, eventType: 'appSwitch', timestamp: Date.now() })
-      void refreshSuggestions()
+    if (newApplicationId !== lastRecordedApplicationId) {
+      const switchedByNoma = consumeExpectedAppSwitch(newApplicationId)
+      if (!switchedByNoma && getWorkflowMonitoringEnabled()) {
+        insertWorkflowEvent({ applicationId: newApplicationId, eventType: 'appSwitch', timestamp: Date.now() })
+        void refreshSuggestions()
+      }
     }
     lastRecordedApplicationId = newApplicationId
 

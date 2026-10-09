@@ -98,9 +98,12 @@ function run(argv) {
   var apps = $.NSWorkspace.sharedWorkspace.runningApplications;
   for (var i = 0; i < apps.count; i++) {
     var app = apps.objectAtIndex(i);
-    if (app.activationPolicy !== 0 || app.executableURL.isNil()) continue;
-    var exe = ObjC.unwrap(app.executableURL.lastPathComponent);
-    if (exe && exe.toLowerCase() === wanted) return String(app.processIdentifier);
+    // JXA hands numeric properties back as strings on current macOS ("0", not
+    // 0), so a strict comparison matches nothing and no app is ever found.
+    if (Number(app.activationPolicy) !== 0) continue;
+    var exe = app.executableURL.isNil() ? '' : ObjC.unwrap(app.executableURL.lastPathComponent);
+    var name = app.localizedName.isNil() ? '' : ObjC.unwrap(app.localizedName);
+    if ((exe && exe.toLowerCase() === wanted) || (name && name.toLowerCase() === wanted)) return String(app.processIdentifier);
   }
   return '';
 }

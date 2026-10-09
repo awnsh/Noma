@@ -3,12 +3,14 @@ import { FLOW_ACTION_CATALOG } from '@shared/constants'
 import type { ActionRunState, ControlAction, MacroStep } from '@shared/types'
 import { keyCodeForName } from '../workflow/keyNames'
 import { markSelfInjected } from '../workflow/selfInjectedKeys'
+import { markExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
 import { getMacroById } from '../database/repositories/macrosRepository'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { focusWindowAndVerify } from './windowFocus'
 import { closeWindowGracefully } from './windowClose'
 import { executeSystemCommand, isKnownSystemCommand } from './systemCommands'
 import { findMainWindowHandleForProcess } from './processWindow'
+import { launchApplicationById } from './launchApplication'
 import { executeClick } from './click'
 import { uiaControlFinder } from './uiaControlFinder'
 import { sleep } from '../util'
@@ -34,6 +36,24 @@ export function isKnownFlowAction(action: string): boolean {
 
 /** A saved workflow the user has paused (Workflows page). */
 export const MACRO_PAUSED_REASON = 'This workflow is paused. Resume it on the Workflows page to use it'
+
+/**
+ * An empty zone (`{type: 'none'}`) and a not-yet-configured shortcut
+ * control (empty combo). Both are "nothing to do", not a failure the user
+ * needs interrupting about: an accidental Glide swipe over an empty zone
+ * must not pop an OS notification. Exported so main/index.ts can recognise
+ * them by identity (see isSilentFailureReason) rather than by re-typing
+ * the literal text.
+ */
+export const EMPTY_ZONE_REASON = 'Nothing is assigned to this zone'
+export const NO_SHORTCUT_SET_REASON = 'This control has no shortcut set yet'
+
+/** True for a failure that is really "nothing was configured here": still
+ *  logged and still reported to the renderer, but never worth an OS
+ *  notification. */
+export function isSilentFailureReason(reason: string | undefined): boolean {
+  return reason === EMPTY_ZONE_REASON || reason === NO_SHORTCUT_SET_REASON
+}
 
 export interface ExecutionResult {
   ok: boolean
@@ -109,7 +129,20 @@ const BLOCKED_COMBOS: string[][] = [
   // stays allowed, matching Ctrl+W above.
   ['Meta', 'Q'],
   ['Meta', 'Alt', 'W'],
-  ['Meta', 'Shift', 'W']
+  ['Meta', 'Shift', 'W'],
+  // Ctrl+Shift+Q quits Chrome (every window, every tab) on Windows.
+  ['Control', 'Shift', 'Q'],
+  // macOS session-level: Cmd+Shift+Q logs out (after a confirmation),
+  // Cmd+Option+Shift+Q logs out with no confirmation at all, and
+  // Cmd+Option+Esc opens the Force Quit dialog. Option is stored as 'Alt'
+  // and Esc as 'Escape' (keyNames.ts / uiohook-napi's own names), so these
+  // match what a captured or configured combo actually contains.
+  ['Meta', 'Shift', 'Q'],
+  ['Meta', 'Alt', 'Shift', 'Q'],
+  ['Meta', 'Alt', 'Escape'],
+  // Cmd+Option+Q is "Quit and Keep Windows" in many Mac apps: still a quit,
+  // and one Shift away from the confirmation-free logout above.
+  ['Meta', 'Alt', 'Q']
 ]
 
 function comboSetKey(keys: string[]): string {
@@ -160,7 +193,7 @@ function sendShortcut(comboKeys: string[]): ExecutionResult {
   // one, so it deserves its own clear reason rather than falling through
   // to resolveShortcutParts' generic "unrecognized key" message.
   if (comboKeys.length === 0) {
-    return { ok: false, reason: 'This control has no shortcut set yet' }
+    return { ok: false, reason: NO_SHORTCUT_SET_REASON }
   }
 
   // Enforced here too (not in executeControlAction) so a macro step
@@ -225,6 +258,10 @@ async function focusApplicationById(applicationId: string): Promise<ExecutionRes
     }
   }
 
+  // This switch is Noma's own doing, not the user's: marked so the
+  // onContextChanged listener in main/index.ts doesn't record it as a
+  // learned `appSwitch` (see selfInjectedSwitches.ts).
+  markExpectedAppSwitch(applicationId)
   return (await focusWindowAndVerify(hwnd))
     ? { ok: true }
     : { ok: false, reason: `Could not confirm focus on ${application.name}` }
@@ -249,7 +286,14 @@ async function focusThenSend(comboKeys: string[], targetHwnd: number | null): Pr
 
 /** How many macros deep a chain of nested `{type: 'macro'}` steps can go
  *  before execution refuses to continue: a fixed backstop against a
- *  runaway chain, on top of (not instead of) the cycle check below. */
+ *  runaway chain, on top of (not instead of) the cycle check below.
+ *
+ *  Counted as an explicit depth, with the top-level run as depth 1 whether
+ *  or not it has a macro id. It used to be inferred from
+ *  `visitedMacroIds.size`, which only worked when the caller seeded the set
+ *  with the running macro's own id: a real press did, but the Macro
+ *  Studio's Test button (TEST_MACRO_STEPS) runs unsaved steps with an empty
+ *  set, so a test allowed one level more than the press it was testing. */
 const MAX_MACRO_NESTING_DEPTH = 3
 
 /**
@@ -268,6 +312,16 @@ export async function executeMacroSteps(
   targetHwnd: number | null,
   visitedMacroIds: Set<string> = new Set()
 ): Promise<ExecutionResult> {
+  return runMacroSteps(steps, targetHwnd, visitedMacroIds, 1)
+}
+
+/** executeMacroSteps at a known nesting depth (1 = the top-level run). */
+async function runMacroSteps(
+  steps: MacroStep[],
+  targetHwnd: number | null,
+  visitedMacroIds: Set<string>,
+  depth: number
+): Promise<ExecutionResult> {
   const actions = steps.filter((step) => step.type !== 'delay').length
   let actionIndex = 0
   if (steps.some((step) => step.type === 'click' && step.target.startsWith('label:'))) uiaControlFinder.warmUp()
@@ -278,7 +332,7 @@ export async function executeMacroSteps(
     // undone. The message says exactly where it stopped.
     const result = cancelRequested
       ? { ok: false, reason: ACTION_CANCELLED_REASON }
-      : await executeMacroStep(step, targetHwnd, visitedMacroIds)
+      : await executeMacroStep(step, targetHwnd, visitedMacroIds, depth)
     if (!result.ok) {
       // Say where it stopped, so a half-run workflow is never a mystery:
       // "Stopped at step 3 of 5: ..." tells the user exactly what did and
@@ -307,7 +361,8 @@ export async function executeMacroSteps(
 async function executeMacroStep(
   step: MacroStep,
   targetHwnd: number | null,
-  visitedMacroIds: Set<string>
+  visitedMacroIds: Set<string>,
+  depth: number
 ): Promise<ExecutionResult> {
   switch (step.type) {
     case 'none':
@@ -343,7 +398,7 @@ async function executeMacroStep(
       return { ok: true }
 
     case 'launchApplication':
-      return { ok: false, reason: 'launchApplication execution is not implemented yet' }
+      return launchApplicationById(step.applicationId)
 
     case 'focusApplication':
       return focusApplicationById(step.applicationId)
@@ -355,14 +410,15 @@ async function executeMacroStep(
       if (visitedMacroIds.has(step.macroId)) {
         return { ok: false, reason: 'Refused: macro references itself, directly or indirectly' }
       }
-      if (visitedMacroIds.size >= MAX_MACRO_NESTING_DEPTH) {
+      // Running this nested macro would make it depth + 1.
+      if (depth >= MAX_MACRO_NESTING_DEPTH) {
         return { ok: false, reason: `Refused: macros can nest at most ${MAX_MACRO_NESTING_DEPTH} levels deep` }
       }
       const nested = getMacroById(step.macroId)
       if (!nested) return { ok: false, reason: 'Macro not found' }
       if (!nested.enabled) return { ok: false, reason: MACRO_PAUSED_REASON }
 
-      return executeMacroSteps(nested.actions, targetHwnd, new Set([...visitedMacroIds, step.macroId]))
+      return runMacroSteps(nested.actions, targetHwnd, new Set([...visitedMacroIds, step.macroId]), depth + 1)
     }
   }
 }
@@ -427,6 +483,12 @@ export function cancelRunningAction(): boolean {
   return true
 }
 
+/** Whether Stop was pressed for the running action: for steps that wait
+ *  inside themselves (click.ts's search for a named control). */
+export function isCancelRequested(): boolean {
+  return cancelRequested
+}
+
 /** The lock itself, shared by every way an action can be started (a press,
  *  and the editors' Test buttons). */
 export async function runActionExclusively(
@@ -455,8 +517,10 @@ export async function runActionExclusively(
  * that governs capture also governs execution), never a window-closing
  * combo as a keystroke (see BLOCKED_COMBOS above; closing has its own
  * safe path via `flowAction: 'closeWindow'` instead), and only ever runs
- * system commands from the fixed allowlist. `launchApplication` and any
- * other `flowAction` are not implemented yet: see docs/architecture.md.
+ * system commands from the fixed allowlist. `launchApplication` only ever
+ * starts the path Noma recorded for that application, with no shell and no
+ * arguments (see launchApplication.ts). Any `flowAction` other than
+ * `closeWindow` is refused: see docs/architecture.md.
  */
 export async function executeControlAction(
   action: ControlAction,
@@ -495,7 +559,12 @@ export async function executeControlAction(
       if (!isKnownSystemCommand(action.command)) {
         return { ok: false, reason: `Unknown system command: ${action.command}` }
       }
-      return { ok: executeSystemCommand(action.command) }
+      // Same reason as the macro-step path, so a failed volume key on a
+      // zone says what failed rather than a bare "failed".
+      if (!executeSystemCommand(action.command)) {
+        return { ok: false, reason: `System command failed: ${action.command}` }
+      }
+      return { ok: true }
 
     case 'flowAction':
       if (isKnownFlowAction(action.action)) {
@@ -510,10 +579,10 @@ export async function executeControlAction(
       return { ok: false, reason: `flowAction "${action.action}" is not implemented yet` }
 
     case 'none':
-      return { ok: false, reason: 'Nothing is assigned to this zone' }
+      return { ok: false, reason: EMPTY_ZONE_REASON }
 
     case 'launchApplication':
-      return { ok: false, reason: `${action.type} execution is not implemented yet` }
+      return launchApplicationById(action.applicationId)
 
     case 'focusApplication':
       return focusApplicationById(action.applicationId)

@@ -73,6 +73,26 @@ import {
 import type { DemoApplicationId } from '../demo/demoService'
 import { clearLearningData, deleteAllData } from '../privacy/dataManagement'
 import { getOnboardingState, saveOnboardingState } from '../database/repositories/onboardingRepository'
+import {
+  isValidActivityDays,
+  isValidApplication,
+  isValidControlAction,
+  isValidControlLabel,
+  isValidEncoderDelta,
+  isValidId,
+  isValidMacroSteps,
+  isValidModuleConfiguration,
+  isValidOnboardingUpdate,
+  isValidSlot,
+  isValidSuggestionResolution,
+  normalizeMacroName,
+  normalizeProfileName,
+  parseMacroUpdate
+} from './validation'
+
+/** The Test buttons' answer to a payload that failed validation: the same
+ *  {ok, reason} shape as a refused run, so the editor shows it inline. */
+const INVALID_ACTION_RESULT = { ok: false, reason: 'Refused: this action is malformed and was not run' }
 
 export function registerIpcHandlers(
   contextService: ApplicationContextService,
@@ -97,6 +117,12 @@ export function registerIpcHandlers(
    *  setting (Glide) is stopped too. */
   afterDeleteAllData: () => void = () => {}
 ): void {
+  // Every argument below arrives from the renderer as an untyped structured
+  // clone; the annotations are what the renderer *should* send, not a
+  // guarantee. Each handler checks its arguments with validation.ts first
+  // and, on a malformed payload, returns its own normal "nothing happened"
+  // value (null/false/[]/{ok:false}) instead of storing or running it.
+  // Never throws: a rejected invoke() is an unhandled error in the renderer.
   ipcMain.handle(IPC_CHANNELS.GET_FLOW_STATUS, async (): Promise<FlowStatus> => {
     await suggestionEngine.refresh()
 
@@ -125,20 +151,25 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_HARDWARE_STATUS, () => getDefaultHardwareDevice().getStatus())
 
   ipcMain.handle(IPC_CHANNELS.PRESS_CONTROL, (_event, controlId: string) => {
+    if (!isValidId(controlId)) return
     getDefaultHardwareDevice().pressControl(controlId)
   })
 
   ipcMain.handle(IPC_CHANNELS.ADD_MODULE, (_event, moduleType: string) => {
+    if (!isValidId(moduleType)) return
     getDefaultHardwareDevice().addModuleByType(moduleType)
   })
 
   ipcMain.handle(IPC_CHANNELS.REMOVE_MODULE, (_event, moduleId: string) => {
+    if (!isValidId(moduleId)) return
     getDefaultHardwareDevice().removeModule(moduleId)
   })
 
   ipcMain.handle(IPC_CHANNELS.GET_WORKFLOW_MONITORING_ENABLED, () => getWorkflowMonitoringEnabled())
 
   ipcMain.handle(IPC_CHANNELS.SET_WORKFLOW_MONITORING_ENABLED, (_event, enabled: boolean) => {
+    // Not a boolean: change nothing and report the current state.
+    if (typeof enabled !== 'boolean') return getWorkflowMonitoringEnabled()
     setWorkflowMonitoringEnabled(enabled)
     if (enabled) {
       captureService.start()
@@ -153,6 +184,7 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_CLICK_CAPTURE_ENABLED, () => getClickCaptureEnabled())
 
   ipcMain.handle(IPC_CHANNELS.SET_CLICK_CAPTURE_ENABLED, (_event, enabled: boolean) => {
+    if (typeof enabled !== 'boolean') return getClickCaptureEnabled()
     setClickCaptureEnabled(enabled)
     // Click capture only ever runs while workflow monitoring is also on.
     if (enabled && getWorkflowMonitoringEnabled()) clickCaptureService.start()
@@ -172,14 +204,15 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.RESOLVE_SUGGESTION,
     (_event, id: string, status: 'accepted' | 'rejected' | 'dismissed') =>
-      resolveSuggestion(id, status)
+      isValidId(id) && isValidSuggestionResolution(status) ? resolveSuggestion(id, status) : null
   )
 
   ipcMain.handle(IPC_CHANNELS.GET_PROFILE_FOR_APPLICATION, (_event, applicationId: string) =>
-    getProfileForApplicationId(applicationId)
+    isValidId(applicationId) ? getProfileForApplicationId(applicationId) : null
   )
 
   ipcMain.handle(IPC_CHANNELS.ASSIGN_SUGGESTION_TO_CONTROL, (_event, suggestionId: string, slot: number) => {
+    if (!isValidId(suggestionId) || !isValidSlot(slot)) return null
     const result = assignSuggestionToControl(suggestionId, slot)
     if (result) {
       onProfileUpdated(result.profile.applicationId)
@@ -196,6 +229,14 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.UPDATE_CONTROL,
     (_event, applicationId: string, slot: number, label: string, action: ControlAction) => {
+      if (
+        !isValidId(applicationId) ||
+        !isValidSlot(slot) ||
+        !isValidControlLabel(label) ||
+        !isValidControlAction(action)
+      ) {
+        return null
+      }
       const profile = updateControl(applicationId, slot, label, action)
       if (profile) onProfileUpdated(applicationId)
       return profile
@@ -203,12 +244,14 @@ export function registerIpcHandlers(
   )
 
   ipcMain.handle(IPC_CHANNELS.CLEAR_CONTROL, (_event, applicationId: string, slot: number) => {
+    if (!isValidId(applicationId) || !isValidSlot(slot)) return null
     const profile = clearControl(applicationId, slot)
     if (profile) onProfileUpdated(applicationId)
     return profile
   })
 
   ipcMain.handle(IPC_CHANNELS.TEST_CONTROL_ACTION, async (_event, action: ControlAction) => {
+    if (!isValidControlAction(action)) return INVALID_ACTION_RESULT
     const result = await executeControlActionExclusively(action, getTargetWindowHandle(), 'Test')
     return { ok: result.ok, reason: result.reason }
   })
@@ -218,37 +261,48 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_ALL_APPLICATIONS, () => getAllApplications())
 
   ipcMain.handle(IPC_CHANNELS.GET_APPLICATION_ICON, (_event, executablePath: string) =>
-    getApplicationIcon(executablePath)
+    typeof executablePath === 'string' ? getApplicationIcon(executablePath) : null
   )
 
   ipcMain.handle(
     IPC_CHANNELS.CREATE_MACRO,
-    (_event, name: string, actions: MacroStep[], applicationId?: string) =>
-      createMacro({
-        name,
+    (_event, name: string, actions: MacroStep[], applicationId?: string) => {
+      const macroName = normalizeMacroName(name)
+      if (macroName === null || !isValidMacroSteps(actions)) return null
+      if (applicationId !== undefined && !isValidId(applicationId)) return null
+      return createMacro({
+        name: macroName,
         applicationId,
         trigger: 'manual',
         actions,
         delayMs: 0,
         enabled: true
       })
+    }
   )
 
   ipcMain.handle(
     IPC_CHANNELS.UPDATE_MACRO,
-    (_event, id: string, updates: { name?: string; actions?: MacroStep[]; enabled?: boolean }) =>
-      updateMacro(id, updates)
+    (_event, id: string, updates: { name?: string; actions?: MacroStep[]; enabled?: boolean }) => {
+      // parseMacroUpdate rebuilds the update from known fields only, so a
+      // stray key (e.g. `applicationId`, which updateMacro would also
+      // accept) can't ride along from the renderer.
+      const parsed = parseMacroUpdate(updates)
+      if (!isValidId(id) || parsed === null) return null
+      return updateMacro(id, parsed)
+    }
   )
 
-  ipcMain.handle(IPC_CHANNELS.DELETE_MACRO, (_event, id: string) => deleteMacro(id))
+  ipcMain.handle(IPC_CHANNELS.DELETE_MACRO, (_event, id: string) => (isValidId(id) ? deleteMacro(id) : false))
 
-  ipcMain.handle(IPC_CHANNELS.DUPLICATE_MACRO, (_event, id: string) => duplicateMacro(id))
+  ipcMain.handle(IPC_CHANNELS.DUPLICATE_MACRO, (_event, id: string) => (isValidId(id) ? duplicateMacro(id) : null))
 
   ipcMain.handle(IPC_CHANNELS.GET_CONTROLS_REFERENCING_MACRO, (_event, macroId: string) =>
-    getControlsReferencingMacro(macroId)
+    isValidId(macroId) ? getControlsReferencingMacro(macroId) : []
   )
 
   ipcMain.handle(IPC_CHANNELS.TEST_MACRO_STEPS, async (_event, actions: MacroStep[]) => {
+    if (!isValidMacroSteps(actions)) return INVALID_ACTION_RESULT
     const result = await runActionExclusively(() => executeMacroSteps(actions, getTargetWindowHandle()), 'Test')
     return { ok: result.ok, reason: result.reason }
   })
@@ -262,7 +316,7 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_CONTROL_USAGE_STATS, () => getControlUsageStats())
 
   ipcMain.handle(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, (_event, days: number) =>
-    getDailyActivityCounts(days)
+    isValidActivityDays(days) ? getDailyActivityCounts(days) : []
   )
 
   ipcMain.handle(IPC_CHANNELS.LIST_APPLICATION_PROFILE_SUMMARIES, () =>
@@ -272,6 +326,10 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.CREATE_PROFILE_FOR_APPLICATION,
     (_event, application: Application, profileName: string) => {
+      // The name is trimmed/capped again inside createProfileForApplication
+      // (its other callers aren't IPC); checked here too so a bad name
+      // doesn't get as far as upserting the application row.
+      if (!isValidApplication(application) || normalizeProfileName(profileName) === null) return null
       const profile = createProfileForApplication(application, profileName)
       if (profile) onProfileUpdated(application.id)
       return profile
@@ -279,12 +337,14 @@ export function registerIpcHandlers(
   )
 
   ipcMain.handle(IPC_CHANNELS.RENAME_APPLICATION_PROFILE, (_event, applicationId: string, name: string) => {
+    if (!isValidId(applicationId)) return null
     const profile = renameApplicationProfile(applicationId, name)
     if (profile) onProfileUpdated(applicationId)
     return profile
   })
 
   ipcMain.handle(IPC_CHANNELS.DELETE_APPLICATION_PROFILE, (_event, applicationId: string) => {
+    if (!isValidId(applicationId)) return false
     const deleted = deleteApplicationProfile(applicationId)
     if (deleted) onProfileUpdated(applicationId)
     return deleted
@@ -293,6 +353,7 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.DEMO_SET_APPLICATION,
     async (_event, applicationId: DemoApplicationId | null) => {
+      if (applicationId !== null && !Object.hasOwn(DEMO_APPLICATIONS, applicationId)) return
       await contextService.setDemoApplication(
         applicationId ? DEMO_APPLICATIONS[applicationId] : null
       )
@@ -344,7 +405,9 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.CONFIGURE_MODULE,
     (_event, moduleId: string, configuration: Record<string, ModuleFunctionConfig>) =>
-      getDefaultHardwareDevice().configureModule(moduleId, configuration)
+      isValidId(moduleId) && isValidModuleConfiguration(configuration)
+        ? getDefaultHardwareDevice().configureModule(moduleId, configuration)
+        : null
   )
 
   ipcMain.handle(IPC_CHANNELS.PING_HARDWARE, () => getDefaultHardwareDevice().ping())
@@ -354,6 +417,7 @@ export function registerIpcHandlers(
   ipcMain.handle(
     IPC_CHANNELS.SIMULATE_ENCODER_ROTATION,
     (_event, moduleId: string, delta: number) => {
+      if (!isValidId(moduleId) || !isValidEncoderDelta(delta)) return
       getDefaultHardwareDevice().rotateEncoder(moduleId, delta)
     }
   )
@@ -365,10 +429,11 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.GET_ONBOARDING_STATE, () => getOnboardingState())
 
   ipcMain.handle(IPC_CHANNELS.SAVE_ONBOARDING_STATE, (_event, update: Partial<OnboardingState>) =>
-    saveOnboardingState(update)
+    isValidOnboardingUpdate(update) ? saveOnboardingState(update) : getOnboardingState()
   )
 
   ipcMain.handle(IPC_CHANNELS.REMOVE_WORKFLOW, (_event, macroId: string) => {
+    if (!isValidId(macroId)) return false
     const result = removeLearnedWorkflow(macroId)
     if (!result) return false
     for (const applicationId of result.applicationIds) onProfileUpdated(applicationId)
@@ -376,6 +441,7 @@ export function registerIpcHandlers(
   })
 
   ipcMain.handle(IPC_CHANNELS.PREVIEW_SUGGESTION_ACTION, (_event, suggestionId: string) => {
+    if (!isValidId(suggestionId)) return null
     const suggestion = getSuggestionById(suggestionId)
     return suggestion ? previewSuggestion(suggestion) : null
   })

@@ -26,6 +26,22 @@ export function formatShortcutCaption(keys: string[]): string {
   return keys.map((key) => KEY_ABBREVIATIONS[key] ?? key).join('+')
 }
 
+/** Plain names for the system commands (the ids are SYSTEM_COMMAND_CATALOG's,
+ *  which stay camelCase because they are stored). Used by the editors'
+ *  dropdowns and the tile caption; an id missing here shows as itself. */
+const SYSTEM_COMMAND_LABELS: Record<string, string> = {
+  volumeMute: 'Mute',
+  volumeUp: 'Volume up',
+  volumeDown: 'Volume down',
+  mediaPlayPause: 'Play/Pause',
+  mediaNextTrack: 'Next track',
+  mediaPrevTrack: 'Previous track'
+}
+
+export function systemCommandLabel(command: string): string {
+  return Object.hasOwn(SYSTEM_COMMAND_LABELS, command) ? SYSTEM_COMMAND_LABELS[command] : command
+}
+
 /** One glyph representing what kind of thing this control does — the
  *  physical-identity marker in the corner of a control tile. */
 export function actionGlyph(action: ControlAction | undefined): string {
@@ -60,13 +76,13 @@ export function actionCaption(action: ControlAction | undefined): string | null 
     case 'shortcut':
       return action.keys.length > 0 ? formatShortcutCaption(action.keys) : null
     case 'systemCommand':
-      return action.command
+      return systemCommandLabel(action.command)
     case 'flowAction':
       return action.action === 'closeWindow' ? 'Close window' : action.action
     case 'macro':
       return 'Workflow'
     case 'launchApplication':
-      return 'Launch'
+      return 'Open app'
     case 'focusApplication':
       return 'Switch app'
     case 'click':

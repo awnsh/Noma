@@ -24,8 +24,8 @@ import { ZONE_COLUMNS, ZONE_ROWS, MIN_WINDOW_SIZE, type ScreenRect } from '../wo
 import { markSelfInjectedClick } from '../workflow/selfInjectedClicks'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { processForWindow, sameProcess } from './windowProcess'
-import { uiaControlFinder } from './uiaControlFinder'
-import type { ExecutionResult } from './actionExecutor'
+import { CANCEL_POLL_MS, uiaControlFinder } from './uiaControlFinder'
+import { ACTION_CANCELLED_REASON, isCancelRequested, type ExecutionResult } from './actionExecutor'
 import {
   CG_LEFT_MOUSE_DOWN,
   CG_LEFT_MOUSE_UP,
@@ -64,7 +64,9 @@ const OFFSCREEN_COORD_THRESHOLD = -30000
  *    be exactly one enabled, visible control with that name; none (after
  *    waiting FIND_WAIT_MS for it to appear) or several both refuse. The
  *    found point must also belong to the app's own window, so a popup
- *    covering the button can't receive the click instead.
+ *    covering the button can't receive the click instead. The wait (and a
+ *    search in progress) checks for Stop every CANCEL_POLL_MS, so pressing
+ *    Stop ends the step at once instead of after the whole wait.
  * 3. **`zone:<col>x<row>`: a position.** Only recorded where the app
  *    exposes no named controls (custom-drawn UIs). Mapped onto the
  *    foreground window's *current* bounds, so a moved or resized window
@@ -113,7 +115,9 @@ async function clickNamedControl(label: string, processId: number | null): Promi
 
   const deadline = Date.now() + FIND_WAIT_MS
   for (;;) {
-    const found = await uiaControlFinder.find(processId, label)
+    const found = await uiaControlFinder.find(processId, label, isCancelRequested)
+    // Also after a search that did answer: Stop pressed meanwhile means no click.
+    if (found.status === 'cancelled' || isCancelRequested()) return { ok: false, reason: ACTION_CANCELLED_REASON }
     if (found.status === 'found') {
       if (ownerPidAt(found.x, found.y) !== processId) {
         return { ok: false, reason: `Something is covering “${label}”. Nothing was clicked` }
@@ -129,8 +133,18 @@ async function clickNamedControl(label: string, processId: number | null): Promi
     if (Date.now() >= deadline) {
       return { ok: false, reason: `Couldn't find “${label}” in the app. It may be hidden, disabled or renamed` }
     }
-    await sleep(FIND_RETRY_MS)
+    if (!(await waitUnlessCancelled(FIND_RETRY_MS))) return { ok: false, reason: ACTION_CANCELLED_REASON }
   }
+}
+
+/** sleep, checking for Stop every CANCEL_POLL_MS; false once it's pressed. */
+async function waitUnlessCancelled(ms: number): Promise<boolean> {
+  const until = Date.now() + ms
+  while (Date.now() < until) {
+    if (isCancelRequested()) return false
+    await sleep(Math.min(CANCEL_POLL_MS, until - Date.now()))
+  }
+  return !isCancelRequested()
 }
 
 /** Mouse path onto the target before pressing: a few steps in from *  below-left of it, like a hand arriving. */

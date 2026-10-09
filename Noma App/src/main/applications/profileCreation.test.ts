@@ -1,7 +1,8 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { MAX_PROFILE_NAME_LENGTH } from '@shared/constants'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
-import { getApplicationById } from '../database/repositories/applicationsRepository'
+import { getApplicationById, upsertApplication } from '../database/repositories/applicationsRepository'
 import {
   createProfileForApplication,
   deleteApplicationProfile,
@@ -54,6 +55,20 @@ describe('createProfileForApplication', () => {
     createProfileForApplication(NOTEPAD, 'My Setup')
     expect(getApplicationById('notepad')?.name).toBe('Notepad (seeded)')
   })
+
+  it('trims the name and caps its length', () => {
+    expect(createProfileForApplication(NOTEPAD, '  Spaced  ')?.name).toBe('Spaced')
+    deleteApplicationProfile('notepad')
+    expect(createProfileForApplication(NOTEPAD, 'x'.repeat(500))?.name).toBe('x'.repeat(MAX_PROFILE_NAME_LENGTH))
+  })
+
+  it('refuses an empty name and writes nothing, not even the application row', () => {
+    expect(createProfileForApplication(NOTEPAD, '   ')).toBeNull()
+    expect(createProfileForApplication(NOTEPAD, '')).toBeNull()
+    const count = getDatabase().prepare('SELECT COUNT(*) as c FROM profiles').get() as { c: number }
+    expect(count.c).toBe(0)
+    expect(getApplicationById('notepad')).toBeNull()
+  })
 })
 
 describe('renameApplicationProfile', () => {
@@ -65,6 +80,20 @@ describe('renameApplicationProfile', () => {
 
   it('returns null when the application has no profile', () => {
     expect(renameApplicationProfile('does-not-exist', 'X')).toBeNull()
+  })
+
+  it('trims the new name and caps its length', () => {
+    createProfileForApplication(NOTEPAD, 'Original')
+    expect(renameApplicationProfile('notepad', '  Trimmed \n')?.name).toBe('Trimmed')
+    expect(renameApplicationProfile('notepad', 'y'.repeat(500))?.name).toBe('y'.repeat(MAX_PROFILE_NAME_LENGTH))
+  })
+
+  it('refuses an empty name and keeps the old one', () => {
+    createProfileForApplication(NOTEPAD, 'Original')
+    expect(renameApplicationProfile('notepad', '   ')).toBeNull()
+    expect(renameApplicationProfile('notepad', 42 as unknown as string)).toBeNull()
+    const name = getDatabase().prepare('SELECT name FROM profiles').get() as { name: string }
+    expect(name.name).toBe('Original')
   })
 })
 
@@ -101,5 +130,27 @@ describe('listApplicationProfileSummaries', () => {
 
   it('returns an empty list when no applications are known', () => {
     expect(listApplicationProfileSummaries()).toEqual([])
+  })
+})
+
+describe('listApplicationProfileSummaries and system helpers', () => {
+  it('leaves out macOS system helpers that were detected earlier, and keeps real apps', () => {
+    upsertApplication({
+      id: 'universalaccessauthwarn',
+      name: 'universalAccessAuthWarn',
+      processName: 'universalAccessAuthWarn',
+      executablePath: '/System/Library/PrivateFrameworks/UniversalAccess.framework/Versions/A/Resources/universalAccessAuthWarn.app'
+    })
+    upsertApplication({
+      id: 'finder',
+      name: 'Finder',
+      processName: 'Finder',
+      executablePath: '/System/Library/CoreServices/Finder.app'
+    })
+
+    const ids = listApplicationProfileSummaries().map((summary) => summary.application.id)
+
+    expect(ids).toContain('finder')
+    expect(ids).not.toContain('universalaccessauthwarn')
   })
 })

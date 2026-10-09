@@ -4,7 +4,7 @@ import {
   WORKFLOW_NOTIFICATION_COOLDOWN_MS,
   WORKFLOW_NOTIFICATION_THRESHOLD
 } from '@shared/constants'
-import type { ControlAction } from '@shared/types'
+import type { ActionHistory, ControlAction } from '@shared/types'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useFlowStore } from '../stores/flowStore'
 import { useWorkflowStore } from '../stores/workflowStore'
@@ -12,6 +12,7 @@ import { useDeveloperStore } from '../stores/developerStore'
 import { DeviceLogRow } from '../components/DeviceLogRow'
 import { HardwareStatusPill } from '../components/HardwareStatusPill'
 import { useStoreSync } from '../lib/useStoreSync'
+import { useActionHistory } from '../lib/useActionHistory'
 
 function describeAction(action: ControlAction): string {
   switch (action.type) {
@@ -77,6 +78,79 @@ function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; o
   )
 }
 
+const RECENT_RUNS_LIMIT = 50
+
+function formatRunTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+}
+
+function RecentRuns({ history }: { history: ActionHistory | null }) {
+  return (
+    <div className="mb-8">
+      <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">Recent Runs</div>
+      <p className="mb-3 text-[11px] text-neutral-600">
+        Every press and whether it worked, newest first, read from logs/actions.jsonl. Counts cover
+        only what the log still holds; it keeps the most recent presses.
+      </p>
+      {history && history.controls.length > 0 && (
+        <div className="mb-3 overflow-hidden rounded-xl border border-white/10 bg-base-900">
+          {history.controls.map((stats) => (
+            <div
+              key={stats.key}
+              className="flex items-center gap-4 border-b border-white/5 px-4 py-2 text-sm last:border-b-0"
+            >
+              <span className="w-32 shrink-0 truncate text-neutral-200">{stats.control || 'Unnamed'}</span>
+              <span className="w-28 shrink-0 font-mono text-xs text-neutral-500">{stats.actionType}</span>
+              <span className="shrink-0 text-xs text-neutral-400">{stats.successCount} ok</span>
+              <span
+                className={`shrink-0 text-xs ${stats.failureCount > 0 ? 'text-red-400' : 'text-neutral-500'}`}
+              >
+                {stats.failureCount} failed
+              </span>
+              {!stats.lastOk && (
+                <span className="truncate text-xs text-neutral-500">
+                  Last: {stats.lastReason ?? 'no reason given'}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="max-h-96 overflow-y-auto rounded-xl border border-white/10 bg-base-900">
+        {!history || history.recent.length === 0 ? (
+          <div className="px-4 py-3 text-sm text-neutral-600">
+            No runs yet. Press a control or swipe into a Glide zone.
+          </div>
+        ) : (
+          history.recent.map((entry, index) => (
+            <div
+              key={`${entry.at}-${index}`}
+              className="flex items-baseline gap-2 border-b border-white/5 px-3 py-1.5 text-xs last:border-b-0"
+            >
+              <span className="shrink-0 font-mono text-neutral-500">{formatRunTime(entry.at)}</span>
+              <span className={`shrink-0 ${entry.ok ? 'text-neutral-500' : 'text-red-400'}`}>
+                {entry.ok ? '✓' : '✗'}
+              </span>
+              <span className="shrink-0 text-neutral-300">{entry.control || 'Unnamed'}</span>
+              <span className="shrink-0 font-mono text-neutral-500">{entry.actionType}</span>
+              {!entry.ok && (
+                <span className="truncate text-neutral-500">{entry.reason ?? 'no reason given'}</span>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function Developer() {
   const hardware = useHardwareStore()
   const flow = useFlowStore()
@@ -84,6 +158,7 @@ export function Developer() {
   const developer = useDeveloperStore()
   const [selectedControlId, setSelectedControlId] = useState<string>('')
   const [selectedModuleType, setSelectedModuleType] = useState(MODULE_CATALOG[0].type)
+  const actionHistory = useActionHistory(RECENT_RUNS_LIMIT)
 
   useStoreSync(
     hardware,
@@ -274,6 +349,8 @@ export function Developer() {
           )}
         </div>
       </div>
+
+      <RecentRuns history={actionHistory} />
 
       <div className="mb-8">
         <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">

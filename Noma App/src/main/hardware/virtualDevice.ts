@@ -156,6 +156,21 @@ export class VirtualHardwareDevice implements HardwareDevice {
   }
 
   /**
+   * Factory reset ("Delete all data"): drops every in-memory module, since
+   * their persisted `modules` rows are gone. Each one is reported as
+   * disconnected, exactly as a real removal would be, so the renderer and
+   * the HOST<->DEVICE log don't keep showing modules that no longer exist.
+   * Connection state, controls and the log itself are left alone.
+   */
+  resetModules(): void {
+    if (this.modules.length === 0) return
+    const removed = this.modules
+    this.modules = []
+    for (const module of removed) this.emitDeviceEvent({ type: 'moduleDisconnected', moduleId: module.id })
+    this.emitStatus()
+  }
+
+  /**
    * Assigns real, executable actions to a module's capability functions
    * (brainstorm.md section 10; e.g. a Rotary Encoder's turn/press). This
    * only stores configuration; it never executes anything itself: the

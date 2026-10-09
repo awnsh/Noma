@@ -34,13 +34,12 @@ export type ControlAction =
    * Switches to an already-running application by id, resolved to a
    * process name (applicationsRepository.getApplicationById) and focused
    * via the same SetForegroundWindow path windowFocus.ts already uses —
-   * never spawns a process. This is deliberately narrower than
-   * `launchApplication` (still unimplemented): "bring the window Windows
-   * already has to the front" is a safe, bounded capability; "start an
-   * arbitrary executable" is a much bigger surface this feature doesn't
-   * need. Added for learned multi-step workflows (see `multiStepWorkflow`
-   * below) whose steps include switching into another app — the one
-   * step in that vocabulary `launchApplication` couldn't safely cover.
+   * never spawns a process. Deliberately narrower than `launchApplication`,
+   * which focuses the app if it's running and otherwise starts the path
+   * Noma recorded for it (main/actions/launchApplication.ts): a learned
+   * workflow's "switch into another app" step must never start anything.
+   * Added for learned multi-step workflows (see `multiStepWorkflow`
+   * below) whose steps include switching into another app.
    */
   | { type: 'focusApplication'; applicationId: string }
   /**
@@ -73,7 +72,7 @@ export interface Control {
   id: string
   /** 1-based physical slot position (maps to a control on the keyboard/module). */
   slot: number
-  /** Short label — must remain renderable on a small physical display (~12 chars). */
+  /** Short label — must remain renderable on a small physical display (see MAX_CONTROL_LABEL_LENGTH). */
   label: string
   action: ControlAction
 }
@@ -666,6 +665,40 @@ export interface ActionExecutionEvent {
   reason?: string
 }
 
+/** One press read back from logs/actions.jsonl. `controlId` is present only
+ *  on lines that recorded it; older lines carry just the label. */
+export interface ActionHistoryEntry {
+  at: number
+  control: string
+  controlId?: string
+  actionType: string
+  ok: boolean
+  reason?: string
+}
+
+/** Success/failure counts for one control over what the log still holds.
+ *  `key` is `id:<controlId>` when known, else `label:<label>`. */
+export interface ControlRunStats {
+  key: string
+  control: string
+  controlId?: string
+  actionType: string
+  successCount: number
+  failureCount: number
+  lastAt: number
+  lastOk: boolean
+  lastReason?: string
+}
+
+export interface ActionHistory {
+  /** Newest first. */
+  recent: ActionHistoryEntry[]
+  /** Most recently run first. */
+  controls: ControlRunStats[]
+  /** Valid entries in the log (it keeps a bounded tail). */
+  total: number
+}
+
 /**
  * A single HOST<->DEVICE communication event, logged for Developer Mode
  * (brainstorm.md section 20) using the same message names as the future
@@ -721,6 +754,45 @@ export interface TestActionResult {
   reason?: string
 }
 
+/** How many of each configuration record a settings file holds. */
+export interface ConfigCounts {
+  applications: number
+  profiles: number
+  controls: number
+  macros: number
+}
+
+export type ConfigExportResult =
+  | { status: 'saved'; filePath: string; counts: ConfigCounts }
+  | { status: 'cancelled' }
+  | { status: 'failed'; reason: string }
+
+/** Merge: apps in the file get the file's profile and controls, macros are
+ *  added or updated by id, everything else stays. Replace: every profile,
+ *  control and macro is removed first, so only the file's remain. */
+export type ConfigImportMode = 'merge' | 'replace'
+
+/** What an import would change, per record kind. */
+export interface ConfigImportPreview {
+  profiles: { added: number; replaced: number; removed: number }
+  controls: { added: number; removed: number }
+  macros: { added: number; replaced: number; removed: number }
+}
+
+export type ConfigImportPickResult =
+  | {
+      status: 'ready'
+      token: string
+      fileName: string
+      exportedAt: string | null
+      counts: ConfigCounts
+      previews: Record<ConfigImportMode, ConfigImportPreview>
+    }
+  | { status: 'cancelled' }
+  | { status: 'invalid'; reason: string }
+
+export type ConfigImportApplyResult = { ok: true; counts: ConfigCounts } | { ok: false; reason: string }
+
 /**
  * The contract exposed to the renderer via the preload bridge
  * (window.flow). Defined here so both main and renderer type-check
@@ -771,6 +843,9 @@ export interface FlowApi {
   /** Every control's all-time press count, keyed by controlId — the
    *  Controls page's "Used N times" line. See ControlUsageStat. */
   getControlUsageStats(): Promise<ControlUsageStat[]>
+  /** The newest `limit` presses (default 50) and per-control success and
+   *  failure counts from the action log. Read-only. */
+  getActionHistory(limit?: number): Promise<ActionHistory>
   /** Shortcut-press counts per local day for the last `days` days (inclusive
    *  of today), oldest first, zero-filled for days with no activity — the
    *  Usage Stats page's activity chart. */
@@ -862,7 +937,9 @@ export interface FlowApi {
 
   /** Macro Studio (Product Development Phase 2). Manual macro authoring,
    *  independent of Flow's suggestion engine. */
-  createMacro(name: string, actions: MacroStep[], applicationId?: string): Promise<Macro>
+  /** Null if the name is empty after trimming or the steps are malformed
+   *  (see main/ipc/validation.ts); nothing is saved in that case. */
+  createMacro(name: string, actions: MacroStep[], applicationId?: string): Promise<Macro | null>
   updateMacro(
     id: string,
     updates: { name?: string; actions?: MacroStep[]; enabled?: boolean }
@@ -919,6 +996,14 @@ export interface FlowApi {
    *  suggestion/workflow_event/setting and restores the seeded defaults —
    *  the same state a fresh install starts in. Irreversible. */
   deleteAllData(): Promise<void>
+  /** Asks where to save, then writes applications, profiles, controls and
+   *  macros (never learning data) to a versioned JSON file. */
+  exportConfiguration(): Promise<ConfigExportResult>
+  /** Asks for a settings file, validates it, and returns what importing it
+   *  would change. Nothing is written until `applyConfigurationImport`. */
+  pickConfigurationImport(): Promise<ConfigImportPickResult>
+  /** Applies the file last picked (by its token) in one transaction. */
+  applyConfigurationImport(token: string, mode: ConfigImportMode): Promise<ConfigImportApplyResult>
 
   /**
    * Module configuration (brainstorm.md section 10) — assigns a real,

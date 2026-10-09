@@ -99,6 +99,12 @@ export type FindResult =
   | { status: 'none' }
   | { status: 'several'; count: number }
   | { status: 'unavailable' }
+  /** The caller's isCancelled said stop (the user pressed Stop) before an
+   *  answer came; the search's own answer, if any, is dropped. */
+  | { status: 'cancelled' }
+
+/** How often a waiting search checks isCancelled, so Stop feels immediate. */
+export const CANCEL_POLL_MS = 50
 
 /** One search can walk a big UI tree; past this, give up on that attempt. */
 const FIND_TIMEOUT_MS = 2500
@@ -127,22 +133,48 @@ class UiaControlFinder {
     this.ensureStarted()
   }
 
-  find(processId: number, label: string): Promise<FindResult> {
-    if (isMac) return findNamedControls(processId, label, normalizeControlName)
+  /**
+   * Looks for the control once. `isCancelled` is polled every CANCEL_POLL_MS
+   * while the answer is awaited; once it's true the result is 'cancelled'
+   * at once rather than whenever the search would have finished.
+   *
+   * On Windows an abandoned request would otherwise keep the helper walking
+   * the UI tree with nobody waiting, and the next search (the next macro's)
+   * would queue behind it, so the helper is stopped instead; the next search
+   * or warmUp starts a fresh one. The macOS walk runs in this process and
+   * yields between slices: it's left to finish (it's bounded and releases
+   * what it holds) and its answer is ignored.
+   */
+  find(processId: number, label: string, isCancelled?: () => boolean): Promise<FindResult> {
+    if (isCancelled?.()) return Promise.resolve({ status: 'cancelled' })
+    if (isMac) return raceCancel(findNamedControls(processId, label, normalizeControlName), isCancelled)
     const child = this.ensureStarted()
     if (!child?.stdin?.writable) return Promise.resolve({ status: 'unavailable' })
     const id = String(this.nextId++)
     const encoded = Buffer.from(label, 'utf8').toString('base64')
     return new Promise((resolve) => {
+      let poll: ReturnType<typeof setInterval> | undefined
       const timer = setTimeout(
         () => {
+          clearInterval(poll)
           this.pending.delete(id)
           resolve({ status: 'unavailable' })
         },
         this.ready ? FIND_TIMEOUT_MS : FIRST_FIND_TIMEOUT_MS
       )
+      if (isCancelled) {
+        poll = setInterval(() => {
+          if (!isCancelled()) return
+          clearInterval(poll)
+          clearTimeout(timer)
+          this.pending.delete(id)
+          this.stopHelper(child)
+          resolve({ status: 'cancelled' })
+        }, CANCEL_POLL_MS)
+      }
       this.pending.set(id, (answer) => {
         clearTimeout(timer)
+        clearInterval(poll)
         if (!answer) return resolve({ status: 'unavailable' })
         if (answer.found === 0) return resolve({ status: 'none' })
         if (answer.found > 1) return resolve({ status: 'several', count: answer.found })
@@ -158,6 +190,14 @@ class UiaControlFinder {
     this.pending.clear()
     this.child?.kill()
     this.child = null
+  }
+
+  /** Kills a helper that's busy with an abandoned search. Any other request
+   *  still waiting on it is answered 'unavailable' rather than left to time
+   *  out. Only that helper: one started since is left alone. */
+  private stopHelper(child: ChildProcess): void {
+    if (this.child !== child) return
+    this.dispose()
   }
 
   private ensureStarted(): ChildProcess | null {
@@ -196,6 +236,29 @@ class UiaControlFinder {
     this.pending.delete(answer.id)
     resolve(answer)
   }
+}
+
+/** Resolves with `search`, or with 'cancelled' as soon as isCancelled (polled
+ *  every CANCEL_POLL_MS) says stop, whichever comes first. */
+function raceCancel(search: Promise<FindResult>, isCancelled?: () => boolean): Promise<FindResult> {
+  if (!isCancelled) return search
+  return new Promise((resolve) => {
+    const poll = setInterval(() => {
+      if (!isCancelled()) return
+      clearInterval(poll)
+      resolve({ status: 'cancelled' })
+    }, CANCEL_POLL_MS)
+    search.then(
+      (result) => {
+        clearInterval(poll)
+        resolve(result)
+      },
+      () => {
+        clearInterval(poll)
+        resolve({ status: 'unavailable' })
+      }
+    )
+  })
 }
 
 /** Shared, started on first use (the PowerShell helper takes ~1 s to load

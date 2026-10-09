@@ -17,7 +17,17 @@ import { zoneNameForSlot } from '../lib/glideZones'
  * doesn't call for that same weight. Both read the exact same
  * `useLearnedActions` data. No second model, just a second presentation.
  */
-export function WorkflowCard({ action, onSelect }: { action: LearnedAction; onSelect: () => void }) {
+export function WorkflowCard({
+  action,
+  onSelect,
+  lastRunFailure
+}: {
+  action: LearnedAction
+  onSelect: () => void
+  /** The reason the most recent run failed, when it did. Omitted when the
+   *  last run worked or there's no run in the action log to go on. */
+  lastRunFailure?: string
+}) {
   const { macro, chain, usageCount, applicationName, lastUsedAt, assignments } = action
   const zoneCount = useGlideStore((state) => state.state?.zoneCount ?? 4)
   const where = assignments[0]
@@ -41,6 +51,7 @@ export function WorkflowCard({ action, onSelect }: { action: LearnedAction; onSe
               ? `${zoneNameForSlot(where.slot, zoneCount)} in ${where.applicationName}${assignments.length > 1 ? ` and ${assignments.length - 1} more` : ''}`
               : `Not on any zone${applicationName ? ` · ${applicationName}` : ''}`}
           </p>
+          {lastRunFailure && <p className="mt-1 text-xs text-red-400">Last run failed: {lastRunFailure}</p>}
         </div>
         <div className="shrink-0 text-right text-xs text-neutral-500">
           <p>

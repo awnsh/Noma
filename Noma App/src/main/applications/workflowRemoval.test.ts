@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Suggestion } from '@shared/types'
 import { __setDatabaseForTesting, getDatabase, runMigrations } from '../database/db'
 import { seedDefaultProfiles } from '../database/seed'
+import { DEMO_MACRO_TRIGGER } from '@shared/constants'
 import { createMacro, getMacroById } from '../database/repositories/macrosRepository'
 import { assignControlAction } from '../database/repositories/controlsRepository'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
@@ -27,11 +28,11 @@ beforeEach(() => {
   __setDatabaseForTesting(db)
 })
 
-function saveWorkflowOn(applicationId: string, slot: number): string {
+function saveWorkflowOn(applicationId: string, slot: number, trigger = 'flow-control'): string {
   const macro = createMacro({
     name: 'Bookmark → Close tab',
     applicationId,
-    trigger: 'flow-control',
+    trigger,
     actions: [{ type: 'shortcut', keys: ['Control', 'D'] }],
     delayMs: 0,
     enabled: true
@@ -60,6 +61,38 @@ describe('removeLearnedWorkflow', () => {
   it('returns null for an unknown workflow and changes nothing', () => {
     expect(removeLearnedWorkflow('nope')).toBeNull()
     expect(getDatabase().prepare('SELECT COUNT(*) AS n FROM controls').get()).toEqual({ n: 12 })
+  })
+})
+
+describe('removeLearnedWorkflow; what it may remove, and what it leaves behind', () => {
+  it('removes a demo workflow too', () => {
+    const id = saveWorkflowOn('chrome', 1, DEMO_MACRO_TRIGGER)
+    expect(removeLearnedWorkflow(id)).toEqual({ applicationIds: ['chrome'] })
+    expect(getMacroById(id)).toBeNull()
+  })
+
+  it('refuses a user-authored macro, changing nothing', () => {
+    const id = saveWorkflowOn('chrome', 1, 'manual')
+    expect(removeLearnedWorkflow(id)).toBeNull()
+    expect(getMacroById(id)).not.toBeNull()
+    const slot1 = getProfileForApplicationId('chrome')!.controls.find((c) => c.slot === 1)
+    expect(slot1?.action).toEqual({ type: 'macro', macroId: id })
+  })
+
+  it('strips the workflow out of any macro that calls it as a step, keeping that macro', () => {
+    const id = saveWorkflowOn('chrome', 1)
+    const caller = createMacro({
+      name: 'Mine',
+      trigger: 'manual',
+      actions: [
+        { type: 'shortcut', keys: ['Control', 'C'] },
+        { type: 'macro', macroId: id }
+      ],
+      delayMs: 0,
+      enabled: true
+    })
+    removeLearnedWorkflow(id)
+    expect(getMacroById(caller.id)?.actions).toEqual([{ type: 'shortcut', keys: ['Control', 'C'] }])
   })
 })
 

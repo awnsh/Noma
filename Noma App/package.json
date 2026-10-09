@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "install:mac": "bash scripts/install-mac-local.sh",
     "release": "node scripts/release.mjs"
   },
   "keywords": [],

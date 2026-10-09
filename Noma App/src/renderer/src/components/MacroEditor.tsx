@@ -27,13 +27,20 @@ interface MacroEditorProps {
   onDiscardNew: () => void
 }
 
-// 'launchApplication' has no working execution path yet (actionExecutor.ts
-// refuses it), so it is never offered. See ControlEditorModal.tsx, which
-// applies the same rule. 'click' targets only come from captured workflow
-// steps, never hand-authored.
-type NewStepType = Exclude<MacroStep['type'], 'launchApplication' | 'click' | 'none'>
+// 'click' targets only come from captured workflow steps, never
+// hand-authored. 'launchApplication' runs for real (main/actions/
+// launchApplication.ts) and uses the same app picker as 'focusApplication'.
+type NewStepType = Exclude<MacroStep['type'], 'click' | 'none'>
 
-const STEP_TYPES_FOR_NEW_STEP: NewStepType[] = ['shortcut', 'delay', 'systemCommand', 'flowAction', 'focusApplication', 'macro']
+const STEP_TYPES_FOR_NEW_STEP: NewStepType[] = [
+  'shortcut',
+  'delay',
+  'systemCommand',
+  'flowAction',
+  'focusApplication',
+  'launchApplication',
+  'macro'
+]
 
 const NEW_STEP_LABELS: Record<NewStepType, string> = {
   shortcut: '+ Shortcut',
@@ -41,6 +48,7 @@ const NEW_STEP_LABELS: Record<NewStepType, string> = {
   systemCommand: '+ System action',
   flowAction: '+ Flow action',
   focusApplication: '+ Switch window',
+  launchApplication: '+ Open app',
   macro: '+ Run macro'
 }
 
@@ -102,7 +110,9 @@ export function MacroEditor({
 
   const otherMacros = allMacros.filter((candidate) => candidate.id !== macro?.id)
   const hasIncompleteStep = actions.some(
-    (step) => (step.type === 'focusApplication' && !step.applicationId) || (step.type === 'macro' && !step.macroId)
+    (step) =>
+      ((step.type === 'focusApplication' || step.type === 'launchApplication') && !step.applicationId) ||
+      (step.type === 'macro' && !step.macroId)
   )
   const canSave = name.trim().length > 0 && !hasIncompleteStep
 
@@ -146,7 +156,7 @@ export function MacroEditor({
     } else {
       const created = await window.flow.createMacro(name.trim(), actions)
       setIsSaving(false)
-      onSaved(created)
+      if (created) onSaved(created)
     }
   }
 

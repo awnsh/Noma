@@ -175,7 +175,7 @@ html.noma-notice-surface #root {
 .noma-fade-in { animation: noma-fade-in 180ms var(--ease-out-quart) both; }
 .noma-rise-in { animation: noma-rise-in 220ms var(--ease-out-expo) both; }
 .noma-scale-in { animation: noma-scale-in 240ms var(--ease-out-expo) both; }
-.noma-page-in { animation: noma-rise-in 220ms var(--ease-out-expo) both; }
+.noma-page-in { animation: noma-rise-in 220ms var(--ease-out-expo) backwards; } /* not `both`: a finished page must not keep a transform, which would re-anchor every fixed element to the page */
 /* Exits: shorter than the matching enter, ease-in so they leave quickly. */
 @keyframes noma-fade-out { from { opacity: 1; } to { opacity: 0; } }
 @keyframes noma-scale-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(6px) scale(0.98); } }

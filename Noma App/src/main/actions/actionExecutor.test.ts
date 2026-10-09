@@ -3,13 +3,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UiohookKey, uIOhook } from 'uiohook-napi'
 import type { MacroStep } from '@shared/types'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
-import { createMacro } from '../database/repositories/macrosRepository'
+import { createMacro, getMacroById } from '../database/repositories/macrosRepository'
 import { __resetSelfInjectedGuardForTesting, isSelfInjected } from '../workflow/selfInjectedKeys'
 import { findMainWindowHandleForProcess } from './processWindow'
 import { focusWindowAndVerify } from './windowFocus'
 import { executeClick } from './click'
+import { executeSystemCommand } from './systemCommands'
+import { clearExpectedAppSwitches, consumeExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
 import {
   ACTION_BUSY_REASON,
+  EMPTY_ZONE_REASON,
+  NO_SHORTCUT_SET_REASON,
+  isSilentFailureReason,
   ACTION_CANCELLED_REASON,
   cancelRunningAction,
   getActionRunState,
@@ -58,6 +63,12 @@ vi.mock('./windowFocus', async (importOriginal) => {
 // MacroStep actually dispatches to it and that its result is honored,
 // exactly the same shape as the findMainWindowHandleForProcess mock above.
 vi.mock('./click', () => ({ executeClick: vi.fn() }))
+// Wrapped like focusWindowAndVerify: the real allowlist check and send stay
+// in place by default; one test overrides the send to report a failure.
+vi.mock('./systemCommands', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./systemCommands')>()
+  return { ...actual, executeSystemCommand: vi.fn(actual.executeSystemCommand) }
+})
 vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { warmUp: vi.fn(), find: vi.fn() } }))
 
 function insertApplication(id: string, name: string, processName: string): void {
@@ -75,6 +86,8 @@ beforeEach(() => {
   vi.mocked(findMainWindowHandleForProcess).mockReset()
   vi.mocked(focusWindowAndVerify).mockClear() // keeps the real pass-through implementation
   vi.mocked(executeClick).mockReset()
+  vi.mocked(executeSystemCommand).mockClear()
+  clearExpectedAppSwitches()
 })
 
 describe('isKeystrokeExecutionEnabled', () => {
@@ -124,6 +137,25 @@ describe('isBlockedShortcut', () => {
     expect(isBlockedShortcut(['Control', 'Shift', 'W'])).toBe(true)
     expect(isBlockedShortcut(['Control', 'Q'])).toBe(true)
     expect(isBlockedShortcut(['Control', 'F4'])).toBe(true)
+  })
+
+  it('blocks session-level and quit-everything combos (macOS logout/force quit, Chrome quit)', () => {
+    expect(isBlockedShortcut(['Meta', 'Shift', 'Q'])).toBe(true) // log out
+    expect(isBlockedShortcut(['Meta', 'Alt', 'Shift', 'Q'])).toBe(true) // log out, no confirmation
+    expect(isBlockedShortcut(['Meta', 'Alt', 'Q'])).toBe(true)
+    expect(isBlockedShortcut(['Meta', 'Alt', 'Escape'])).toBe(true) // Force Quit dialog
+    expect(isBlockedShortcut(['Control', 'Shift', 'Q'])).toBe(true) // quits Chrome
+  })
+
+  it('uses the stored key names, so a real configured combo actually matches', () => {
+    // 'Escape' (uiohook-napi's name) resolves; 'Esc' isn't in the vocabulary
+    // at all, so it could never be sent in the first place.
+    expect(resolveShortcutParts(['Meta', 'Alt', 'Escape'])).not.toBeNull()
+    expect(resolveShortcutParts(['Meta', 'Alt', 'Esc'])).toBeNull()
+  })
+
+  it('still allows Meta+W (close a tab), matching Control+W', () => {
+    expect(isBlockedShortcut(['Meta', 'W'])).toBe(false)
   })
 
   it('is order-independent', () => {
@@ -184,7 +216,8 @@ describe('executeControlAction; shortcut', () => {
   it('refuses a not-yet-configured control (empty combo) with a clear reason, not a blank one', async () => {
     const result = await executeControlAction({ type: 'shortcut', keys: [] }, null)
     expect(result.ok).toBe(false)
-    expect(result.reason).toBe('This control has no shortcut set yet')
+    expect(result.reason).toBe(NO_SHORTCUT_SET_REASON)
+    expect(isSilentFailureReason(result.reason)).toBe(true)
   })
 
   it('marks the combo as self-injected right before actually sending it', async () => {
@@ -204,6 +237,27 @@ describe('executeControlAction; shortcut', () => {
     await executeControlAction({ type: 'shortcut', keys: ['Control', 'Q'] }, 999999999)
     expect(uIOhook.keyTap).not.toHaveBeenCalled()
     expect(isSelfInjected(['Control', 'Q'])).toBe(false)
+  })
+})
+
+describe('executeControlAction; nothing to do', () => {
+  it('reports an empty zone with the exported reason, which is silent for OS notifications', async () => {
+    const result = await executeControlAction({ type: 'none' }, null)
+    expect(result).toEqual({ ok: false, reason: EMPTY_ZONE_REASON })
+    expect(isSilentFailureReason(result.reason)).toBe(true)
+  })
+
+  it('never treats a real failure as silent', () => {
+    expect(isSilentFailureReason('Macro not found')).toBe(false)
+    expect(isSilentFailureReason(undefined)).toBe(false)
+  })
+})
+
+describe('executeControlAction; systemCommand', () => {
+  it('gives a failed send the same reason as the macro-step path', async () => {
+    vi.mocked(executeSystemCommand).mockReturnValueOnce(false)
+    const result = await executeControlAction({ type: 'systemCommand', command: 'volumeUp' }, null)
+    expect(result).toEqual({ ok: false, reason: 'System command failed: volumeUp' })
   })
 })
 
@@ -236,11 +290,19 @@ describe('executeMacroSteps', () => {
     expect(result.reason).toContain('No known target window')
   })
 
-  it('refuses a launchApplication step as not implemented yet', async () => {
+  it('dispatches a launchApplication step to launchApplication.ts, failing closed for an unknown app', async () => {
+    // launchApplication.test.ts covers the launch itself; this only checks
+    // the step is wired up, using the one path that can't start anything.
     const steps: MacroStep[] = [{ type: 'launchApplication', applicationId: 'code' }]
     const result = await executeMacroSteps(steps, null)
     expect(result.ok).toBe(false)
-    expect(result.reason).toContain('not implemented yet')
+    expect(result.reason).toContain('Unknown application, nothing to open')
+    expect(findMainWindowHandleForProcess).not.toHaveBeenCalled()
+  })
+
+  it('dispatches a launchApplication control action the same way', async () => {
+    const result = await executeControlAction({ type: 'launchApplication', applicationId: 'code' }, null)
+    expect(result).toEqual({ ok: false, reason: 'Unknown application, nothing to open' })
   })
 
   it('dispatches a click step to click.ts and succeeds when it does', async () => {
@@ -374,6 +436,45 @@ describe('executeMacroSteps', () => {
     expect(result.ok).toBe(false)
     expect(result.reason).toContain('nest at most')
   })
+
+  /** A -> B -> C (three levels) or A -> B -> C -> D (four), each level a
+   *  real saved macro; returns A's id. */
+  function macroChain(levels: number): string {
+    let previousId = createMacro({
+      name: `Level ${levels}`,
+      trigger: 'manual',
+      actions: [{ type: 'delay', ms: 1 }],
+      delayMs: 0,
+      enabled: true
+    }).id
+    for (let level = levels - 1; level >= 1; level--) {
+      previousId = createMacro({
+        name: `Level ${level}`,
+        trigger: 'manual',
+        actions: [{ type: 'macro', macroId: previousId }],
+        delayMs: 0,
+        enabled: true
+      }).id
+    }
+    return previousId
+  }
+
+  it('allows exactly as much nesting from a Test run (empty visited set) as from a real press', async () => {
+    // Real press: the pressed macro is level 1; three levels run.
+    expect(await executeControlAction({ type: 'macro', macroId: macroChain(3) }, null)).toEqual({ ok: true })
+    const pressTooDeep = await executeControlAction({ type: 'macro', macroId: macroChain(4) }, null)
+    expect(pressTooDeep.reason).toContain('nest at most 3')
+
+    // Macro Studio Test (TEST_MACRO_STEPS): the unsaved steps being tested
+    // are level 1 themselves, with no id and an empty set, so a chain of two
+    // more levels runs and a third is refused, the same as a press.
+    const testedA = getMacroById(macroChain(3))!
+    expect(await executeMacroSteps(testedA.actions, null)).toEqual({ ok: true })
+    const testedTooDeep = getMacroById(macroChain(4))!
+    const testResult = await executeMacroSteps(testedTooDeep.actions, null)
+    expect(testResult.ok).toBe(false)
+    expect(testResult.reason).toContain('nest at most 3')
+  })
 })
 
 describe('isKnownFlowAction', () => {
@@ -467,6 +568,23 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     // 3 shortcut steps: screenshot, paste, enter; focusApplication itself
     // sends no keystroke.
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(3)
+  })
+
+  it('marks its own switch as expected, so it is not learned as the user switching apps', async () => {
+    insertApplication('claude', 'Claude Code', 'Claude.exe')
+    vi.mocked(findMainWindowHandleForProcess).mockResolvedValue(4242)
+    vi.mocked(focusWindowAndVerify).mockResolvedValue(true)
+
+    await executeControlAction({ type: 'focusApplication', applicationId: 'claude' }, null)
+    expect(consumeExpectedAppSwitch('claude')).toBe(true)
+  })
+
+  it('marks nothing when the app is not running (no switch is coming)', async () => {
+    insertApplication('claude', 'Claude Code', 'Claude.exe')
+    vi.mocked(findMainWindowHandleForProcess).mockResolvedValue(null)
+
+    await executeControlAction({ type: 'focusApplication', applicationId: 'claude' }, null)
+    expect(consumeExpectedAppSwitch('claude')).toBe(false)
   })
 })
 

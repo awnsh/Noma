@@ -37,3 +37,21 @@ describe('findMainWindowHandleForProcess', () => {
     ).resolves.toBeNull()
   }, 10_000)
 })
+
+// The macOS lookup runs a real osascript, so it is only exercised on a Mac. Finder
+// is always running in a logged-in session, which makes it a stable target.
+// The lookup starts a real osascript with a short time limit, which a busy machine can miss
+// now and then, so these retry rather than fail on a slow moment.
+describe.runIf(process.platform === 'darwin')('findMainWindowHandleForProcess on macOS', { retry: 2 }, () => {
+  it('finds a running app by its executable name', async () => {
+    expect(await findMainWindowHandleForProcess('Finder')).toBeGreaterThan(0)
+  })
+
+  it('matches case-insensitively', async () => {
+    expect(await findMainWindowHandleForProcess('finder')).toBeGreaterThan(0)
+  })
+
+  it('returns null for an app that is not running', async () => {
+    expect(await findMainWindowHandleForProcess('Definitely Not Running')).toBeNull()
+  })
+})

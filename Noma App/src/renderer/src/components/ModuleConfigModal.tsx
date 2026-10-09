@@ -5,6 +5,7 @@ import { ShortcutRecorder } from './ShortcutRecorder'
 import { Modal, ModalCloseButton } from './Modal'
 import { PrimaryButton } from './Button'
 import { FIELD_INPUT_SM } from '../lib/surfaces'
+import { systemCommandLabel } from '../lib/describeAction'
 import { defaultActionForType, type SelectableActionType } from '../lib/actions'
 
 interface ModuleFunctionSpec {
@@ -145,7 +146,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
                 >
                   {SYSTEM_COMMAND_CATALOG.map((command) => (
                     <option key={command} value={command}>
-                      {command}
+                      {systemCommandLabel(command)}
                     </option>
                   ))}
                 </select>

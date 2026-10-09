@@ -454,7 +454,7 @@ component swap, not a rewrite:
    (and don't need to care) whether a control was triggered by a mouse
    click or a real button.
 2. **Small, display-safe control labels.** `Control.label` is a short
-   string (~12 characters) plus an optional icon id, because a real
+   string (~16 characters) plus an optional icon id, because a real
    module's OLED/segment display can only render short labels. Designing
    the data model around a hypothetical rich UI now would mean redesigning
    it later; constraining it now costs nothing.

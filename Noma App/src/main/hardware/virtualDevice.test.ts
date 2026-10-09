@@ -241,6 +241,34 @@ describe('VirtualHardwareDevice', () => {
     })
   })
 
+  describe('resetModules', () => {
+    it('drops every module and reports each one as disconnected', async () => {
+      const a = device.addModuleByType('rotaryEncoder')
+      const b = device.addModuleByType('rotaryEncoder')
+      const events: DeviceEvent[] = []
+      device.onDeviceEvent((event) => events.push(event))
+
+      device.resetModules()
+
+      expect((await device.getStatus()).modules).toEqual([])
+      expect(events).toEqual([
+        { type: 'moduleDisconnected', moduleId: a.id },
+        { type: 'moduleDisconnected', moduleId: b.id }
+      ])
+    })
+
+    it('leaves connection state and controls alone, and is a no-op with no modules', async () => {
+      await device.connect()
+      await device.setControls(CONTROLS)
+      device.clearLog()
+      device.resetModules()
+      const status = await device.getStatus()
+      expect(status.connected).toBe(true)
+      expect(status.controls).toEqual(CONTROLS)
+      expect(device.getLog()).toEqual([])
+    })
+  })
+
   describe('reset', () => {
     it('cycles through disconnect then connect, ending connected', async () => {
       await device.connect()

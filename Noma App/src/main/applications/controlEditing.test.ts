@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
 import { seedDefaultProfiles } from '../database/seed'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { DEMO_MACRO_TRIGGER, LEARNED_MACRO_TRIGGER } from '@shared/constants'
+import { createMacro, getMacroById } from '../database/repositories/macrosRepository'
 import { updateControl, clearControl } from './controlEditing'
 
 beforeEach(() => {
@@ -63,5 +65,54 @@ describe('clearControl', () => {
 
   it('returns null for an application with no profile', () => {
     expect(clearControl('never-seeded-app', 1)).toBeNull()
+  })
+})
+
+function macroOn(slot: number, trigger: string): string {
+  const id = createMacro({
+    name: 'Workflow',
+    applicationId: 'code',
+    trigger,
+    actions: [{ type: 'shortcut', keys: ['Control', 'C'] }],
+    delayMs: 0,
+    enabled: true
+  }).id
+  updateControl('code', slot, 'WORKFLOW', { type: 'macro', macroId: id })
+  return id
+}
+
+describe('updateControl / clearControl; the workflow a control held', () => {
+  it('deletes a learned or demo workflow once its only control is overwritten or cleared', () => {
+    const learned = macroOn(1, LEARNED_MACRO_TRIGGER)
+    updateControl('code', 1, 'Ctrl+S', { type: 'shortcut', keys: ['Control', 'S'] })
+    expect(getMacroById(learned)).toBeNull()
+
+    const demo = macroOn(2, DEMO_MACRO_TRIGGER)
+    clearControl('code', 2)
+    expect(getMacroById(demo)).toBeNull()
+  })
+
+  it('never deletes a user-authored macro', () => {
+    const manual = macroOn(1, 'manual')
+    clearControl('code', 1)
+    expect(getMacroById(manual)).not.toBeNull()
+  })
+
+  it('keeps a learned workflow still on another control, or called by another macro', () => {
+    const shared = macroOn(1, LEARNED_MACRO_TRIGGER)
+    updateControl('code', 2, 'ALSO', { type: 'macro', macroId: shared })
+    clearControl('code', 1)
+    expect(getMacroById(shared)).not.toBeNull()
+
+    const called = macroOn(3, LEARNED_MACRO_TRIGGER)
+    createMacro({ name: 'Caller', trigger: 'manual', actions: [{ type: 'macro', macroId: called }], delayMs: 0, enabled: true })
+    clearControl('code', 3)
+    expect(getMacroById(called)).not.toBeNull()
+  })
+
+  it('keeps the workflow when the same macro is re-assigned (e.g. a rename)', () => {
+    const learned = macroOn(1, LEARNED_MACRO_TRIGGER)
+    updateControl('code', 1, 'RENAMED', { type: 'macro', macroId: learned })
+    expect(getMacroById(learned)).not.toBeNull()
   })
 })

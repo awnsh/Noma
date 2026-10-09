@@ -18,10 +18,13 @@ function mockFlow(overrides: Partial<FlowApi> = {}): FlowApi {
   } as unknown as FlowApi
 }
 
-function open(control: Control | undefined, props: { onClose?: () => void; onSaved?: () => void } = {}) {
+function open(
+  control: Control | undefined,
+  props: { onClose?: () => void; onSaved?: () => void; applicationId?: string } = {}
+) {
   return render(
     <ControlEditorModal
-      applicationId="code"
+      applicationId={props.applicationId ?? 'code'}
       applicationName="Visual Studio Code"
       slot={3}
       control={control}
@@ -95,8 +98,11 @@ describe('ControlEditorModal', () => {
 
   it('says why Save is unavailable', async () => {
     open({ id: 'c3', slot: 3, label: 'TERMINAL', action: { type: 'shortcut', keys: [] } })
-    expect(await screen.findByText('Record a shortcut to save.')).toBeInTheDocument()
+    expect(await screen.findByText('Choose a shortcut to save.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+
+    fireEvent.change(screen.getByDisplayValue('App shortcut'), { target: { value: 'shortcut' } })
+    expect(screen.getByText('Record a shortcut to save.')).toBeInTheDocument()
 
     fireEvent.change(screen.getByDisplayValue('TERMINAL'), { target: { value: '' } })
     expect(screen.getByText('Give it a name to save.')).toBeInTheDocument()
@@ -112,5 +118,64 @@ describe('ControlEditorModal', () => {
     expect(await screen.findByText('Could not save this. Try again.')).toBeInTheDocument()
     expect(onClose).not.toHaveBeenCalled()
     await waitFor(() => expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled())
+  })
+
+  it('renames the zone for the new action until you type a name of your own', async () => {
+    open(LOWER_LEFT)
+
+    fireEvent.change(await screen.findByDisplayValue('Saved workflow'), { target: { value: 'systemCommand' } })
+    expect(screen.getByDisplayValue('VOLUME MUTE')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByDisplayValue('VOLUME MUTE'), { target: { value: 'MY NAME' } })
+    fireEvent.change(screen.getByDisplayValue('System action'), { target: { value: 'flowAction' } })
+    expect(screen.getByDisplayValue('MY NAME')).toBeInTheDocument()
+  })
+
+  it('keeps App shortcut and Keyboard shortcut as separate categories', async () => {
+    open(LOWER_LEFT)
+    const categories = await screen.findByDisplayValue('Saved workflow')
+    const labels = [...categories.querySelectorAll('option')].map((option) => option.textContent)
+    expect(labels).toContain('App shortcut')
+    expect(labels).toContain('Keyboard shortcut')
+
+    // Keyboard shortcut is only the recorder; the library is not mixed into it.
+    fireEvent.change(categories, { target: { value: 'shortcut' } })
+    expect(screen.getByRole('button', { name: 'Record' })).toBeInTheDocument()
+    expect(screen.queryByText('Choose a shortcut…')).not.toBeInTheDocument()
+  })
+
+  it('picks a known shortcut for the app, sets its keys, and names the zone for it', async () => {
+    const onClose = vi.fn()
+    open(LOWER_LEFT, { onClose })
+
+    fireEvent.change(await screen.findByDisplayValue('Saved workflow'), { target: { value: 'knownShortcut' } })
+    expect(screen.queryByRole('button', { name: 'Record' })).not.toBeInTheDocument()
+
+    const picker = screen.getByDisplayValue('Choose a shortcut…')
+    const index = [...picker.querySelectorAll('option')].findIndex((o) => (o.textContent ?? '').startsWith('Command palette'))
+    fireEvent.change(picker, { target: { value: String(index - 1) } })
+    expect(screen.getByDisplayValue('PALETTE')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+    expect(window.flow.updateControl).toHaveBeenCalledWith('code', 3, 'PALETTE', {
+      type: 'shortcut',
+      keys: ['Control', 'Shift', 'P']
+    })
+  })
+
+  it('does not offer App shortcut for an app the library does not know', async () => {
+    open(LOWER_LEFT, { applicationId: 'notepad' })
+    const categories = await screen.findByDisplayValue('Saved workflow')
+    expect([...categories.querySelectorAll('option')].map((o) => o.textContent)).not.toContain('App shortcut')
+  })
+
+  it('reopens a saved library shortcut as an App shortcut, and a custom one as a Keyboard shortcut', async () => {
+    const { unmount } = open({ id: 'c1', slot: 1, label: 'PALETTE', action: { type: 'shortcut', keys: ['Control', 'Shift', 'P'] } })
+    expect(await screen.findByDisplayValue('App shortcut')).toBeInTheDocument()
+    unmount()
+
+    open({ id: 'c1', slot: 1, label: 'MINE', action: { type: 'shortcut', keys: ['Control', 'Alt', 'Q'] } })
+    expect(await screen.findByDisplayValue('Keyboard shortcut')).toBeInTheDocument()
   })
 })

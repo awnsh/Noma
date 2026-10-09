@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { GLASS_PANEL, MODAL_SCRIM } from '../lib/surfaces'
 import { useBackdropDismiss } from '../lib/useBackdropDismiss'
 
@@ -8,7 +9,7 @@ interface ModalProps {
   /** id of the heading inside; becomes aria-labelledby. */
   titleId?: string
   size?: 'md' | 'lg'
-  /** Cap the panel at 90vh and scroll its content. */
+  /** Cap the panel at 90vh and scroll its content (on by default, so a tall popup never pushes its buttons off a short window). */
   scroll?: boolean
   className?: string
   /** Rendered inside the scrim after the panel (e.g. a nested modal). */
@@ -31,7 +32,7 @@ export function useModalClose(fallback?: () => void): () => void {
 const openModals: symbol[] = []
 
 /** Scrim + glass panel with backdrop-click and Escape dismissal, and an exit animation. The panel must stay the scrim's first child. */
-export function Modal({ onClose, titleId, size = 'md', scroll = false, className, overlay, children }: ModalProps) {
+export function Modal({ onClose, titleId, size = 'md', scroll = true, className, overlay, children }: ModalProps) {
   const [closing, setClosing] = useState(false)
   const closingRef = useRef(false)
   const onCloseRef = useRef(onClose)
@@ -76,7 +77,10 @@ export function Modal({ onClose, titleId, size = 'md', scroll = false, className
   ]
     .filter(Boolean)
     .join(' ')
-  return (
+  // Drawn straight into <body>: inside the page, any ancestor with a transform (the
+  // page transition) makes "fixed" mean "relative to the whole page", which put the
+  // popup off the bottom of the window.
+  return createPortal(
     <ModalCloseContext.Provider value={requestClose}>
       <div
         className={`${MODAL_SCRIM}${closing ? ' noma-fade-out' : ''}`}
@@ -92,7 +96,8 @@ export function Modal({ onClose, titleId, size = 'md', scroll = false, className
         </div>
         {overlay}
       </div>
-    </ModalCloseContext.Provider>
+    </ModalCloseContext.Provider>,
+    document.body
   )
 }
 

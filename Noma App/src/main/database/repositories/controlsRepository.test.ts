@@ -1,3 +1,4 @@
+import { MAX_CONTROL_LABEL_LENGTH } from '@shared/constants'
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../db'
@@ -34,7 +35,7 @@ describe('toDisplayLabel', () => {
 
   it('truncates long labels for a small physical display', () => {
     const label = toDisplayLabel('Control+Shift+Alt+P')
-    expect(label.length).toBeLessThanOrEqual(12)
+    expect(label.length).toBeLessThanOrEqual(MAX_CONTROL_LABEL_LENGTH)
     expect(label.endsWith('…')).toBe(true)
   })
 })
@@ -88,5 +89,19 @@ describe('getControlsReferencingMacro', () => {
   it('does not match a different macro id assigned elsewhere', () => {
     assignControlAction('code-default', 1, 'Other', { type: 'macro', macroId: 'macro-2' })
     expect(getControlsReferencingMacro('macro-1')).toEqual([])
+  })
+})
+
+describe('getControlsReferencingMacro; corrupt payloads', () => {
+  it('skips a control whose action_payload is not valid JSON instead of throwing for every macro', () => {
+    getDatabase()
+      .prepare(
+        `INSERT INTO controls (id, profile_id, slot, label, action_type, action_payload)
+         VALUES ('ctrl-2', 'code-default', 2, 'BROKEN', 'macro', '{not json')`
+      )
+      .run()
+    assignControlAction('code-default', 1, 'My Macro', { type: 'macro', macroId: 'macro-1' })
+
+    expect(getControlsReferencingMacro('macro-1').map((ref) => ref.controlId)).toEqual(['ctrl-1'])
   })
 })

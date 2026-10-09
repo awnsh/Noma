@@ -1,8 +1,21 @@
 import Database from 'better-sqlite3'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MacroStep } from '@shared/types'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../db'
-import { createMacro, deleteMacro, duplicateMacro, getAllMacros, getMacroById, updateMacro } from './macrosRepository'
+import { DEMO_MACRO_TRIGGER, LEARNED_MACRO_TRIGGER } from '@shared/constants'
+import {
+  createMacro,
+  deleteLearnedMacroIfOrphaned,
+  deleteMacro,
+  duplicateMacro,
+  getAllMacros,
+  getMacroById,
+  getMacroReferences,
+  getMacrosReferencingMacro,
+  stripMacroReferences,
+  updateMacro
+} from './macrosRepository'
+import { assignControlAction } from './controlsRepository'
 
 const COPY_PASTE: MacroStep[] = [
   { type: 'shortcut', keys: ['Control', 'C'] },
@@ -130,5 +143,141 @@ describe('duplicateMacro', () => {
 
   it('returns null for a macro id that does not exist', () => {
     expect(duplicateMacro('does-not-exist')).toBeNull()
+  })
+})
+
+function makeMacro(name: string, trigger: string, actions: MacroStep[] = COPY_PASTE): string {
+  return createMacro({ name, trigger, actions, delayMs: 0, enabled: true }).id
+}
+
+/** One application with a single-slot profile, for reference tests. */
+function seedControl(): void {
+  const db = getDatabase()
+  db.prepare("INSERT INTO applications (id, name, process_name) VALUES ('code', 'Visual Studio Code', 'Code.exe')").run()
+  db.prepare("INSERT INTO profiles (id, application_id, name) VALUES ('code-default', 'code', 'Developer')").run()
+  db.prepare(
+    `INSERT INTO controls (id, profile_id, slot, label, action_type, action_payload)
+     VALUES ('ctrl-1', 'code-default', 1, 'RUN', 'shortcut', '{"type":"shortcut","keys":["F5"]}')`
+  ).run()
+}
+
+describe('updateMacro; delayMs', () => {
+  it('changes delayMs and persists it', () => {
+    const id = makeMacro('Paced', 'manual')
+    expect(updateMacro(id, { delayMs: 250 })?.delayMs).toBe(250)
+    expect(getMacroById(id)?.delayMs).toBe(250)
+  })
+
+  it('fails closed on a negative or non-finite delay, writing nothing', () => {
+    const id = makeMacro('Paced', 'manual')
+    expect(updateMacro(id, { name: 'Renamed', delayMs: -1 })).toBeNull()
+    expect(updateMacro(id, { delayMs: Number.NaN })).toBeNull()
+    expect(getMacroById(id)).toMatchObject({ name: 'Paced', delayMs: 0 })
+  })
+})
+
+describe('duplicateMacro; trigger', () => {
+  it('makes a copy of a learned or demo workflow the user’s own (manual)', () => {
+    for (const trigger of [LEARNED_MACRO_TRIGGER, DEMO_MACRO_TRIGGER]) {
+      const copy = duplicateMacro(makeMacro('Learned', trigger))
+      expect(copy?.trigger).toBe('manual')
+      expect(getMacroById(copy!.id)?.trigger).toBe('manual')
+    }
+  })
+})
+
+describe('rowToMacro; corrupt actions', () => {
+  it('loads a macro with unreadable actions as disabled with no steps, without breaking the list', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const good = makeMacro('Good', 'manual')
+    const bad = makeMacro('Bad', 'manual')
+    const notArray = makeMacro('NotArray', 'manual')
+    getDatabase().prepare("UPDATE macros SET actions = '{oops' WHERE id = ?").run(bad)
+    getDatabase().prepare('UPDATE macros SET actions = \'{"type":"shortcut"}\' WHERE id = ?').run(notArray)
+
+    const all = getAllMacros()
+    expect(all).toHaveLength(3)
+    expect(all.find((m) => m.id === good)).toMatchObject({ actions: COPY_PASTE, enabled: true })
+    expect(getMacroById(bad)).toMatchObject({ actions: [], enabled: false })
+    expect(getMacroById(notArray)).toMatchObject({ actions: [], enabled: false })
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
+  })
+})
+
+describe('getMacrosReferencingMacro / getMacroReferences', () => {
+  it('finds macros with a direct macro step pointing at it, not unrelated or self references', () => {
+    const target = makeMacro('Target', LEARNED_MACRO_TRIGGER)
+    const caller = makeMacro('Caller', 'manual', [{ type: 'macro', macroId: target }])
+    makeMacro('Unrelated', 'manual', [{ type: 'macro', macroId: 'someone-else' }])
+    // Mentions the id only inside a shortcut key: the prefilter matches, the parse must not.
+    makeMacro('Lookalike', 'manual', [{ type: 'shortcut', keys: [target] }])
+    updateMacro(target, { actions: [{ type: 'macro', macroId: target }] })
+
+    expect(getMacrosReferencingMacro(target).map((m) => m.id)).toEqual([caller])
+  })
+
+  it('reports both controls and macros that reference a macro', () => {
+    seedControl()
+    const target = makeMacro('Target', 'manual')
+    const caller = makeMacro('Caller', 'manual', [{ type: 'macro', macroId: target }])
+    assignControlAction('code-default', 1, 'TARGET', { type: 'macro', macroId: target })
+
+    const refs = getMacroReferences(target)
+    expect(refs.controls.map((c) => c.controlId)).toEqual(['ctrl-1'])
+    expect(refs.macros).toEqual([{ macroId: caller, name: 'Caller' }])
+  })
+
+  it('stripMacroReferences removes only the steps calling that macro', () => {
+    const target = makeMacro('Target', 'manual')
+    const caller = makeMacro('Caller', 'manual', [
+      { type: 'shortcut', keys: ['Control', 'C'] },
+      { type: 'macro', macroId: target },
+      { type: 'macro', macroId: 'other' }
+    ])
+    expect(stripMacroReferences(target)).toEqual([caller])
+    expect(getMacroById(caller)?.actions).toEqual([
+      { type: 'shortcut', keys: ['Control', 'C'] },
+      { type: 'macro', macroId: 'other' }
+    ])
+  })
+})
+
+describe('deleteLearnedMacroIfOrphaned', () => {
+  it('deletes an unreferenced learned or demo macro', () => {
+    const learned = makeMacro('Learned', LEARNED_MACRO_TRIGGER)
+    const demo = makeMacro('Demo', DEMO_MACRO_TRIGGER)
+    expect(deleteLearnedMacroIfOrphaned(learned)).toEqual([learned])
+    expect(deleteLearnedMacroIfOrphaned(demo)).toEqual([demo])
+    expect(getAllMacros()).toEqual([])
+  })
+
+  it('never deletes a user-authored macro, even unreferenced', () => {
+    const manual = makeMacro('Mine', 'manual')
+    expect(deleteLearnedMacroIfOrphaned(manual)).toEqual([])
+    expect(getMacroById(manual)).not.toBeNull()
+  })
+
+  it('keeps a learned macro that a control or another macro still uses', () => {
+    seedControl()
+    const onControl = makeMacro('On control', LEARNED_MACRO_TRIGGER)
+    assignControlAction('code-default', 1, 'X', { type: 'macro', macroId: onControl })
+    const called = makeMacro('Called', LEARNED_MACRO_TRIGGER)
+    makeMacro('Caller', 'manual', [{ type: 'macro', macroId: called }])
+
+    expect(deleteLearnedMacroIfOrphaned(onControl)).toEqual([])
+    expect(deleteLearnedMacroIfOrphaned(called)).toEqual([])
+    expect(getAllMacros()).toHaveLength(3)
+  })
+
+  it('cascades to learned macros only the deleted one called, never to manual ones', () => {
+    const inner = makeMacro('Inner', LEARNED_MACRO_TRIGGER)
+    const manualInner = makeMacro('Manual inner', 'manual')
+    const outer = makeMacro('Outer', LEARNED_MACRO_TRIGGER, [
+      { type: 'macro', macroId: inner },
+      { type: 'macro', macroId: manualInner }
+    ])
+    expect(deleteLearnedMacroIfOrphaned(outer)).toEqual([outer, inner])
+    expect(getAllMacros().map((m) => m.id)).toEqual([manualInner])
   })
 })

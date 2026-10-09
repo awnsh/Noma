@@ -1,5 +1,5 @@
 import { useSuggestionsStore } from '../stores/suggestionsStore'
-import { useLearnedActions } from '../lib/useLearnedActions'
+import { useLearnedActions, type LearnedAction } from '../lib/useLearnedActions'
 import { NomaMoment } from '../components/NomaMoment'
 import { WorkflowCard } from '../components/WorkflowCard'
 import { EmptyState } from '../components/EmptyState'
@@ -8,6 +8,7 @@ import { useWorkflowStore } from '../stores/workflowStore'
 import { CARD } from '../lib/surfaces'
 import { COMMAND_MODIFIERS_COPY } from '../lib/platform'
 import { useStoreSync } from '../lib/useStoreSync'
+import { latestRunFor, useActionHistory } from '../lib/useActionHistory'
 
 /**
  * Workflows: "what has Noma learned that I actually do?"
@@ -29,6 +30,21 @@ export function Workflows() {
     useWorkflowStore()
 
   useStoreSync({ refresh, subscribe }, { refresh: refreshFlow })
+
+  const actionHistory = useActionHistory()
+  // Labels held by exactly one workflow's control: the only ones a log line
+  // without a controlId can be pinned on.
+  const labelCounts = new Map<string, number>()
+  for (const action of learnedActions ?? []) {
+    for (const assignment of action.assignments) {
+      labelCounts.set(assignment.label, (labelCounts.get(assignment.label) ?? 0) + 1)
+    }
+  }
+  const unambiguousLabels = new Set([...labelCounts].filter(([, count]) => count === 1).map(([label]) => label))
+  const lastRunFailure = (action: LearnedAction): string | undefined => {
+    const latest = latestRunFor(actionHistory, action.assignments, unambiguousLabels)
+    return latest && !latest.lastOk ? (latest.lastReason ?? 'no reason given') : undefined
+  }
 
   const isLoading = suggestionsLoading || learnedActions === null
   const hasPending = suggestions.length > 0
@@ -101,7 +117,12 @@ export function Workflows() {
             {hasLearned ? (
               <div className="space-y-4 mc-stagger">
                 {(learnedActions ?? []).map((action) => (
-                  <WorkflowCard key={action.macro.id} action={action} onSelect={() => openMacro(action.macro.id)} />
+                  <WorkflowCard
+                    key={action.macro.id}
+                    action={action}
+                    onSelect={() => openMacro(action.macro.id)}
+                    lastRunFailure={lastRunFailure(action)}
+                  />
                 ))}
               </div>
             ) : (

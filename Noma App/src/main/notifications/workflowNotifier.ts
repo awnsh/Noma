@@ -102,6 +102,23 @@ export class WorkflowNotifier {
     }
   }
 
+  /**
+   * Factory reset ("Delete all data"): forgets the cooldown and takes down
+   * any notice on screen, whose suggestion no longer exists. Without this,
+   * the first workflow noticed after a reset could stay silenced by a
+   * cooldown earned before it, or be blocked behind a "visible" notice
+   * for a deleted suggestion that nothing will ever dismiss. The
+   * per-workflow "already notified" record lived in the suggestions table,
+   * which the reset already wiped.
+   */
+  reset(): void {
+    this.lastNotifiedAt = null
+    if (this.visibleSuggestionId !== null) {
+      this.visibleSuggestionId = null
+      hideWorkflowNotice()
+    }
+  }
+
   /** Test seam: what the notifier believes is on screen right now. */
   get visibleId(): string | null {
     return this.visibleSuggestionId

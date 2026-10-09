@@ -2,23 +2,22 @@ import { FLOW_ACTION_CATALOG, SYSTEM_COMMAND_CATALOG } from '@shared/constants'
 import type { Macro, MacroStep } from '@shared/types'
 import { ShortcutRecorder } from './ShortcutRecorder'
 import { FIELD_INPUT } from '../lib/surfaces'
+import { systemCommandLabel } from '../lib/describeAction'
 import { useApplicationsStore } from '../stores/applicationsStore'
 
 type StepType = MacroStep['type']
-// 'launchApplication' has no working execution path anywhere yet
-// (actionExecutor.ts's executeMacroSteps refuses it with "not implemented
-// yet"). Left out of the type-change dropdown below so a step can never
-// be switched to one that silently does nothing when the macro runs.
 // 'click' is real (main/actions/click.ts) but a click target only ever comes
-// from a captured workflow step, so it isn't hand-authored here either.
-// 'focusApplication' is selectable: it runs for real and has an application
-// picker below.
-type SelectableStepType = Exclude<StepType, 'launchApplication' | 'click' | 'none'>
+// from a captured workflow step, so it isn't hand-authored here.
+// 'focusApplication' and 'launchApplication' are selectable: both run for
+// real (launchApplication.ts focuses the app if it's open, else starts it)
+// and share the application picker below.
+type SelectableStepType = Exclude<StepType, 'click' | 'none'>
 
 const STEP_TYPE_LABELS: Record<SelectableStepType, string> = {
   shortcut: 'Keyboard shortcut',
   delay: 'Wait',
   focusApplication: 'Switch window',
+  launchApplication: 'Open app',
   systemCommand: 'System action',
   flowAction: 'Flow action',
   macro: 'Run another macro'
@@ -77,7 +76,8 @@ export function MacroStepRow({
   const applicationsById = useApplicationsStore((state) => state.byId)
   const applications = Object.values(applicationsById)
   // A step built from a suggestion may point at an app that isn't in the list.
-  const knownApp = applications.some((application) => application.id === (step.type === 'focusApplication' ? step.applicationId : ''))
+  const pickedAppId = step.type === 'focusApplication' || step.type === 'launchApplication' ? step.applicationId : ''
+  const knownApp = applications.some((application) => application.id === pickedAppId)
   return (
     <div className="relative flex gap-3 pb-5 pl-1 last:pb-0">
       {/* Timeline rail: a plain CSS line + dot, no diagramming library needed. */}
@@ -184,10 +184,10 @@ export function MacroStepRow({
           </div>
         )}
 
-        {step.type === 'focusApplication' && (
+        {(step.type === 'focusApplication' || step.type === 'launchApplication') && (
           <select
             value={step.applicationId}
-            onChange={(event) => onChange({ type: 'focusApplication', applicationId: event.target.value })}
+            onChange={(event) => onChange({ type: step.type, applicationId: event.target.value })}
             className={selectClass}
           >
             <option value="" disabled>
@@ -210,7 +210,7 @@ export function MacroStepRow({
           >
             {SYSTEM_COMMAND_CATALOG.map((command) => (
               <option key={command} value={command}>
-                {command}
+                {systemCommandLabel(command)}
               </option>
             ))}
           </select>

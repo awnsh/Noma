@@ -112,6 +112,7 @@ const flowApi: FlowApi = {
   getLearningStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_LEARNING_STATS),
   getShortcutUsageStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SHORTCUT_USAGE_STATS),
   getControlUsageStats: () => ipcRenderer.invoke(IPC_CHANNELS.GET_CONTROL_USAGE_STATS),
+  getActionHistory: (limit) => ipcRenderer.invoke(IPC_CHANNELS.GET_ACTION_HISTORY, limit),
   getDailyActivityCounts: (days) => ipcRenderer.invoke(IPC_CHANNELS.GET_DAILY_ACTIVITY_COUNTS, days),
 
   listApplicationProfileSummaries: () =>
@@ -140,6 +141,9 @@ const flowApi: FlowApi = {
 
   clearLearningData: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_LEARNING_DATA),
   deleteAllData: () => ipcRenderer.invoke(IPC_CHANNELS.DELETE_ALL_DATA),
+  exportConfiguration: () => ipcRenderer.invoke(IPC_CHANNELS.CONFIG_EXPORT),
+  pickConfigurationImport: () => ipcRenderer.invoke(IPC_CHANNELS.CONFIG_IMPORT_PICK),
+  applyConfigurationImport: (token, mode) => ipcRenderer.invoke(IPC_CHANNELS.CONFIG_IMPORT_APPLY, token, mode),
 
   configureModule: (moduleId: string, configuration: Record<string, ModuleFunctionConfig>) =>
     ipcRenderer.invoke(IPC_CHANNELS.CONFIGURE_MODULE, moduleId, configuration),

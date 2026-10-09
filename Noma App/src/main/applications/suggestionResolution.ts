@@ -1,6 +1,8 @@
 import type { ApplicationProfile, MacroStep, Suggestion, WorkflowStep } from '@shared/types'
 import { DEMO_MACRO_TRIGGER, LEARNED_MACRO_TRIGGER } from '@shared/constants'
+import { getDatabase } from '../database/db'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
+import { collectReplacedMacro } from './controlEditing'
 import { assignControlAction, toDisplayLabel } from '../database/repositories/controlsRepository'
 import { createMacro } from '../database/repositories/macrosRepository'
 import { getSuggestionById, resolveSuggestion } from '../database/repositories/suggestionsRepository'
@@ -13,7 +15,9 @@ import { buildWorkflowMacroSteps, hasRunnableSteps } from '../workflow/macroStep
  * profile. Deliberately conservative: never called automatically, never
  * picks a slot itself, and fails closed (returns null) rather than
  * guessing when the suggestion, its application's profile, or the
- * requested slot doesn't check out.
+ * requested slot doesn't check out. One transaction (see below): on any
+ * null nothing is written. A learned workflow the slot held before is
+ * deleted if nothing else still uses it (collectReplacedMacro).
  */
 export function assignSuggestionToControl(
   suggestionId: string,
@@ -29,18 +33,38 @@ export function assignSuggestionToControl(
   const targetControl = profile.controls.find((control) => control.slot === slot)
   if (!targetControl) return null
 
-  const update = buildControlUpdate(suggestion)
-  if (!update) return null
-  const { label, action } = update
-  const applied = assignControlAction(profile.id, slot, label, action)
-  if (!applied) return null
+  const applicationId = suggestion.applicationId
 
-  const resolved = resolveSuggestion(suggestionId, 'accepted')
-  const updatedProfile = getProfileForApplicationId(suggestion.applicationId)
-  if (!resolved || !updatedProfile) return null
+  // All-or-nothing: building the update may create a macro, then the
+  // control is overwritten, a learned workflow it displaced may be
+  // collected, and the suggestion is resolved. Any step failing throws
+  // ROLLBACK, which better-sqlite3 turns into a rollback of the lot, so a
+  // failure can never leave an orphan macro, or a changed control behind a
+  // still-pending suggestion.
+  const accept = getDatabase().transaction((): { suggestion: Suggestion; profile: ApplicationProfile } => {
+    const update = buildControlUpdate(suggestion)
+    if (!update) throw ROLLBACK
+    const { label, action } = update
+    if (!assignControlAction(profile.id, slot, label, action)) throw ROLLBACK
+    collectReplacedMacro(targetControl.action, action)
 
-  return { suggestion: resolved, profile: updatedProfile }
+    const resolved = resolveSuggestion(suggestionId, 'accepted')
+    const updatedProfile = getProfileForApplicationId(applicationId)
+    if (!resolved || !updatedProfile) throw ROLLBACK
+    return { suggestion: resolved, profile: updatedProfile }
+  })
+
+  try {
+    return accept()
+  } catch (error) {
+    if (error === ROLLBACK) return null
+    throw error
+  }
 }
+
+/** Thrown inside assignSuggestionToControl's transaction to roll it back
+ *  on a fail-closed null; any other error still propagates. */
+const ROLLBACK = Symbol('assignSuggestionToControl rollback')
 
 function buildControlUpdate(
   suggestion: Suggestion

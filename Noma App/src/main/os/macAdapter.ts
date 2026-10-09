@@ -2,6 +2,7 @@ import { spawn, type ChildProcess } from 'child_process'
 import { createInterface } from 'readline'
 import type { Application } from '@shared/types'
 import type { PlatformOSAdapter } from './types'
+import { isSystemUtilityApp } from './systemApps'
 
 interface RawFrontmostApp {
   processId: number
@@ -199,6 +200,10 @@ export class MacOSAdapter implements PlatformOSAdapter {
         if (!trimmed) return
         try {
           const raw = JSON.parse(trimmed) as RawFrontmostApp
+          // A system helper (a permission dialog, the login window) that took
+          // the front for a moment is not an app the user is in: ignore it, so
+          // the previous app stays the active one.
+          if (isSystemUtilityApp(raw.bundlePath)) return
           // A restarted helper re-reports whatever is in front; that's not
           // a switch.
           if (raw.processId === this.lastKnownPid && this.current) return

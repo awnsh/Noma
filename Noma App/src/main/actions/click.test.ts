@@ -4,6 +4,7 @@ import { SendInput, SetCursorPos, WindowFromPoint } from './win32'
 import { processForWindow } from './windowProcess'
 import { uiaControlFinder } from './uiaControlFinder'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
+import { isCancelRequested } from './actionExecutor'
 
 // Real input and real UI Automation are mocked: these tests are about the
 // checks click.ts makes *before* it will click, which is the part that
@@ -41,9 +42,11 @@ vi.mock('./windowProcess', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./windowProcess')>()),
   processForWindow: vi.fn()
 }))
-vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { find: vi.fn(), warmUp: vi.fn() } }))
+vi.mock('./uiaControlFinder', () => ({ CANCEL_POLL_MS: 50, uiaControlFinder: { find: vi.fn(), warmUp: vi.fn() } }))
 vi.mock('../database/repositories/applicationsRepository', () => ({ getApplicationById: vi.fn() }))
 vi.mock('../workflow/selfInjectedClicks', () => ({ markSelfInjectedClick: vi.fn() }))
+// Only the Stop flag; the real executor would pull in the whole input stack.
+vi.mock('./actionExecutor', () => ({ ACTION_CANCELLED_REASON: 'You stopped it', isCancelRequested: vi.fn(() => false) }))
 
 const RESOLVE = { id: 'resolve', name: 'DaVinci Resolve', processName: 'Resolve.exe' }
 
@@ -51,6 +54,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(getApplicationById).mockReturnValue(RESOLVE)
   vi.mocked(processForWindow).mockReturnValue({ pid: 42, processName: 'Resolve.exe' })
+  vi.mocked(isCancelRequested).mockReturnValue(false)
 })
 
 afterEach(() => {
@@ -82,7 +86,7 @@ describe('executeClick: a named control is found again, not guessed', () => {
     vi.mocked(uiaControlFinder.find).mockResolvedValue({ status: 'found', x: 812, y: 44 })
     const result = await executeClick('label:Blade', 'resolve')
     expect(result.ok).toBe(true)
-    expect(uiaControlFinder.find).toHaveBeenCalledWith(42, 'Blade')
+    expect(uiaControlFinder.find).toHaveBeenCalledWith(42, 'Blade', isCancelRequested)
     expect(SetCursorPos).toHaveBeenCalledWith(812, 44)
   })
 
@@ -153,5 +157,48 @@ describe('executeClick: a position in a custom-drawn app', () => {
 
   it('refuses a cell outside the grid', async () => {
     expect((await executeClick('zone:40x2')).ok).toBe(false)
+  })
+})
+
+describe('executeClick: Stop interrupts the wait for a control', () => {
+  it('passes the Stop check into the search', async () => {
+    vi.mocked(uiaControlFinder.find).mockResolvedValue({ status: 'found', x: 5, y: 5 })
+    await executeClick('label:Render', 'resolve')
+    expect(uiaControlFinder.find).toHaveBeenCalledWith(42, 'Render', isCancelRequested)
+  })
+
+  it('stops within ~50 ms while waiting between searches, and clicks nothing', async () => {
+    vi.mocked(uiaControlFinder.find).mockResolvedValue({ status: 'none' })
+    vi.useFakeTimers()
+    let settled = false
+    const pending = executeClick('label:Render', 'resolve').then((result) => {
+      settled = true
+      return result
+    })
+    await vi.advanceTimersByTimeAsync(10) // first search done, now waiting to retry
+    vi.mocked(isCancelRequested).mockReturnValue(true)
+    await vi.advanceTimersByTimeAsync(50)
+    expect(settled).toBe(true)
+    expect(await pending).toEqual({ ok: false, reason: 'You stopped it' })
+    expect(uiaControlFinder.find).toHaveBeenCalledTimes(1)
+    expect(SendInput).not.toHaveBeenCalled()
+  })
+
+  it('stops when the search itself reports it was cancelled', async () => {
+    vi.mocked(uiaControlFinder.find).mockResolvedValue({ status: 'cancelled' })
+    const result = await executeClick('label:Render', 'resolve')
+    expect(result).toEqual({ ok: false, reason: 'You stopped it' })
+    expect(SendInput).not.toHaveBeenCalled()
+  })
+
+  it('does not click a control found after Stop was pressed', async () => {
+    vi.mocked(uiaControlFinder.find).mockImplementation(async () => {
+      vi.mocked(isCancelRequested).mockReturnValue(true)
+      return { status: 'found', x: 5, y: 5 }
+    })
+    const result = await executeClick('label:Render', 'resolve')
+    expect(result).toEqual({ ok: false, reason: 'You stopped it' })
+    expect(SendInput).not.toHaveBeenCalled()
+    expect(SetCursorPos).not.toHaveBeenCalled()
   })
 })

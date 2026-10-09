@@ -4,6 +4,9 @@ import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database
 import { insertSuggestionIfNew, getSuggestionById } from '../database/repositories/suggestionsRepository'
 import { assignSuggestionToControl, buildWorkflowMacroSteps } from './suggestionResolution'
 import type { Suggestion } from '@shared/types'
+import { LEARNED_MACRO_TRIGGER } from '@shared/constants'
+import { createMacro, getMacroById } from '../database/repositories/macrosRepository'
+import { assignControlAction } from '../database/repositories/controlsRepository'
 
 function seedProfile(): void {
   const db = getDatabase()
@@ -333,7 +336,7 @@ describe('assignSuggestionToControl; workflows that must do something', () => {
 
     const result = assignSuggestionToControl('suggestion:switch-only', 1)
     const control = result?.profile.controls.find((c) => c.slot === 1)
-    expect(control?.label).toBe('GitHub Desk…')
+    expect(control?.label).toBe('GitHub Desktop')
     if (control?.action.type === 'macro') {
       const row = getDatabase().prepare('SELECT name FROM macros WHERE id = ?').get(control.action.macroId) as { name: string }
       expect(row.name).toBe('Visual Studio Code → GitHub Desktop')
@@ -357,5 +360,42 @@ describe('assignSuggestionToControl; workflows that must do something', () => {
     expect(assignSuggestionToControl('suggestion:inert', 1)).toBeNull()
     expect(getSuggestionById('suggestion:inert')?.status).toBe('pending')
     expect(getDatabase().prepare('SELECT COUNT(*) AS n FROM macros').get()).toEqual({ n: 0 })
+  })
+})
+
+describe('assignSuggestionToControl; atomic', () => {
+  it('rolls back the macro it created when the control write then fails', () => {
+    insertSuggestionIfNew(sequenceSuggestion())
+    // The control UPDATE silently changes no rows (assignControlAction → false)
+    // after buildControlUpdate has already created the macro.
+    getDatabase().exec(`CREATE TRIGGER block_controls BEFORE UPDATE ON controls BEGIN SELECT RAISE(IGNORE); END`)
+
+    expect(assignSuggestionToControl('suggestion:sequence:code::Control+C->Control+V', 3)).toBeNull()
+    expect(getDatabase().prepare('SELECT COUNT(*) AS n FROM macros').get()).toEqual({ n: 0 })
+    expect(getSuggestionById('suggestion:sequence:code::Control+C->Control+V')?.status).toBe('pending')
+  })
+
+  it('rolls back the macro and the control when resolving the suggestion fails', () => {
+    insertSuggestionIfNew(sequenceSuggestion())
+    getDatabase().exec(`CREATE TRIGGER block_resolve BEFORE UPDATE ON suggestions BEGIN SELECT RAISE(ABORT, 'nope'); END`)
+
+    expect(() => assignSuggestionToControl('suggestion:sequence:code::Control+C->Control+V', 3)).toThrow()
+    expect(getDatabase().prepare('SELECT COUNT(*) AS n FROM macros').get()).toEqual({ n: 0 })
+    const row = getDatabase().prepare("SELECT label FROM controls WHERE id = 'ctrl-3'").get() as { label: string }
+    expect(row.label).toBe('TERMINAL')
+  })
+
+  it('deletes the learned workflow the slot held before, once nothing else uses it', () => {
+    const old = createMacro({ name: 'Old', trigger: LEARNED_MACRO_TRIGGER, actions: [], delayMs: 0, enabled: true })
+    const mine = createMacro({ name: 'Mine', trigger: 'manual', actions: [], delayMs: 0, enabled: true })
+    assignControlAction('code-default', 2, 'OLD', { type: 'macro', macroId: old.id })
+    assignControlAction('code-default', 3, 'MINE', { type: 'macro', macroId: mine.id })
+    insertSuggestionIfNew(shortcutSuggestion())
+    insertSuggestionIfNew(sequenceSuggestion())
+
+    expect(assignSuggestionToControl('suggestion:shortcut:code::Control+S', 2)).not.toBeNull()
+    expect(getMacroById(old.id)).toBeNull()
+    expect(assignSuggestionToControl('suggestion:sequence:code::Control+C->Control+V', 3)).not.toBeNull()
+    expect(getMacroById(mine.id)).not.toBeNull()
   })
 })
