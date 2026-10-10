@@ -1,6 +1,6 @@
 {
   "name": "noma",
-  "version": "0.1.22",
+  "version": "0.1.23",
   "description": "Noma — adaptive computer interface software brain and development platform. Flow is the adaptive-suggestion feature within it.",
   "private": true,
   "main": "./out/main/index.js",
