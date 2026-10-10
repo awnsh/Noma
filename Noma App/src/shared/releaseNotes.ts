@@ -7,6 +7,10 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.23': [
+    'Mac: a saved workflow that ends with a paste (⌘V) now presses Enter afterwards to send what was pasted, as it already did on Windows. Save the workflow again to pick this up.',
+    'Workflow steps that select everything now read "Select all" instead of "Meta+A" or "Control+A".'
+  ],
   '0.1.22': [
     'Glide: after a swipe, a small note in the bottom-left corner says what ran, so you know it worked without switching to Noma.'
   ],
