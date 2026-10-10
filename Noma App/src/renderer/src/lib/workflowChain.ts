@@ -33,6 +33,7 @@ const SHORTCUT_STEP_LABELS: Record<string, string> = {
   'Control+V': 'Paste',
   'Control+C': 'Copy',
   'Control+X': 'Cut',
+  'Control+A': 'Select all',
   Enter: 'Enter'
 }
 
@@ -41,6 +42,7 @@ const MAC_SHORTCUT_STEP_LABELS: Record<string, string> = {
   'Meta+V': 'Paste',
   'Meta+C': 'Copy',
   'Meta+X': 'Cut',
+  'Meta+A': 'Select all',
   'Meta+Shift+3': 'Screenshot',
   'Meta+Shift+4': 'Screenshot',
   'Meta+Shift+5': 'Screenshot',
