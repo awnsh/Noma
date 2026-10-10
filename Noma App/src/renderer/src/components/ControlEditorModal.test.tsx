@@ -4,8 +4,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import type { Control, FlowApi } from '@shared/types'
 import { ControlEditorModal } from './ControlEditorModal'
+import { isMacRenderer } from '../lib/platform'
 
 const MACRO_ID = 'macro-1'
+/** VS Code's Command palette in the shortcut library, as this OS spells it. */
+const PALETTE_KEYS = isMacRenderer ? ['Meta', 'Shift', 'P'] : ['Control', 'Shift', 'P']
 const LOWER_LEFT: Control = { id: 'c3', slot: 3, label: 'TERMINAL', action: { type: 'macro', macroId: MACRO_ID } }
 
 function mockFlow(overrides: Partial<FlowApi> = {}): FlowApi {
@@ -160,7 +163,7 @@ describe('ControlEditorModal', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled())
     expect(window.flow.updateControl).toHaveBeenCalledWith('code', 3, 'PALETTE', {
       type: 'shortcut',
-      keys: ['Control', 'Shift', 'P']
+      keys: PALETTE_KEYS
     })
   })
 
@@ -171,7 +174,7 @@ describe('ControlEditorModal', () => {
   })
 
   it('reopens a saved library shortcut as an App shortcut, and a custom one as a Keyboard shortcut', async () => {
-    const { unmount } = open({ id: 'c1', slot: 1, label: 'PALETTE', action: { type: 'shortcut', keys: ['Control', 'Shift', 'P'] } })
+    const { unmount } = open({ id: 'c1', slot: 1, label: 'PALETTE', action: { type: 'shortcut', keys: PALETTE_KEYS } })
     expect(await screen.findByDisplayValue('App shortcut')).toBeInTheDocument()
     unmount()
 

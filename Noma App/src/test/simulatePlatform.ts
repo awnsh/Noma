@@ -27,12 +27,15 @@ vi.mock('../main/platform', async (importOriginal) => {
   return { isWindows: platform === 'win32', isMac: platform === 'darwin' }
 })
 
-if (simulated && simulated !== process.platform) {
-  if (typeof navigator !== 'undefined') {
-    const userAgent =
-      simulated === 'darwin'
-        ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) jsdom'
-        : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) jsdom'
-    Object.defineProperty(navigator, 'userAgent', { value: userAgent, configurable: true })
-  }
+// The renderer asks the user agent (renderer/src/lib/platform.ts looks for
+// "Mac"), and jsdom's own says "(darwin)" or "(win32)": on a real Mac the
+// renderer would believe it's on Windows. So it is set for every run, to
+// the simulated OS or else the real one.
+const effective = simulated ?? process.platform
+if (typeof navigator !== 'undefined' && (effective === 'darwin' || effective === 'win32')) {
+  const userAgent =
+    effective === 'darwin'
+      ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) jsdom'
+      : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) jsdom'
+  Object.defineProperty(navigator, 'userAgent', { value: userAgent, configurable: true })
 }
