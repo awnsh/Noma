@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { isMac } from '../platform'
 import type { MacroStep } from '@shared/types'
 import { isRegionScreenshotShortcut, regionFromDrag, usualRegion, withoutScreenshotOverlaySteps } from './screenshotRegions'
 
-const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
+const SHOT = isMac ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
 describe('isRegionScreenshotShortcut', () => {
   it('is Win+Shift+S on Windows, in any key order', () => {

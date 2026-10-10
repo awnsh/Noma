@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { isMac } from '../platform'
 import type { DetectedPattern } from '@shared/types'
 import { LEARNED_MACRO_TRIGGER } from '@shared/constants'
 import { __setDatabaseForTesting, runMigrations } from '../database/db'
@@ -7,7 +8,9 @@ import { createMacro, getMacroById, updateMacro } from '../database/repositories
 import { refreshLearnedMacros } from './learnedMacroRefresh'
 
 /** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
-const SHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
+const SHOT = isMac ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
+/** This OS's paste: a workflow ending in one gets an Enter appended. */
+const PASTE = isMac ? ['Meta', 'V'] : ['Control', 'V']
 
 beforeEach(() => {
   const db = new Database(':memory:')
@@ -30,7 +33,7 @@ function pattern(): DetectedPattern {
       { type: 'shortcut', applicationId: 'chrome', comboKeys: SHOT, region: area },
       { type: 'appSwitch', applicationId: 'snippingtool' },
       { type: 'appSwitch', applicationId: 'chrome' },
-      { type: 'shortcut', applicationId: 'chrome', comboKeys: ['Control', 'V'], tab: 'chat' }
+      { type: 'shortcut', applicationId: 'chrome', comboKeys: PASTE, tab: 'chat' }
     ],
     description: 'd',
     count: 3,
@@ -52,7 +55,7 @@ function savedWorkflow(trigger = LEARNED_MACRO_TRIGGER) {
       { type: 'shortcut', keys: SHOT },
       { type: 'focusApplication', applicationId: 'chrome' },
       { type: 'delay', ms: 1297 },
-      { type: 'shortcut', keys: ['Control', 'V'] },
+      { type: 'shortcut', keys: PASTE },
       { type: 'shortcut', keys: ['Enter'] }
     ]
   })
@@ -68,7 +71,7 @@ describe('refreshLearnedMacros', () => {
       { type: 'shortcut', keys: SHOT, region: area },
       { type: 'focusApplication', applicationId: 'chrome' },
       { type: 'delay', ms: 1297 },
-      { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' },
+      { type: 'shortcut', keys: PASTE, tab: 'chat' },
       { type: 'shortcut', keys: ['Enter'] }
     ])
     // Nothing new the second time.

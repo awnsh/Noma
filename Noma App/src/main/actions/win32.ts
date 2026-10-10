@@ -1,5 +1,4 @@
 import koffi, { type LibraryHandle } from 'koffi'
-import { isWindows } from '../platform'
 
 /**
  * The single place user32.dll gets loaded and its functions declared
@@ -13,7 +12,15 @@ import { isWindows } from '../platform'
  * call from Flow's own process: see windowFocus.ts for why that
  * distinction is exactly what makes the redesigned focus mechanism safe.
  */
-const user32 = isWindows ? koffi.load('user32.dll') : null
+/**
+ * Whether the DLLs below exist on this machine. Deliberately the real
+ * process.platform, not platform.ts's isWindows: which libraries can be
+ * loaded is a fact about the host, and a test run simulating Windows on a
+ * Mac (src/test/simulatePlatform.ts) must still get the throwing stand-ins.
+ */
+const onWindowsHost = process.platform === 'win32'
+
+const user32 = onWindowsHost ? koffi.load('user32.dll') : null
 
 type NativeFunction = ReturnType<LibraryHandle['func']>
 
@@ -151,7 +158,7 @@ export const GetRawInputDataBuffer = declare(user32,
 )
 export const RID_INPUT = 0x10000003
 export const RIDI_PREPARSEDDATA = 0x20000005
-const hid = isWindows ? koffi.load('hid.dll') : null
+const hid = onWindowsHost ? koffi.load('hid.dll') : null
 export const HidP_GetCaps = declare(hid, 'long __stdcall HidP_GetCaps(void *preparsedData, void *capabilities)')
 export const HidP_GetValueCaps = declare(hid,
   'long __stdcall HidP_GetValueCaps(int reportType, void *valueCaps, _Inout_ uint16_t *valueCapsLength, void *preparsedData)'
@@ -183,7 +190,7 @@ export const HID_USAGE_DIGITIZER_CONTACT_COUNT = 0x54
  * windowProcess.ts). PROCESS_QUERY_LIMITED_INFORMATION is the least access
  * that can read an image name, and works for elevated processes too.
  */
-const kernel32 = isWindows ? koffi.load('kernel32.dll') : null
+const kernel32 = onWindowsHost ? koffi.load('kernel32.dll') : null
 export const GetWindowThreadProcessId = declare(user32, 
   'uint32_t __stdcall GetWindowThreadProcessId(intptr_t hwnd, _Out_ uint32_t *lpdwProcessId)'
 )
@@ -223,7 +230,7 @@ export const MOUSEEVENTF_VIRTUALDESK = 0x4000
  * per-monitor DPI aware process like Electron), so a remembered drag maps
  * straight back to the pixels it covered.
  */
-const gdi32 = isWindows ? koffi.load('gdi32.dll') : null
+const gdi32 = onWindowsHost ? koffi.load('gdi32.dll') : null
 export const GetDC = declare(user32, 'intptr_t __stdcall GetDC(intptr_t hwnd)')
 export const ReleaseDC = declare(user32, 'int __stdcall ReleaseDC(intptr_t hwnd, intptr_t hdc)')
 export const CreateCompatibleDC = declare(gdi32, 'intptr_t __stdcall CreateCompatibleDC(intptr_t hdc)')

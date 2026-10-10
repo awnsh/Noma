@@ -396,7 +396,8 @@ const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Meta+Shift+S': 'Screenshot',
   'Control+V': 'Paste',
   'Control+C': 'Copy',
-  'Control+X': 'Cut'
+  'Control+X': 'Cut',
+  'Control+A': 'Select all'
 }
 
 /** The same, as a Mac spells them (Command, and its own screenshot keys). */
@@ -404,6 +405,7 @@ const MAC_SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Meta+V': 'Paste',
   'Meta+C': 'Copy',
   'Meta+X': 'Cut',
+  'Meta+A': 'Select all',
   'Meta+Shift+3': 'Screenshot',
   'Meta+Shift+4': 'Screenshot',
   'Meta+Shift+5': 'Screenshot',

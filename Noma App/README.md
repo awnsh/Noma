@@ -161,7 +161,19 @@ npm test        # unit tests: capture-policy filter, keydown->combo logic
                  # control-assignment orchestration, and the keystroke/
                  # window-close/system-command execution logic
 npm run typecheck
+
+# The same suite as the other OS, from this machine: Noma's code takes its
+# macOS (or Windows) paths, so a change made on Windows is checked against
+# the Mac version without a Mac. CI runs the other OS on each runner too.
+npm run test:mac
+npm run test:windows
 ```
+
+`src/main/platformParity.test.ts` plays Flow's whole loop (capture, the
+"makes sense" rules, the suggestion's wording, saving it to a zone, the keys
+a swipe sends) with Windows keys and with Mac keys in every plain `npm test`.
+Native code (window focus, the trackpad, app icons) still needs the real OS:
+those tests run on their own OS only, locally or in CI.
 
 ## Build
 

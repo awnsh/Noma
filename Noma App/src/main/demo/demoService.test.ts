@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { isMac } from '../platform'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
 import { getProfileForApplicationId } from '../database/repositories/profileRepository'
 import { getWorkflowEventsSince, insertWorkflowEvent } from '../database/repositories/workflowEventsRepository'
@@ -13,7 +14,7 @@ import type { Suggestion } from '@shared/types'
 import { DEMO_MACRO_TRIGGER, LEARNED_MACRO_TRIGGER } from '@shared/constants'
 
 /** The seed's Chrome FIND is Ctrl+F on Windows and Cmd+F on macOS. */
-const PRIMARY_MODIFIER = process.platform === 'darwin' ? 'Meta' : 'Control'
+const PRIMARY_MODIFIER = isMac ? 'Meta' : 'Control'
 
 /** Mirrors database/seed.ts's SEED_APPLICATIONS for 'code' and 'chrome'
  *  demoService.resetDemoData relies on getSeedDefaultControl, which reads
