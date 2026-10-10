@@ -40,6 +40,13 @@ jobs:
           ls node_modules/@koromix
       - run: npm run typecheck
       - run: npm test
+      # The whole suite again as the other OS (src/test/simulatePlatform.ts):
+      # the Windows runner checks Noma's macOS code paths and the Mac runner
+      # its Windows ones, so neither depends on the other runner alone.
+      - name: Test as the other OS
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then npm run test:windows; else npm run test:mac; fi
       - run: npm run build
       # An unpacked app (no installer, nothing published): proves packaging
       # still works on this OS. Ad-hoc signed on macOS, like the release

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { onRealMac } from '../../test/hostPlatform'
 import { findMainWindowHandleForProcess, normalizeProcessNameForLookup } from './processWindow'
 
 describe('normalizeProcessNameForLookup', () => {
@@ -42,7 +43,7 @@ describe('findMainWindowHandleForProcess', () => {
 // is always running in a logged-in session, which makes it a stable target.
 // The lookup starts a real osascript with a short time limit, which a busy machine can miss
 // now and then, so these retry rather than fail on a slow moment.
-describe.runIf(process.platform === 'darwin')('findMainWindowHandleForProcess on macOS', { retry: 2 }, () => {
+describe.runIf(onRealMac)('findMainWindowHandleForProcess on macOS', { retry: 2 }, () => {
   it('finds a running app by its executable name', async () => {
     expect(await findMainWindowHandleForProcess('Finder')).toBeGreaterThan(0)
   })

@@ -29,6 +29,8 @@
  *    Escape...), and Option alongside Control or Command is a command.
  */
 
+import { isMac } from '../platform'
+
 export const COMMAND_MODIFIER_KEYS = ['Control', 'Alt', 'Meta'] as const
 export type CommandModifierKey = (typeof COMMAND_MODIFIER_KEYS)[number]
 
@@ -54,7 +56,7 @@ function typesNoCharacter(key: string): boolean {
   return NON_CHARACTER_KEYS.has(key) || /^F\d{1,2}$/.test(key)
 }
 
-export function shouldCaptureKeyCombo(keys: string[], mac: boolean = process.platform === 'darwin'): boolean {
+export function shouldCaptureKeyCombo(keys: string[], mac: boolean = isMac): boolean {
   if (keys.length < 2) {
     return false
   }

@@ -7,6 +7,10 @@ import type { Suggestion } from '@shared/types'
 import { LEARNED_MACRO_TRIGGER } from '@shared/constants'
 import { createMacro, getMacroById } from '../database/repositories/macrosRepository'
 import { assignControlAction } from '../database/repositories/controlsRepository'
+import { isMac } from '../platform'
+
+/** This OS's paste: a workflow ending in one gets an Enter appended. */
+const PASTE = isMac ? ['Meta', 'V'] : ['Control', 'V']
 
 function seedProfile(): void {
   const db = getDatabase()
@@ -133,7 +137,7 @@ function workflowSuggestion(overrides: Partial<Suggestion> = {}): Suggestion {
       steps: [
         { type: 'shortcut', applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
         { type: 'appSwitch', applicationId: 'claude' },
-        { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'] },
+        { type: 'shortcut', applicationId: 'claude', comboKeys: PASTE },
         { type: 'appSwitch', applicationId: 'code' }
       ]
     },
@@ -163,7 +167,7 @@ describe('assignSuggestionToControl; multiStepWorkflow (WORKFLOW LEARNING)', () 
       expect(JSON.parse(macroRow!.actions)).toEqual([
         { type: 'shortcut', keys: ['Meta', 'Shift', 'S'] },
         { type: 'focusApplication', applicationId: 'claude' },
-        { type: 'shortcut', keys: ['Control', 'V'] },
+        { type: 'shortcut', keys: PASTE },
         // The trailing "switch back to code" step is dropped (it's what the
         // workflow leads to, not part of doing it) and a submit keystroke
         // is appended because the chain ends in a paste.

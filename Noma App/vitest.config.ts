@@ -16,7 +16,7 @@ export default defineConfig({
     // environment; renderer component tests opt into jsdom individually
     // via a `// @vitest-environment jsdom` docblock at the top of the file.
     environment: 'node',
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: ['./src/test/simulatePlatform.ts', './src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}']
   }
 })

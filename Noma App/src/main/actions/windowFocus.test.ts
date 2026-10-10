@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import { simulatingOtherOS } from '../../test/hostPlatform'
 import { focusWindowAndVerify } from './windowFocus'
 
-describe('focusWindowAndVerify', () => {
+// Real OS calls (IsWindow on Windows): see test/hostPlatform.ts.
+describe.skipIf(simulatingOtherOS)('focusWindowAndVerify', () => {
   it('fails closed for a handle that is not a real window', async () => {
     // A made-up number is guaranteed not to be a live window handle.
     // IsWindow() answers false for it: a safe, read-only query, no

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { onRealMac, onRealWindows } from '../../test/hostPlatform'
 
 const getFileIcon = vi.fn()
 
@@ -28,7 +29,7 @@ beforeEach(() => {
 
 // These cover the Electron path (Windows). macOS never calls getFileIcon;
 // its own test is below and runs on CI's Mac runner.
-describe.skipIf(process.platform === 'darwin')('getApplicationIcon', () => {
+describe.runIf(onRealWindows)('getApplicationIcon', () => {
   it('returns null without calling the OS for a null/undefined path', async () => {
     expect(await getApplicationIcon(null)).toBeNull()
     expect(await getApplicationIcon(undefined)).toBeNull()
@@ -85,7 +86,7 @@ describe.skipIf(process.platform === 'darwin')('getApplicationIcon', () => {
   })
 })
 
-describe.runIf(process.platform === 'darwin')('getApplicationIcon on macOS', () => {
+describe.runIf(onRealMac)('getApplicationIcon on macOS', () => {
   it('reads a real app icon without Electron, as a PNG', async () => {
     const { readMacAppIconResult } = await import('./macAppIcon')
     const detail = await readMacAppIconResult('/System/Applications/Calculator.app')

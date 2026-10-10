@@ -1,5 +1,7 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { simulatingOtherOS } from '../../test/hostPlatform'
+import { isMac } from '../platform'
 import { UiohookKey, uIOhook } from 'uiohook-napi'
 import type { MacroStep } from '@shared/types'
 import { __setDatabaseForTesting, runMigrations, getDatabase } from '../database/db'
@@ -80,7 +82,7 @@ vi.mock('./screenshot', () => ({ runScreenshotStep: vi.fn(async () => ({ ok: tru
 // Real window titles; here, a scripted sequence of "which tab is in front".
 vi.mock('../workflow/tabFingerprint', () => ({ currentTabFingerprint: vi.fn(() => null) }))
 /** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
-const REGION_SCREENSHOT = process.platform === 'darwin' ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
+const REGION_SCREENSHOT = isMac ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
 function insertApplication(id: string, name: string, processName: string): void {
   getDatabase()
@@ -203,7 +205,8 @@ describe('executeControlAction; shortcut', () => {
     expect(uIOhook.keyTap).toHaveBeenCalledTimes(1)
   })
 
-  it('fails closed when the target window handle is invalid', async () => {
+  // Reaches a real IsWindow() call: see test/hostPlatform.ts.
+  it.skipIf(simulatingOtherOS)('fails closed when the target window handle is invalid', async () => {
     // A made-up handle is guaranteed not to be a real window. IsWindow()
     // returns false for it: a safe, read-only query; and execution
     // must refuse rather than send anywhere.
@@ -535,7 +538,8 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     expect(findMainWindowHandleForProcess).toHaveBeenCalledWith('Claude.exe')
   })
 
-  it('fails closed when a window handle is found but focus cannot be confirmed', async () => {
+  // Reaches a real IsWindow() call: see test/hostPlatform.ts.
+  it.skipIf(simulatingOtherOS)('fails closed when a window handle is found but focus cannot be confirmed', async () => {
     insertApplication('claude', 'Claude Code', 'Claude.exe')
     // A made-up handle; guaranteed not to be a real window, so
     // IsWindow()/SetForegroundWindow() can never actually confirm focus.

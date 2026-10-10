@@ -1,11 +1,12 @@
 import type { MacroStep, WorkflowStep } from '@shared/types'
 import { withoutScreenshotOverlaySteps } from './screenshotRegions'
+import { isMac } from '../platform'
 
 /** A chain the same shortcut a paste uses, by combo; kept as a constant
  *  rather than reaching for shortcutDisplayLabel's "Paste" copy, which is
  *  presentation text, not something execution logic should pattern-match
- *  against. */
-const PASTE_COMBO = 'Control+V'
+ *  against. Cmd+V on a Mac, where Ctrl+V isn't a paste at all. */
+const PASTE_COMBO = isMac ? 'Meta+V' : 'Control+V'
 
 function isPasteShortcut(step: WorkflowStep): boolean {
   return step.type === 'shortcut' && step.comboKeys.join('+') === PASTE_COMBO

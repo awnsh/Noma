@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { isMac } from '../platform'
 import type { Suggestion } from '@shared/types'
 import { __setDatabaseForTesting, getDatabase, runMigrations } from '../database/db'
 import { seedDefaultProfiles } from '../database/seed'
@@ -12,7 +13,9 @@ import { removeLearnedWorkflow } from './workflowRemoval'
 
 /** Seeded starter actions and key names follow the OS: Ctrl/Win on
  *  Windows, Cmd on macOS. */
-const isMacRun = process.platform === 'darwin'
+const isMacRun = isMac
+/** This OS's paste: a workflow ending in one gets an Enter appended. */
+const PASTE = isMac ? ['Meta', 'V'] : ['Control', 'V']
 
 // The preview pulls in the executor, which loads the native input hook.
 vi.mock('uiohook-napi', async (importOriginal) => {
@@ -109,7 +112,7 @@ describe('previewSuggestion', () => {
         steps: [
           { type: 'shortcut', applicationId: 'code', comboKeys: ['Meta', 'Shift', 'S'] },
           { type: 'appSwitch', applicationId: 'claude' },
-          { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'] }
+          { type: 'shortcut', applicationId: 'claude', comboKeys: PASTE }
         ]
       })
     )!
@@ -117,7 +120,7 @@ describe('previewSuggestion', () => {
       // Win+Shift+S is a region screenshot only on Windows (a Mac's is Cmd+Shift+4).
       isMacRun ? 'Screenshot (Cmd+Shift+S)' : 'Screenshot (Win+Shift+S): the first time, drag the area once and Noma keeps it',
       'Switch to Claude Code (it has to be open already)',
-      'Paste (Ctrl+V)',
+      isMacRun ? 'Paste (Cmd+V)' : 'Paste (Ctrl+V)',
       'Press Enter, to send what was pasted'
     ])
     expect(preview.steps[3].added).toBe(true)

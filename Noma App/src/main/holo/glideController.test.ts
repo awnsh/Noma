@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { onRealMac, onRealWindows } from '../../test/hostPlatform'
 import type { ApplicationContext, HoloTrackpadEvent } from '@shared/types'
 import { __setDatabaseForTesting, runMigrations } from '../database/db'
 import { getGlideEnabled, setGlideEnabled, setInputSource } from '../database/repositories/settingsRepository'
@@ -67,7 +68,7 @@ function makeController(overrides: { focused?: boolean; runningMarkerPath?: stri
   return { controller: new GlideController(host), host }
 }
 
-const onWindows = process.platform === 'win32'
+const onWindows = onRealWindows
 
 beforeEach(() => {
   const db = new Database(':memory:')
@@ -159,7 +160,7 @@ describe.runIf(onWindows)('GlideController', () => {
   })
 })
 
-describe.runIf(onWindows || process.platform === 'darwin')('crash guard', () => {
+describe.runIf(onWindows || onRealMac)('crash guard', () => {
   const markerPath = () => join(mkdtempSync(join(tmpdir(), 'noma-glide-')), 'glide-running')
 
   it('marks Glide as running while it is on, and clears the mark when it is turned off', () => {
