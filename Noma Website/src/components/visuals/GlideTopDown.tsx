@@ -1,39 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion, useInView, useReducedMotion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import AppIcon from './AppIcon'
-import SectionIntro from '../ui/SectionIntro'
-import Reveal from '../ui/Reveal'
 import { appProfiles } from '../../data/appProfiles'
-import { overlay } from '../../data/glideOverlay'
 
 /**
- * Glide, on a real laptop (2026-10-11): a rendered MacBook deck seen from
- * straight above (Blender, the scene from Marketing/glide-film), with a
- * transparent background so it sits on the page itself. Over it the page
- * draws Glide: the four zones on the trackpad's edges and a finger sliding
- * in from the palm rest, while the control it fires lights in the panel.
- * The zone and finger positions come from the render's own camera
- * (glideOverlay.ts, made by scripts/export_web.py), so they sit exactly on
- * the rendered trackpad at any size.
- *
- * Earlier the same day this was a scroll-scrubbed sequence (the laptop
- * opening, then turning to top-down); the user chose the top-down view alone.
- *
- * It plays through the four zones on its own while on screen, until the
- * visitor picks a control. Reduced motion: no finger, picking still lights.
+ * Glide, drawn over a top-down render of the laptop (2026-10-11): the four
+ * zones on the trackpad's edges and a finger sliding in from the palm rest,
+ * while the control it fires lights in the panel. Positions come from the
+ * render's own camera (journey.ts), so they sit exactly on the rendered
+ * trackpad at any size. Used by DemoGlide, the pinned demo -> Glide section.
  */
 
-const APP_ID = 'claude'
-const IMAGE_SRC = '/media/glide-top.webp'
-const [VW, VH] = overlay.aspect
+export const GLIDE_APP_ID = 'claude'
 
 /** Slot order: upper left 1, upper right 2, lower left 3, lower right 4. */
-const ZONES = [
+export const GLIDE_ZONES = [
   { key: 'topLeft', where: 'upper left' },
   { key: 'topRight', where: 'upper right' },
   { key: 'bottomLeft', where: 'lower left' },
   { key: 'bottomRight', where: 'lower right' },
 ] as const
+
+type ZoneKey = (typeof GLIDE_ZONES)[number]['key']
+type Point = [number, number]
+export interface ZoneGeometry {
+  line: readonly (readonly number[])[]
+  rest: readonly number[]
+  end: readonly number[]
+}
 
 const CYCLE_MS = 2200
 /** The finger rests a beat on the palm rest, then slides in. */
@@ -44,19 +38,8 @@ const FINGER_S = 1.2
 const FIRE_MS = 480
 const LIT_MS = 1500
 
-/** The render's top edge cuts through the lid (seen from above it leans out
- *  of frame); fade it into the page rather than show a straight cut. */
-const TOP_FADE = 'linear-gradient(to bottom, transparent 0%, #000 9%)'
-
-type Point = [number, number]
-const at = ([x, y]: readonly number[]): Point => [x * VW, y * VH]
-
-export default function GlideTopDown() {
-  const reduceMotion = useReducedMotion()
-  const app = appProfiles[APP_ID]
-  const stage = useRef<HTMLDivElement>(null)
-  const inView = useInView(stage, { amount: 0.5 })
-
+/** Plays through the four zones while `running`, until the visitor picks one. */
+export function useGlideSwipes(running: boolean, reduceMotion: boolean) {
   const [swiping, setSwiping] = useState<number | null>(null)
   const [fired, setFired] = useState<number | null>(null)
   const [swipeKey, setSwipeKey] = useState(0)
@@ -88,103 +71,98 @@ export default function GlideTopDown() {
   )
 
   useEffect(() => {
-    if (!inView || taken || reduceMotion) return
+    if (!running || taken || reduceMotion) return
     let index = 0
-    const first = setTimeout(() => swipe(0), 500)
+    const first = setTimeout(() => swipe(0), 400)
     const loop = setInterval(() => {
-      index = (index + 1) % ZONES.length
+      index = (index + 1) % GLIDE_ZONES.length
       swipe(index)
     }, CYCLE_MS)
     return () => {
       clearTimeout(first)
       clearInterval(loop)
     }
-  }, [inView, taken, reduceMotion, swipe])
+  }, [running, taken, reduceMotion, swipe])
+
+  // Leaving the view resets it, so the visitor can come back to the loop.
+  useEffect(() => {
+    if (!running) {
+      clearTimers()
+      setSwiping(null)
+      setFired(null)
+    }
+  }, [running])
 
   const pick = (index: number) => {
     setTaken(true)
     swipe(index)
   }
 
-  const dotR = overlay.padWidth * VW * 0.08
-  const active = swiping === null ? null : overlay.zones[ZONES[swiping].key]
+  return { swiping, fired, swipeKey, pick }
+}
 
+/** The zones and the finger, as an SVG over a W x H image. */
+export function GlideOverlay({
+  width,
+  height,
+  zones,
+  padWidth,
+  fired,
+  swiping,
+  swipeKey,
+  reduceMotion,
+}: {
+  width: number
+  height: number
+  zones: Record<ZoneKey, ZoneGeometry>
+  padWidth: number
+  fired: number | null
+  swiping: number | null
+  swipeKey: number
+  reduceMotion: boolean
+}) {
+  const at = ([x, y]: readonly number[]): Point => [x * width, y * height]
+  const dotR = padWidth * width * 0.08
+  const active = swiping === null ? null : zones[GLIDE_ZONES[swiping].key]
   return (
-    <section id="glide" className="relative scroll-mt-24 px-3 sm:px-5">
-      <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-16 sm:px-10 sm:py-20 md:px-12 md:py-28 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
-        <div>
-          <SectionIntro
-            compact
-            title="Your four controls, on the trackpad."
-            line="Glide puts them at the edges of the trackpad you already have. Swipe in from the palm rest to use one. No extra hardware."
-          />
-          <Reveal delay={0.08} className="mt-8 hidden lg:block">
-            <div className="rounded-2xl border border-white/10 bg-base-900/70 p-5 backdrop-blur-xl">
-              <ControlPanel app={app} fired={fired} onPick={pick} />
-            </div>
-          </Reveal>
-        </div>
-
-        <Reveal delay={0.04}>
-          <div ref={stage} className="relative lg:-mr-[4%]">
-            <img
-              src={IMAGE_SRC}
-              alt="A laptop seen from straight above. A finger on the palm rest slides onto the trackpad from its edge, and the zone it came in through lights up."
-              width={VW}
-              height={VH}
-              loading="lazy"
-              decoding="async"
-              className="block h-auto w-full select-none"
-              style={{ maskImage: TOP_FADE, WebkitMaskImage: TOP_FADE }}
-              draggable={false}
+    <svg viewBox={`0 0 ${width} ${height}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
+      <defs>
+        <radialGradient id="glide-finger">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
+          <stop offset="0.55" stopColor="#eef2ff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#eef2ff" stopOpacity="0" />
+        </radialGradient>
+        {/* User-space region: a vertical line has a zero-width box, which
+            would collapse a bounding-box filter region. */}
+        <filter id="glide-glow" filterUnits="userSpaceOnUse" x={0} y={0} width={width} height={height}>
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+      </defs>
+      {GLIDE_ZONES.map((zone, index) => {
+        const z = zones[zone.key]
+        const [a, b] = [at(z.line[0]), at(z.line[1])]
+        const lit = fired === index
+        return (
+          <g key={zone.key}>
+            <motion.line
+              x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
+              stroke="#4c7eff" strokeWidth={26} strokeLinecap="round" filter="url(#glide-glow)"
+              initial={false}
+              animate={{ opacity: lit ? 0.9 : 0 }}
+              transition={{ duration: lit ? 0.12 : 0.6 }}
             />
-            <svg viewBox={`0 0 ${VW} ${VH}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-              <defs>
-                <radialGradient id="glide-finger">
-                  <stop offset="0" stopColor="#ffffff" stopOpacity="0.95" />
-                  <stop offset="0.55" stopColor="#eef2ff" stopOpacity="0.55" />
-                  <stop offset="1" stopColor="#eef2ff" stopOpacity="0" />
-                </radialGradient>
-                {/* User-space region: a vertical line has a zero-width box,
-                    which would collapse a bounding-box filter region. */}
-                <filter id="glide-glow" filterUnits="userSpaceOnUse" x={0} y={0} width={VW} height={VH}>
-                  <feGaussianBlur stdDeviation="9" />
-                </filter>
-              </defs>
-              {ZONES.map((zone, index) => {
-                const z = overlay.zones[zone.key]
-                const [a, b] = [at(z.line[0]), at(z.line[1])]
-                const lit = fired === index
-                return (
-                  <g key={zone.key}>
-                    <motion.line
-                      x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
-                      stroke="#4c7eff" strokeWidth={30} strokeLinecap="round" filter="url(#glide-glow)"
-                      initial={false}
-                      animate={{ opacity: lit ? 0.9 : 0 }}
-                      transition={{ duration: lit ? 0.12 : 0.6 }}
-                    />
-                    <motion.line
-                      x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
-                      stroke={lit ? '#a9c0ff' : '#4c7eff'} strokeWidth={lit ? 10 : 8} strokeLinecap="round"
-                      initial={false}
-                      animate={{ opacity: lit ? 1 : 0.55 }}
-                      transition={{ duration: lit ? 0.12 : 0.6 }}
-                    />
-                  </g>
-                )
-              })}
-              {active && !reduceMotion && <Finger key={swipeKey} from={at(active.rest)} to={at(active.end)} r={dotR} />}
-            </svg>
-          </div>
-        </Reveal>
-
-        {/* Phones and tablets: the panel under the laptop. */}
-        <div className="rounded-2xl border border-white/10 bg-base-900/70 p-3 backdrop-blur-xl sm:p-4 lg:hidden">
-          <ControlPanel app={app} fired={fired} onPick={pick} compact />
-        </div>
-      </div>
-    </section>
+            <motion.line
+              x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
+              stroke={lit ? '#a9c0ff' : '#4c7eff'} strokeWidth={lit ? 8 : 6.5} strokeLinecap="round"
+              initial={false}
+              animate={{ opacity: lit ? 1 : 0.55 }}
+              transition={{ duration: lit ? 0.12 : 0.6 }}
+            />
+          </g>
+        )
+      })}
+      {active && !reduceMotion && <Finger key={swipeKey} from={at(active.rest)} to={at(active.end)} r={dotR} />}
+    </svg>
   )
 }
 
@@ -209,22 +187,22 @@ function Finger({ from, to, r }: { from: Point; to: Point; r: number }) {
   return <circle ref={ref} cx={from[0]} cy={from[1]} r={r} fill="url(#glide-finger)" opacity={0} />
 }
 
-function ControlPanel({
-  app,
+/** Claude's four controls, lit as their swipe lands; picking one replays it. */
+export function ControlPanel({
   fired,
   onPick,
   compact = false,
 }: {
-  app: (typeof appProfiles)[string]
   fired: number | null
   onPick: (index: number) => void
   compact?: boolean
 }) {
+  const app = appProfiles[GLIDE_APP_ID]
   return (
     <>
       <div className="flex items-center gap-3">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
-          <AppIcon id={APP_ID} color={app.color} className="h-4 w-4" />
+          <AppIcon id={GLIDE_APP_ID} color={app.color} className="h-4 w-4" />
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium tracking-tight text-base-50">{app.shortName}</p>
@@ -232,7 +210,7 @@ function ControlPanel({
         </div>
       </div>
       <div className={`grid grid-cols-2 gap-2 ${compact ? 'mt-3' : 'mt-4'}`}>
-        {ZONES.map((zone, index) => {
+        {GLIDE_ZONES.map((zone, index) => {
           const control = app.controls[index]
           const isFired = fired === index
           return (
@@ -244,7 +222,7 @@ function ControlPanel({
               animate={{ scale: isFired ? 0.96 : 1 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               className={`flex flex-col items-center justify-center rounded-xl border px-2 text-center transition-colors duration-200 ${
-                compact ? 'h-[48px]' : 'h-[60px]'
+                compact ? 'h-[46px]' : 'h-[60px]'
               } ${
                 isFired
                   ? 'border-accent/60 bg-accent/15 text-base-50'

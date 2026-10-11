@@ -1,9 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
+import { type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { SiApple } from 'react-icons/si'
 import ProductNotice, { type ProductNoticeStep } from './ProductNotice'
 import AppIcon from './AppIcon'
 import { appProfiles } from '../../data/appProfiles'
+import { journey } from '../../data/journey'
 
 /**
  * Flow, demonstrated on a real-looking desktop (2026-10-06 redesign; grew out
@@ -18,12 +19,14 @@ import { appProfiles } from '../../data/appProfiles'
  * Windows key, or an app switch. A bare Enter is never recorded, which is
  * why the commit is Ctrl+Enter (GitHub Desktop's own commit shortcut).
  *
- * Drawn at a fixed 960x600 "screen" and scaled to fit, so it looks the same
- * at every width, like a screenshot would, while staying sharp.
+ * Since 2026-10-11 this is the screen of a rendered MacBook, played by
+ * scrolling (DemoGlide.tsx): the laptop image has its display cut out and
+ * this screen sits behind it, warped onto the display's corners. Drawn at a
+ * fixed 960 wide, with the display's own aspect, and warped to fit.
  */
 
-const SCREEN_W = 960
-const SCREEN_H = 600
+export const SCREEN_W = 960
+export const SCREEN_H = Math.round(SCREEN_W / journey.screenAspect)
 
 type WindowId = 'code' | 'terminal' | 'github'
 
@@ -42,7 +45,7 @@ const NOTICE_STEPS: ProductNoticeStep[] = [
 /** The app's own WORKFLOW_NOTIFICATION_THRESHOLD. */
 const RUNS = 3
 
-interface Frame {
+export interface Frame {
   run: number
   step: number | null
   notice: boolean
@@ -61,7 +64,7 @@ const TIMELINE: Frame[] = (() => {
   return frames
 })()
 
-const FINAL: Frame = { run: RUNS, step: null, notice: true, ms: 0 }
+export const FINAL: Frame = { run: RUNS, step: null, notice: true, ms: 0 }
 
 function TrafficLights() {
   return (
@@ -243,7 +246,7 @@ function GitHubWindow({ focused }: { focused: boolean }) {
 }
 
 /** The keys being pressed, the way a screen recording shows them. */
-function Keycast({ frame }: { frame: Frame }) {
+export function Keycast({ frame }: { frame: Frame }) {
   const step = frame.step === null ? null : STEPS[frame.step]
   return (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/70 px-3 py-2 backdrop-blur-md">
@@ -274,57 +277,81 @@ function Keycast({ frame }: { frame: Frame }) {
   )
 }
 
-export default function WorkflowDemo({ className = '' }: { className?: string }) {
-  const stage = useRef<HTMLDivElement>(null)
-  const [scale, setScale] = useState(0)
-  const reduceMotion = useReducedMotion()
-  const inView = useInView(stage, { margin: '-10% 0px' })
-  const [index, setIndex] = useState(0)
+/** Where the pointer goes for each moment, in screen pixels: into the
+ *  window the step happens in, then over the notice's button. */
+const POINTER: Record<WindowId | 'rest' | 'notice', [number, number]> = {
+  rest: [480, 330],
+  code: [300, 262],
+  terminal: [585, 512],
+  github: [742, 318],
+  notice: [688, SCREEN_H - 36],
+}
 
-  useLayoutEffect(() => {
-    const element = stage.current
-    if (!element) return
-    const update = () => setScale(element.clientWidth / SCREEN_W)
-    update()
-    const observer = new ResizeObserver(update)
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [])
+function targetOf(frame: Frame): [number, number] {
+  if (frame.notice) return POINTER.notice
+  if (frame.step === null) return POINTER.rest
+  return POINTER[STEPS[frame.step].window]
+}
 
-  // Plays while on screen; starts over each time it comes back into view.
-  useEffect(() => {
-    if (reduceMotion || !inView) return
-    let current = 0
-    let timer: ReturnType<typeof setTimeout>
-    const tick = () => {
-      setIndex(current)
-      timer = setTimeout(() => {
-        current = (current + 1) % TIMELINE.length
-        tick()
-      }, TIMELINE[current].ms)
+const TOTAL_MS = TIMELINE.reduce((sum, frame) => sum + frame.ms, 0)
+
+export interface Moment {
+  frame: Frame
+  pointer: [number, number]
+  pressed: boolean
+}
+
+/** The demo at progress p (0..1): which moment, and where the pointer is.
+ *  The pointer travels in the first 45% of each moment, then rests and
+ *  clicks. p = 1 is the final state, notice up. */
+export function playhead(p: number): Moment {
+  const t = Math.min(1, Math.max(0, p)) * TOTAL_MS
+  let start = 0
+  for (let index = 0; index < TIMELINE.length; index++) {
+    const frame = TIMELINE[index]
+    if (t < start + frame.ms || index === TIMELINE.length - 1) {
+      const into = Math.min(1, (t - start) / frame.ms)
+      const from = index === 0 ? POINTER.rest : targetOf(TIMELINE[index - 1])
+      const to = targetOf(frame)
+      const k = Math.min(1, into / 0.45)
+      const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2
+      return {
+        frame,
+        pointer: [from[0] + (to[0] - from[0]) * ease, from[1] + (to[1] - from[1]) * ease],
+        pressed: frame.step !== null && into > 0.45 && into < 0.62,
+      }
     }
-    tick()
-    return () => clearTimeout(timer)
-  }, [inView, reduceMotion])
+    start += frame.ms
+  }
+  return { frame: FINAL, pointer: POINTER.notice, pressed: false }
+}
 
-  const frame = reduceMotion ? FINAL : TIMELINE[index]
-  const focusedWindow: WindowId = frame.step === null ? (frame.run === 0 ? 'code' : 'github') : STEPS[frame.step].window
-  const menu = STEPS.find((step) => step.window === focusedWindow)?.menu ?? 'Code'
+export const FINAL_MOMENT: Moment = { frame: FINAL, pointer: POINTER.notice, pressed: false }
 
-  // On a phone the screen shrinks to about a third, which would leave the
-  // keycast and the notice a few pixels tall. There they're drawn at a
-  // readable size below the screen instead.
-  const compact = scale > 0 && scale < 0.6
+/** The macOS pointer. */
+function Pointer({ at, pressed }: { at: [number, number]; pressed: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 28"
+      className="pointer-events-none absolute z-[60] h-[24px] w-[17px] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
+      style={{ left: at[0], top: at[1], transform: `scale(${pressed ? 0.86 : 1})`, transformOrigin: 'top left', transition: 'transform 120ms' }}
+      aria-hidden
+    >
+      <path d="M1.5 1.5 L1.5 22 L6.6 17.2 L10 25.4 L13.4 24 L10 16 L17 16 Z" fill="#000" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
-  const notice = (
+/** Noma's notice, as the app shows it (enter 280 ms, exit 200 ms). */
+export function DemoNotice({ show, compact, animate }: { show: boolean; compact: boolean; animate: boolean }) {
+  return (
     <AnimatePresence>
-      {frame.notice && (
+      {show && (
         <motion.div
           className={compact ? 'flex justify-center' : 'absolute bottom-[20px] right-[20px] z-40'}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          initial={animate ? { opacity: 0, y: 14 } : false}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}
-          // The app's own enter/exit: 280 ms in, 200 ms out.
           transition={{ duration: 0.28, ease: [0.22, 0.61, 0.36, 1] }}
         >
           <ProductNotice steps={NOTICE_STEPS} occurrences={RUNS} />
@@ -332,52 +359,46 @@ export default function WorkflowDemo({ className = '' }: { className?: string })
       )}
     </AnimatePresence>
   )
+}
 
+/** The whole screen at one moment, SCREEN_W x SCREEN_H, unscaled. In
+ *  compact layouts the keycast and notice are drawn outside it instead. */
+export function DemoScreen({ moment, compact = false, animate = true }: { moment: Moment; compact?: boolean; animate?: boolean }) {
+  const { frame } = moment
+  const focusedWindow: WindowId = frame.step === null ? (frame.run === 0 ? 'code' : 'github') : STEPS[frame.step].window
+  const menu = STEPS.find((step) => step.window === focusedWindow)?.menu ?? 'Code'
   return (
-    <div className={className}>
-      <div ref={stage} className="relative w-full" style={{ height: SCREEN_H * scale }}>
-        <div
-          className="absolute left-0 top-0 overflow-hidden rounded-[14px] border border-white/10 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.9)]"
-          style={{
-            width: SCREEN_W,
-            height: SCREEN_H,
-            transform: `scale(${scale})`,
-            transformOrigin: 'top left',
-            visibility: scale ? 'visible' : 'hidden',
-            background:
-              'radial-gradient(ellipse 80% 70% at 70% 20%, #1a2236 0%, transparent 60%), radial-gradient(ellipse 70% 60% at 15% 90%, #17151f 0%, transparent 60%), #0c0e14',
-          }}
-        >
-          <div className="relative z-50 flex h-[26px] items-center gap-[18px] bg-black/35 px-4 text-[12px] text-white/90 backdrop-blur-xl">
-            <SiApple className="h-[13px] w-[13px]" />
-            <span className="font-semibold">{menu}</span>
-            {['File', 'Edit', 'View', 'Window', 'Help'].map((item) => (
-              <span key={item} className="text-white/85">
-                {item}
-              </span>
-            ))}
-            <span className="ml-auto text-white/85">Mon 9:21 AM</span>
-          </div>
-
-          <VSCodeWindow focused={focusedWindow === 'code'} />
-          <GitHubWindow focused={focusedWindow === 'github'} />
-          <TerminalWindow focused={focusedWindow === 'terminal'} />
-
-          {!compact && (
-            <div className="absolute bottom-[20px] left-[20px] z-40">
-              <Keycast frame={frame} />
-            </div>
-          )}
-          {!compact && notice}
-        </div>
+    <div
+      className="relative overflow-hidden"
+      style={{
+        width: SCREEN_W,
+        height: SCREEN_H,
+        background:
+          'radial-gradient(ellipse 80% 70% at 70% 20%, #1a2236 0%, transparent 60%), radial-gradient(ellipse 70% 60% at 15% 90%, #17151f 0%, transparent 60%), #0c0e14',
+      }}
+    >
+      <div className="relative z-50 flex h-[26px] items-center gap-[18px] bg-black/35 px-4 text-[12px] text-white/90 backdrop-blur-xl">
+        <SiApple className="h-[13px] w-[13px]" />
+        <span className="font-semibold">{menu}</span>
+        {['File', 'Edit', 'View', 'Window', 'Help'].map((item) => (
+          <span key={item} className="text-white/85">
+            {item}
+          </span>
+        ))}
+        <span className="ml-auto text-white/85">Mon 9:21 AM</span>
       </div>
 
-      {compact && (
-        <div className="mt-4 flex flex-col items-center gap-3">
+      <VSCodeWindow focused={focusedWindow === 'code'} />
+      <GitHubWindow focused={focusedWindow === 'github'} />
+      <TerminalWindow focused={focusedWindow === 'terminal'} />
+
+      {!compact && (
+        <div className="absolute bottom-[20px] left-[20px] z-40">
           <Keycast frame={frame} />
-          <div className="min-h-[150px]">{notice}</div>
         </div>
       )}
+      {!compact && <DemoNotice show={frame.notice} compact={false} animate={animate} />}
+      <Pointer at={moment.pointer} pressed={moment.pressed} />
     </div>
   )
 }

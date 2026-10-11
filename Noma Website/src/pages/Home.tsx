@@ -1,9 +1,8 @@
 import Hero from '../components/sections/Hero'
-import Demo from '../components/sections/Demo'
+import DemoGlide from '../components/sections/DemoGlide'
 import Problem from '../components/sections/Problem'
 import Flow from '../components/sections/Flow'
 import HowItWorks from '../components/sections/HowItWorks'
-import Holo from '../components/sections/Holo'
 import Adaptive from '../components/sections/Adaptive'
 import Privacy from '../components/sections/Privacy'
 import Beta from '../components/sections/Beta'
@@ -13,11 +12,12 @@ import Beta from '../components/sections/Beta'
  * that order, with the product shown working right under the hero.
  *
  *   Hero        the claim, with the adaptive controls under it
- *   Demo        Noma noticing a real workflow while someone works
+ *   DemoGlide   Noma noticing a workflow on a rendered MacBook's screen, then
+ *               (scrolling on) the camera swings down to the trackpad for
+ *               Glide (ids "demo" and "glide"); 2026-10-11
  *   Problem     you shouldn't have to work around your computer
  *   Flow        stop repeating yourself: the real suggestion, clickable
  *   HowItWorks  four steps, short
- *   Holo        Glide: the controls on the trackpad (id "glide")
  *   Adaptive    it gets better as you use it; the larger idea
  *   Privacy     what Noma records and never records (hardware lives on /device)
  *   Beta        the invitation
@@ -31,11 +31,10 @@ export default function Home() {
     <>
       <Hero />
       <div className="relative">
-        <Demo />
+        <DemoGlide />
         <Problem />
         <Flow />
         <HowItWorks />
-        <Holo />
         <Adaptive />
         <Privacy />
         <Beta />
