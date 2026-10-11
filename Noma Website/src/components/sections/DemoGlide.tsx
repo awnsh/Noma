@@ -37,12 +37,13 @@ const [CW, CH] = journey.canvas
 const FRAMES = journey.frames
 const frameSrc = (i: number) => `/media/journey/${String(i).padStart(2, '0')}.webp`
 
-// Scroll phases, as shares of the pinned scroll.
-const DEMO = [0.03, 0.42] as const
-const MOVE = [0.48, 0.74] as const
-const GLIDE_AT = 0.78
+// Scroll phases, as shares of the pinned scroll. The workflow takes about
+// one screen of scrolling (user, 2026-10-11: not too long on this part).
+const DEMO = [0.02, 0.30] as const
+const MOVE = [0.35, 0.68] as const
+const GLIDE_AT = 0.72
 /** Where the nav's #glide lands: GLIDE_AT of the pinned scroll. */
-const TRACK_VH = 540
+const TRACK_VH = 380
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 const smooth = (v: number) => v * v * (3 - 2 * v)
