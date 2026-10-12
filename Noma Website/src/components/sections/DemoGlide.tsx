@@ -42,6 +42,8 @@ const frameSrc = (i: number) => `/media/journey/${String(i).padStart(2, '0')}.we
 const DEMO = [0.02, 0.30] as const
 const MOVE = [0.35, 0.68] as const
 const GLIDE_AT = 0.72
+/** Share of the content width the laptop takes beside Glide's words. */
+const GLIDE_COL = 0.56
 /** Where the nav's #glide lands: GLIDE_AT of the pinned scroll. */
 const TRACK_VH = 380
 
@@ -83,16 +85,27 @@ export default function DemoGlide() {
   const frameIndex = useRef(0)
 
   const [width, setWidth] = useState(0)
+  /** The content box the stage moves within (the max-w-6xl column, inside its padding). */
+  const content = useRef<HTMLDivElement>(null)
+  const [contentWidth, setContentWidth] = useState(0)
   const [p, setP] = useState(0)
   const [moment, setMoment] = useState<Moment>(() => playhead(0))
 
   useLayoutEffect(() => {
     const element = stage.current
     if (!element) return
-    const update = () => setWidth(element.clientWidth)
+    const box = content.current
+    const update = () => {
+      setWidth(element.clientWidth)
+      if (box) {
+        const style = getComputedStyle(box)
+        setContentWidth(box.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight))
+      }
+    }
     update()
     const observer = new ResizeObserver(update)
     observer.observe(element)
+    if (box) observer.observe(box)
     return () => observer.disconnect()
   }, [])
 
@@ -166,12 +179,18 @@ export default function DemoGlide() {
     (k) => [journey.screen[k][0] * width, journey.screen[k][1] * height] as [number, number],
   )
   const scale = width ? (quad[1][0] - quad[0][0]) / SCREEN_W : 0
-  const compact = scale > 0 && scale < 0.6
+  // Below this the keycast and notice move under the laptop (phones only).
+  const compact = scale > 0 && scale < 0.45
   const shown = inDemo ? moment : FINAL_MOMENT
 
   // Wide screens: during the move the laptop slides right and shrinks a
   // little, making room for Glide's words and panel on the left.
   const shift = wide ? t : 0
+  // Wide screens, Glide: the laptop fits the right-hand GLIDE_COL of the
+  // content box, right-aligned, clear of the text column (lg:w-[38%]) on
+  // the left. Measured, so it can never run into the words or the panel.
+  const fitScale = width && contentWidth ? Math.min(1, (contentWidth * GLIDE_COL) / width) : 1
+  const fitShift = width && contentWidth ? contentWidth / 2 - (width * fitScale) / 2 : 0
   const demoText = reduceMotion ? 1 : 1 - smooth(clamp01((p - MOVE[0]) / 0.06))
   const glideText = reduceMotion ? 1 : smooth(clamp01((p - (MOVE[1] - 0.04)) / 0.06))
 
@@ -206,7 +225,7 @@ export default function DemoGlide() {
       <span id="glide" className="pointer-events-none absolute left-0" style={{ top: `${GLIDE_AT * (TRACK_VH - 100)}vh` }} aria-hidden />
       <div ref={track} className="relative" style={{ height: `${TRACK_VH}vh` }}>
         <div className="sticky top-0 h-[100svh] overflow-hidden">
-          <div className="relative mx-auto h-full max-w-6xl px-5 sm:px-10 md:px-12">
+          <div ref={content} className="relative mx-auto h-full max-w-6xl px-5 sm:px-10 md:px-12">
             {/* 1. The demo's words, above the laptop. */}
             <motion.div
               className="absolute inset-x-5 top-[88px] sm:inset-x-10 md:inset-x-12"
@@ -215,7 +234,9 @@ export default function DemoGlide() {
               <SectionIntro
                 center
                 title="Here’s Noma catching a workflow."
-                line="Screenshot the bug, paste it into Claude, commit the fix. The third time, Noma recognizes the sequence and offers to save it."
+                // Wide screens: the heading alone, so the screen can be big
+                // enough to show the notice on it (user, 2026-10-11).
+                line={wide ? undefined : 'Screenshot the bug, paste it into Claude, commit the fix. The third time, Noma recognizes the sequence and offers to save it.'}
               />
             </motion.div>
 
@@ -240,10 +261,10 @@ export default function DemoGlide() {
             {/* The laptop. */}
             <div
               ref={stage}
-              className="absolute left-1/2 top-[calc(50%+100px)] w-[min(100%,calc((100svh-380px)*4/3),1040px)]"
+              className="absolute left-1/2 top-[calc(50%+100px)] w-[min(100%,calc((100svh-380px)*4/3),1040px)] lg:top-[calc(50%+80px)] lg:w-[min(100%,calc((100svh-260px)*4/3),1100px)]"
               style={{
                 height: height || undefined,
-                transform: `translate(calc(-50% + ${shift * 21}%), calc(-50% - ${t * 50}px)) scale(${1 - shift * 0.06})`,
+                transform: `translate(calc(-50% + ${shift * fitShift}px), calc(-50% - ${t * 50}px)) scale(${1 - shift * (1 - fitScale)})`,
                 // The head-on frame ends in a strip of keyboard; fade it into
                 // the page, easing off as the view swings to top-down.
                 maskImage: `linear-gradient(to bottom, #000 ${66 + 30 * t}%, transparent 100%)`,
