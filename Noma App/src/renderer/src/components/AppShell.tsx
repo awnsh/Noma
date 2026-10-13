@@ -121,7 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-base-700 bg-white/[0.03] px-4 py-6 backdrop-blur-2xl">
         <div className="mb-8 flex items-center gap-1.5 px-1">
-          <img src={logo} alt="" className="h-6 w-[34px]" />
+          <img src={logo} alt="" className="h-6 w-[37px] object-contain" />
           <img src={wordmark} alt="Noma" className="h-[14px] w-auto" />
           <BetaBadge className="ml-1" />
         </div>

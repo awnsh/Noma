@@ -278,6 +278,22 @@ a soft accent glow (`bg-accent/15` + a real offset+blur `shadow` + a thin
 glass tooltip (real `backdrop-blur`, since real page content sits behind
 it) rather than a browser-default `title` tooltip alone.
 
+### The logo mark
+The mark (`assets/logo.png`, transparent, light gray) is wide: about
+**1.56 : 1**. Never put it in a square box without `object-contain`, and
+never crop it to a circle; both stretch it or clip its curled ends.
+- **Next to text** (sidebar, onboarding, Noma Notice): bare mark, width =
+  height × 1.56 (`h-6 w-[37px]`, `h-9 w-14`, `h-[18px] w-[26px]`),
+  `object-contain`.
+- **In a round badge** (Glide toast): the circle is its own element
+  (`h-6 w-6 rounded-full bg-white/[0.07]` + inset hairline ring), and the
+  mark sits inside it at about half the badge width (`h-[9px] w-[13px]`).
+- **OS icons** (`resources/`): small sizes are drawn with heavier strokes
+  than a downscale gives, one file per size. Windows tray: `tray-16.png`,
+  `tray-24.png`, `tray.png` (32) added as 1x/1.5x/2x representations;
+  never `resize()` at runtime. macOS menu bar: `trayIconTemplate.png`
+  (16) and `@2x` (32), black on transparent, ~2px strokes at 16.
+
 ## Do's and Don'ts
 
 ### Do:

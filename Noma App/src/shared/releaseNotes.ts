@@ -7,6 +7,10 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.24': [
+    "Glide: the middle of the trackpad shows the app's icon with its name, so you can see at a glance whose four actions you're looking at.",
+    'The Noma logo is no longer squashed in the sidebar or cut off in the Glide note, and the tray icon is sharper on Windows.'
+  ],
   '0.1.23': [
     'Mac: a saved workflow that ends with a paste (⌘V) now presses Enter afterwards to send what was pasted, as it already did on Windows. Save the workflow again to pick this up.',
     'Workflow steps that select everything now read "Select all" instead of "Meta+A" or "Control+A".'

@@ -35,8 +35,10 @@ if (TEST_USER_DATA_DIR) {
 import icon from '../../resources/icon.png?asset'
 import iconIco from '../../resources/icon.ico?asset'
 import iconMac from '../../resources/icon-mac.png?asset'
-// The website favicon's 32px artwork, whose strokes are drawn heavier to
-// stay legible at tray size (downscaling the big icon makes them too thin).
+// Windows tray, one file per display scale (100/150/200%), each drawn with
+// strokes heavier than a plain downscale so the mark stays solid at that size.
+import trayIcon16Path from '../../resources/tray-16.png?asset'
+import trayIcon24Path from '../../resources/tray-24.png?asset'
 import trayIconPath from '../../resources/tray.png?asset'
 // macOS menu bar: black-on-alpha template image (the OS tints it for light/dark).
 import trayTemplatePath from '../../resources/trayIconTemplate.png?asset'
@@ -391,7 +393,11 @@ function createTray(): void {
     trayIcon.addRepresentation({ scaleFactor: 2, buffer: readFileSync(trayTemplate2xPath) })
     trayIcon.setTemplateImage(true)
   } else {
-    trayIcon = nativeImage.createFromPath(trayIconPath).resize({ width: 16, height: 16 })
+    // Windows picks the representation matching the display scale; resizing
+    // the 32px file at runtime would blur it and drop the sharper sizes.
+    trayIcon = nativeImage.createFromPath(trayIcon16Path)
+    trayIcon.addRepresentation({ scaleFactor: 1.5, buffer: readFileSync(trayIcon24Path) })
+    trayIcon.addRepresentation({ scaleFactor: 2, buffer: readFileSync(trayIconPath) })
   }
   tray = new Tray(trayIcon)
   tray.setToolTip(

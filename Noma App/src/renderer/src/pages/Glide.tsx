@@ -187,6 +187,7 @@ export function Glide() {
               flashingZone={flashing}
               onEditZone={(slot) => void openZone(slot)}
               centerLabel={app.name}
+              centerAppId={app.id}
             />
           ) : (
             <div className="py-8 text-center">

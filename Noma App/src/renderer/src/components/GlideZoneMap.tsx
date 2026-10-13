@@ -1,6 +1,7 @@
 import { GLIDE_ZONE_LABELS, GLIDE_ZONE_SLOTS, glideZonesFor, type GlideZoneName } from '@shared/constants'
 import type { Control, HoloTrackpadZoneCount } from '@shared/types'
 import { actionCaption } from '../lib/describeAction'
+import { AppIcon } from './AppIcon'
 
 /** Position of each zone on the drawn trackpad. Whole class names only:
  *  Tailwind can't see names assembled at runtime. */
@@ -28,7 +29,8 @@ export function isEmptyControl(control: Control | undefined): boolean {
  * The trackpad as Glide sees it: a strip down each side (split in halves
  * with four zones), each showing the action it runs. Click a zone to change
  * its action when `onEditZone` is given; a flashing zone marks the swipe-in
- * that was just recognised.
+ * that was just recognised. The centre names the app, with its icon when
+ * `centerAppId` is given.
  */
 export function GlideZoneMap({
   zoneCount,
@@ -36,6 +38,7 @@ export function GlideZoneMap({
   flashingZone,
   onEditZone,
   centerLabel,
+  centerAppId,
   compact = false
 }: {
   zoneCount: HoloTrackpadZoneCount
@@ -43,6 +46,8 @@ export function GlideZoneMap({
   flashingZone?: GlideZoneName | null
   onEditZone?: (slot: number) => void
   centerLabel?: string
+  /** Shows this app's icon above `centerLabel`. */
+  centerAppId?: string | null
   /** Smaller, zone names only: for onboarding, where it shares the screen. */
   compact?: boolean
 }) {
@@ -94,8 +99,15 @@ export function GlideZoneMap({
         )
       })}
       {centerLabel && (
-        <div className="pointer-events-none absolute inset-x-[32%] top-1/2 -translate-y-1/2 text-center text-[11px] leading-snug text-holo-muted">
-          {centerLabel}
+        <div className="pointer-events-none absolute inset-x-[32%] top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 text-center">
+          {centerAppId !== undefined && <AppIcon applicationId={centerAppId} name={centerLabel} size={compact ? 28 : 40} fill />}
+          <span
+            className={`max-w-full truncate leading-snug ${
+              centerAppId !== undefined ? 'font-display text-sm font-medium text-holo-text' : 'text-[11px] text-holo-muted'
+            }`}
+          >
+            {centerLabel}
+          </span>
         </div>
       )}
       </div>

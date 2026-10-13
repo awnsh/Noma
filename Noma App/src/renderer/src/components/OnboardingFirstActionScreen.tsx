@@ -117,7 +117,7 @@ export function OnboardingFirstActionScreen({ onFinish }: OnboardingFirstActionS
           <div className="mt-5 w-full rounded-2xl bg-holo-bg p-5">
             {profile && app ? (
               <div className="mx-auto max-w-md">
-                <GlideZoneMap zoneCount={zoneCount} controls={profile.controls} onEditZone={setEditingSlot} centerLabel={app.name} />
+                <GlideZoneMap zoneCount={zoneCount} controls={profile.controls} onEditZone={setEditingSlot} centerLabel={app.name} centerAppId={app.id} />
               </div>
             ) : (
               <p className="py-8 text-sm text-holo-muted">No app with actions yet. You can set one up on the Glide page.</p>
