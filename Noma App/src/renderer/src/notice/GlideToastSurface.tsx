@@ -35,7 +35,11 @@ export function GlideToastSurface() {
         className="noma-glide-toast flex max-w-full items-center gap-2 rounded-full border border-white/[0.09] bg-[rgba(17,18,20,0.86)] py-1.5 pl-1.5 pr-3.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.8)]"
         style={{ animationDuration: `${GLIDE_TOAST_MS}ms` }}
       >
-        <img src={logo} alt="" className="h-6 w-6 shrink-0 rounded-full" draggable={false} />
+        {/* The mark is wide (about 3:2), so it sits inset at its own
+            proportions inside the circle rather than being stretched to fill it. */}
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.07] ring-1 ring-inset ring-white/[0.06]">
+          <img src={logo} alt="" className="h-[9px] w-[13px] object-contain opacity-90" draggable={false} />
+        </span>
         <span className="truncate text-[13px] font-medium text-neutral-100">{toast.name}</span>
         {toast.applicationName && (
           <span className="max-w-[40%] shrink-0 truncate text-[12px] text-neutral-500">{toast.applicationName}</span>

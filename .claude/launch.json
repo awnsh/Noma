@@ -14,6 +14,20 @@
       "port": 5180
     },
     {
+      "name": "noma-website-lan",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "Noma Website/node_modules/vite/bin/vite.js",
+        "Noma Website",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5182",
+        "--strictPort"
+      ],
+      "port": 5182
+    },
+    {
       "name": "noma-website-dist",
       "runtimeExecutable": "python",
       "runtimeArgs": [
@@ -24,6 +38,18 @@
         "Noma Website/dist"
       ],
       "port": 5181
+    },
+    {
+      "name": "glide-toast-mock",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "5190",
+        "--directory",
+        "C:/Users/UKANI~1.AWN/AppData/Local/Temp/claude/C--Users-ukani-AWNSH-OneDrive-Desktop-Noma/3d79154d-4821-48c3-9d45-4e8219eedce5/scratchpad/toast"
+      ],
+      "port": 5190
     }
   ]
 }
