@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { PlusIcon } from './icons'
 import type { Application, Macro, MacroStep } from '@shared/types'
 import { MacroStepRow, defaultStepForType } from './MacroStepRow'
 import { GhostButton, PrimaryButton } from './Button'
@@ -43,13 +44,13 @@ const STEP_TYPES_FOR_NEW_STEP: NewStepType[] = [
 ]
 
 const NEW_STEP_LABELS: Record<NewStepType, string> = {
-  shortcut: '+ Shortcut',
-  delay: '+ Wait',
-  systemCommand: '+ System action',
-  flowAction: '+ Flow action',
-  focusApplication: '+ Switch window',
-  launchApplication: '+ Open app',
-  macro: '+ Run macro'
+  shortcut: 'Shortcut',
+  delay: 'Wait',
+  systemCommand: 'System action',
+  flowAction: 'Flow action',
+  focusApplication: 'Switch window',
+  launchApplication: 'Open app',
+  macro: 'Run macro'
 }
 
 export function MacroEditor({
@@ -210,7 +211,7 @@ export function MacroEditor({
       </div>
 
       <div className="mb-6">
-        <div className="mb-3 text-[10px] uppercase tracking-widest text-neutral-500">Steps</div>
+        <div className="mb-3 text-xs font-medium text-neutral-400">Steps</div>
 
         {actions.length === 0 ? (
           <p className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-neutral-600">
@@ -241,8 +242,9 @@ export function MacroEditor({
               key={type}
               type="button"
               onClick={() => addStep(type)}
-              className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-neutral-400 hover:border-accent-muted hover:text-accent"
+              className="noma-press inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-base-800 px-3 py-1.5 text-xs text-neutral-300 hover:bg-base-700 hover:text-neutral-50"
             >
+              <PlusIcon className="h-3 w-3" />
               {NEW_STEP_LABELS[type]}
             </button>
           ))}
@@ -345,7 +347,7 @@ export function MacroEditor({
 
       {macro && (
         <div className="rounded-xl border border-white/10 bg-base-900 p-4">
-          <div className="mb-3 text-[10px] uppercase tracking-widest text-neutral-500">Assigned controls</div>
+          <div className="mb-3 text-xs font-medium text-neutral-400">Assigned controls</div>
           {assignments.length === 0 ? (
             <p className="mb-3 text-xs text-neutral-600">Not assigned to any control yet.</p>
           ) : (

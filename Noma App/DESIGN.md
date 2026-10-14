@@ -1,323 +1,330 @@
 ---
 name: Noma
-description: Adaptive modular keyboard app: near-black glass chrome over a signature-blue accent, built to read as premium hardware, not a dev tool.
+description: A desktop companion that wears the colour of the app you're in.
 colors:
-  base-950: "#050506"
-  base-900: "#09090b"
-  base-800: "#131317"
-  base-700: "#1c1c21"
-  base-600: "#28282f"
-  accent: "#4c7eff"
-  accent-muted: "#3150a4"
-  gold: "#cda15a"
-  gold-muted: "#6b5730"
-  flow: "#a78bd1"
-  flow-muted: "#5c4a78"
-  neutral-100: "#eaeaec"
-  neutral-200: "#c2c2c8"
-  neutral-300: "#98989f"
-  neutral-400: "#82828c"
-  neutral-500: "#73737d"
-  neutral-600: "#5c5c65"
-  neutral-700: "#414148"
+  base-950: "#141210"
+  base-900: "#181614"
+  base-850: "#1e1c19"
+  base-800: "#26231f"
+  base-700: "#322e2a"
+  base-600: "#423d38"
+  ink: "#ece8e1"
+  ink-muted: "#5a5751"
+  ink-subtle: "rgba(236,232,225,0.08)"
+  space: "oklch(0.76 var(--space-c) var(--space-h))"
+  space-ink: "oklch(0.86 calc(var(--space-c) * 0.7) var(--space-h))"
+  space-deep: "oklch(0.27 calc(var(--space-c) * 0.45) var(--space-h))"
+  space-wash: "oklch(0.215 calc(var(--space-c) * 0.32) var(--space-h))"
+  violet: "#b09ae6"
+  violet-muted: "rgba(176,154,230,0.14)"
+  violet-note: "#221d2b"
+  violet-edge: "rgba(176,154,230,0.22)"
+  success: "#7cc49a"
+  error: "#ec8a7d"
+  gold: "#d4ad66"
+  neutral-50: "#fffdf9"
+  neutral-100: "#f1ede6"
+  neutral-200: "#d9d4cc"
+  neutral-300: "#b7b1a9"
+  neutral-400: "#9e9891"
+  neutral-500: "#8e8982"
+  neutral-600: "#7d7871"
+  trackpad-face: "#141315"
 typography:
   display:
-    fontFamily: "Sora Variable, Inter, -apple-system, sans-serif"
+    fontFamily: "Sora Variable, Inter, -apple-system, Segoe UI, sans-serif"
+    fontSize: "34px"
     fontWeight: 600
+    lineHeight: 1.1
+    letterSpacing: "-0.02em"
+  display-onboarding:
+    fontFamily: "Sora Variable, Inter, -apple-system, Segoe UI, sans-serif"
+    fontSize: "44px"
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: "-0.025em"
+  headline:
+    fontFamily: "Sora Variable, Inter, -apple-system, Segoe UI, sans-serif"
+    fontSize: "24px"
+    fontWeight: 600
+    lineHeight: 1.25
+  title:
+    fontFamily: "Sora Variable, Inter, -apple-system, Segoe UI, sans-serif"
+    fontSize: "18px"
+    fontWeight: 600
+    lineHeight: 1.4
   body:
-    fontFamily: "Inter, -apple-system, sans-serif"
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "13px"
     fontWeight: 400
+    lineHeight: 1.5
+    fontFeature: "'cv11', 'ss01'"
   label:
-    fontFamily: "Inter, -apple-system, sans-serif"
+    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    fontSize: "12px"
     fontWeight: 500
-    letterSpacing: "0.1em"
-    textTransform: "uppercase"
+    lineHeight: 1.4
   mono:
-    fontFamily: "JetBrains Mono, SFMono-Regular, monospace"
+    fontFamily: "JetBrains Mono, SFMono-Regular, Consolas, monospace"
+    fontSize: "11px"
+    fontWeight: 400
+    lineHeight: 1.4
 rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "12px"
-  xl: "16px"
-  "2xl": "20px"
-  "3xl": "24px"
-  rail: "28px"
-  full: "9999px"
+  key: "8px"
+  control: "10px"
+  plate: "12px"
+  tile: "14px"
+  sheet: "16px"
+  card: "18px"
+  modal: "20px"
+  trackpad: "22px"
+  pill: "999px"
 spacing:
   xs: "4px"
   sm: "8px"
-  md: "12px"
-  lg: "16px"
-  xl: "24px"
-  "2xl": "32px"
+  md: "16px"
+  lg: "24px"
+  section: "56px"
+  page-x: "48px"
 components:
   button-primary:
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.ink}"
     textColor: "{colors.base-950}"
-    rounded: "{rounded.full}"
-    padding: "12px 28px"
+    rounded: "{rounded.control}"
+    padding: "6px 14px"
+    typography: "{typography.label}"
   button-primary-hover:
-    backgroundColor: "{colors.accent}"
-  button-tinted:
-    backgroundColor: "{colors.accent}"
-    textColor: "{colors.accent}"
-    rounded: "{rounded.md}"
-    padding: "6px 12px"
-  button-tinted-hover:
-    backgroundColor: "{colors.accent}"
+    backgroundColor: "{colors.neutral-50}"
+  button-secondary:
+    backgroundColor: "{colors.base-800}"
+    textColor: "{colors.neutral-100}"
+    rounded: "{rounded.control}"
+    padding: "6px 14px"
+  button-secondary-hover:
+    backgroundColor: "{colors.base-700}"
+  button-quiet:
+    textColor: "{colors.neutral-400}"
+    rounded: "{rounded.control}"
+    padding: "6px 10px"
+  input:
+    backgroundColor: "{colors.base-950}"
+    textColor: "{colors.neutral-100}"
+    rounded: "{rounded.control}"
+    padding: "8px 12px"
+  card:
+    backgroundColor: "{colors.base-850}"
+    rounded: "{rounded.card}"
+  flow-note:
+    backgroundColor: "{colors.violet-note}"
+    textColor: "{colors.neutral-100}"
+    rounded: "{rounded.card}"
+    padding: "28px"
+  space-plate:
+    backgroundColor: "{colors.space-deep}"
+    textColor: "{colors.space-ink}"
+    rounded: "{rounded.plate}"
+    padding: "8px 10px"
+  trackpad:
+    backgroundColor: "{colors.trackpad-face}"
+    rounded: "{rounded.trackpad}"
+    width: "600px"
+  trackpad-compact:
+    backgroundColor: "{colors.trackpad-face}"
+    rounded: "{rounded.trackpad}"
+    width: "360px"
+  toggle-on:
+    backgroundColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    width: "44px"
+    height: "24px"
+  toggle-off:
+    backgroundColor: "{colors.base-950}"
+    rounded: "{rounded.pill}"
+    width: "44px"
+    height: "24px"
 ---
 
 # Design System: Noma
 
 ## Overview
 
-**Creative North Star: "Frosted metal and glass, at rest in the dark."**
+**Creative North Star: "App Spaces"**
 
-Noma reads as a premium hardware companion: Apple, Logitech, WHOOP
-territory, not an engineering dashboard. The ground is always near-black
-(this is a dark-only product; there is no light theme). Every surface that
-sits *above* the ground plane—the sidebar, modals, the virtual keyboard
-deck, elevated cards—gets real materiality: a soft top-lit gradient
-sheen, a crisp 1px inset highlight standing in for a glass bevel catching
-light, and a genuine offset-plus-blur ambient shadow that separates it
-from the plane beneath. Nothing is flat by accident; flatness (plain
-borders, no shadow) is reserved for content that is genuinely part of the
-background plane, not elevated above it.
+Noma wears the colour of the app you're in. The window frame, the wash at the top of every page, the app's own name and the trackpad's zones all take the current app's hue, the way an Arc space or a Things area has its own colour. Switch from VS Code to Spotify and the colour slides across the window over 700ms. You know whose four actions you're looking at before you read a word.
 
-One accent color (signature brand blue) carries every interactive/active
-state, rendered as a soft glow rather than a flat fill wherever it marks
-"this is currently selected/active." Two secondary semantic colors, gold
-and flow violet, are reserved narrowly (see Colors) and never used for
-general UI decoration.
+Everything else stays out of the way: a warm graphite ground (brown-black, never blue-black), off-white ink for the one thing you press, Sora for titles, Inter for reading, JetBrains Mono only for keys and shortcuts. Surfaces are solid materials with real offset shadows: no glass, no glow, no colour on cards. Flow, the part of Noma that notices repeated work, speaks on its own violet paper, so a suggestion never reads as part of the interface. Gold appears only when real hardware is in contact.
 
-This system was built 2026-08-31 as a deliberate redesign of an earlier,
-flatter dark theme (plain `border + bg-base-900` cards everywhere, no
-shadows, no glass); see `src/renderer/index.html`'s design-contract
-comment for the original brief. The old look is not preserved anywhere as
-an alternate; every elevated surface should use the recipes below.
+The system replaces the earlier one-accent (blue `#4c7eff`) "frosted metal and glass" dashboard. It refuses that pattern specifically: no single brand accent on every control, no uppercase eyebrow labels over sections, no AI gradients or glow, no fake 3D hardware.
 
 **Key Characteristics:**
-- Near-black ground, never light; chosen for the use scene (a desktop
-  utility running alongside dark-mode dev tools/media apps most of its
-  users already run).
-- Elevation is real: gradient sheen + inset top highlight + offset/blur
-  ambient shadow, on every panel that sits above the base plane.
-- One glowing accent blue for "active/interactive now"; gold and flow
-  violet are narrow, meaning-carrying exceptions, never decoration.
-- Glass/blur is used where it does real work (a floating tooltip over real
-  content, a modal scrim over real content), not as texture for its own
-  sake on surfaces with nothing behind them to blur.
+- One colour per app (OKLCH hue + chroma, fixed lightness), meaning only "where you are".
+- Off-white ink is the only "press me" colour; one primary per view.
+- Warm graphite ground in six steps; warm neutral text in seven.
+- Real offset shadows plus a hairline inset top-light on every raised surface.
+- Sora sentence-case titles; no kickers; mono only for keys.
+- The trackpad is the signature object, drawn at one scale everywhere.
 
 ## Colors
 
-Near-black neutrals for structure and text, one glowing signature blue for
-everything interactive, and two rare, meaning-locked accents.
+A warm graphite ground with one moving hue that belongs to the app, not to Noma.
 
 ### Primary
-- **Signature Blue** (`#4c7eff`, token `accent`): every active/interactive
-  state: the active nav pill's glow, primary buttons, links, focus rings,
-  the keyboard's live-status readout. Deliberately not a generic SaaS
-  periwinkle; tuned to sit clear of nearby brand blues (VS Code, Discord/
-  Stripe). **The One Meaning Rule.** Blue always means "this is the
-  interface, active or ready to be pressed"; never repurposed for
-  hardware state or Flow's own suggestions (those have their own colors
-  below).
+- **Ink** (`#ece8e1`): the fill of the single primary button, the on-state of a toggle, the text caret and the focus outline (2px, 2px offset). Off-white the way a dark-mode primary button is filled, so no app's colour is ever mistaken for a control. Hover lifts to `neutral-50`.
 
 ### Secondary
-- **Gold** (`#cda15a`, token `gold`): reserved exclusively for "a real,
-  physical hardware connection exists right now" (`HardwareStatusPill`).
-  Never used for anything else, including as a generic warm accent;
-  see [[noma-app-colors]] for the full history of this rule.
-- **Flow Violet** (`#a78bd1`, token `flow`): reserved exclusively for
-  Flow's own cognition: a suggestion card, the Learning Center's history,
-  anything that is Flow *noticing and proposing*, as opposed to the
-  resulting interface change (which stays blue).
+- **App Space** (`space`, `oklch(0.76 c h)`): the current app's hue at fixed lightness 0.76, so every app sits at the same brightness on graphite. Hue and chroma come from `lib/appSpace.ts` (e.g. VS Code 248/0.13, Chrome 82/0.13, Spotify 150/0.14, Claude 42/0.11); unknown apps hash to one of eight evenly spread fallback hues at chroma 0.11; no app is warm graphite (70/0.012). Used for swipe chevrons and zone light on the trackpad, and text selection (at 32%).
+- **Space Ink** (`space-ink`, L 0.86, 70% chroma): the app's name wherever it's named: the sidebar "In <app>" plate, the trackpad centre, workflow step names, the Glide toast.
+- **Space Deep** (`space-deep`, L 0.27, 45% chroma): the plate behind the app's icon and name (sidebar plate at 70%, trackpad centre tile at 80%, workflow app tiles, Glide toast badge) and the top-of-page wash (460px gradient from 90% to transparent).
+- **Space Wash** (`space-wash`, L 0.215, 32% chroma): the window frame itself; the sidebar sits directly on it and the page is a graphite sheet laid on top.
+
+### Tertiary
+- **Flow Violet** (`#b09ae6`): Flow's voice only: the dot beside "Flow noticed", the dot in the Noma Notice. Its paper is **Violet Note** (`#221d2b` grading to `#1d1a22`) with a **Violet Edge** border (22% violet).
+- **Hardware Gold** (`#d4ad66`): real hardware contact only (HardwareStatusPill, DeviceLogRow).
+- **Success** (`#7cc49a`) and **Error** (`#ec8a7d`): status dots and messages ("Glide is ready", a problem line). Never decoration.
 
 ### Neutral
-- **Base scale** (`base-950` `#050506` → `base-600` `#28282f`): background
-  fills only: the app ground, card fills, modal panels. Never used for
-  text.
-- **Neutral text scale** (`neutral-100` `#eaeaec` → `neutral-700`
-  `#414148`): every text color in the app. 400-700 were deliberately
-  rebalanced brighter than the visually-matching `base` values on
-  2026-08-31 after a real contrast complaint; see [[noma-app-colors]].
-  **The Never-Gray-On-Black-Below-3:1 Rule.** No text color renders below
-  roughly 3:1 against `base-950`; the two most-used tiers (400/500) clear
-  or nearly clear 4.5:1. Don't reach for a raw Tailwind gray or a darker
-  ad-hoc value "for emphasis by dimming"; it will fail this floor.
+- **Window** (`base-950`, `#141210`): the page sheet and field wells.
+- **Sidebar ground** (`base-900`, `#181614`).
+- **Resting surface** (`base-850`, `#1e1c19`): cards, the running-action bar.
+- **Raised surface** (`base-800`, `#26231f`): secondary buttons, modals.
+- **Seams** (`base-700` `#322e2a`, `base-600` `#423d38`): secondary hover, outlined tags. Most hairlines are `white/[0.05–0.07]` rather than a solid seam.
+- **Text**: `neutral-50` headings, `neutral-100` reading text, `neutral-200` body default, `neutral-300` secondary, `neutral-400/500` quiet, `neutral-600` the faintest that still reads on `base-950`.
+
+### Named Rules
+**The Where-You-Are Rule.** The app's colour means only "where you are": the frame, the page wash, the app's name, its zones and its icon plate. Never a button, a chart series, a status, or decoration. If removing the hue would lose information about which app this is, it belongs; otherwise it doesn't.
+
+**The Ink Rule.** Off-white ink is the only "press me" colour, and a view has at most one ink button. Everything else is a raised graphite key or a quiet text action.
+
+**The Flow's Voice Rule.** Violet is Flow speaking: a suggestion, something Flow noticed. Never general UI, never a highlight.
+
+**The Real Contact Rule.** Gold appears only when real hardware is connected. No physical device exists for users yet, so in practice it is almost never seen.
 
 ## Typography
 
-**Display Font:** Sora Variable (with system-ui fallback)
-**Body Font:** System UI (with system-ui fallback)
-**Label/Mono Font:** JetBrains Mono, for technical/measurement content only
-(shortcut captions, the HOST↔DEVICE log, timestamps), never as a
-"technical-looking" costume elsewhere.
+**Display Font:** Sora Variable (with Inter, system sans fallback)
+**Body Font:** Inter 400/500/600 (with system sans fallback), `cv11` and `ss01` on
+**Label/Mono Font:** JetBrains Mono 400/500, for keys, shortcuts and counts only
 
-**Character:** Sora's rounded-geometric letterforms echo the "noma"
-wordmark; Inter carries all body copy so the pairing reads considered
-rather than default-system.
+**Character:** Sora's rounded geometry echoes the "noma" wordmark and carries every title; Inter does the reading at a compact desktop size; mono appears only where the text is literally something you type.
 
 ### Hierarchy
-- **Display** (600 weight, `text-xl`–`text-4xl`, `font-display`): page
-  titles and modal titles only (`Onboarding.tsx`'s screens, every page's
-  `<h1>`). Never body copy.
-- **Body** (400 weight, `text-sm`): descriptions, supporting copy.
-- **Label** (500 weight, `text-[10px]`–`text-xs`, `tracking-widest`
-  uppercase, one of the neutral-500/600 tiers): section/field labels
-  ("Current Application," "Flow Status"). **The Label-Not-Kicker Rule.**
-  These are field labels attached to a value directly below them, never a
-  decorative eyebrow floating above an otherwise-complete heading; don't
-  add one to a heading that doesn't need it.
+- **Display** (600, 34px, 1.1, -0.02em): Home's title, which is the current app's name. Onboarding welcome runs larger (44px, 1.05, -0.025em, balanced).
+- **Headline** (600, 24px): page titles (Glide, Activity, Learning). Flow's note headline is 22px, -0.01em.
+- **Title** (600, 18px): section titles inside a page ("Saved workflows", "What each zone does"), Sora, sentence case.
+- **Body** (400, 13px default; 14-16px for longer reading): nav rows, captions, explanations, kept to `max-w-md`/`max-w-lg`.
+- **Label** (500, 12px): field labels, plain small text in `neutral-400`, 6px above the field. Group labels in the sidebar are 11px `neutral-300/50`, sentence case.
+- **Mono** (400, 11px): shortcut captions under zone actions and workflow steps, occurrence counts. Tabular figures on counts, times and `kbd`.
+
+### Named Rules
+**The No-Kicker Rule.** No uppercase, letter-spaced eyebrow or kicker labels. Section titles are Sora in sentence case; field labels are plain small text. Stored action names in capitals ("NEW TAB") are shown sentence-cased ("New tab") by `zoneLabel`; a mixed-case label the user typed is left alone.
+
+**The Mono-Means-Keys Rule.** JetBrains Mono is for things you'd type or count. Never for headings or decoration.
 
 ## Layout
 
-A fixed-chrome desktop shell: a persistent left icon rail (see Components
-→ Navigation) plus a single scrollable content pane, no responsive
-breakpoints (this is a desktop window, not a webpage). Page content is
-generally `mx-auto max-w-3xl`–`max-w-5xl` with `px-10 py-10`, list/detail
-pages (Profiles, Macro Studio) use a fixed `w-72` sidebar + flexible detail
-pane. Spacing follows Tailwind's default 4px-multiple scale used
-consistently (`gap-1.5`, `p-4`, `p-6`, `mb-8`/`mb-10` between major
-sections); no arbitrary spacing values.
+Two-part window: a fixed 224px (`w-56`) sidebar sitting directly on the space-washed frame, and a graphite page sheet inset 8px from the top, right and bottom with a 16px radius. Pages are a single centred column (Home `max-w-[760px]`, 48px side padding, 56px top), sections separated by 56px (`mb-14`), with hairline rules (`white/[0.06]`) instead of nested containers inside a section.
+
+The first viewport on Home is fixed in order: the app name at 34px with a status line, then the trackpad at 600px, then Flow's note. Onboarding centres a single column: logo, a 360px trackpad, the 44px headline, one ink button.
+
+Spacing works on a 4px rhythm: 4/8/16/24 inside components, 56px between sections. The sidebar groups (primary, "More", "Developer") are separated by 12px-margin hairlines; Settings pins to the bottom.
 
 ## Elevation & Depth
 
-Layered, not flat. Every surface above the base ground plane carries a
-three-part shadow: an inset top highlight (the glass bevel), an ambient
-offset+blur shadow (real elevation, never a zero-offset glow), and,
-where the surface is meant to read as a physical key rather than a glass
-panel, an inset dark shadow simulating a recessed face. Two named
-recipes, both in `src/renderer/src/lib/surfaces.ts`:
+Layered with real shadows. Every raised surface has two parts: a 1px inset top-light in warm white (`rgba(255,250,240,0.04–0.07)`) and a soft offset drop shadow below (negative spread, black at 70–90%). Depth increases from card to modal to the floating notice. Recessed things (fields, the trackpad face, an off toggle) use an inner shadow instead. No glow, no coloured shadow, no backdrop blur.
 
 ### Shadow Vocabulary
-- **Glass panel** (`GLASS_PANEL`: `shadow-[0_24px_60px_-12px_rgba(0,0,0,.65),inset_0_1px_0_0_rgba(255,255,255,.08)]`
-  + a white-to-transparent gradient sheen): modals, the virtual keyboard
-  deck, onboarding's hero cards. The "big, floating glass surface" recipe.
-- **Glass card** (`GLASS_CARD`: same idea, lighter shadow spread): inline
-  cards that aren't full modals (Dashboard's Flow Status card, Demo Mode's
-  panels).
-- **Keycap** (`KEYCAP_SHADOW`: inset dark + inset top highlight + real
-  outer ambient shadow, all three in one `box-shadow`): `ControlTile` and
-  `VirtualControlButton` only; the one surface that should look pressed
-  *into* its own face while still casting a shadow onto the page, like
-  real keycap product photography.
-- **Rail glass** (`AppShell.tsx`'s `RAIL_GLASS`): the sidebar's own
-  recipe: gradient + inset highlight + a real drop shadow onto the
-  content pane, plus `backdrop-blur`/`saturate` kept for when a future
-  layout lets content pass under it.
+- **Card** (`0 1px 0 0 rgba(255,250,240,0.04) inset, 0 12px 32px -18px rgba(0,0,0,0.75)`): the resting surface.
+- **Modal** (`0 1px 0 0 rgba(255,250,240,0.05) inset, 0 28px 70px -24px rgba(0,0,0,0.8)`): lifted panels.
+- **Page sheet** (`0 0 0 1px rgba(255,250,240,0.05), 0 18px 50px -20px rgba(0,0,0,0.8)`): the sheet over the frame.
+- **Keycap** (`0 1px 0 0 rgba(255,250,240,0.07) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 8px 18px -10px rgba(0,0,0,0.75)` over a top-lit gradient): anything shaped like a key you could press.
+- **Primary button** (`0 1px 0 0 rgba(255,255,255,0.4) inset, 0 6px 14px -8px rgba(0,0,0,0.8)`).
+- **Notice** (`0 1px 0 0 rgba(255,250,240,0.05) inset, 0 24px 60px -20px rgba(0,0,0,0.85)`): the floating Noma Notice over the user's own work.
+- **Recess** (`0 1px 2px 0 rgba(0,0,0,0.4) inset`): fields; the trackpad face uses `0 2px 6px 0 rgba(0,0,0,0.55) inset`.
 
-**The Real-Blur-Only Rule.** `backdrop-blur` is applied only where real
-content can plausibly sit behind the element (a floating nav tooltip over
-page content, a modal scrim over the page behind it). It's also kept on
-the sidebar rail as a forward-compatible no-op today (nothing currently
-renders behind it); don't spread `backdrop-blur` onto surfaces purely for
-texture; the "glass" read there comes from the gradient/highlight/shadow.
+### Named Rules
+**The No-Nest Rule.** A card never sits inside a card. Inside a surface, group with spacing and hairline rules.
+
+**The Solid Material Rule.** Surfaces are opaque graphite. No glass, no blur, no colour on cards; the app's colour lives only in the frame, the wash and the app's own name and zones.
 
 ## Shapes
 
-Generous, soft radii; no sharp corners anywhere. `rounded-lg`/`rounded-xl`
-(8-16px) for buttons and inputs, `rounded-2xl` (20px) for standard cards
-and keycaps, `rounded-3xl` (24px) for hero panels and modals, and a custom
-`rounded-[28px]` for the sidebar rail specifically (the single largest,
-most rounded surface; it should read as the softest object in the
-window). Borders are always a single 1px hairline at `white/[0.08]`
-(sometimes `white/10` on unconverted surfaces), never thicker, never
-colored except where a state (active/error) requires it.
+Soft, consistent rounding that grows with the size of the object: 8px small keys and close buttons, 10px controls and fields, 12px the app plate, 14px workflow tiles, 16px the page sheet, 18px cards and notes, 20px modals, 22px the trackpad bezel (19px face). Pills (toggle, Glide toast, status dots) are fully round. Borders are hairlines in warm white at 5.5–8% opacity, never solid light lines.
+
+### The logo mark
+The mark (`assets/logo.png`, transparent, light gray) is wide: about **1.56 : 1**. Never put it in a square box without `object-contain`, and never crop it to a circle; both stretch it or clip its curled ends.
+- **Next to text** (sidebar, onboarding, Noma Notice): bare mark, width = height x 1.56 (`h-[22px] w-[34px]`, `h-[18px] w-[26px]`), `object-contain`, followed by the wordmark.
+- **In a round badge** (Glide toast): the circle is its own element (`h-6 w-6 rounded-full`, now on `space-deep` with an inset hairline ring), and the mark sits inside it at about half the badge width (`h-[9px] w-[13px]`).
+- **OS icons** (`resources/`): small sizes are drawn with heavier strokes than a downscale gives, one file per size. Windows tray: `tray-16.png`, `tray-24.png`, `tray.png` (32) added as 1x/1.5x/2x representations; never `resize()` at runtime. macOS menu bar: `trayIconTemplate.png` (16) and `@2x` (32), black on transparent, ~2px strokes at 16.
 
 ## Components
 
 ### Buttons
-- **Shape:** `rounded-md`/`rounded-lg` for the common tinted-outline
-  button; `rounded-full` for the onboarding/Dashboard "hero" CTA.
-- **Tinted (the app's default primary)**: `border-accent-muted bg-accent/10
-  text-accent`, brightening to `bg-accent/20` on hover, `active:scale-
-  [0.97]` on press. Used almost everywhere ("+ New Macro," "Save,"
-  "Create profile"). **The Tint-Not-Fill Rule.** This is the *default*
-  primary action anywhere inside the main app shell; a soft accent tint,
-  not a solid fill. Solid fill is reserved for onboarding's single-CTA-
-  per-screen moments (see below), where there's exactly one action to
-  make unmissable.
-- **Solid (onboarding only)**: `bg-accent text-base-950`, full pill radius,
-  `hover:opacity-90 active:scale-[0.98]`; deliberately bolder than the
-  in-app default, because onboarding is a sequence of one-clear-action
-  screens, not a dashboard of many.
-- **Secondary/Ghost:** plain `text-neutral-500 hover:text-neutral-300`,
-  no border, no fill.
-- **Destructive:** `text-neutral-600 hover:text-red-400`, confirmed inline
-  (a "Delete? [Delete] [Cancel]" row replaces the button) rather than a
-  separate modal; see Do's and Don'ts.
+Tactile keys with a press: every button scales to 0.98 on `:active` (150ms, ease-out-quart).
+- **Shape:** gently rounded (10px).
+- **Primary:** ink fill, `base-950` text, 13px medium, 6px x 14px; hover `neutral-50`. One per view.
+- **Secondary:** raised graphite key (`base-800`, hairline border, small offset shadow), `neutral-100` text; hover `base-700`.
+- **Quiet:** text only in `neutral-400`, faint `white/[0.04]` hover fill: "Not now", "Cancel".
+- **Inline link:** `neutral-300` text with a `white/20` underline at 3px offset ("Change zones", "Change").
+- **Focus:** a single global rule, 2px ink outline with 2px offset, keyboard (`:focus-visible`) only.
+- **Disabled:** 40% opacity, not-allowed cursor.
+
+### Toggle
+44 x 24px pill. On: ink track with a `base-950` thumb. Off: recessed `base-950` track with a `neutral-400` thumb. Thumb slides 22px over 200ms.
 
 ### Cards / Containers
-- **Corner Style:** `rounded-2xl` standard, `rounded-3xl` for hero panels.
-- **Background:** `bg-base-900`, layered under a `GLASS_CARD`/`GLASS_PANEL`
-  gradient sheen for anything elevated.
-- **Shadow Strategy:** see Elevation & Depth; never a bare card with zero
-  shadow if it's meant to read as sitting above the page.
-- **Border:** 1px `white/[0.08]`.
+- **Corner Style:** 18px.
+- **Background:** `base-850`.
+- **Shadow Strategy:** Card shadow (see Elevation).
+- **Border:** `white/[0.055]` hairline.
+- **Internal Padding:** 20-32px.
 
 ### Inputs / Fields
-- **Style:** `rounded-md border border-white/10 bg-base-950`, `text-sm`.
-- **Shortcut inputs** are a distinct pattern (`ShortcutRecorder`): a
-  read-only display of the recorded combo plus a "Record" button that
-  arms a real keydown listener; never a text field you type a combo name
-  into by hand.
-- **Toggles:** `ToggleSwitch`; a flexbox-positioned knob (not
-  absolute+transform, see the component's own doc comment on why), accent
-  fill when on.
+- **Style:** recessed well, `base-950` fill, `white/[0.07]` hairline, 10px radius, 8px x 12px, 14px text, `neutral-600` placeholder. A mono variant for shortcut entry; a compact 12px variant for per-function selects.
+- **Label:** plain 12px medium `neutral-400`, 6px above.
+- **Focus:** the global ink outline.
 
 ### Navigation
-The left icon rail (`AppShell.tsx`) is a floating glass panel, inset from
-the window edges (`p-3` gap all around), `rounded-[28px]`, holding two
-groups: primary product pages, then a soft-fade divider, then Demo/
-Developer pinned to the bottom via `mt-auto`; presentation and
-engineering tools are visually subordinate to the pages a real user
-actually works in. Each icon button is `rounded-xl`; the active page gets
-a soft accent glow (`bg-accent/15` + a real offset+blur `shadow` + a thin
-`ring-accent/30`), never a flat gray highlight. Hover reveals a small
-glass tooltip (real `backdrop-blur`, since real page content sits behind
-it) rather than a browser-default `title` tooltip alone.
+Sidebar on the space-washed frame: logo + wordmark + Beta badge, then the **"In <app>" plate** (`space-deep` at 70%, 12px radius, the app icon in a `black/25` 28px tile, "In" at 11px `space-ink/60` over the app name 13px medium `space-ink`). Nav rows are 13px with a 16px icon from `icons.tsx`, 10px radius; inactive `neutral-300/80`, hover `white/[0.035]`; active `white/[0.075]` fill, medium `neutral-50`, a small inset top-light and shadow. Groups: Home, Glide, Workflows; "More"; "Developer" (only with developer tools on); Settings pinned at the bottom.
 
-### The logo mark
-The mark (`assets/logo.png`, transparent, light gray) is wide: about
-**1.56 : 1**. Never put it in a square box without `object-contain`, and
-never crop it to a circle; both stretch it or clip its curled ends.
-- **Next to text** (sidebar, onboarding, Noma Notice): bare mark, width =
-  height × 1.56 (`h-6 w-[37px]`, `h-9 w-14`, `h-[18px] w-[26px]`),
-  `object-contain`.
-- **In a round badge** (Glide toast): the circle is its own element
-  (`h-6 w-6 rounded-full bg-white/[0.07]` + inset hairline ring), and the
-  mark sits inside it at about half the badge width (`h-[9px] w-[13px]`).
-- **OS icons** (`resources/`): small sizes are drawn with heavier strokes
-  than a downscale gives, one file per size. Windows tray: `tray-16.png`,
-  `tray-24.png`, `tray.png` (32) added as 1x/1.5x/2x representations;
-  never `resize()` at runtime. macOS menu bar: `trayIconTemplate.png`
-  (16) and `@2x` (32), black on transparent, ~2px strokes at 16.
+### The trackpad (signature component)
+`GlideZoneMap`, the one object every Glide surface draws (Home, Glide, onboarding). A 3:2 bezel (22px radius, graphite gradient, inset top-light and deep drop shadow) around a recessed face (`#141315`). Mirrored around its centre line: a 31%-wide strip down each side, split into halves with four zones; each zone lit from the edge you swipe in from by a `space` gradient (24% to 7% to transparent), with an inward chevron in `space`. Zone name 11px `neutral-400`; action 15px semibold `neutral-50` (sentence-cased); shortcut caption 11px mono; "Change"/"Set action" as an underlined link. An empty zone reads "Nothing yet" in `neutral-500`. A just-recognised swipe lights the zone at `space/30`. The centre shows the app's icon on a `space-deep` tile and its name in Sora `space-ink`. Each map can carry another app's space via `spaceStyle()`.
+
+### Flow's note
+`HERO_CARD`: a suggestion written on violet paper (`violet-note` gradient, `violet-edge` border, 18px radius, 28-32px padding). The app's tile icon, a 22px Sora headline, a meta line led by a violet dot, the workflow chain, then a hairline-separated action row with one ink primary and quiet secondaries.
+
+### Workflow chain
+Steps left to right. An app step is a 14px-radius tile on that app's own `space-deep`, its name in `space-ink`. A keystroke step is a keycap tile (top-lit gradient, hairline, keycap shadow) with the keyboard icon, its keys beneath in mono `neutral-500`. Nodes reveal in order (`noma-node-in`, staggered).
+
+### Noma Notice and Glide toast
+The Notice floats bottom-right in its own transparent window: max 300px, 18px radius, near-opaque violet-tinted graphite with a violet edge, logo + wordmark, a violet dot beside what Flow noticed, a small ink "save" button. Enters with `noma-notice-in` (12px rise), exits shorter and quieter. The Glide toast is a bottom-left pill naming what a swipe ran: round logo badge on `space-deep`, action name 13px medium, the app name in `space-ink/70`; rises, holds, fades in one animation.
+
+### Icons
+Hand-drawn stroke icons from `components/icons.tsx` (nav set, app-category glyphs, and Plus, Check, Cross, ArrowRight for actions). Real application icons come from the OS via `AppIcon`.
+
+### Motion
+- **Signature:** `--space-h` and `--space-c` are registered `@property` numbers, so a change of app transitions the hue across the whole window over 700ms on `cubic-bezier(0.16, 1, 0.3, 1)`. The onboarding welcome trackpad cycles four apps' colours (VS Code, Chrome, Spotify, Claude) every 2.6s.
+- **Primitives:** fade 180ms, rise 220ms (6px), scale-in 240ms (0.97) on ease-out-expo; pages fade only (160ms) without sliding; exits are shorter and ease-in. Transform and opacity only, no looping except the Glide gesture demo.
+- **Reduced motion:** animations removed, transitions near-instant; the toast keeps only its fade.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** give every surface that sits above the base plane a real shadow
-  (`GLASS_PANEL`/`GLASS_CARD`/`KEYCAP_SHADOW` from `lib/surfaces.ts`);
-  never a bare `border + bg-base-900` with nothing else.
-- **Do** keep gold and flow violet meaning-locked (real hardware contact;
-  Flow's own cognition, respectively); reach for accent blue for
-  anything else, including new features.
-- **Do** check any new text color's contrast against `base-950` before
-  reaching for a `neutral-600`/`700` tier; see the Never-Gray-On-Black
-  rule above.
-- **Do** use `active:scale-[0.97]` (in-app) or `active:scale-[0.98]`
-  (onboarding) on every clickable button for tactile press feedback.
+- **Do** put the app's colour only on the frame (`space-wash`), the page wash (`space-deep`), the app's name (`space-ink`), its icon plate and its trackpad zones.
+- **Do** use ink (`#ece8e1`) for the one primary action in a view; everything else is a graphite key or a quiet text action.
+- **Do** write section titles in Sora, sentence case, and field labels as plain 12px text.
+- **Do** draw the trackpad with `GlideZoneMap` at 600px (360px compact), mirrored left/right, lit from the swipe edge.
+- **Do** give every raised surface the inset top-light plus an offset drop shadow from the Shadow Vocabulary.
+- **Do** reuse the recipes in `lib/surfaces.ts` (CARD, GLASS_PANEL, KEYCAP_SHADOW, HERO_CARD, NOTICE_GLASS, BUTTON_*, FIELD_*) rather than hand-rolling a surface.
+- **Do** draw icons from `icons.tsx`.
+- **Do** keep the logo mark at 1.56:1 with `object-contain`.
 
 ### Don't:
-- **Don't** introduce a second "glass" recipe with different shadow/
-  gradient values; extend `lib/surfaces.ts`'s constants instead of
-  hand-rolling a new one inline.
-- **Don't** apply `backdrop-blur` to a surface with nothing real behind it
-  purely for texture; the "Real-Blur-Only Rule" above.
-- **Don't** use a solid accent-fill button inside the main app shell (post-
-  onboarding); that visual weight is reserved for onboarding's single-CTA
-  screens.
-- **Don't** reintroduce the pre-2026-08-31 flat card look (`rounded-xl
-  border border-white/10 bg-base-900`, no shadow) on any new elevated
-  surface; it was the explicit thing this redesign replaced.
+- **Don't** use the app's colour on buttons, charts, statuses or decoration.
+- **Don't** use violet for anything but Flow speaking, or gold for anything but real hardware contact.
+- **Don't** add uppercase, letter-spaced eyebrow or kicker labels.
+- **Don't** nest a card inside a card.
+- **Don't** use unicode glyphs as icons (arrows, checks, crosses, plus signs); use `icons.tsx`.
+- **Don't** scale the trackpad to fit its container or draw it at a third size.
+- **Don't** use glass, backdrop blur, glow, AI gradients or coloured shadows.
+- **Don't** fake 3D hardware or imply a connected device that doesn't exist.
+- **Don't** square-crop or circle-crop the logo mark.

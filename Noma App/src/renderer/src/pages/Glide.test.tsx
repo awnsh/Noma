@@ -76,7 +76,7 @@ describe('Glide: editing a zone', () => {
 
     // The map shows the saved value, and reopening the zone shows it too.
     const zone = await screen.findByRole('button', { name: /Lower left zone: TERM2/ })
-    expect(within(zone).getByText('TERM2')).toBeInTheDocument()
+    expect(within(zone).getByText('Term2')).toBeInTheDocument()
     fireEvent.click(zone)
     expect(await screen.findByDisplayValue('TERM2')).toBeInTheDocument()
   })

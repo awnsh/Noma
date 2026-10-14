@@ -115,7 +115,7 @@ export function KeyboardLayout({ flashingKeys = new Set() }: KeyboardLayoutProps
   return (
     <div className="mb-6 select-none rounded-2xl border border-white/5 bg-base-950/60 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="text-[9px] uppercase tracking-widest text-neutral-700">Standard Keys</div>
+        <div className="text-[11px] text-neutral-500">Standard keys</div>
         <div className="text-[9px] text-neutral-700">
           Lights up on captured shortcuts, never on ordinary typing
         </div>

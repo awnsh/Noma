@@ -1,3 +1,4 @@
+import { BUTTON_PRIMARY, CARD } from '../lib/surfaces'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type {
   ApplicationProfile,
@@ -177,7 +178,7 @@ export function Glide() {
           </label>
         </div>
 
-        <div className="rounded-2xl bg-holo-bg p-6">
+        <div>
           {profile === undefined ? (
             <p className="py-10 text-center text-sm text-holo-muted">Loading…</p>
           ) : profile && app ? (
@@ -198,7 +199,7 @@ export function Glide() {
                 <button
                   type="button"
                   onClick={() => void setUpApp()}
-                  className="mt-3 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+                  className={`mt-3 ${BUTTON_PRIMARY}`}
                 >
                   Set up {app.name}
                 </button>
@@ -206,7 +207,7 @@ export function Glide() {
             </div>
           )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-holo-muted">
+          <div className="mx-auto mt-5 flex max-w-[600px] flex-wrap items-center gap-2 text-xs text-holo-muted">
             {ZONE_COUNT_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -226,7 +227,7 @@ export function Glide() {
             {zoneCount === 2 && <span>The lower two actions aren&apos;t reachable with two zones.</span>}
           </div>
 
-          <p className="mt-3 min-h-[1.25rem] text-xs text-holo-muted" aria-live="polite">
+          <p className="mx-auto mt-3 min-h-[1.25rem] max-w-[600px] text-xs text-holo-muted" aria-live="polite">
             {state?.enabled && lastActivity ? (
               <span className={lastActivity.type === 'fire' && lastActivity.outcome === 'pressed' ? 'text-accent' : ''}>
                 {glideActivityMessage(lastActivity, zoneCount)}
@@ -238,7 +239,7 @@ export function Glide() {
         </div>
       </section>
 
-      <section className="mb-10 rounded-2xl bg-holo-bg p-6">
+      <section className={`mb-10 p-6 ${CARD}`}>
         <div className="grid items-center gap-6 sm:grid-cols-[1.1fr_1fr]">
           <GlideGestureDemo className="w-full" />
           <ul className="space-y-2.5 text-sm text-holo-text/90">
@@ -267,7 +268,7 @@ export function Glide() {
       </section>
 
       {!unavailable && (
-        <details className="group mb-8 rounded-2xl bg-holo-bg p-6">
+        <details className={`group mb-8 p-6 ${CARD}`}>
           <summary className="cursor-pointer list-none text-sm text-holo-text">
             <span className="mr-1.5 inline-block transition-transform group-open:rotate-90">›</span>
             Touch check (optional diagnostics)

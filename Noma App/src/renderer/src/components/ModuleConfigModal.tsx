@@ -84,7 +84,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
   return (
     <Modal onClose={onClose}>
       <div className="mb-5">
-        <div className="text-[10px] uppercase tracking-widest text-neutral-600">{module.name}</div>
+        <div className="text-xs font-medium text-neutral-400">{module.name}</div>
         <h2 className="mt-1 font-display text-lg font-semibold text-neutral-100">Configure module</h2>
       </div>
 
@@ -94,7 +94,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
           const testResult = testResults[fn.key]
           return (
             <div key={fn.key} className="rounded-lg border border-white/10 p-3">
-              <div className="mb-2 text-[10px] uppercase tracking-widest text-accent">{fn.gesture}</div>
+              <div className="mb-2 text-xs font-medium text-neutral-200">{fn.gesture}</div>
 
               <input
                 type="text"

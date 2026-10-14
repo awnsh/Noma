@@ -18,6 +18,9 @@ import { isMacRenderer } from './platform'
 export interface WorkflowChainStep {
   label: string
   kind: 'app' | 'shortcut'
+  /** The keys themselves ("Win+Shift+S"), when `label` names them
+   *  ("Screenshot"). */
+  keys?: string
   applicationId?: string
 }
 
@@ -59,6 +62,12 @@ export function shortcutStepLabel(comboKeys: string[]): string {
   )
 }
 
+function shortcutStep(comboKeys: string[]): WorkflowChainStep {
+  const label = shortcutStepLabel(comboKeys)
+  const keys = formatShortcutCaption(comboKeys)
+  return keys && keys !== label ? { label, kind: 'shortcut', keys } : { label, kind: 'shortcut' }
+}
+
 function appStepLabel(applicationId: string | null, names: Record<string, string | null> | undefined): string {
   if (!applicationId) return 'another app'
   return names?.[applicationId] ?? applicationId
@@ -67,6 +76,8 @@ function appStepLabel(applicationId: string | null, names: Record<string, string
 /** Renderer-local mirror of main/workflow/clickTarget.ts's
  *  describeClickTarget — same reasoning as SHORTCUT_STEP_LABELS above. */
 function clickStepLabel(target: string): string {
+  if (target === 'select') return 'Highlight'
+  if (target.startsWith('tab:')) return 'Go to a tab'
   if (target.startsWith('label:')) return `Click “${target.slice('label:'.length)}”`
   return 'Click on screen'
 }
@@ -76,7 +87,7 @@ function workflowStep(step: WorkflowStep, names: Record<string, string | null> |
   // action inside an app, not a switch to one.
   if (step.type === 'click') return { label: clickStepLabel(step.target), kind: 'shortcut' }
   return step.type === 'shortcut'
-    ? { label: shortcutStepLabel(step.comboKeys), kind: 'shortcut' }
+    ? shortcutStep(step.comboKeys)
     : { label: appStepLabel(step.applicationId, names), kind: 'app', applicationId: step.applicationId ?? undefined }
 }
 
@@ -97,9 +108,9 @@ export function workflowChainSteps(suggestion: Suggestion): WorkflowChainStep[] 
     case 'createWorkflowMacroAndAssignToControl':
       return action.steps.map((step) => workflowStep(step, suggestion.chainApplicationNames))
     case 'createMacroAndAssignToControl':
-      return action.sequence.map((combo) => ({ label: shortcutStepLabel(combo.split('+')), kind: 'shortcut' }))
+      return action.sequence.map((combo) => shortcutStep(combo.split('+')))
     case 'assignShortcutToControl':
-      return [{ label: shortcutStepLabel(action.comboKeys), kind: 'shortcut' }]
+      return [shortcutStep(action.comboKeys)]
   }
 }
 

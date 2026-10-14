@@ -72,7 +72,7 @@ export function Workflows() {
           <button
             type="button"
             onClick={() => void setFlowEnabled(true)}
-            className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+            className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:bg-neutral-50"
           >
             Turn on Flow
           </button>

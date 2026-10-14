@@ -1,109 +1,68 @@
 /**
- * Shared surface class strings (v4, restrained graphite — 2026-09-17).
- * Supersedes v3's "glass everywhere" system — real feedback was that a
- * translucent-white-on-black card with a colored glow read as generic
- * "AI SaaS," not a premium hardware product (think Apple / Teenage
- * Engineering / Linear, not a neon AI dashboard). The default surface is
- * now solid graphite: a real `base-850` fill, a real `base-700` hex
- * border, a plain dark ambient shadow — no backdrop-blur, no colored glow,
- * no gradient background. Depth comes from the material (fill + border +
- * a soft shadow), not from translucency.
- *
- * Genuine glass survives in exactly the three places called out
- * explicitly: navigation (AppShell's sidebar, built inline, not from
- * these constants), a device surface (Holo's own token group; see
- * `DEVICE_GLASS_CARD` below for HomeSidePanel's Noma Device card), and
- * Noma Notice (`HERO_CARD`) — every other surface in the app should reach
- * for `CARD`, not invent a new translucent recipe.
+ * Shared surface and control recipes (v5, App Spaces, 2026-10-14; see
+ * DESIGN.md). Warm graphite materials with real offset shadows. No glass,
+ * no glow, no colour on surfaces: the app's colour lives only in the
+ * sidebar frame, the page wash, and the app's own name and zones
+ * (lib/appSpace.ts). Reuse these rather than hand-rolling a card.
  */
 
 /** The scrim behind a modal — a soft, mostly-transparent dark wash over
  *  real page content, not a full black-out. */
-export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px] noma-fade-in'
+export const MODAL_SCRIM = 'fixed inset-0 z-50 flex items-center justify-center bg-[#0b0a0c]/60 p-4 noma-fade-in'
 
 /**
- * The default solid surface — Card fill, real border, a plain shadow.
- * This is what "everything else" (Settings, Learning, Demo panels, modal
- * panels, the onboarding hardware picker, the Noma loop card) should use;
- * don't invent a second flat-card recipe per page.
+ * The default resting surface: a warm graphite fill a step above the
+ * window, a seam you feel more than see, and a real offset shadow. Used
+ * for anything that groups content above the page. Never nest one inside
+ * another; inside a CARD, group with spacing and hairline rules instead.
  */
 export const CARD =
-  'rounded-2xl border border-base-700 bg-base-850 shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)]'
+  'rounded-[18px] border border-white/[0.055] bg-base-850 shadow-[0_1px_0_0_rgba(255,250,240,0.04)_inset,0_12px_32px_-18px_rgba(0,0,0,0.75)]'
 
-/** A modal panel — same solid Card material as everything else, just a
- *  touch more elevated (Elevated fill, a slightly heavier shadow) so it
- *  visibly lifts off the page behind the scrim. Callers still supply their
- *  own `max-w-*`/`p-*`. */
+/** A modal panel: the raised material, lifted further off the page. */
 export const GLASS_PANEL =
-  'rounded-2xl border border-base-700 bg-base-800 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.65)] noma-scale-in'
+  'rounded-[20px] border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_28px_70px_-24px_rgba(0,0,0,0.8)] noma-scale-in'
+
+/** HomeSidePanel's Noma Device card: the same material as CARD (the device
+ *  is not real yet, so it gets no special finish). */
+export const DEVICE_GLASS_CARD = CARD
 
 /**
- * The one deliberate glass surface outside Holo/Noma Notice: HomeSidePanel's
- * Noma Device card, since that one specifically represents the physical
- * device — a light translucency reads as "a piece of hardware's own
- * surface," not decoration. Restrained on purpose: no color tint, modest
- * blur, no glow.
- */
-export const DEVICE_GLASS_CARD =
-  'rounded-2xl border border-white/[0.08] bg-white/[0.035] backdrop-blur-md shadow-[0_10px_28px_-16px_rgba(0,0,0,0.55)]'
-
-/**
- * The physical "keycap" material shared by ControlTile (read-only) and
- * VirtualControlButton (pressable) — a control should read as a small,
- * tactile piece of Noma hardware, not a dashboard tile. A subtle internal
- * light gradient (top-lit, like a real keycap catching ambient light) —
- * brightness only, never a color — plus the same soft ambient shadow every
- * elevated surface gets.
+ * A key you could press: a soft top-lit face and a shadow underneath, like
+ * a real key. ControlTile and VirtualControlButton.
  */
 export const KEYCAP_SHADOW =
-  'bg-gradient-to-b from-white/[0.05] to-white/[0.015] shadow-[0_6px_18px_-10px_rgba(0,0,0,0.55)]'
+  'bg-gradient-to-b from-[rgba(255,250,240,0.055)] to-[rgba(255,250,240,0.02)] shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_-1px_0_0_rgba(0,0,0,0.35)_inset,0_8px_18px_-10px_rgba(0,0,0,0.75)]'
 
-/**
- * Noma Notice's own surface — the one card allowed a touch of real glass,
- * per the product brief, but restrained: a solid-leaning fill (not the
- * heavy 6.5%-opacity/28px-blur v3 had), a plain border, a plain shadow.
- * No colored glow layer — a past version of this card had one
- * (`HERO_CARD_GLOW`, blue+violet radial gradients bleeding in from the
- * corners); real feedback was that it read as "glowing because it's AI,"
- * exactly the effect this whole system now avoids. The workflow inside the
- * card (see `WorkflowChain`'s real application icons) is what's supposed
- * to provide the visual interest here, not the card's own background.
- */
+/** Flow's note: a suggestion is written on its own violet paper, so it
+ *  reads at a glance as Flow speaking, never as part of the interface. */
 export const HERO_CARD =
-  'relative overflow-hidden rounded-2xl border border-base-700 bg-white/[0.025] backdrop-blur-md shadow-[0_20px_48px_-20px_rgba(0,0,0,0.6)]'
+  'relative overflow-hidden rounded-[18px] border border-violet-edge bg-gradient-to-b from-violet-note to-[#1d1a22] shadow-[0_1px_0_0_rgba(214,200,255,0.07)_inset,0_14px_36px_-18px_rgba(0,0,0,0.8)]'
 
 /**
- * Noma Notice's floating surface — the fourth, and last, place real glass
- * belongs.
- *
- * It earns it for a reason none of the in-app cards could: this one
- * genuinely does sit on the user's desktop, over their actual work, in its
- * own transparent window. Translucency here is representational rather than
- * decorative — it is what tells you the thing is *on top of* your screen
- * rather than part of an application. That was exactly the argument this
- * file's own history rejected for ordinary cards, and it holds here.
- *
- * Restrained to the same rules as everything else: a graphite tint rather
- * than translucent white, one real border, one plain ambient shadow. No
- * glow, no gradient, no accent-coloured background. The workflow's real
- * application icons inside are the only thing with any visual weight.
- *
- * `backdrop-blur` is included and is honest about what it does: over a
- * transparent window it has no desktop content to sample, so it frosts
- * nothing today and costs nothing. It is there so the card looks right
- * anywhere it is rendered over real content — a preview inside the app, a
- * future acrylic-backed window (see notificationWindow.ts). The tint,
- * border and shadow are what carry the material in the meantime.
+ * Noma Notice, floating over the user's own work in its own transparent
+ * window: the raised material, opaque enough to read over anything.
  */
 export const NOTICE_GLASS =
-  'rounded-2xl border border-white/[0.09] bg-[rgba(17,18,20,0.82)] backdrop-blur-xl shadow-[0_24px_64px_-24px_rgba(0,0,0,0.8)]'
+  'rounded-[18px] border border-violet-edge bg-gradient-to-b from-[rgba(36,30,46,0.98)] to-[rgba(30,27,34,0.98)] shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_24px_60px_-20px_rgba(0,0,0,0.85)]'
 
+/** What you press. Ink fill, dark text: one per view at most. */
+export const BUTTON_PRIMARY =
+  'noma-press inline-flex items-center justify-center gap-1.5 rounded-[10px] bg-accent px-3.5 py-1.5 text-[13px] font-medium text-base-950 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset,0_6px_14px_-8px_rgba(0,0,0,0.8)] hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40'
+
+/** Everything else you press: a raised graphite key. */
+export const BUTTON_SECONDARY =
+  'noma-press inline-flex items-center justify-center gap-1.5 rounded-[10px] border border-white/[0.07] bg-base-800 px-3.5 py-1.5 text-[13px] font-medium text-neutral-100 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] hover:bg-base-700 disabled:cursor-not-allowed disabled:opacity-40'
+
+/** A quiet text action: "Not now", "Cancel". */
+export const BUTTON_QUIET =
+  'noma-press inline-flex items-center gap-1 rounded-[10px] px-2.5 py-1.5 text-[13px] text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-100'
 
 /** Form field recipes shared by the modals and the macro editor. */
 export const FIELD_INPUT =
-  'w-full rounded-md border border-white/10 bg-base-950 px-3 py-2 text-sm text-neutral-100'
+  'w-full rounded-[10px] border border-white/[0.07] bg-base-950 px-3 py-2 text-sm text-neutral-100 shadow-[0_1px_2px_0_rgba(0,0,0,0.4)_inset] placeholder:text-neutral-600'
 export const FIELD_INPUT_MONO = `${FIELD_INPUT} font-mono`
 /** Compact select used inside per-function cards (ModuleConfigModal). */
 export const FIELD_INPUT_SM =
-  'w-full rounded-md border border-white/10 bg-base-950 px-3 py-1.5 text-xs text-neutral-200'
-export const FIELD_LABEL = 'mb-1.5 block text-[10px] uppercase tracking-widest text-neutral-500'
+  'w-full rounded-[10px] border border-white/[0.07] bg-base-950 px-3 py-1.5 text-xs text-neutral-200'
+export const FIELD_LABEL = 'mb-1.5 block text-xs font-medium text-neutral-400'

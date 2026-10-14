@@ -13,6 +13,26 @@
   color-scheme: light;
 }
 
+/* App Spaces (lib/appSpace.ts): the current app's hue and chroma. Registered
+   so a change of app slides the colour across the window instead of
+   snapping: the app's one authored motion. */
+@property --space-h {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 70;
+}
+@property --space-c {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.012;
+}
+html,
+.space-transition {
+  transition:
+    --space-h 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    --space-c 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* The app is dark, so its native scrollbars, selects and menus should be
    too. Set on #root, not the document root: on the root it would also give
    the transparent Noma Notice window an opaque dark canvas. */
@@ -31,6 +51,35 @@ body {
   font-feature-settings:
     'cv11',
     'ss01';
+  caret-color: theme('colors.accent.DEFAULT');
+}
+
+/* The parts the browser draws still belong to the design. */
+::selection {
+  background: oklch(0.76 var(--space-c) var(--space-h) / 0.32);
+  color: theme('colors.neutral.50');
+}
+#root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+#root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+#root ::-webkit-scrollbar-thumb {
+  background: rgba(241, 237, 230, 0.1);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+#root ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(241, 237, 230, 0.2);
+}
+/* Numbers that line up: counts, times, shortcut keys. */
+.tabular,
+time,
+kbd {
+  font-variant-numeric: tabular-nums;
 }
 
 /* A single, purposeful entrance — used for the moment a workflow actually

@@ -74,9 +74,10 @@ heard of Noma and give it a few minutes to prove itself.
   CI's Mac runner, but no one has used it on a real Mac yet, and Glide's
   thresholds were tuned on a Windows touchpad.
 - No physical device exists for users; never fake a hardware connection.
-- Visual identity: near-black graphite, Sora, JetBrains Mono, blue
-  accent `#4c7eff`, violet only to mark a Flow suggestion, gold only for real
-  hardware contact. No AI gradients or glow, no fake 3D hardware.
+- Visual identity ("App Spaces", see DESIGN.md): warm graphite ground,
+  Sora / Inter / JetBrains Mono, off-white ink for anything you press, one
+  colour per app meaning only "where you are", violet only for Flow, gold only
+  for real hardware contact. No AI gradients or glow, no fake 3D hardware.
 - Voice: plain, specific, quiet. No marketing clichés or hype language.
 
 ## Product principles

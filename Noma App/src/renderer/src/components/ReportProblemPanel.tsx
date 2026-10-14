@@ -30,7 +30,7 @@ export function ReportProblemPanel() {
 
   return (
     <section className={`mb-8 px-5 py-4 ${CARD}`}>
-      <div className="text-xs uppercase tracking-widest text-neutral-500">Report a problem</div>
+      <div className="font-display text-[15px] font-semibold text-neutral-100">Report a problem</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
         You can add a technical summary of this install. Read it first; it&apos;s never sent automatically.
       </p>
@@ -38,7 +38,7 @@ export function ReportProblemPanel() {
         <button
           type="button"
           onClick={() => void window.flow.openIssuePage()}
-          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:bg-neutral-50"
         >
           Open the report form
         </button>

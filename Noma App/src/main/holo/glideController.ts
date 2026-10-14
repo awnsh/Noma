@@ -216,7 +216,8 @@ export class GlideController {
       outcome: decision.outcome,
       controlLabel: control?.label,
       actionName,
-      applicationName: context.application?.name
+      applicationName: context.application?.name,
+      applicationId: context.application?.id
     })
   }
 }

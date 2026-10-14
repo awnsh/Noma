@@ -15,7 +15,7 @@ export function DailyActivityChart({ data }: { data: DailyActivityCount[] }) {
 
   return (
     <div className="rounded-xl border border-white/10 bg-base-900 p-4">
-      <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+      <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
         Shortcut activity, last {data.length} days
       </div>
       <div className="flex h-24 items-end gap-[3px]">

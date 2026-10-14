@@ -74,7 +74,7 @@ function App() {
   return (
     <AppShell>
       <MacAccessibilityNotice />
-      <div key={shownPage} className={`${leaving ? 'noma-page-out' : 'noma-page-in'} min-h-full`}>
+      <div key={shownPage} className={`${leaving ? 'noma-page-out' : 'noma-page-in'} h-full`}>
       {shownPage === 'home' && <Home />}
       {shownPage === 'workflows' && <Workflows />}
       {shownPage === 'learning' && <Learning />}

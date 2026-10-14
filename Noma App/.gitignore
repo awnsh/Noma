@@ -7,3 +7,6 @@ out
 *.db-journal
 *.db-wal
 .DS_Store
+
+# Design review screenshots (impeccable skill): scratch evidence, regenerated each review
+.impeccable/review/

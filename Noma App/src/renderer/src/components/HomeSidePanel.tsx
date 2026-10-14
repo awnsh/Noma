@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
+import { ArrowRightIcon } from './icons'
 import type { Application, ApplicationProfile } from '@shared/types'
 import { useHardwareStore } from '../stores/hardwareStore'
 import { useUiStore } from '../stores/uiStore'
 import { AppIcon } from './AppIcon'
-import { DEVICE_GLASS_CARD } from '../lib/surfaces'
+import { CARD, DEVICE_GLASS_CARD } from '../lib/surfaces'
 
 /** Holo's four swipe-in zones press control slots 1-4. */
 const HOLO_ZONES = [
@@ -47,15 +48,13 @@ export function HomeSidePanel({
   return (
     <aside className="w-72 shrink-0 space-y-4">
       <button type="button" onClick={() => setActivePage('holo')} className="block w-full text-left">
-        <div className="rounded-2xl bg-holo-bg p-5 transition-transform duration-150 hover:-translate-y-0.5">
+        <div className={`p-5 transition-transform duration-150 hover:-translate-y-0.5 ${CARD}`}>
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-holo-muted">
+            <span className="flex items-center gap-1.5 text-xs text-holo-muted">
               {application && <AppIcon applicationId={application.id} name={application.name} size={18} />}
               Glide zones{application ? `, ${application.name}` : ''}
             </span>
-            <span aria-hidden className="text-holo-muted">
-              →
-            </span>
+            <ArrowRightIcon className="h-3.5 w-3.5 text-holo-muted" />
           </div>
           <div className="mt-3 space-y-1.5">
             {HOLO_ZONES.map(({ slot, name }) => {
@@ -74,7 +73,7 @@ export function HomeSidePanel({
       </button>
 
       <div className={`${DEVICE_GLASS_CARD} p-5`}>
-        <span className="text-[11px] font-semibold uppercase tracking-widest text-neutral-500">Noma Device</span>
+        <span className="text-xs font-medium text-neutral-400">Noma Device</span>
         {/* A tasteful, honest placeholder for the physical device; no
             spec, no render, just the same four-control layout the app's
             interface actually drives, so the loop ("Noma builds your
@@ -88,7 +87,7 @@ export function HomeSidePanel({
                 <div
                   key={slot}
                   className={`aspect-square rounded-md border ${
-                    filled ? 'border-accent-muted bg-accent/10' : 'border-base-700 bg-base-900'
+                    filled ? 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)]' : 'border-base-700 bg-base-900'
                   }`}
                 />
               )
@@ -109,7 +108,7 @@ export function HomeSidePanel({
               onClick={() => setActivePage('holo')}
               className="mt-1.5 text-xs font-medium text-accent hover:opacity-80"
             >
-              Open Glide →
+              Open Glide
             </button>
           </div>
         )}

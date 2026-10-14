@@ -101,7 +101,7 @@ export function VirtualKeyboard() {
 
         {/* Contextual controls */}
         <div className="mb-2 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="flex items-center gap-1.5 text-xs font-medium text-neutral-400">
             {application && (
               <AppIcon applicationId={application.id} name={application.name} size={14} />
             )}
@@ -112,7 +112,7 @@ export function VirtualKeyboard() {
             onClick={() => setIsEditMode((prev) => !prev)}
             className={`rounded-full border px-3 py-1 text-[11px] ${
               isEditMode
-                ? 'border-accent-muted bg-accent/10 text-accent'
+                ? 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] text-accent'
                 : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'
             }`}
           >
@@ -148,7 +148,7 @@ export function VirtualKeyboard() {
 
         {/* Modular slots */}
         <div>
-          <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+          <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
             Modular Slots
           </div>
           <div className="flex flex-wrap gap-3">

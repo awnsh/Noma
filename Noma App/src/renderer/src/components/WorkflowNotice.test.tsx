@@ -79,7 +79,7 @@ describe('WorkflowNotice', () => {
     expect(screen.getByText('New workflow detected')).toBeInTheDocument()
     // The real chain, from the suggestion's own steps. Not a hardcoded string.
     expect(screen.getByText('Claude Code')).toBeInTheDocument()
-    expect(screen.getByText('6x')).toBeInTheDocument()
+    expect(screen.getByText('6×')).toBeInTheDocument()
   })
 
   it('can be closed outright, without that counting against the workflow', () => {

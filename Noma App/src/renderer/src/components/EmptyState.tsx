@@ -8,7 +8,7 @@ export function EmptyState({ title, hint }: { title?: string; hint: string }) {
   return (
     <div className="py-2">
       {title && <p className="text-base font-medium text-neutral-100">{title}</p>}
-      <p className={`${title ? 'mt-1.5 ' : ''}max-w-md text-sm leading-relaxed text-neutral-600`}>{hint}</p>
+      <p className={`${title ? 'mt-1.5 ' : ''}max-w-md text-sm leading-relaxed text-neutral-400`}>{hint}</p>
     </div>
   )
 }

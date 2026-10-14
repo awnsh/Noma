@@ -41,13 +41,13 @@ export function DataManagementPanel() {
 
   return (
     <section className="rounded-xl border border-white/10 bg-base-900 px-5 py-4">
-      <div className="text-xs uppercase tracking-widest text-neutral-500">Your Data</div>
+      <div className="font-display text-[15px] font-semibold text-neutral-100">Your data</div>
       <p className="mt-2 max-w-md text-sm text-neutral-400">
         Stored on this computer. Never sent anywhere.
       </p>
 
       {lastAction && (
-        <div className="mt-3 flex items-center justify-between rounded-md border border-accent-muted bg-accent/10 px-3 py-2 text-xs text-accent">
+        <div className="mt-3 flex items-center justify-between rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-2 text-xs text-accent">
           <span>
             {lastAction === 'clearedLearningData'
               ? 'Learning data cleared.'
@@ -147,7 +147,7 @@ function ConfirmRow({
   return (
     <div
       className={`flex items-center gap-3 rounded-md border px-3 py-1.5 text-xs ${
-        danger ? 'border-red-900/60 bg-red-950/20' : 'border-accent-muted bg-accent/10'
+        danger ? 'border-red-900/60 bg-red-950/20' : 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)]'
       }`}
     >
       <span className={danger ? 'text-red-300' : 'text-accent'}>{prompt}</span>

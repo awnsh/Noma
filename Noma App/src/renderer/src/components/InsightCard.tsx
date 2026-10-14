@@ -57,7 +57,7 @@ export function InsightCard({ text, hint, action, applicationId, applicationName
         <button
           type="button"
           onClick={action.onClick}
-          className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90"
+          className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:opacity-90"
         >
           {action.label}
         </button>

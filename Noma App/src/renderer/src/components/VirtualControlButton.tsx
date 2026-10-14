@@ -51,11 +51,11 @@ export function VirtualControlButton({
         // A real press gets a brief, real feedback flash in the signature
         // brand blue. This is the one moment a colored glow belongs here:
         // an actual interaction just happened, not ambient decoration.
-        isPressed ? 'border-accent/60 shadow-[0_4px_16px_-6px_rgba(76,126,255,0.45)]' : ''
+        isPressed ? 'border-accent/60 shadow-[0_4px_16px_-6px_rgba(0,0,0,0.6)]' : ''
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-widest text-neutral-600">
+        <span className="text-xs font-medium text-neutral-400">
           {editMode ? `Edit · Control ${slot}` : `Control ${slot}`}
         </span>
         {!editMode && control && <span className="text-sm text-neutral-500">{actionGlyph(control.action)}</span>}

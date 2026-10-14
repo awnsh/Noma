@@ -73,7 +73,7 @@ export function UsageStats() {
             <DailyActivityChart data={activity} />
           </div>
 
-          <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+          <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
             Shortcuts, most used first
           </div>
           <div className="space-y-2">

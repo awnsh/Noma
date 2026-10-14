@@ -14,7 +14,7 @@ export function WorkflowMonitoringPanel() {
     <section className="mb-10 rounded-xl border border-white/10 bg-base-900 px-5 py-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-widest text-neutral-500">
+          <div className="font-display text-[15px] font-semibold text-neutral-100">
             Flow learning
           </div>
           <p className="mt-2 max-w-md text-sm text-neutral-400">
@@ -31,7 +31,7 @@ export function WorkflowMonitoringPanel() {
       {enabled && (
         <div className="mt-4 flex items-start justify-between gap-4 border-t border-white/5 pt-4">
           <div>
-            <div className="text-xs uppercase tracking-widest text-neutral-500">
+            <div className="font-display text-[15px] font-semibold text-neutral-100">
               Learn from on-screen buttons
             </div>
             <p className="mt-2 max-w-md text-sm text-neutral-400">
@@ -57,7 +57,7 @@ export function WorkflowMonitoringPanel() {
 
       {enabled && (
         <div className="mt-4 border-t border-white/5 pt-4">
-          <div className="mb-2 text-xs uppercase tracking-widest text-neutral-500">
+          <div className="mb-2 font-display text-[15px] font-semibold text-neutral-100">
             Patterns detected today
           </div>
           {patterns.length === 0 ? (

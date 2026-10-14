@@ -41,7 +41,7 @@ export function UpdatePrompt() {
 
   return (
     <Modal onClose={later} titleId="update-prompt-title">
-      <div className="text-xs uppercase tracking-widest text-neutral-500">Update</div>
+      <div className="font-display text-[15px] font-semibold text-neutral-100">Update</div>
       <h2 id="update-prompt-title" className="mt-1 font-display text-lg font-semibold text-neutral-100">
         Noma {offer.version} is {ready ? 'ready' : 'available'}
       </h2>
@@ -71,7 +71,7 @@ export function UpdatePrompt() {
               later()
             }
           }}
-          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90 disabled:opacity-60"
+          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:bg-neutral-50 disabled:opacity-60"
         >
           {ready ? (installing ? 'Restarting…' : 'Restart and update') : 'Download'}
         </button>

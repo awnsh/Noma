@@ -128,7 +128,7 @@ export function WorkflowNotice({
               reader saying "Noma" twice would be worse than saying it once. */}
           <img src={logo} alt="" className="h-[18px] w-[26px] object-contain opacity-90" />
           <img src={wordmark} alt="Noma" className="h-[9px] w-auto opacity-75" />
-          <span className="ml-auto font-mono text-[10px] text-neutral-600">{occurrenceCount}x</span>
+          <span className="ml-auto font-mono text-[10px] text-neutral-600">{occurrenceCount}×</span>
           {/* Quiet until wanted: at rest it reads as part of the chrome, and
               only resolves into a control once the pointer is on the card.
               Given the window is click-through until then, this is exactly
@@ -145,7 +145,8 @@ export function WorkflowNotice({
           </button>
         </div>
 
-        <p className="mt-2 text-xs font-medium text-neutral-100">
+        <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-neutral-100">
+          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet" />
           {suggestion.isDemo ? 'Demo workflow (simulated, not learned from you)' : 'New workflow detected'}
         </p>
 
@@ -167,7 +168,7 @@ export function WorkflowNotice({
               <button
                 type="button"
                 onClick={onAccept}
-                className="rounded-md bg-accent px-2.5 py-1 text-[11px] font-medium text-white transition-colors duration-150 hover:bg-accent/90"
+                className="noma-press rounded-[8px] bg-accent px-2.5 py-1 text-[11px] font-medium text-base-950 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset] transition-colors duration-150 hover:bg-neutral-50"
               >
                 Review steps in Noma
               </button>
@@ -184,7 +185,7 @@ export function WorkflowNotice({
           <button
             type="button"
             onClick={() => setReviewing(true)}
-            className="mt-2 flex items-center gap-1 text-[11px] font-medium text-accent transition-colors duration-150 hover:text-accent/80"
+            className="mt-2 flex items-center gap-1 text-[11px] font-medium text-neutral-200 transition-colors duration-150 hover:text-neutral-50"
           >
             Review
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-3.5">

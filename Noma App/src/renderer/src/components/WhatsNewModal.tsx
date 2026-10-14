@@ -25,7 +25,7 @@ export function WhatsNewModal() {
 
   return (
     <Modal onClose={close} titleId="whats-new-title">
-      <div className="text-xs uppercase tracking-widest text-neutral-500">Updated to {whatsNew.version}</div>
+      <div className="font-display text-[15px] font-semibold text-neutral-100">Updated to {whatsNew.version}</div>
       <h2 id="whats-new-title" className="mt-1 font-display text-lg font-semibold text-neutral-100">
         What&apos;s new
       </h2>
@@ -34,7 +34,7 @@ export function WhatsNewModal() {
 
       {earlier.map((release) => (
         <div key={release.version} className="mt-5">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">Also in {release.version}</div>
+          <div className="text-xs font-medium text-neutral-400">Also in {release.version}</div>
           <NoteList notes={release.notes} />
         </div>
       ))}
@@ -42,7 +42,7 @@ export function WhatsNewModal() {
       <div className="mt-6 flex justify-end">
         <ModalCloseButton
           autoFocus
-          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:bg-neutral-50"
         >
           Got it
         </ModalCloseButton>

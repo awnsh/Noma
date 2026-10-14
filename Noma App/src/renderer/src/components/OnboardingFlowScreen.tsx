@@ -32,7 +32,7 @@ export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenP
 
       <div className="mt-8 grid w-full max-w-md grid-cols-2 gap-6 rounded-xl border border-base-700 bg-base-900 px-5 py-4 text-left">
         <div>
-          <div className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">Flow records</div>
+          <div className="mb-2 text-xs font-medium text-neutral-400">Flow records</div>
           <ul className="space-y-1.5 text-xs text-neutral-300">
             {SEES.map((item) => (
               <li key={item} className="flex gap-2">
@@ -45,7 +45,7 @@ export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenP
           </ul>
         </div>
         <div>
-          <div className="mb-2 text-[10px] uppercase tracking-widest text-neutral-500">Never</div>
+          <div className="mb-2 text-xs font-medium text-neutral-400">Never</div>
           <ul className="space-y-1.5 text-xs text-neutral-400">
             {NEVER.map((item) => (
               <li key={item} className="flex gap-2">

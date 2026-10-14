@@ -34,7 +34,7 @@ describe('workflowChainSteps', () => {
         }
       })
     )
-    expect(steps).toEqual([
+    expect(steps).toMatchObject([
       { label: 'Screenshot', kind: 'shortcut' },
       { label: 'Claude Code', kind: 'app', applicationId: 'claude' },
       { label: 'Paste', kind: 'shortcut' }
@@ -57,10 +57,21 @@ describe('workflowChainSteps', () => {
     const steps = workflowChainSteps(
       baseSuggestion({ action: { kind: 'createMacroAndAssignToControl', sequence: ['Control+C', 'Control+V'] } })
     )
-    expect(steps).toEqual([
+    expect(steps).toMatchObject([
       { label: 'Copy', kind: 'shortcut' },
       { label: 'Paste', kind: 'shortcut' }
     ])
+  })
+
+  it('carries the keys when the label names them, but not when the label is the keys', () => {
+    const named = workflowChainSteps(
+      baseSuggestion({ action: { kind: 'createMacroAndAssignToControl', sequence: ['Control+C', 'Control+V'] } })
+    )
+    expect(named?.[0].keys).toBeTruthy()
+    const plain = workflowChainSteps(
+      baseSuggestion({ action: { kind: 'assignShortcutToControl', comboKeys: ['Control', 'Shift', 'P'] } })
+    )
+    expect(plain?.[0].keys).toBeUndefined()
   })
 
   it('returns a single-item chain for a plain shortcut suggestion', () => {

@@ -142,7 +142,7 @@ export function ConfigTransferControls() {
           role="status"
           className={`mt-3 flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-xs ${
             message.tone === 'ok'
-              ? 'border-accent-muted bg-accent/10 text-accent'
+              ? 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] text-accent'
               : 'border-red-900/60 bg-red-950/20 text-red-300'
           }`}
         >
@@ -158,7 +158,7 @@ export function ConfigTransferControls() {
       )}
 
       {pending ? (
-        <div className="mt-3 rounded-md border border-accent-muted bg-accent/10 px-3 py-3 text-xs">
+        <div className="mt-3 rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-3 text-xs">
           <div className="text-accent">
             Import <span className="font-medium">{pending.fileName}</span>?
           </div>

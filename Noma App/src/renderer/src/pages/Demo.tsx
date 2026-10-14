@@ -222,7 +222,7 @@ export function Demo() {
             <button
               type="button"
               onClick={() => setPhase('vscode')}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
+              className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97]"
             >
               Start Demo
             </button>
@@ -239,7 +239,7 @@ export function Demo() {
             <button
               type="button"
               onClick={() => setPhase('chrome')}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
+              className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97]"
             >
               Switch to Chrome
             </button>
@@ -259,7 +259,7 @@ export function Demo() {
               type="button"
               disabled={isWorking}
               onClick={() => void handleSimulateWorkflow()}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
+              className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
             >
               {isWorking ? 'Simulating…' : 'Simulate repeated workflow (Bookmark → Close tab)'}
             </button>
@@ -305,7 +305,7 @@ export function Demo() {
             <button
               type="button"
               onClick={() => setPhase('multiStepIntro')}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 active:opacity-80"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-base-950 transition-opacity duration-150 hover:opacity-90 active:opacity-80"
             >
               Continue: the bigger idea
             </button>
@@ -328,7 +328,7 @@ export function Demo() {
               type="button"
               disabled={isWorking}
               onClick={() => void handleSimulateMultiStepWorkflow()}
-              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 active:opacity-80 disabled:opacity-40"
+              className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-base-950 transition-opacity duration-150 hover:opacity-90 active:opacity-80 disabled:opacity-40"
             >
               {isWorking
                 ? 'Simulating…'
@@ -379,7 +379,7 @@ export function Demo() {
               type="button"
               disabled={isWorking || !learnedControl}
               onClick={() => void handleRunLearnedAction()}
-              className="rounded-md border border-accent-muted bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
+              className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-4 py-2 text-sm font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97] disabled:opacity-40 disabled:active:scale-100"
             >
               Run it
             </button>

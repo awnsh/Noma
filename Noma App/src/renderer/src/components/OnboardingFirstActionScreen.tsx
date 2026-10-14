@@ -114,7 +114,7 @@ export function OnboardingFirstActionScreen({ onFinish }: OnboardingFirstActionS
             </div>
           )}
 
-          <div className="mt-5 w-full rounded-2xl bg-holo-bg p-5">
+          <div className="mt-6 w-full">
             {profile && app ? (
               <div className="mx-auto max-w-md">
                 <GlideZoneMap zoneCount={zoneCount} controls={profile.controls} onEditZone={setEditingSlot} centerLabel={app.name} centerAppId={app.id} />

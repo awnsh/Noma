@@ -23,84 +23,83 @@ module.exports = {
       // Same token NAMES as the prior system so every existing
       // `bg-base-900`/`text-neutral-100`/etc. class across the app
       // repaints automatically — only the values changed.
+      // 2026-10-14 visual system (v5, "App Spaces"; DESIGN.md): warm
+      // graphite ground, off-white ink for anything you act on, and one
+      // colour per app (`space`, driven by --space-h/--space-c from
+      // lib/appSpace.ts) that only ever means "where you are". Same token
+      // names as v4, so existing classes repaint; `accent` is now ink, not
+      // blue.
       colors: {
-        // `base` is the surface ramp: 950 is the page canvas (true
-        // near-black), 900 a hair lighter for a secondary flat panel, 850
-        // is "Card" (the new default solid-card fill — see
-        // lib/surfaces.ts), 800 is "Elevated" (an input, a hover state, a
-        // step brighter than Card), and 700/600 are now real solid
-        // graphite hex borders ("Border"/"Strong border") — not
-        // translucent white overlays the way v3 had them, so a card's
-        // edge reads as a material seam, not a light catching glass.
+        // Surfaces, darkest first: 950 the window, 900 the sidebar ground,
+        // 850 a resting surface, 800 a raised one (inputs, hovers), 700 a
+        // seam, 600 a strong seam. Warm, not blue-black.
         base: {
-          950: '#08090a',
-          900: '#0d0f11',
-          850: '#111214',
-          800: '#15171a',
-          700: '#24262a',
-          600: '#30333a'
+          950: '#141210',
+          900: '#181614',
+          850: '#1e1c19',
+          800: '#26231f',
+          700: '#322e2a',
+          600: '#423d38'
         },
+        // Ink: what you press. Off-white, the way Things and Apple's dark
+        // mode fill a primary button, so no app's colour is ever mistaken
+        // for a control.
         accent: {
-          DEFAULT: '#4c7eff',
-          muted: '#2f4f9e',
-          // The active-nav-item / "part of the adaptive loop" wash — a
-          // translucent accent tint over dark glass, not a light color.
-          subtle: 'rgba(76,126,255,0.12)'
+          DEFAULT: '#ece8e1',
+          muted: '#5a5751',
+          subtle: 'rgba(236,232,225,0.08)'
         },
-        // Flow's own voice, used sparingly (v0.1): only to mark a Flow
-        // suggestion ("Noma noticed" labels, the approve button of a
-        // suggestion). Never on general UI, never as a glow or gradient.
+        // The current app's colour. Lightness is fixed so every app's hue
+        // sits at the same brightness on graphite.
+        space: {
+          DEFAULT: 'oklch(0.76 var(--space-c) var(--space-h) / <alpha-value>)',
+          ink: 'oklch(0.86 calc(var(--space-c) * 0.7) var(--space-h) / <alpha-value>)',
+          deep: 'oklch(0.27 calc(var(--space-c) * 0.45) var(--space-h) / <alpha-value>)',
+          wash: 'oklch(0.215 calc(var(--space-c) * 0.32) var(--space-h) / <alpha-value>)'
+        },
+        // Flow's own voice: a suggestion, something Flow noticed. Never
+        // general UI.
         violet: {
-          DEFAULT: '#8b6cff',
-          muted: 'rgba(139,108,255,0.16)'
+          DEFAULT: '#b09ae6',
+          muted: 'rgba(176,154,230,0.14)',
+          // Flow's note: the paper a suggestion is written on.
+          note: '#221d2b',
+          edge: 'rgba(176,154,230,0.22)'
         },
         success: {
-          DEFAULT: '#4cbf82',
-          muted: 'rgba(76,191,130,0.16)'
+          DEFAULT: '#7cc49a',
+          muted: 'rgba(124,196,154,0.14)'
         },
         error: {
-          DEFAULT: '#e0685f',
-          muted: 'rgba(224,104,95,0.16)'
+          DEFAULT: '#ec8a7d',
+          muted: 'rgba(236,138,125,0.14)'
         },
-        // Real hardware dock contact only (HardwareStatusPill, DeviceLogRow)
-        // — never a general brand color, and never used for "Noma learned
-        // something" (that's communicated through typography and real
-        // information now, not a color).
+        // Real hardware contact only (HardwareStatusPill, DeviceLogRow).
         gold: {
-          DEFAULT: '#c9a45f',
-          muted: 'rgba(201,164,95,0.18)'
+          DEFAULT: '#d4ad66',
+          muted: 'rgba(212,173,102,0.16)'
         },
-        // `neutral` is the text ramp: 100 is primary reading text (near-
-        // white, #F5F5F7), climbing toward 950 which lands on the same
-        // near-black as `base`'s own 950 — text at the bottom of this
-        // scale is for a surface, never a glyph.
+        // Text, warm. 100 reading text, 300 secondary, 400/500 quiet,
+        // 600 the faintest that still reads on base-950.
         neutral: {
-          50: '#ffffff',
-          100: '#f5f5f7',
-          200: '#d5d6db',
-          300: '#adaeb8',
-          // 400 ("Secondary text") and 600 ("Muted") are the two tiers
-          // named explicitly in the new restrained palette; 500/700 are
-          // interpolated between them, unchanged from before.
-          400: '#96999f',
-          500: '#75767e',
-          600: '#656970',
-          700: '#45474e',
-          800: '#15171a',
-          900: '#0d0f11',
-          950: '#08090a'
+          50: '#fffdf9',
+          100: '#f1ede6',
+          200: '#d9d4cc',
+          300: '#b7b1a9',
+          400: '#9e9891',
+          500: '#8e8982',
+          600: '#7d7871',
+          700: '#4d4a46',
+          800: '#26231f',
+          900: '#181614',
+          950: '#141210'
         },
-        // Holo keeps its own small token group — "a piece of Noma hardware
-        // translated into software" (see Holo.tsx) needs to read as a
-        // literal inset physical device face, deliberately a touch deeper/
-        // more contrasted than the app's own now-dark canvas around it —
-        // never reference `base`/`neutral` inside Holo's own components.
         holo: {
-          bg: '#050506',
-          surface: 'rgba(255,255,255,0.05)',
-          border: 'rgba(255,255,255,0.1)',
-          text: '#f5f5f7',
-          muted: '#83858d'
+          bg: '#0e0d0f',
+          surface: 'rgba(255,250,240,0.05)',
+          border: 'rgba(255,250,240,0.1)',
+          text: '#f1ede6',
+          muted: '#8d8882'
         }
       },
       fontFamily: {

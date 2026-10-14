@@ -1,6 +1,8 @@
-import { Fragment } from 'react'
+import { type CSSProperties, Fragment } from 'react'
 import type { WorkflowChainStep } from '../lib/workflowChain'
+import { spaceStyle } from '../lib/appSpace'
 import { AppIcon } from './AppIcon'
+import { KeyboardIcon } from './icons'
 import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
 
 /**
@@ -30,6 +32,8 @@ interface WorkflowNode {
   key: string
   kind: 'app' | 'action'
   label: string
+  /** For a keystroke node: its keys, shown under its name. */
+  keys?: string
   applicationId?: string
   /** A shortcut step immediately following this app step. Folded into
    *  the same node as its "what happened here" line (e.g. "Chrome" /
@@ -58,7 +62,7 @@ function groupIntoNodes(steps: WorkflowChainStep[]): WorkflowNode[] {
       }
       nodes.push({ key: `${i}`, kind: 'app', label: step.label, applicationId: step.applicationId })
     } else {
-      nodes.push({ key: `${i}`, kind: 'action', label: step.label })
+      nodes.push({ key: `${i}`, kind: 'action', label: step.label, keys: step.keys })
     }
   }
   return nodes
@@ -92,7 +96,7 @@ function groupIntoNodes(steps: WorkflowChainStep[]): WorkflowNode[] {
 // well under the 48px real-icon ceiling described above, so it is shown
 // below native resolution rather than stretched past it.
 const SIZES = {
-  sm: { box: 34, icon: 32, name: 'text-[11px]', action: 'text-[10px]', gap: 'gap-x-2' },
+  sm: { box: 34, icon: 32, name: 'text-[11px]', action: 'text-[10px]', gap: 'gap-x-1.5' },
   md: { box: 52, icon: 48, name: 'text-sm', action: 'text-[11px]', gap: 'gap-x-3' },
   lg: { box: 58, icon: 50, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
 } as const
@@ -125,7 +129,7 @@ export function WorkflowChain({
 
   return (
     <div
-      className={`flex items-start overflow-x-auto overflow-y-hidden pb-1 ${compact ? 'gap-x-2' : dim.gap} ${
+      className={`flex items-start overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${compact ? 'gap-x-2' : dim.gap} ${
         centered ? 'mx-auto w-fit max-w-full' : ''
       }`}
     >
@@ -144,18 +148,36 @@ export function WorkflowChain({
             style={{ animation: reduceMotion ? undefined : `noma-node-in 200ms ease-out ${index * 80}ms both` }}
           >
             {node.kind === 'app' ? (
-              <div className={ICON_BOX} style={{ width: dim.box, height: dim.box }}>
-                <AppIcon applicationId={node.applicationId} name={node.label} size={dim.icon} variant="bare" fill />
+              // Each app step sits on that app's own colour: the chain shows
+              // where each step happens (lib/appSpace.ts).
+              <div
+                className={`${ICON_BOX} rounded-[14px] bg-space-deep shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]`}
+                style={{ width: dim.box, height: dim.box, ...(spaceStyle(node.applicationId) as CSSProperties) }}
+              >
+                <AppIcon applicationId={node.applicationId} name={node.label} size={Math.round(dim.icon * 0.72)} variant="bare" fill />
               </div>
             ) : (
-              <span
-                className={`flex items-center rounded-md border border-base-700 font-mono text-neutral-300 ${
-                  size === 'lg' ? 'px-2.5 py-1 text-xs' : size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]'
-                }`}
-                style={{ height: dim.box }}
+              // A keystroke: a key tile at the same size as the app tiles,
+              // its name underneath like theirs, so every step lines up.
+              <div
+                className={`${ICON_BOX} rounded-[14px] border border-white/[0.07] bg-gradient-to-b from-[rgba(255,250,240,0.07)] to-[rgba(255,250,240,0.025)] text-neutral-200 shadow-[0_1px_0_0_rgba(255,250,240,0.08)_inset,0_-1px_0_0_rgba(0,0,0,0.35)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]`}
+                style={{ width: dim.box, height: dim.box }}
+              >
+                <KeyboardIcon className={size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'} />
+              </div>
+            )}
+
+            {node.kind === 'action' && (
+              <p
+                className={`${size === 'sm' ? 'mt-1 max-w-[5rem] leading-tight' : 'mt-2 max-w-[9rem]'} break-words text-center font-medium text-neutral-100 ${dim.name}`}
               >
                 {node.label}
-              </span>
+              </p>
+            )}
+            {node.kind === 'action' && node.keys && (
+              <p className={`mt-0.5 ${size === 'sm' ? 'max-w-[5rem]' : 'max-w-[9rem]'} break-words text-center font-mono text-neutral-500 ${dim.action}`}>
+                {node.keys}
+              </p>
             )}
 
             {node.kind === 'app' && (
@@ -163,12 +185,13 @@ export function WorkflowChain({
                 {/* Names are never truncated: a cut-off "Google C..." tells you nothing.
                     They wrap under the icon instead, centered. */}
                 <p
-                  className={`max-w-[9rem] break-words text-center font-medium text-neutral-100 ${size === 'sm' ? 'mt-1' : 'mt-2'} ${dim.name}`}
+                  className={`${size === 'sm' ? 'max-w-[5rem] leading-tight' : 'max-w-[9rem]'} break-words text-center font-medium text-space-ink ${size === 'sm' ? 'mt-1' : 'mt-2'} ${dim.name}`}
+                  style={spaceStyle(node.applicationId) as CSSProperties}
                 >
                   {node.label}
                 </p>
                 {node.action && (
-                  <p className={`mt-0.5 max-w-[9rem] break-words text-center font-mono text-neutral-500 ${dim.action}`}>
+                  <p className={`mt-0.5 ${size === 'sm' ? 'max-w-[5rem]' : 'max-w-[9rem]'} break-words text-center font-mono text-neutral-500 ${dim.action}`}>
                     {node.action}
                   </p>
                 )}

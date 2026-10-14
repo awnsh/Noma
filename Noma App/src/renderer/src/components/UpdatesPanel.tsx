@@ -26,7 +26,7 @@ export function UpdatesPanel() {
     <section className={`mb-8 px-5 py-4 ${CARD}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-widest text-neutral-500">Updates</div>
+          <div className="font-display text-[15px] font-semibold text-neutral-100">Updates</div>
           <p className={`mt-2 max-w-md text-sm ${status.phase === 'error' ? 'text-error' : 'text-neutral-400'}`}>
             {describe(status)}
           </p>
@@ -46,7 +46,7 @@ export function UpdatesPanel() {
 }
 
 function UpdateAction({ status, onCheck }: { status: UpdateStatus; onCheck: () => void }) {
-  const primary = 'shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90'
+  const primary = 'shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-base-950 hover:bg-neutral-50'
   const secondary =
     'shrink-0 rounded-md border border-base-600 px-3 py-1.5 text-xs text-neutral-200 hover:border-neutral-400 disabled:opacity-50 disabled:hover:border-base-600'
 

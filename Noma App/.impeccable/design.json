@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-14T00:00:00Z",
+  "title": "Design System: Noma",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "primary", "displayName": "Ink", "canonical": "#ece8e1", "tonalRamp": ["#2a2825", "#3f3c38", "#5a5751", "#7a766f", "#9d9890", "#c2bdb5", "#ece8e1", "#fffdf9"] },
+      "space": { "role": "secondary", "displayName": "App Space", "canonical": "oklch(0.76 var(--space-c) var(--space-h))", "tonalRamp": ["oklch(0.215 0.04 248)", "oklch(0.27 0.06 248)", "oklch(0.4 0.1 248)", "oklch(0.52 0.12 248)", "oklch(0.64 0.13 248)", "oklch(0.76 0.13 248)", "oklch(0.86 0.09 248)", "oklch(0.94 0.04 248)"] },
+      "space-ink": { "role": "secondary", "displayName": "Space Ink", "canonical": "oklch(0.86 calc(var(--space-c) * 0.7) var(--space-h))" },
+      "space-deep": { "role": "secondary", "displayName": "Space Deep", "canonical": "oklch(0.27 calc(var(--space-c) * 0.45) var(--space-h))" },
+      "space-wash": { "role": "secondary", "displayName": "Space Wash (window frame)", "canonical": "oklch(0.215 calc(var(--space-c) * 0.32) var(--space-h))" },
+      "violet": { "role": "tertiary", "displayName": "Flow Violet", "canonical": "#b09ae6", "tonalRamp": ["#1d1a22", "#221d2b", "#3a2f52", "#55457a", "#7461a8", "#9580cf", "#b09ae6", "#ddd3f7"] },
+      "violet-note": { "role": "tertiary", "displayName": "Violet Note (Flow's paper)", "canonical": "#221d2b" },
+      "gold": { "role": "tertiary", "displayName": "Hardware Gold", "canonical": "#d4ad66" },
+      "success": { "role": "status", "displayName": "Success", "canonical": "#7cc49a" },
+      "error": { "role": "status", "displayName": "Error", "canonical": "#ec8a7d" },
+      "base-950": { "role": "neutral", "displayName": "Window", "canonical": "#141210", "tonalRamp": ["#141210", "#181614", "#1e1c19", "#26231f", "#322e2a", "#423d38", "#4d4a46", "#7d7871"] },
+      "neutral-100": { "role": "neutral", "displayName": "Reading Text", "canonical": "#f1ede6", "tonalRamp": ["#7d7871", "#8e8982", "#9e9891", "#b7b1a9", "#d9d4cc", "#f1ede6", "#fffdf9", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Home's title: the current app's name at 34px, Sora." },
+      "display-onboarding": { "displayName": "Onboarding display", "purpose": "The welcome headline only." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles, Sora sentence case." },
+      "title": { "displayName": "Title", "purpose": "Section titles inside a page, Sora sentence case. Replaces eyebrow labels." },
+      "body": { "displayName": "Body", "purpose": "Nav, captions, explanations." },
+      "label": { "displayName": "Label", "purpose": "Field labels: plain small text, never uppercase." },
+      "mono": { "displayName": "Mono", "purpose": "Keys, shortcuts and counts only." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 0 0 rgba(255,250,240,0.04) inset, 0 12px 32px -18px rgba(0,0,0,0.75)", "purpose": "Resting surface." },
+      { "name": "modal", "value": "0 1px 0 0 rgba(255,250,240,0.05) inset, 0 28px 70px -24px rgba(0,0,0,0.8)", "purpose": "Modal panels." },
+      { "name": "page-sheet", "value": "0 0 0 1px rgba(255,250,240,0.05), 0 18px 50px -20px rgba(0,0,0,0.8)", "purpose": "The graphite page laid over the space-washed frame." },
+      { "name": "keycap", "value": "0 1px 0 0 rgba(255,250,240,0.07) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 8px 18px -10px rgba(0,0,0,0.75)", "purpose": "Anything shaped like a key you could press." },
+      { "name": "button-primary", "value": "0 1px 0 0 rgba(255,255,255,0.4) inset, 0 6px 14px -8px rgba(0,0,0,0.8)", "purpose": "The ink button." },
+      { "name": "notice", "value": "0 1px 0 0 rgba(255,250,240,0.05) inset, 0 24px 60px -20px rgba(0,0,0,0.85)", "purpose": "Noma Notice floating over the user's work." },
+      { "name": "recess", "value": "0 1px 2px 0 rgba(0,0,0,0.4) inset", "purpose": "Field wells." },
+      { "name": "trackpad-face", "value": "0 2px 6px 0 rgba(0,0,0,0.55) inset", "purpose": "The recessed trackpad face inside its bezel." }
+    ],
+    "motion": [
+      { "name": "space-slide", "value": "--space-h/--space-c 700ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Signature: the app's hue slides across the window when the app changes (registered @property)." },
+      { "name": "ease-out-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrances: rise 220ms, scale-in 240ms." },
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Press feedback (scale 0.98, 150ms) and fades (180ms)." },
+      { "name": "page-in", "value": "fade 160ms ease-out", "purpose": "Pages fade without sliding." },
+      { "name": "exit", "value": "120-160ms ease-in", "purpose": "Exits are shorter and quieter than entrances." },
+      { "name": "onboarding-cycle", "value": "2600ms per app", "purpose": "Welcome trackpad cycles VS Code, Chrome, Spotify, Claude colours." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink fill: the one thing to press in a view.",
+      "html": "<button class=\"ds-btn-primary\">Save as workflow</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 6px; background: #ece8e1; color: #141210; border: none; border-radius: 10px; padding: 6px 14px; font: 500 13px Inter, system-ui, sans-serif; box-shadow: 0 1px 0 0 rgba(255,255,255,0.4) inset, 0 6px 14px -8px rgba(0,0,0,0.8); cursor: pointer; transition: transform 150ms cubic-bezier(0.25,1,0.5,1), background-color 150ms; } .ds-btn-primary:hover { background: #fffdf9; } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A raised graphite key for every other action.",
+      "html": "<button class=\"ds-btn-secondary\">Stop after this step</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; gap: 6px; background: #26231f; color: #f1ede6; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 6px 14px; font: 500 13px Inter, system-ui, sans-serif; box-shadow: 0 1px 0 0 rgba(255,250,240,0.05) inset, 0 4px 10px -6px rgba(0,0,0,0.7); cursor: pointer; transition: transform 150ms, background-color 150ms; } .ds-btn-secondary:hover { background: #322e2a; } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Text-only action: Not now, Cancel.",
+      "html": "<button class=\"ds-btn-quiet\">Not now</button>",
+      "css": ".ds-btn-quiet { background: transparent; color: #9e9891; border: none; border-radius: 10px; padding: 6px 10px; font: 400 13px Inter, system-ui, sans-serif; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-btn-quiet:hover { background: rgba(255,255,255,0.04); color: #f1ede6; } .ds-btn-quiet:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed well with a plain label above.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Name</span><input class=\"ds-input\" placeholder=\"Open terminal\" /></label>",
+      "css": ".ds-field { display: block; width: 260px; } .ds-field-label { display: block; margin-bottom: 6px; font: 500 12px Inter, system-ui, sans-serif; color: #9e9891; } .ds-input { width: 100%; box-sizing: border-box; background: #141210; color: #f1ede6; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 8px 12px; font: 400 14px Inter, system-ui, sans-serif; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.4) inset; } .ds-input::placeholder { color: #7d7871; } .ds-input:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Sidebar with app plate",
+      "kind": "nav",
+      "refersTo": "space-plate",
+      "description": "Sidebar on the app's colour, the In <app> plate, nav rows.",
+      "html": "<nav class=\"ds-nav\" style=\"--h:248;--c:0.13\"><div class=\"ds-plate\"><span class=\"ds-plate-in\">In</span><span class=\"ds-plate-app\">Visual Studio Code</span></div><button class=\"ds-nav-row ds-active\">Home</button><button class=\"ds-nav-row\">Glide</button><button class=\"ds-nav-row\">Workflows</button></nav>",
+      "css": ".ds-nav { width: 224px; padding: 20px 12px; background: oklch(0.215 calc(var(--c) * 0.32) var(--h)); display: flex; flex-direction: column; gap: 2px; } .ds-plate { margin-bottom: 20px; padding: 8px 10px; border-radius: 12px; background: oklch(0.27 calc(var(--c) * 0.45) var(--h) / 0.7); box-shadow: 0 1px 0 0 rgba(255,250,240,0.05) inset; } .ds-plate-in { display: block; font: 400 11px Inter, sans-serif; color: oklch(0.86 calc(var(--c) * 0.7) var(--h) / 0.6); } .ds-plate-app { display: block; font: 500 13px Inter, sans-serif; color: oklch(0.86 calc(var(--c) * 0.7) var(--h)); } .ds-nav-row { text-align: left; background: transparent; border: none; border-radius: 10px; padding: 7px 10px; font: 400 13px Inter, sans-serif; color: rgba(183,177,169,0.8); cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-nav-row:hover { background: rgba(255,255,255,0.035); color: #f1ede6; } .ds-nav-row.ds-active { background: rgba(255,255,255,0.075); color: #fffdf9; font-weight: 500; box-shadow: 0 1px 0 0 rgba(255,250,240,0.06) inset, 0 4px 10px -6px rgba(0,0,0,0.6); } .ds-nav-row:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The resting graphite surface. Never nested.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Saved workflows</h3><p class=\"ds-card-body\">Three workflows, each runs from a Glide zone.</p></div>",
+      "css": ".ds-card { width: 320px; padding: 24px; background: #1e1c19; border: 1px solid rgba(255,255,255,0.055); border-radius: 18px; box-shadow: 0 1px 0 0 rgba(255,250,240,0.04) inset, 0 12px 32px -18px rgba(0,0,0,0.75); } .ds-card-title { margin: 0; font: 600 18px 'Sora Variable', Sora, Inter, sans-serif; color: #f1ede6; } .ds-card-body { margin: 6px 0 0; font: 400 13px Inter, sans-serif; color: #9e9891; }"
+    },
+    {
+      "name": "Flow's note",
+      "kind": "card",
+      "refersTo": "flow-note",
+      "description": "A Flow suggestion on its own violet paper.",
+      "html": "<div class=\"ds-note\"><p class=\"ds-note-meta\"><span class=\"ds-dot\"></span>Flow noticed this 6 times</p><p class=\"ds-note-title\">Save, switch to Chrome, refresh</p><div class=\"ds-note-actions\"><button class=\"ds-note-primary\">Put it on a zone</button><button class=\"ds-note-quiet\">Not now</button></div></div>",
+      "css": ".ds-note { width: 380px; padding: 28px; border-radius: 18px; border: 1px solid rgba(176,154,230,0.22); background: linear-gradient(to bottom, #221d2b, #1d1a22); box-shadow: 0 1px 0 0 rgba(214,200,255,0.07) inset, 0 14px 36px -18px rgba(0,0,0,0.8); } .ds-note-meta { margin: 0; display: flex; align-items: center; gap: 6px; font: 400 13px Inter, sans-serif; color: #b09ae6; } .ds-dot { width: 6px; height: 6px; border-radius: 999px; background: #b09ae6; } .ds-note-title { margin: 8px 0 0; font: 600 22px/1.35 'Sora Variable', Sora, Inter, sans-serif; letter-spacing: -0.01em; color: #f1ede6; } .ds-note-actions { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; gap: 16px; } .ds-note-primary { background: #ece8e1; color: #141210; border: none; border-radius: 10px; padding: 6px 14px; font: 500 13px Inter, sans-serif; cursor: pointer; } .ds-note-primary:hover { background: #fffdf9; } .ds-note-quiet { background: transparent; border: none; color: #9e9891; font: 400 13px Inter, sans-serif; cursor: pointer; } .ds-note-quiet:hover { color: #f1ede6; }"
+    },
+    {
+      "name": "Trackpad",
+      "kind": "custom",
+      "refersTo": "trackpad",
+      "description": "Signature object: mirrored zones lit from the swipe edge in the app's colour, app named in the centre.",
+      "html": "<div class=\"ds-pad\" style=\"--h:248;--c:0.13\"><div class=\"ds-face\"><div class=\"ds-zone ds-l ds-top\"><span class=\"ds-zname\">Upper left</span><span class=\"ds-act\">Run</span><span class=\"ds-key\">Ctrl+F5</span></div><div class=\"ds-zone ds-l ds-bot\"><span class=\"ds-zname\">Lower left</span><span class=\"ds-act\">Terminal</span></div><div class=\"ds-zone ds-r ds-top\"><span class=\"ds-zname\">Upper right</span><span class=\"ds-act\">Debug</span><span class=\"ds-key\">F5</span></div><div class=\"ds-zone ds-r ds-bot\"><span class=\"ds-zname\">Lower right</span><span class=\"ds-act\">Search</span></div><div class=\"ds-center\">Visual Studio Code</div></div></div>",
+      "css": ".ds-pad { position: relative; width: 360px; aspect-ratio: 3/2; padding: 3px; border-radius: 22px; background: linear-gradient(to bottom, #1e1d20, #18171a); box-shadow: 0 1px 0 0 rgba(255,250,240,0.07) inset, 0 -1px 0 0 rgba(0,0,0,0.5) inset, 0 22px 48px -24px rgba(0,0,0,0.9); } .ds-face { position: absolute; inset: 3px; overflow: hidden; border-radius: 19px; background: #141315; box-shadow: 0 2px 6px 0 rgba(0,0,0,0.55) inset; } .ds-zone { position: absolute; width: 31%; height: 50%; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px; transition: background-color 200ms; } .ds-top { top: 0; } .ds-bot { bottom: 0; } .ds-l { left: 0; align-items: flex-start; background: linear-gradient(to right, oklch(0.76 var(--c) var(--h) / 0.24), oklch(0.76 var(--c) var(--h) / 0.07), transparent); } .ds-r { right: 0; align-items: flex-end; text-align: right; background: linear-gradient(to left, oklch(0.76 var(--c) var(--h) / 0.24), oklch(0.76 var(--c) var(--h) / 0.07), transparent); } .ds-zone:hover { background: oklch(0.76 var(--c) var(--h) / 0.14); } .ds-zname { font: 400 11px Inter, sans-serif; color: #9e9891; } .ds-act { margin-top: auto; font: 600 14px Inter, sans-serif; color: #fffdf9; } .ds-key { font: 400 11px 'JetBrains Mono', monospace; color: #9e9891; } .ds-center { position: absolute; left: 33%; right: 33%; top: 50%; transform: translateY(-50%); text-align: center; font: 600 13px 'Sora Variable', Sora, Inter, sans-serif; color: oklch(0.86 calc(var(--c) * 0.7) var(--h)); }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "custom",
+      "refersTo": "toggle-on",
+      "description": "Ink track when on, recessed well when off.",
+      "html": "<button class=\"ds-toggle\" role=\"switch\" aria-checked=\"true\"><span class=\"ds-thumb\"></span></button>",
+      "css": ".ds-toggle { display: flex; align-items: center; width: 44px; height: 24px; padding: 2px; border-radius: 999px; border: 1px solid transparent; background: #ece8e1; box-shadow: 0 1px 0 0 rgba(255,255,255,0.35) inset; cursor: pointer; } .ds-thumb { width: 16px; height: 16px; border-radius: 999px; background: #141210; transform: translateX(22px); box-shadow: 0 1px 3px rgba(0,0,0,0.5); transition: transform 200ms ease-out; } .ds-toggle[aria-checked='false'] { background: #141210; border-color: rgba(255,255,255,0.08); box-shadow: 0 1px 2px 0 rgba(0,0,0,0.5) inset; } .ds-toggle[aria-checked='false'] .ds-thumb { transform: none; background: #9e9891; } .ds-toggle:focus-visible { outline: 2px solid #ece8e1; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "App Spaces",
+    "overview": "Noma wears the colour of the app you're in. The window frame, the wash at the top of every page, the app's own name and the trackpad's zones all take the current app's hue, the way an Arc space or a Things area has its own colour. Switch from VS Code to Spotify and the colour slides across the window over 700ms. You know whose four actions you're looking at before you read a word.\n\nEverything else stays out of the way: a warm graphite ground (brown-black, never blue-black), off-white ink for the one thing you press, Sora for titles, Inter for reading, JetBrains Mono only for keys and shortcuts. Surfaces are solid materials with real offset shadows: no glass, no glow, no colour on cards. Flow, the part of Noma that notices repeated work, speaks on its own violet paper, so a suggestion never reads as part of the interface. Gold appears only when real hardware is in contact.\n\nThe system replaces the earlier one-accent (blue `#4c7eff`) \"frosted metal and glass\" dashboard. It refuses that pattern specifically: no single brand accent on every control, no uppercase eyebrow labels over sections, no AI gradients or glow, no fake 3D hardware.",
+    "keyCharacteristics": [
+      "One colour per app (OKLCH hue + chroma, fixed lightness), meaning only \"where you are\".",
+      "Off-white ink is the only \"press me\" colour; one primary per view.",
+      "Warm graphite ground in six steps; warm neutral text in seven.",
+      "Real offset shadows plus a hairline inset top-light on every raised surface.",
+      "Sora sentence-case titles; no kickers; mono only for keys.",
+      "The trackpad is the signature object, drawn at one scale everywhere."
+    ],
+    "rules": [
+      { "name": "The Where-You-Are Rule", "body": "The app's colour means only \"where you are\": the frame, the page wash, the app's name, its zones and its icon plate. Never a button, a chart series, a status, or decoration. If removing the hue would lose information about which app this is, it belongs; otherwise it doesn't.", "section": "colors" },
+      { "name": "The Ink Rule", "body": "Off-white ink is the only \"press me\" colour, and a view has at most one ink button. Everything else is a raised graphite key or a quiet text action.", "section": "colors" },
+      { "name": "The Flow's Voice Rule", "body": "Violet is Flow speaking: a suggestion, something Flow noticed. Never general UI, never a highlight.", "section": "colors" },
+      { "name": "The Real Contact Rule", "body": "Gold appears only when real hardware is connected. No physical device exists for users yet, so in practice it is almost never seen.", "section": "colors" },
+      { "name": "The No-Kicker Rule", "body": "No uppercase, letter-spaced eyebrow or kicker labels. Section titles are Sora in sentence case; field labels are plain small text. Stored action names in capitals (\"NEW TAB\") are shown sentence-cased (\"New tab\") by `zoneLabel`; a mixed-case label the user typed is left alone.", "section": "typography" },
+      { "name": "The Mono-Means-Keys Rule", "body": "JetBrains Mono is for things you'd type or count. Never for headings or decoration.", "section": "typography" },
+      { "name": "The No-Nest Rule", "body": "A card never sits inside a card. Inside a surface, group with spacing and hairline rules.", "section": "elevation" },
+      { "name": "The Solid Material Rule", "body": "Surfaces are opaque graphite. No glass, no blur, no colour on cards; the app's colour lives only in the frame, the wash and the app's own name and zones.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put the app's colour only on the frame (`space-wash`), the page wash (`space-deep`), the app's name (`space-ink`), its icon plate and its trackpad zones.",
+      "Do use ink (`#ece8e1`) for the one primary action in a view; everything else is a graphite key or a quiet text action.",
+      "Do write section titles in Sora, sentence case, and field labels as plain 12px text.",
+      "Do draw the trackpad with `GlideZoneMap` at 600px (360px compact), mirrored left/right, lit from the swipe edge.",
+      "Do give every raised surface the inset top-light plus an offset drop shadow from the Shadow Vocabulary.",
+      "Do reuse the recipes in `lib/surfaces.ts` (CARD, GLASS_PANEL, KEYCAP_SHADOW, HERO_CARD, NOTICE_GLASS, BUTTON_*, FIELD_*) rather than hand-rolling a surface.",
+      "Do draw icons from `icons.tsx`.",
+      "Do keep the logo mark at 1.56:1 with `object-contain`."
+    ],
+    "donts": [
+      "Don't use the app's colour on buttons, charts, statuses or decoration.",
+      "Don't use violet for anything but Flow speaking, or gold for anything but real hardware contact.",
+      "Don't add uppercase, letter-spaced eyebrow or kicker labels.",
+      "Don't nest a card inside a card.",
+      "Don't use unicode glyphs as icons (arrows, checks, crosses, plus signs); use `icons.tsx`.",
+      "Don't scale the trackpad to fit its container or draw it at a third size.",
+      "Don't use glass, backdrop blur, glow, AI gradients or coloured shadows.",
+      "Don't fake 3D hardware or imply a connected device that doesn't exist.",
+      "Don't square-crop or circle-crop the logo mark."
+    ]
+  }
+}

@@ -10,7 +10,7 @@ import { workflowChainSteps } from '../lib/workflowChain'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
 import { WorkflowChain } from './WorkflowChain'
 import { AppIcon } from './AppIcon'
-import { HERO_CARD } from '../lib/surfaces'
+import { BUTTON_PRIMARY, BUTTON_QUIET, HERO_CARD } from '../lib/surfaces'
 
 /**
  * The Noma Moment: the single most important component in the app. "Noma
@@ -157,7 +157,7 @@ export function NomaMoment({
               <button
                 type="button"
                 onClick={() => void setGlideEnabled(true)}
-                className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/90"
+                className={BUTTON_PRIMARY}
               >
                 Turn on Glide
               </button>
@@ -179,40 +179,35 @@ export function NomaMoment({
   }
 
   return (
-    <div className={isHero ? `${HERO_CARD} p-6` : ''}>
-      <div className="flex items-start justify-between gap-4">
-        <p
-          className={
-            isHero
-              ? 'text-[11px] font-semibold uppercase tracking-widest text-neutral-500'
-              : 'font-display text-base font-semibold text-neutral-100'
-          }
-        >
-          <span className={isHero ? 'text-violet' : ''}>{suggestion.isDemo ? 'Demo workflow' : 'Noma noticed'}</span>
-          {suggestion.isDemo && (
-            <span className="ml-2 rounded border border-base-600 px-1.5 py-px text-[10px] font-normal normal-case tracking-normal text-neutral-500">
-              Simulated by Demo Mode, not learned from you
-            </span>
-          )}
-        </p>
-        {isHero && (
-          <span className="shrink-0 text-xs text-neutral-500" title={formatAbsoluteTime(suggestion.createdAt)}>
-            {formatRelativeTime(suggestion.createdAt)}
-          </span>
-        )}
-      </div>
-
-      <div
-        className={`flex items-start gap-2.5 text-neutral-100 ${
-          isHero ? 'mt-2' : 'mt-1'
-        }`}
-      >
+    <div className={isHero ? `${HERO_CARD} p-7` : ''}>
+      <div className={`flex items-start gap-3 text-neutral-100`}>
         {isHero && (!chain || chain.length <= 1) && suggestion.applicationId && (
           <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={28} variant="tile" className="mt-0.5" />
         )}
-        <p className={isHero ? 'font-display text-xl font-semibold leading-snug' : 'text-sm text-neutral-600'}>
-          {occurrenceSentence(suggestion)}
-        </p>
+        <div className="min-w-0">
+          <p className={isHero ? 'font-display text-[22px] font-semibold leading-snug tracking-[-0.01em] text-balance' : 'font-display text-base font-semibold text-neutral-100'}>
+            {isHero ? occurrenceSentence(suggestion) : suggestion.isDemo ? 'Demo workflow' : 'Noma noticed'}
+          </p>
+          <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${isHero ? 'mt-2 text-[13px]' : 'mt-1 text-sm'} text-neutral-400`}>
+            {isHero ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 text-violet">
+                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet" />
+                  {suggestion.isDemo ? 'Demo workflow' : 'Flow noticed this'}
+                </span>
+                <span aria-hidden className="text-neutral-600">·</span>
+                <span title={formatAbsoluteTime(suggestion.createdAt)}>{formatRelativeTime(suggestion.createdAt)}</span>
+              </>
+            ) : (
+              occurrenceSentence(suggestion)
+            )}
+            {suggestion.isDemo && (
+              <span className="rounded-md border border-base-600 px-1.5 py-px text-[11px] text-neutral-400">
+                Simulated by Demo Mode, not learned from you
+              </span>
+            )}
+          </p>
+        </div>
       </div>
 
       {chain && chain.length > 1 && (
@@ -223,7 +218,7 @@ export function NomaMoment({
 
       {!isPicking ? (
         <>
-          <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 ${isHero ? 'mt-6' : 'mt-3'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 ${isHero ? 'mt-7 border-t border-white/[0.06] pt-5' : 'mt-3'}`}>
             <p className={`text-neutral-100 ${isHero ? 'text-base' : 'text-sm'}`}>
               {suggestion.action ? 'Turn this into one Glide action?' : 'Worth remembering for next time?'}
             </p>
@@ -231,23 +226,22 @@ export function NomaMoment({
               <button
                 type="button"
                 onClick={() => void startPicking()}
-                className={`rounded-md bg-accent font-medium text-white shadow-[0_2px_8px_-2px_rgba(76,126,255,0.35)] transition-colors duration-150 hover:bg-accent/90 active:opacity-90 ${
-                  isHero ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
-                }`}
+                className={BUTTON_PRIMARY}
               >
                 {suggestion.action ? 'Review steps' : 'Sounds right'}
               </button>
               <button
                 type="button"
                 onClick={() => onDismiss(suggestion.id)}
-                className={`text-neutral-500 hover:text-neutral-100 ${isHero ? 'text-sm' : 'text-xs'}`}
+                className={BUTTON_QUIET}
               >
                 Not now
               </button>
               <button
                 type="button"
                 onClick={() => setShowMore((prev) => !prev)}
-                className="text-[11px] text-neutral-400 hover:text-neutral-600"
+                aria-expanded={showMore}
+                className={BUTTON_QUIET}
               >
                 More
               </button>
@@ -273,7 +267,7 @@ export function NomaMoment({
           )}
         </>
       ) : (
-        <div className="mt-4 border-t border-base-700 pt-4">
+        <div className="mt-6 border-t border-white/[0.06] pt-5">
           {profile === undefined && <p className="text-xs text-neutral-600">Looking at your controls…</p>}
 
           {profile === null && (
@@ -284,7 +278,7 @@ export function NomaMoment({
               <button
                 type="button"
                 onClick={() => void handleAcceptInformational()}
-                className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_2px_8px_-2px_rgba(76,126,255,0.35)] transition-colors duration-150 hover:bg-accent/90"
+                className={`shrink-0 ${BUTTON_PRIMARY}`}
               >
                 Accept
               </button>
@@ -338,7 +332,7 @@ export function NomaMoment({
                       key={slot}
                       type="button"
                       onClick={() => void handleAssign(slot)}
-                      className="rounded-md border border-base-700 px-2 py-2 text-center text-xs text-neutral-500 transition-colors hover:border-violet hover:text-neutral-100"
+                      className="noma-press rounded-[10px] border border-white/[0.07] bg-base-800 px-2 py-2.5 text-center text-xs text-neutral-400 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset] transition-colors hover:border-violet/50 hover:text-neutral-100"
                     >
                       <div className="text-[10px] text-neutral-500">{zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : `Control ${slot}`}</div>
                       <div className="mt-0.5 truncate text-neutral-100">{control?.label || '–'}</div>
@@ -356,7 +350,7 @@ export function NomaMoment({
           <button
             type="button"
             onClick={() => setIsPicking(false)}
-            className="mt-3 text-xs text-neutral-500 hover:text-neutral-100"
+            className={`mt-3 ${BUTTON_QUIET}`}
           >
             Cancel
           </button>

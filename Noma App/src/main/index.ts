@@ -149,7 +149,12 @@ const glide = new GlideController({
     mainWindow?.webContents.send(IPC_CHANNELS.GLIDE_ACTIVITY, activity)
     // Name what ran, in the corner, since the user is looking at another app.
     if (activity.type === 'fire' && activity.outcome === 'pressed' && activity.actionName) {
-      showGlideToast({ name: activity.actionName, applicationName: activity.applicationName, at: activity.at })
+      showGlideToast({
+        name: activity.actionName,
+        applicationName: activity.applicationName,
+        applicationId: activity.applicationId,
+        at: activity.at
+      })
     }
   }
 })

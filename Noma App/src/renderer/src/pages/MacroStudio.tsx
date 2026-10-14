@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { BUTTON_SECONDARY } from '../lib/surfaces'
+import { PlusIcon } from '../components/icons'
 import type { Macro } from '@shared/types'
 import { useMacrosStore } from '../stores/macrosStore'
 import { useUiStore } from '../stores/uiStore'
@@ -61,7 +63,7 @@ export function MacroStudio() {
 
   return (
     <div className="flex h-full">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-white/10 p-6">
+      <aside className="flex w-72 shrink-0 flex-col border-r border-white/[0.06] px-6 pb-6 pt-14">
         <div className="mb-1 font-display text-xl font-semibold text-neutral-100">Macro Studio</div>
         <p className="mb-5 text-xs text-neutral-500">
           Build a sequence of actions once, then assign it to any control.
@@ -69,9 +71,10 @@ export function MacroStudio() {
         <button
           type="button"
           onClick={handleNew}
-          className="mb-4 rounded-md border border-accent-muted bg-accent/10 px-3 py-2 text-xs font-medium text-accent transition-transform duration-150 hover:bg-accent/20 active:scale-[0.97]"
+          className={`mb-5 ${BUTTON_SECONDARY}`}
         >
-          + New Macro{drafts.new && !isCreatingNew ? ' (draft)' : ''}
+          <PlusIcon className="h-3.5 w-3.5" />
+          New macro{drafts.new && !isCreatingNew ? ' (draft)' : ''}
         </button>
 
         {isLoading ? (
@@ -94,10 +97,10 @@ export function MacroStudio() {
                   <div className="flex items-center justify-between gap-2">
                     <span className="truncate">{macro.name}</span>
                     {drafts[macro.id] ? (
-                      <span className="text-[10px] uppercase tracking-widest text-accent">Unsaved</span>
+                      <span className="text-xs font-medium text-neutral-200">Unsaved</span>
                     ) : (
                       !macro.enabled && (
-                        <span className="text-[10px] uppercase tracking-widest text-neutral-700">Off</span>
+                        <span className="text-xs font-medium text-neutral-400">Off</span>
                       )
                     )}
                   </div>

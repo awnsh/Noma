@@ -88,7 +88,7 @@ export function GettingStartedCard({ flowEnabled, savedWorkflows }: { flowEnable
               }`}
             >
               {step.done && (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mc-check h-3 w-3 text-white">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mc-check h-3 w-3 text-base-950">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>
               )}

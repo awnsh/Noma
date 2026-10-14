@@ -1,5 +1,9 @@
+import { useEffect, useState } from 'react'
 import logo from '../assets/logo.png'
+import wordmark from '../assets/noma-wordmark.png'
 import { OnboardingButton } from './OnboardingButton'
+import { GlideZoneMap } from './GlideZoneMap'
+import { usePrefersReducedMotion } from '../lib/usePrefersReducedMotion'
 import { BetaBadge } from './BetaBadge'
 import { IS_BETA } from '@shared/constants'
 
@@ -7,16 +11,38 @@ interface OnboardingWelcomeScreenProps {
   onContinue: () => void
 }
 
+/** A few apps the trackpad steps through, each in its own colour: every
+ *  app has its own four zones. An illustration, zone names only. */
+const SHOWCASE_APPS = [
+  { id: 'code', name: 'VS Code' },
+  { id: 'chrome', name: 'Chrome' },
+  { id: 'spotify', name: 'Spotify' },
+  { id: 'claude', name: 'Claude' }
+]
+const SHOWCASE_STEP_MS = 2600
+
 /** Screen 1: what Noma is, in two sentences, and one button. */
 export function OnboardingWelcomeScreen({ onContinue }: OnboardingWelcomeScreenProps) {
+  const reduceMotion = usePrefersReducedMotion()
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    if (reduceMotion) return
+    const timer = window.setInterval(() => setIndex((value) => (value + 1) % SHOWCASE_APPS.length), SHOWCASE_STEP_MS)
+    return () => window.clearInterval(timer)
+  }, [reduceMotion])
+  const app = SHOWCASE_APPS[index]
+
   return (
     <div className="flex flex-col items-center text-center">
-      <img src={logo} alt="" className="mb-6 h-9 w-14" />
-      <div className="mb-5 flex items-center gap-2.5">
-        <span className="font-display text-xs font-medium uppercase tracking-[0.4em] text-neutral-500">Noma</span>
-        <BetaBadge />
+      <div className="mb-10 flex items-center gap-1.5">
+        <img src={logo} alt="" className="h-[22px] w-[34px] object-contain" />
+        <img src={wordmark} alt="Noma" className="h-[13px] w-auto" />
+        <BetaBadge className="ml-1" />
       </div>
-      <h1 className="font-display text-4xl font-semibold leading-tight text-neutral-50 sm:text-5xl">
+      <div className="mb-10 w-[360px]" aria-hidden>
+        <GlideZoneMap compact zoneCount={4} controls={[]} centerLabel={app.name} centerAppId={app.id} />
+      </div>
+      <h1 className="font-display text-[44px] font-semibold leading-[1.05] tracking-[-0.025em] text-neutral-50 text-balance">
         Your next action, one swipe away.
       </h1>
       <p className="mt-6 max-w-md text-base text-neutral-400">

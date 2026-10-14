@@ -521,6 +521,7 @@ export type GlideActivity =
        *  control's label. Only set when `outcome` is 'pressed'. */
       actionName?: string
       applicationName?: string
+      applicationId?: string
     }
   | Extract<HoloTrackpadEvent, { type: 'miss' }>
 
@@ -528,6 +529,8 @@ export type GlideActivity =
 export interface GlideToast {
   name: string
   applicationName?: string
+  /** For the badge's colour: the app's space (renderer lib/appSpace.ts). */
+  applicationId?: string
   /** When the swipe fired; also tells two toasts for the same name apart. */
   at: number
 }

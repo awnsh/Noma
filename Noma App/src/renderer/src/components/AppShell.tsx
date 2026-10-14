@@ -1,10 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { BUTTON_SECONDARY } from '../lib/surfaces'
 import { useUiStore, type Page } from '../stores/uiStore'
 import { useApplicationsStore } from '../stores/applicationsStore'
 import { useActionRunStore } from '../stores/actionRunStore'
 import logo from '../assets/logo.png'
 import wordmark from '../assets/noma-wordmark.png'
 import { BetaBadge } from './BetaBadge'
+import { AppIcon } from './AppIcon'
+import { useFlowStore } from '../stores/flowStore'
+import { useAppSpace } from '../lib/appSpace'
 import {
   HomeIcon,
   DemoIcon,
@@ -58,10 +62,10 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
       type="button"
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.98] ${
+      className={`flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-left text-[13px] transition-[color,background-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98] ${
         isActive
-          ? 'border border-accent/25 bg-accent/[0.12] font-medium text-accent'
-          : 'border border-transparent text-neutral-400 hover:text-neutral-100'
+          ? 'bg-white/[0.075] font-medium text-neutral-50 shadow-[0_1px_0_0_rgba(255,250,240,0.06)_inset,0_4px_10px_-6px_rgba(0,0,0,0.6)]'
+          : 'text-neutral-300/80 hover:bg-white/[0.035] hover:text-neutral-100'
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -71,11 +75,33 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
 }
 
 function NavDivider() {
-  return <div className="my-3 h-px bg-white/[0.08]" />
+  return <div className="my-3 h-px bg-white/[0.06]" />
 }
 
 function NavGroupLabel({ children }: { children: ReactNode }) {
-  return <div className="mb-1.5 px-2.5 text-[11px] tracking-wide text-neutral-600">{children}</div>
+  return <div className="mb-1 px-2.5 text-[11px] text-neutral-300/50">{children}</div>
+}
+
+/**
+ * Where you are: the app Noma is acting for right now, on its own colour.
+ * The only place in the chrome that names it, so it's the first thing the
+ * sidebar says after Noma's own name.
+ */
+function CurrentSpace() {
+  const application = useFlowStore((state) => state.context.application)
+  return (
+    <div className="mb-6 flex items-center gap-2.5 rounded-[12px] bg-space-deep/70 px-2.5 py-2 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset]">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-black/25">
+        <AppIcon applicationId={application?.id} name={application?.name ?? 'No app'} size={18} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[11px] leading-tight text-space-ink/60">In</span>
+        <span className="block truncate text-[13px] font-medium leading-tight text-space-ink">
+          {application?.name ?? 'No app yet'}
+        </span>
+      </span>
+    </div>
+  )
 }
 
 /**
@@ -94,6 +120,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const developerTools = useUiStore((state) => state.developerTools)
   const refreshApplications = useApplicationsStore((state) => state.refresh)
   const subscribeApplications = useApplicationsStore((state) => state.subscribe)
+  useAppSpace()
 
   // Loaded once, app-wide; every `AppIcon` anywhere in the tree resolves
   // its executable path from this store (see applicationsStore.ts), not a
@@ -106,25 +133,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-base-950 text-neutral-100">
-      {/* v4: a single, extremely low-opacity cool wash; not the two
-          80-160px-blur violet/blue "AI glow" blobs a prior version had.
-          Real feedback was that even a restrained version of that reads
-          as decoration; this is deliberately close to invisible, the way
-          a premium physical product's own ambient lighting would be. */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div
-          className="absolute -right-1/4 -top-1/3 h-[900px] w-[900px] rounded-full opacity-[0.05] blur-[180px]"
-          style={{ background: 'radial-gradient(circle, #4c7eff 0%, transparent 70%)' }}
-        />
-      </div>
-
-      <aside className="relative z-10 flex w-56 shrink-0 flex-col border-r border-base-700 bg-white/[0.03] px-4 py-6 backdrop-blur-2xl">
-        <div className="mb-8 flex items-center gap-1.5 px-1">
-          <img src={logo} alt="" className="h-6 w-[37px] object-contain" />
-          <img src={wordmark} alt="Noma" className="h-[14px] w-auto" />
+    <div className="relative flex h-screen w-screen overflow-hidden bg-space-wash text-neutral-100">
+      {/* The window frame is the app's space (lib/appSpace.ts), the way an
+          Arc window takes its space's colour: the sidebar sits directly on
+          it, and the page is a graphite sheet laid on top. */}
+      <aside className="relative z-10 flex w-56 shrink-0 flex-col px-3 pb-4 pt-5">
+        <div className="mb-5 flex items-center gap-1.5 px-2">
+          <img src={logo} alt="" className="h-[22px] w-[34px] object-contain" />
+          <img src={wordmark} alt="Noma" className="h-[13px] w-auto" />
           <BetaBadge className="ml-1" />
         </div>
+        <CurrentSpace />
 
         <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
           <div className="flex flex-col gap-0.5">
@@ -163,9 +182,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
       </aside>
-      <main className="relative z-10 flex-1 overflow-y-auto">
-        <RunningActionBar />
-        {children}
+      <main className="relative z-10 my-2 mr-2 flex-1 overflow-y-auto rounded-[16px] bg-base-950 shadow-[0_0_0_1px_rgba(255,250,240,0.05),0_18px_50px_-20px_rgba(0,0,0,0.8)]">
+        {/* The app's colour bleeds a little way onto the sheet from the top,
+            so each page opens in its space and settles into graphite. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[460px] bg-gradient-to-b from-space-deep/90 via-space-deep/35 to-transparent"
+        />
+        <div className="relative h-full">
+          <RunningActionBar />
+          {children}
+        </div>
       </main>
     </div>
   )
@@ -196,7 +223,7 @@ function RunningActionBar() {
   return (
     <div
       role="status"
-      className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-accent/30 bg-base-900/95 px-10 py-2.5 text-sm text-neutral-100 backdrop-blur"
+      className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-white/[0.06] bg-base-850 px-10 py-2.5 text-sm text-neutral-100"
     >
       <span>
         Running <span className="font-medium">“{run.label ?? 'action'}”</span>… it stops by itself when done.
@@ -204,7 +231,7 @@ function RunningActionBar() {
       <button
         type="button"
         onClick={() => void window.flow.cancelRunningAction()}
-        className="rounded-md border border-base-600 px-3 py-1 text-xs text-neutral-100 hover:border-neutral-400"
+        className={BUTTON_SECONDARY}
       >
         Stop after this step
       </button>

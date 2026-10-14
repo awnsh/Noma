@@ -45,7 +45,7 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
       }`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-widest text-neutral-500">
+        <span className="text-xs font-medium text-neutral-400">
           {zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : `Control ${slot}`}
         </span>
         {glyph && <span className="text-sm text-neutral-500">{glyph}</span>}
@@ -54,7 +54,7 @@ export function ControlTile({ slot, control, application }: ControlTileProps) {
         <AppIcon applicationId={application.id} name={application.name} size={32} variant="tile" />
       )}
       <div>
-        <div className="truncate text-sm font-medium tracking-wide text-neutral-100">
+        <div className="truncate text-sm font-medium text-neutral-100">
           {control?.label || <span className="text-neutral-500">–</span>}
         </div>
         {caption && <div className="mt-1 truncate font-mono text-xs text-neutral-500">{caption}</div>}

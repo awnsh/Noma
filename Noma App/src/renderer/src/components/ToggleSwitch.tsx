@@ -18,11 +18,13 @@ export function ToggleSwitch({ checked, onChange, label }: ToggleSwitchProps) {
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={`flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-colors duration-200 ${
-        checked ? 'justify-start border-accent-muted bg-accent/30' : 'justify-start border-white/15 bg-base-800'
+        checked
+          ? 'justify-start border-transparent bg-accent shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset]'
+          : 'justify-start border-white/[0.08] bg-base-950 shadow-[0_1px_2px_0_rgba(0,0,0,0.5)_inset]'
       }`}
     >
       <span
-        className={`h-4 w-4 rounded-full transition-[transform,background-color] duration-200 ease-out ${checked ? 'translate-x-[22px] bg-accent' : 'translate-x-0 bg-neutral-500'}`}
+        className={`h-4 w-4 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.5)] transition-[transform,background-color] duration-200 ease-out ${checked ? 'translate-x-[22px] bg-base-950' : 'translate-x-0 bg-neutral-400'}`}
       />
     </button>
   )

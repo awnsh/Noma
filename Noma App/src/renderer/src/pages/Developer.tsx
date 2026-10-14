@@ -94,7 +94,7 @@ function formatRunTime(timestamp: number): string {
 function RecentRuns({ history }: { history: ActionHistory | null }) {
   return (
     <div className="mb-8">
-      <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">Recent Runs</div>
+      <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">Recent runs</div>
       <p className="mb-3 text-[11px] text-neutral-600">
         Every press and whether it worked, newest first, read from logs/actions.jsonl. Counts cover
         only what the log still holds; it keeps the most recent presses.
@@ -185,7 +185,7 @@ export function Developer() {
 
       <div className="mb-8 grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="text-xs font-medium text-neutral-400">
             Hardware Connection
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -201,7 +201,7 @@ export function Developer() {
         </div>
 
         <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="text-xs font-medium text-neutral-400">
             Workflow Monitoring
           </div>
           <div className="mt-2">
@@ -210,7 +210,7 @@ export function Developer() {
         </div>
 
         <div className="rounded-xl border border-white/10 bg-base-900 px-4 py-3">
-          <div className="text-[10px] uppercase tracking-widest text-neutral-600">
+          <div className="text-xs font-medium text-neutral-400">
             Keystroke Execution
           </div>
           <div className="mt-2">
@@ -229,7 +229,7 @@ export function Developer() {
       </div>
 
       <div className="mb-8 rounded-xl border border-white/10 bg-base-900 px-4 py-4">
-        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">Noma Notice</div>
+        <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">Noma Notice</div>
         <p className="mb-3 text-[11px] text-neutral-600">
           Puts a real workflow notice on screen now, instead of waiting for Flow to see the same
           workflow {WORKFLOW_NOTIFICATION_THRESHOLD} times. It replays the demo workflow through the
@@ -244,7 +244,7 @@ export function Developer() {
       </div>
 
       <div className="mb-8 rounded-xl border border-white/10 bg-base-900 px-4 py-4">
-        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+        <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
           Hardware Bring-Up Tools
         </div>
         <p className="mb-3 text-[11px] text-neutral-600">
@@ -318,7 +318,7 @@ export function Developer() {
       </div>
 
       <div className="mb-8">
-        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+        <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
           Current Control Mappings
         </div>
         <div className="overflow-hidden rounded-xl border border-white/10 bg-base-900">
@@ -337,7 +337,7 @@ export function Developer() {
                   key={control.id}
                   className="flex items-center gap-4 border-b border-white/5 px-4 py-2 text-sm last:border-b-0"
                 >
-                  <span className="w-16 shrink-0 text-[10px] uppercase tracking-widest text-neutral-600">
+                  <span className="w-16 shrink-0 text-xs font-medium text-neutral-400">
                     Slot {control.slot}
                   </span>
                   <span className="w-32 shrink-0 text-neutral-200">{control.label}</span>
@@ -353,7 +353,7 @@ export function Developer() {
       <RecentRuns history={actionHistory} />
 
       <div className="mb-8">
-        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+        <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
           Modules ({status.modules.length})
         </div>
         {status.modules.length === 0 ? (
@@ -375,7 +375,7 @@ export function Developer() {
       </div>
 
       <div>
-        <div className="mb-3 text-xs uppercase tracking-widest text-neutral-500">
+        <div className="mb-3 font-display text-[15px] font-semibold text-neutral-100">
           HOST ↔ DEVICE Log
         </div>
         <div className="max-h-96 overflow-y-auto rounded-xl border border-white/10 bg-base-900">

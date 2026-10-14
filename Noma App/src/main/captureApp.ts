@@ -29,8 +29,18 @@ export async function captureApp(options: {
     if (window.webContents.isLoading()) await new Promise((resolve) => window.webContents.once('did-finish-load', () => resolve(undefined)))
     window.setSize(1440, 900)
     window.show()
+    // First launch, before setup: what a new person sees first.
+    await sleep(1500)
+    await save('onboarding.png')
+    for (const step of ['glide', 'flow', 'firstAction']) {
+      await run(`window.flow.saveOnboardingState({ step: '${step}' })`)
+      window.webContents.reload()
+      await new Promise((resolve) => window.webContents.once('did-finish-load', () => resolve(undefined)))
+      await sleep(1500)
+      await save(`onboarding-${step}.png`)
+    }
     await run(
-      "window.flow.saveOnboardingState({ completed: true, step: 'done', selectedUseCases: [], flowEnabled: true, hardwareSkipped: true })"
+      "window.flow.saveOnboardingState({ completed: true, step: 'firstAction', selectedUseCases: [], flowEnabled: true, hardwareSkipped: true })"
     )
     // The state someone sees after setup rather than first launch: Flow and
     // Glide on, the checklist dismissed, no scrollbar in the picture.
@@ -62,6 +72,12 @@ export async function captureApp(options: {
     await open('Glide')
     await sleep(1200)
     await save('glide.png')
+    // Every other page, for design review (not used by the website).
+    for (const label of ['Learning', 'Activity', 'Macro Studio', 'Profiles', 'Usage Stats', 'Settings']) {
+      await open(label)
+      await sleep(1000)
+      await save(`page-${label.toLowerCase().replace(/\s+/g, '-')}.png`)
+    }
     app.exit(0)
   } catch (error) {
     console.error('[capture] failed:', error)

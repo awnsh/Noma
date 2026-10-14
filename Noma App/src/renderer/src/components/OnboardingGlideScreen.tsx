@@ -55,7 +55,7 @@ export function OnboardingGlideScreen({ onContinue }: OnboardingGlideScreenProps
         land in picks the action. It never clicks, and normal trackpad use doesn&apos;t count.
       </p>
 
-      <div className="mt-8 w-full rounded-2xl bg-holo-bg p-5">
+      <div className="mt-8 w-full">
         {state?.enabled ? (
           <>
             <GlideZoneMap compact zoneCount={zoneCount} controls={PRACTICE_CONTROLS} flashingZone={flashing} centerLabel="Swipe in" />

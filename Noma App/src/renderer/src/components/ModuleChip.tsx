@@ -91,10 +91,10 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
             </div>
           )}
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-200">
+            <div className="text-xs font-semibold text-neutral-100">
               {module.name}
             </div>
-            <div className="text-[9px] uppercase tracking-widest text-neutral-600">
+            <div className="text-[11px] text-neutral-500">
               {module.capabilities.join(' · ')}
             </div>
           </div>
@@ -163,7 +163,7 @@ export function ModuleChip({ module, onRemove }: ModuleChipProps) {
           <button
             type="button"
             onClick={() => setIsConfiguring(true)}
-            className="mt-1 w-full rounded-md border border-dashed border-white/10 py-1 text-[10px] uppercase tracking-widest text-neutral-500 hover:border-accent-muted hover:text-accent"
+            className="mt-1 w-full rounded-md border border-dashed border-white/10 py-1 text-xs font-medium text-neutral-400 hover:border-accent-muted hover:text-accent"
           >
             Configure
           </button>
