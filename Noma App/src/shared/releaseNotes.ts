@@ -7,6 +7,12 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.25': [
+    'Flow notices when you highlight something (drag across text or clips, double-click a word, Shift+click, pick a file). Noma keeps only that you highlighted, never what. A saved workflow copies or deletes whatever you have highlighted when you run it.',
+    'Delete or Backspace right after a highlight can now be part of a workflow, so "select the clips, then delete" is learned. Ordinary typing is still never recorded.',
+    'Chrome and other browsers: Flow learns the buttons you click and which tab you go to, and a workflow goes back to that tab. Tabs are kept only as a scrambled fingerprint, never their title or address.',
+    'Flow no longer keeps buttons that carry your name, folder names or branch names, and ignores minimize and scrollbar buttons.'
+  ],
   '0.1.24': [
     "Glide: the middle of the trackpad shows the app's icon with its name, so you can see at a glance whose four actions you're looking at.",
     'The Noma logo is no longer squashed in the sidebar or cut off in the Glide note, and the tray icon is sharper on Windows.'
