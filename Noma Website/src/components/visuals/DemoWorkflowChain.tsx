@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import DemoAppIcon from './appGlyphIcons'
+import { spaceStyle } from '../../lib/appSpace'
 
 export type DemoChainStep = { kind: 'app'; appId: string; label: string } | { kind: 'shortcut'; label: string }
 
@@ -63,7 +64,10 @@ const SIZES = {
   lg: { box: 58, icon: 50, name: 'text-base', action: 'text-xs', gap: 'gap-x-5' }
 } as const
 
-const ICON_BOX = 'flex shrink-0 items-center justify-center rounded-2xl border border-base-600 bg-base-850 shadow-[0_6px_16px_-10px_rgba(0,0,0,0.5)]'
+/** Each app step sits on that app's own colour, as in the app since
+ *  2026-10-14: the chain shows where each step happens. */
+const ICON_BOX =
+  'flex shrink-0 items-center justify-center rounded-[14px] bg-space-deep shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]'
 
 export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoChainStep[]; size?: 'md' | 'lg' }) {
   const reduceMotion = useReducedMotion()
@@ -88,8 +92,8 @@ export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoC
             transition={{ duration: 0.2, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
           >
             {node.kind === 'app' ? (
-              <div className={ICON_BOX} style={{ width: dim.box, height: dim.box }}>
-                <DemoAppIcon appId={node.appId} name={node.label} size={dim.icon} variant="bare" fill />
+              <div className={ICON_BOX} style={{ width: dim.box, height: dim.box, ...spaceStyle(node.appId) }}>
+                <DemoAppIcon appId={node.appId} name={node.label} size={Math.round(dim.icon * 0.72)} variant="bare" fill />
               </div>
             ) : (
               <span
@@ -110,7 +114,10 @@ export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoC
                     `truncate`d, narrower-than-content box clips from both
                     edges, silently dropping the string's own first letter
                     with no ellipsis marking it. */}
-                <p className={`mt-2 truncate text-left font-medium text-base-100 ${dim.name}`} style={{ maxWidth: dim.box + 28 }}>
+                <p
+                  className={`mt-2 truncate text-left font-medium text-space-ink ${dim.name}`}
+                  style={{ maxWidth: dim.box + 28, ...spaceStyle(node.appId) }}
+                >
                   {node.label}
                 </p>
                 {node.action && (

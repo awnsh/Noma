@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import AppIcon from './AppIcon'
+import { spaceStyle } from '../../lib/appSpace'
 import { appProfiles } from '../../data/appProfiles'
 
 /**
@@ -12,6 +13,12 @@ import { appProfiles } from '../../data/appProfiles'
  */
 
 export const GLIDE_APP_ID = 'claude'
+
+/** Glide's zones light in the app's own colour, as in the Noma app since
+ *  2026-10-14 (App Spaces): Claude's hue from lib/appSpace.ts, at the
+ *  lightness the app uses for `space` and `space-ink`. */
+const ZONE_GLOW = 'oklch(0.76 0.11 42)'
+const ZONE_LIT = 'oklch(0.86 0.077 42)'
 
 /** Slot order: upper left 1, upper right 2, lower left 3, lower right 4. */
 export const GLIDE_ZONES = [
@@ -146,14 +153,14 @@ export function GlideOverlay({
           <g key={zone.key}>
             <motion.line
               x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
-              stroke="#4c7eff" strokeWidth={26} strokeLinecap="round" filter="url(#glide-glow)"
+              stroke={ZONE_GLOW} strokeWidth={26} strokeLinecap="round" filter="url(#glide-glow)"
               initial={false}
               animate={{ opacity: lit ? 0.9 : 0 }}
               transition={{ duration: lit ? 0.12 : 0.6 }}
             />
             <motion.line
               x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]}
-              stroke={lit ? '#a9c0ff' : '#4c7eff'} strokeWidth={lit ? 8 : 6.5} strokeLinecap="round"
+              stroke={lit ? ZONE_LIT : ZONE_GLOW} strokeWidth={lit ? 8 : 6.5} strokeLinecap="round"
               initial={false}
               animate={{ opacity: lit ? 1 : 0.55 }}
               transition={{ duration: lit ? 0.12 : 0.6 }}
@@ -199,13 +206,13 @@ export function ControlPanel({
 }) {
   const app = appProfiles[GLIDE_APP_ID]
   return (
-    <>
+    <div style={spaceStyle(GLIDE_APP_ID)}>
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-space-deep shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07)]">
           <AppIcon id={GLIDE_APP_ID} color={app.color} className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium tracking-tight text-base-50">{app.shortName}</p>
+          <p className="truncate text-sm font-medium tracking-tight text-space-ink">{app.shortName}</p>
           <p className="truncate text-xs text-base-500">Tap a control to see its swipe</p>
         </div>
       </div>
@@ -225,16 +232,16 @@ export function ControlPanel({
                 compact ? 'h-[46px]' : 'h-[60px]'
               } ${
                 isFired
-                  ? 'border-accent/60 bg-accent/15 text-base-50'
+                  ? 'border-space/60 bg-space/15 text-base-50'
                   : 'border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.015] text-base-100 hover:border-white/20'
               }`}
             >
               <span className="block w-full truncate text-xs font-medium tracking-tight">{control}</span>
-              <span className={`mt-0.5 block text-[10px] ${isFired ? 'text-accent-bright' : 'text-base-500'}`}>{zone.where}</span>
+              <span className={`mt-0.5 block text-[10px] ${isFired ? 'text-space-ink' : 'text-base-500'}`}>{zone.where}</span>
             </motion.button>
           )
         })}
       </div>
-    </>
+    </div>
   )
 }

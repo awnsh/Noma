@@ -105,7 +105,7 @@ export function NoticeScene() {
         {[0, 1, 2].map((dot) => (
           <span
             key={dot}
-            className={`h-2 w-8 rounded-full transition-colors duration-300 ${dot < runs ? 'bg-accent-bright' : 'bg-white/10'}`}
+            className={`h-2 w-8 rounded-full transition-colors duration-300 ${dot < runs ? 'bg-note-violet' : 'bg-white/10'}`}
           />
         ))}
         <span className="ml-2 font-mono text-xs text-base-400">{runs}×</span>
@@ -142,8 +142,8 @@ export function ZoneScene() {
           return (
             <div
               key={zone}
-              className={`rounded-lg border px-3 py-2.5 text-left transition-colors duration-300 ${
-                chosen ? 'border-accent/70 bg-accent/[0.12]' : 'border-base-600'
+              className={`rounded-[10px] border bg-app-800 px-3 py-2.5 text-left shadow-[inset_0_1px_0_0_rgba(255,250,240,0.05)] transition-colors duration-300 ${
+                chosen ? 'border-note-violet/60' : 'border-white/[0.07]'
               }`}
             >
               <span className="block text-xs text-base-400">{zone}</span>
@@ -163,7 +163,11 @@ export function ZoneScene() {
               exit={{ opacity: 0 }}
               className="flex items-center gap-2 text-sm text-base-200"
             >
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] text-white">✓</span>
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-ink text-app-950">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-2.5 w-2.5" aria-hidden>
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </span>
               Saved to the upper left zone. Five steps, one swipe.
             </motion.p>
           )}

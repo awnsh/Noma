@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import AppIcon from './AppIcon'
 import { appProfiles } from '../../data/appProfiles'
+import { spaceStyle } from '../../lib/appSpace'
 
 /**
  * The hero's version of Noma: one slim bar, the app in front on the left and
@@ -42,13 +43,16 @@ export default function ControlBar({
   })
 
   return (
+    // Wears the app's own colour (lib/appSpace.ts), sliding to the next
+    // app's when the app changes, as the Noma app does.
     <div
-      className={`flex flex-col gap-3 rounded-[22px] border border-white/10 bg-base-900/70 p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_32px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-2xl ${
+      style={spaceStyle(app.id)}
+      className={`space-transition flex flex-col gap-3 rounded-[22px] border border-white/10 bg-gradient-to-r from-space/[0.2] via-space/[0.06] to-app-950/70 p-3 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07),0_32px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-2xl ${
         compact ? '' : 'sm:flex-row sm:items-center sm:gap-4 sm:rounded-full sm:p-2.5 sm:pl-3'
       } ${className}`}
     >
       <div className={`flex min-w-0 items-center gap-3 px-1 ${compact ? '' : 'sm:w-44 sm:shrink-0'}`}>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-black/25 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.06)]">
           <AnimatePresence mode="wait" initial={false}>
             <motion.span key={app.id} {...swap(0)} className="flex">
               <AppIcon id={app.id} color={app.color} className="h-5 w-5" />
@@ -56,7 +60,7 @@ export default function ControlBar({
           </AnimatePresence>
         </span>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span key={app.id} {...swap(0.03)} className="truncate font-display text-base font-semibold tracking-tight text-base-50">
+          <motion.span key={app.id} {...swap(0.03)} className="truncate font-display text-base font-semibold tracking-tight text-space-ink">
             {app.shortName}
           </motion.span>
         </AnimatePresence>
@@ -66,10 +70,10 @@ export default function ControlBar({
         {(controls ?? app.controls).map((control, index) => (
           <div
             key={index}
-            className={`flex h-11 items-center justify-center rounded-full border px-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.09)] transition-colors duration-500 ${
+            className={`flex h-11 items-center justify-center rounded-full border px-2 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.08),0_6px_14px_-8px_rgba(0,0,0,0.7)] transition-colors duration-500 ${
               highlight === index
-                ? 'border-accent/45 bg-accent/[0.12]'
-                : 'border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.015]'
+                ? 'border-ink/40 bg-ink/[0.1]'
+                : 'border-white/[0.08] bg-gradient-to-b from-[rgba(255,250,240,0.06)] to-[rgba(255,250,240,0.02)]'
             }`}
           >
             <AnimatePresence mode="wait" initial={false}>

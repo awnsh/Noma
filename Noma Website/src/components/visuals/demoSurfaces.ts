@@ -26,4 +26,11 @@ export const DEMO_KEYCAP =
  *  v4 pass removed). The workflow inside the card is what's supposed to
  *  provide the visual interest, not the card's own background. */
 export const DEMO_HERO_CARD =
-  'relative overflow-hidden rounded-2xl border border-base-600 bg-base-800 shadow-[0_20px_48px_-20px_rgba(0,0,0,0.6)]'
+  'relative overflow-hidden rounded-[18px] border border-note-edge bg-gradient-to-b from-note to-[#1d1a22] shadow-[0_1px_0_0_rgba(214,200,255,0.07)_inset,0_20px_48px_-20px_rgba(0,0,0,0.7)]'
+
+/** The app's buttons since 2026-10-14 (App Spaces): off-white ink for the
+ *  one thing to press, a quiet text button beside it. */
+export const DEMO_BUTTON_PRIMARY =
+  'inline-flex items-center rounded-[10px] bg-ink px-3.5 py-1.5 text-[13px] font-medium text-app-950 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset,0_6px_14px_-8px_rgba(0,0,0,0.8)] transition-colors duration-150 hover:bg-white active:scale-[0.98]'
+export const DEMO_BUTTON_QUIET =
+  'inline-flex items-center rounded-[10px] px-2.5 py-1.5 text-[13px] text-base-300 transition-colors duration-150 hover:bg-white/[0.04] hover:text-base-50'

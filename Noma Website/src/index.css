@@ -70,6 +70,21 @@
   --color-flow-dim: #5c4a78;
   --color-flow-950: #150f1e;
 
+  /* The app as it looks since 2026-10-14 (App Spaces): every piece of this
+     page that SHOWS the Noma app uses these, so it matches what people
+     install. `space` is the colour of the app being shown (lib/appSpace.ts
+     sets --space-h/--space-c on the element); `ink` is the app's off-white
+     for anything you press; `note` is Flow's violet paper; `app-*` are the
+     app's warm graphite surfaces. The site's own chrome (backdrop, nav,
+     hero type, beta buttons) keeps its navy and Noma Blue. */
+  --color-ink: #ece8e1;
+  --color-note: #221d2b;
+  --color-note-edge: rgba(176, 154, 230, 0.22);
+  --color-note-violet: #b09ae6;
+  --color-app-950: #141210;
+  --color-app-850: #1e1c19;
+  --color-app-800: #26231f;
+
   /* Geometric rounded sans, matching the "noma" wordmark's own letterforms
      rather than contrasting against them the way a serif would. */
   --font-display: "Sora Variable", "Inter", sans-serif;
@@ -255,4 +270,32 @@
   .hero-glow {
     background-image: radial-gradient(ellipse 50% 42% at 50% 0%, color-mix(in oklab, var(--color-accent) 4%, transparent), transparent 70%);
   }
+}
+
+/* The app colours are `inline` so each utility carries the formula itself
+   and reads --space-h/--space-c from the element it's on. Defined in the
+   plain @theme above they'd be resolved once on :root, and an app's hue set
+   on a component would never reach them. */
+@theme inline {
+  --color-space: oklch(0.76 var(--space-c) var(--space-h));
+  --color-space-ink: oklch(0.86 calc(var(--space-c) * 0.7) var(--space-h));
+  --color-space-deep: oklch(0.27 calc(var(--space-c) * 0.45) var(--space-h));
+}
+
+/* App Spaces: the app colour slides when the app shown changes, the way it
+   does in the app. Registered so the transition interpolates. */
+@property --space-h {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 70;
+}
+@property --space-c {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.012;
+}
+.space-transition {
+  transition:
+    --space-h 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    --space-c 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }

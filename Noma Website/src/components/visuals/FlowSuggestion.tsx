@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import DemoWorkflowChain, { type DemoChainStep } from './DemoWorkflowChain'
-import { DEMO_HERO_CARD } from './demoSurfaces'
+import { DEMO_BUTTON_PRIMARY, DEMO_BUTTON_QUIET, DEMO_HERO_CARD } from './demoSurfaces'
 import { appProfiles } from '../../data/appProfiles'
 import { SAVED_LABEL, ZONES } from '../../data/flowDemo'
 
@@ -79,18 +79,22 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
         ) : stage === 'dismissed' ? (
           <motion.div key="dismissed" {...fade}>
             <p className="text-sm text-base-300">Not now. Noma learns from that too.</p>
-            <button type="button" onClick={reset} className="mt-4 text-xs text-accent-bright transition-colors hover:text-accent">
+            <button type="button" onClick={reset} className="mt-4 text-xs text-base-100 underline decoration-white/20 underline-offset-[3px] transition-colors hover:text-white">
               Show it again
             </button>
           </motion.div>
         ) : (
           <motion.div key="ask" {...fade}>
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-base-400">Noma noticed</p>
-              <span className="shrink-0 text-xs text-base-500">Just now</span>
-            </div>
-            <p className="mt-2 font-display text-xl font-semibold leading-snug tracking-tight text-base-50 sm:text-2xl">
+            <p className="font-display text-xl font-semibold leading-snug tracking-tight text-base-50 sm:text-[22px]">
               You&rsquo;ve repeated this workflow {OCCURRENCES} times across your apps.
+            </p>
+            <p className="mt-2 flex items-center gap-2 text-[13px] text-base-400">
+              <span className="inline-flex items-center gap-1.5 text-note-violet">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-note-violet" />
+                Flow noticed this
+              </span>
+              <span aria-hidden className="text-base-500">&middot;</span>
+              Just now
             </p>
             {/* The app's large chain on wider screens; its smaller one on
                 phones, where three large nodes don't fit. */}
@@ -103,22 +107,20 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
 
             {stage === 'ask' ? (
               <>
-                <p className="mt-6 text-base text-base-100">Turn this into one Glide action?</p>
-                <div className="mt-3 flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setStage('review')}
-                    className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent-bright"
-                  >
-                    Review steps
-                  </button>
-                  <button type="button" onClick={() => setStage('dismissed')} className="text-sm text-base-400 hover:text-base-100">
-                    Not now
-                  </button>
+                <div className="mt-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/[0.06] pt-5">
+                  <p className="text-base text-base-100">Turn this into one Glide action?</p>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => setStage('review')} className={DEMO_BUTTON_PRIMARY}>
+                      Review steps
+                    </button>
+                    <button type="button" onClick={() => setStage('dismissed')} className={DEMO_BUTTON_QUIET}>
+                      Not now
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
-              <div className="mt-5 border-t border-base-700 pt-4">
+              <div className="mt-6 border-t border-white/[0.06] pt-5">
                 <p className="mb-2 text-xs text-base-400">Exactly what this will do, in order:</p>
                 <ol className="space-y-1 text-sm">
                   {PREVIEW.map((step, index) => (
@@ -140,9 +142,9 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
                       key={zone}
                       type="button"
                       onClick={() => save(index)}
-                      className="rounded-md border border-base-600 px-2 py-2 text-left text-xs transition-colors hover:border-accent/70"
+                      className="rounded-[10px] border border-white/[0.07] bg-app-800 px-2.5 py-2.5 text-left text-xs shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset] transition-colors hover:border-note-violet/50"
                     >
-                      <span className="block text-[10px] text-base-500">{zone}</span>
+                      <span className="block text-[11px] text-base-400">{zone}</span>
                       <span className="mt-0.5 block truncate text-base-100">{controls[index]}</span>
                     </button>
                   ))}

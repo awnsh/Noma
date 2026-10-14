@@ -1,4 +1,5 @@
 import nomaMark from '../../assets/noma-mark.png'
+import { spaceStyle } from '../../lib/appSpace'
 import nomaWordmark from '../../assets/noma-wordmark.png'
 import AppIcon from './AppIcon'
 
@@ -33,16 +34,19 @@ export default function ProductNotice({
     <div
       role="img"
       aria-label={`Noma notice: new workflow detected, ${steps.map((step) => step.label).join(', then ')}`}
-      className={`w-[300px] rounded-2xl border border-white/[0.09] bg-[rgba(17,18,20,0.82)] px-3 py-2.5 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.8)] backdrop-blur-xl ${className}`}
+      className={`w-[300px] rounded-[18px] border border-note-edge bg-gradient-to-b from-[rgba(36,30,46,0.98)] to-[rgba(30,27,34,0.98)] px-3 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.05),0_24px_60px_-20px_rgba(0,0,0,0.85)] ${className}`}
     >
       <div className="flex items-center gap-1.5">
         <img src={nomaMark} alt="" className="h-[18px] w-[26px] object-contain opacity-90" />
         <img src={nomaWordmark} alt="" className="h-[9px] w-auto opacity-75" />
-        <span className="ml-auto font-mono text-[10px] text-[#656970]">{occurrences}x</span>
+        <span className="ml-auto font-mono text-[10px] text-[#7d7871]">{occurrences}×</span>
         <span className="-mr-0.5 flex h-4 w-4 items-center justify-center text-[13px] leading-none text-[#656970]">×</span>
       </div>
 
-      <p className="mt-2 text-xs font-medium text-[#f5f5f7]">New workflow detected</p>
+      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#f1ede6]">
+        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-note-violet" />
+        New workflow detected
+      </p>
 
       <div className="mt-2 flex items-start gap-x-2 pb-1">
         {steps.map((step, index) => (
@@ -50,12 +54,15 @@ export default function ProductNotice({
             <div className="flex shrink-0 flex-col items-center text-center">
               {step.kind === 'app' ? (
                 <>
-                  <div className="flex shrink-0 items-center justify-center" style={{ width: BOX, height: BOX }}>
-                    <AppIcon id={step.appId} color={step.color} className="h-[30px] w-[30px]" />
+                  <div
+                    className="flex shrink-0 items-center justify-center rounded-[10px] bg-space-deep shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07)]"
+                    style={{ width: BOX, height: BOX, ...spaceStyle(step.appId) }}
+                  >
+                    <AppIcon id={step.appId} color={step.color} className="h-[20px] w-[20px]" />
                   </div>
                   <p
-                    className="mt-1 truncate text-left text-[11px] font-medium text-[#f5f5f7]"
-                    style={{ maxWidth: BOX + 16 }}
+                    className="mt-1 truncate text-left text-[11px] font-medium text-space-ink"
+                    style={{ maxWidth: BOX + 16, ...spaceStyle(step.appId) }}
                   >
                     {step.label}
                   </p>
@@ -70,7 +77,7 @@ export default function ProductNotice({
                 </>
               ) : (
                 <span
-                  className="flex items-center rounded-md border border-[#24262a] px-1.5 py-0.5 font-mono text-[10px] text-[#adaeb8]"
+                  className="flex items-center rounded-[10px] border border-white/[0.07] bg-gradient-to-b from-[rgba(255,250,240,0.07)] to-[rgba(255,250,240,0.025)] px-1.5 py-0.5 font-mono text-[10px] text-[#d9d4cc]"
                   style={{ height: BOX }}
                 >
                   {step.label}
@@ -86,7 +93,7 @@ export default function ProductNotice({
         ))}
       </div>
 
-      <p className="mt-2 text-[11px] font-medium text-[#4c7eff]">Review →</p>
+      <p className="mt-2 text-[11px] font-medium text-[#d9d4cc]">Review →</p>
     </div>
   )
 }
