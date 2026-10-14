@@ -142,7 +142,7 @@ export function ZoneScene() {
           return (
             <div
               key={zone}
-              className={`rounded-[10px] border bg-app-800 px-3 py-2.5 text-left shadow-[inset_0_1px_0_0_rgba(255,250,240,0.05)] transition-colors duration-300 ${
+              className={`rounded-[8px] border bg-app-800 px-3 py-2.5 text-left transition-colors duration-300 ${
                 chosen ? 'border-note-violet/60' : 'border-white/[0.07]'
               }`}
             >

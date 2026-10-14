@@ -20,7 +20,7 @@ export function GhostButton({ onClick, children }: ButtonProps) {
 }
 
 const PRIMARY =
-  'rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97]'
+  'rounded-md border border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-1.5 text-xs font-medium text-accent transition-transform duration-150 hover:bg-base-700 active:scale-[0.97]'
 const PRIMARY_DIM = 'disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100'
 
 /** Accent-outlined confirm button (Save / Create). `dimDisabled={false}` keeps the disabled state unstyled. */

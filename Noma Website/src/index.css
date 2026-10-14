@@ -299,3 +299,37 @@
     --space-h 700ms cubic-bezier(0.16, 1, 0.3, 1),
     --space-c 700ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* The app's liquid glass (Noma App globals.css `.glass`, since v0.1.27),
+   for the pieces of this page that show the app: a translucent warm fill, a
+   hairline, a blur, and a 1px specular rim brightest at the top-left (a
+   masked border, not a fill). */
+@layer components {
+  .app-glass {
+    position: relative;
+    background: rgba(255, 250, 240, 0.04);
+    border: 1px solid rgba(255, 250, 240, 0.08);
+    backdrop-filter: blur(24px) saturate(150%);
+    box-shadow: 0 24px 60px -28px rgba(0, 0, 0, 0.9);
+  }
+  .app-glass::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.04) 32%, rgba(255, 255, 255, 0) 60%, rgba(255, 255, 255, 0.08));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .app-glass-violet {
+    background: rgba(176, 154, 230, 0.08);
+    border-color: rgba(176, 154, 230, 0.2);
+  }
+  .app-glass-violet::before {
+    background: linear-gradient(140deg, rgba(214, 200, 255, 0.4), rgba(214, 200, 255, 0.05) 32%, rgba(214, 200, 255, 0) 60%, rgba(214, 200, 255, 0.1));
+  }
+}
+.no-gpu .app-glass { backdrop-filter: none; background: rgba(28, 26, 30, 0.9); }

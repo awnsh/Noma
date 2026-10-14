@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { BUTTON_SECONDARY } from '../lib/surfaces'
 import { useUiStore, type Page } from '../stores/uiStore'
 import { useApplicationsStore } from '../stores/applicationsStore'
@@ -62,10 +62,9 @@ function NavRow({ label, page, Icon, isActive, onClick }: NavItem & { isActive: 
       type="button"
       onClick={onClick}
       aria-current={isActive ? 'page' : undefined}
-      className={`flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-left text-[13px] transition-[color,background-color,box-shadow,transform] duration-150 ease-out active:scale-[0.98] ${
-        isActive
-          ? 'bg-white/[0.075] font-medium text-neutral-50 shadow-[0_1px_0_0_rgba(255,250,240,0.06)_inset,0_4px_10px_-6px_rgba(0,0,0,0.6)]'
-          : 'text-neutral-300/80 hover:bg-white/[0.035] hover:text-neutral-100'
+      data-nav-page={page}
+      className={`relative z-10 flex w-full items-center gap-2.5 rounded-full px-3 py-[7px] text-left text-[13px] transition-[color,transform] duration-200 ease-out active:scale-[0.97] ${
+        isActive ? 'font-medium text-neutral-50' : 'text-neutral-300/80 hover:text-neutral-100'
       }`}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -90,13 +89,15 @@ function NavGroupLabel({ children }: { children: ReactNode }) {
 function CurrentSpace() {
   const application = useFlowStore((state) => state.context.application)
   return (
-    <div className="mb-6 flex items-center gap-2.5 rounded-[12px] bg-space-deep/70 px-2.5 py-2 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset]">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-black/25">
+    <div className="glass mb-6 flex items-center gap-2.5 rounded-[14px] px-2.5 py-2">
+      {/* The app's colour, as a solid tile behind its icon: the one place
+          the chrome shows it. */}
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] bg-space-deep">
         <AppIcon applicationId={application?.id} name={application?.name ?? 'No app'} size={18} />
       </span>
       <span className="min-w-0">
-        <span className="block text-[11px] leading-tight text-space-ink/60">In</span>
-        <span className="block truncate text-[13px] font-medium leading-tight text-space-ink">
+        <span className="block text-[11px] leading-tight text-neutral-500">In</span>
+        <span className="block truncate text-[13px] font-medium leading-tight text-neutral-100">
           {application?.name ?? 'No app yet'}
         </span>
       </span>
@@ -122,6 +123,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   const subscribeApplications = useApplicationsStore((state) => state.subscribe)
   useAppSpace()
 
+  // Where the nav's glass pill sits: over the active row.
+  const navRef = useRef<HTMLElement>(null)
+  const [pill, setPill] = useState<{ top: number; height: number } | null>(null)
+  useLayoutEffect(() => {
+    const place = (): void => {
+      const nav = navRef.current
+      const row = nav?.querySelector<HTMLElement>(`[data-nav-page="${activePage}"]`)
+      if (!nav || !row) return setPill(null)
+      const navTop = nav.getBoundingClientRect().top
+      const rect = row.getBoundingClientRect()
+      setPill({ top: rect.top - navTop, height: rect.height })
+    }
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [activePage, developerTools])
+
   // Loaded once, app-wide; every `AppIcon` anywhere in the tree resolves
   // its executable path from this store (see applicationsStore.ts), not a
   // per-page fetch, since a workflow chain or Learning Center entry can
@@ -133,7 +151,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <div className="relative flex h-screen w-screen overflow-hidden bg-space-wash text-neutral-100">
+    <div className="noma-window relative flex h-screen w-screen overflow-hidden text-neutral-100">
       {/* The window frame is the app's space (lib/appSpace.ts), the way an
           Arc window takes its space's colour: the sidebar sits directly on
           it, and the page is a graphite sheet laid on top. */}
@@ -145,7 +163,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <CurrentSpace />
 
-        <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
+        <nav ref={navRef} aria-label="Main" className="relative flex min-h-0 flex-1 flex-col">
+          {/* One glass pill that glides to the page you open, instead of
+              each row lighting up on its own. */}
+          {pill && (
+            <div
+              aria-hidden
+              className="glass pointer-events-none absolute inset-x-0 rounded-full bg-white/[0.07] transition-[top,height] duration-500 [transition-timing-function:var(--ease-spring)]"
+              style={{ top: pill.top, height: pill.height }}
+            />
+          )}
           <div className="flex flex-col gap-0.5">
             {PRIMARY_NAV_ITEMS.map((item) => (
               <NavRow key={item.label} {...item} isActive={item.page === activePage} onClick={() => setActivePage(item.page)} />
@@ -182,13 +209,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </nav>
       </aside>
-      <main className="relative z-10 my-2 mr-2 flex-1 overflow-y-auto rounded-[16px] bg-base-950 shadow-[0_0_0_1px_rgba(255,250,240,0.05),0_18px_50px_-20px_rgba(0,0,0,0.8)]">
-        {/* The app's colour bleeds a little way onto the sheet from the top,
-            so each page opens in its space and settles into graphite. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[460px] bg-gradient-to-b from-space-deep/90 via-space-deep/35 to-transparent"
-        />
+      <main className="relative z-10 my-2 mr-2 flex-1 overflow-y-auto glass rounded-[14px] bg-[rgba(17,16,14,0.74)]">
         <div className="relative h-full">
           <RunningActionBar />
           {children}

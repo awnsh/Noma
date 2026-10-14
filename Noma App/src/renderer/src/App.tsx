@@ -61,7 +61,7 @@ function App() {
   // flight. Same background as every other state below, so there's no
   // visible flash before we know whether to show onboarding or the app.
   if (isOnboardingLoading || !onboardingState) {
-    return <div className="h-screen w-screen bg-base-950" />
+    return <div className="noma-window h-screen w-screen" />
   }
 
   // Onboarding replaces the whole app shell (no sidebar, no normal

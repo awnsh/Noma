@@ -98,16 +98,12 @@ export default function AdaptiveSurface({ appId, size = 'lg', className = '', co
   return (
     <div
       style={spaceStyle(app.id)}
-      className={`space-transition relative overflow-hidden rounded-3xl border border-white/10 bg-base-900/70 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_32px_80px_-32px_rgba(0,0,0,0.9)] backdrop-blur-2xl backdrop-saturate-150 ${dim.pad} ${className}`}
+      className={`space-transition app-glass overflow-hidden rounded-3xl ${dim.pad} ${className}`}
     >
-      {/* The app's own colour, washed down from the top the way the Noma
-          app wears it (App Spaces, lib/appSpace.ts); it slides to the next
-          app's colour when the app changes. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-space/[0.16] to-transparent" />
 
       <div className={`relative flex items-center ${dim.gap}`}>
         <div
-          className={`flex shrink-0 items-center justify-center rounded-2xl bg-black/25 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07)] ${dim.iconBox}`}
+          className={`flex shrink-0 items-center justify-center rounded-2xl bg-space-deep ${dim.iconBox}`}
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span key={app.id} {...swap(0)} className="flex items-center justify-center">
@@ -119,7 +115,7 @@ export default function AdaptiveSurface({ appId, size = 'lg', className = '', co
         <div className="min-w-0 flex-1">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={app.id} {...swap(0.04)}>
-              <p className={`truncate font-display font-semibold tracking-tight text-space-ink ${dim.name}`}>
+              <p className={`truncate font-display font-semibold tracking-tight text-base-50 ${dim.name}`}>
                 {app.shortName}
               </p>
               <p className={`mt-0.5 truncate text-base-400 ${dim.doing}`}>
@@ -134,10 +130,10 @@ export default function AdaptiveSurface({ appId, size = 'lg', className = '', co
         {(controls ?? app.controls).map((control, index) => (
           <div
             key={index}
-            className={`flex items-center justify-center rounded-xl border px-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.09)] transition-colors duration-500 ${
+            className={`flex items-center justify-center rounded-xl border px-2 transition-colors duration-500 ${
               highlight === index
                 ? 'border-ink/40 bg-ink/[0.1]'
-                : 'border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.015]'
+                : 'border-white/[0.09] bg-white/[0.04]'
             } ${dim.tile}`}
           >
             <AnimatePresence mode="wait" initial={false}>

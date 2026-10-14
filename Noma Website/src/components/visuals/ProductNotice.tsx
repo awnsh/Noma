@@ -34,7 +34,7 @@ export default function ProductNotice({
     <div
       role="img"
       aria-label={`Noma notice: new workflow detected, ${steps.map((step) => step.label).join(', then ')}`}
-      className={`w-[300px] rounded-[18px] border border-note-edge bg-gradient-to-b from-[rgba(36,30,46,0.98)] to-[rgba(30,27,34,0.98)] px-3 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,250,240,0.05),0_24px_60px_-20px_rgba(0,0,0,0.85)] ${className}`}
+      className={`app-glass app-glass-violet w-[300px] rounded-[16px] bg-[rgba(34,29,43,0.92)] px-3 py-2.5 ${className}`}
     >
       <div className="flex items-center gap-1.5">
         <img src={nomaMark} alt="" className="h-[18px] w-[26px] object-contain opacity-90" />
@@ -55,13 +55,13 @@ export default function ProductNotice({
               {step.kind === 'app' ? (
                 <>
                   <div
-                    className="flex shrink-0 items-center justify-center rounded-[10px] bg-space-deep shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07)]"
+                    className="flex shrink-0 items-center justify-center rounded-[8px] bg-space-deep"
                     style={{ width: BOX, height: BOX, ...spaceStyle(step.appId) }}
                   >
                     <AppIcon id={step.appId} color={step.color} className="h-[20px] w-[20px]" />
                   </div>
                   <p
-                    className="mt-1 truncate text-left text-[11px] font-medium text-space-ink"
+                    className="mt-1 truncate text-left text-[11px] font-medium text-[#f1ede6]"
                     style={{ maxWidth: BOX + 16, ...spaceStyle(step.appId) }}
                   >
                     {step.label}
@@ -77,7 +77,7 @@ export default function ProductNotice({
                 </>
               ) : (
                 <span
-                  className="flex items-center rounded-[10px] border border-white/[0.07] bg-gradient-to-b from-[rgba(255,250,240,0.07)] to-[rgba(255,250,240,0.025)] px-1.5 py-0.5 font-mono text-[10px] text-[#d9d4cc]"
+                  className="flex items-center rounded-[8px] border border-white/[0.08] bg-app-800 px-1.5 py-0.5 font-mono text-[10px] text-[#d9d4cc]"
                   style={{ height: BOX }}
                 >
                   {step.label}

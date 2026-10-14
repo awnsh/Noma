@@ -19,7 +19,7 @@ interface OnboardingLayoutProps {
  */
 export function OnboardingLayout({ stepIndex, onBack, wide = false, children }: OnboardingLayoutProps) {
   return (
-    <div className="flex h-screen w-screen flex-col bg-base-950 text-neutral-200">
+    <div className="noma-window flex h-screen w-screen flex-col text-neutral-200">
       <div className="flex shrink-0 items-center justify-between px-8 py-6">
         <button
           type="button"

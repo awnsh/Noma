@@ -151,7 +151,7 @@ export function WorkflowChain({
               // Each app step sits on that app's own colour: the chain shows
               // where each step happens (lib/appSpace.ts).
               <div
-                className={`${ICON_BOX} rounded-[14px] bg-space-deep shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]`}
+                className={`${ICON_BOX} rounded-[12px] bg-space-deep`}
                 style={{ width: dim.box, height: dim.box, ...(spaceStyle(node.applicationId) as CSSProperties) }}
               >
                 <AppIcon applicationId={node.applicationId} name={node.label} size={Math.round(dim.icon * 0.72)} variant="bare" fill />
@@ -160,7 +160,7 @@ export function WorkflowChain({
               // A keystroke: a key tile at the same size as the app tiles,
               // its name underneath like theirs, so every step lines up.
               <div
-                className={`${ICON_BOX} rounded-[14px] border border-white/[0.07] bg-gradient-to-b from-[rgba(255,250,240,0.07)] to-[rgba(255,250,240,0.025)] text-neutral-200 shadow-[0_1px_0_0_rgba(255,250,240,0.08)_inset,0_-1px_0_0_rgba(0,0,0,0.35)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]`}
+                className={`${ICON_BOX} rounded-[12px] border border-white/[0.08] bg-base-800 text-neutral-200`}
                 style={{ width: dim.box, height: dim.box }}
               >
                 <KeyboardIcon className={size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'} />
@@ -185,7 +185,7 @@ export function WorkflowChain({
                 {/* Names are never truncated: a cut-off "Google C..." tells you nothing.
                     They wrap under the icon instead, centered. */}
                 <p
-                  className={`${size === 'sm' ? 'max-w-[5rem] leading-tight' : 'max-w-[9rem]'} break-words text-center font-medium text-space-ink ${size === 'sm' ? 'mt-1' : 'mt-2'} ${dim.name}`}
+                  className={`${size === 'sm' ? 'max-w-[5rem] leading-tight' : 'max-w-[9rem]'} break-words text-center font-medium text-neutral-100 ${size === 'sm' ? 'mt-1' : 'mt-2'} ${dim.name}`}
                   style={spaceStyle(node.applicationId) as CSSProperties}
                 >
                   {node.label}

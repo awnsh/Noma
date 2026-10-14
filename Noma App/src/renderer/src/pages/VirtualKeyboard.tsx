@@ -112,7 +112,7 @@ export function VirtualKeyboard() {
             onClick={() => setIsEditMode((prev) => !prev)}
             className={`rounded-full border px-3 py-1 text-[11px] ${
               isEditMode
-                ? 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] text-accent'
+                ? 'border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)] text-accent'
                 : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'
             }`}
           >

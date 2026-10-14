@@ -34,7 +34,7 @@ export function GlideToastSurface() {
         key={toast.at}
         role="status"
         aria-live="polite"
-        className="noma-glide-toast flex max-w-full items-center gap-2 rounded-full border border-white/[0.08] bg-[rgba(29,28,31,0.97)] py-1.5 pl-1.5 pr-3.5 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_12px_32px_-12px_rgba(0,0,0,0.85)]"
+        className="noma-glide-toast flex max-w-full items-center gap-2 rounded-full border border-white/[0.08] bg-[rgba(29,28,31,0.97)] py-1.5 pl-1.5 pr-3.5 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.85)]"
         style={{ animationDuration: `${GLIDE_TOAST_MS}ms`, ...(spaceStyle(toast.applicationId) as CSSProperties) }}
       >
         {/* The mark is wide (about 3:2), so it sits inset at its own

@@ -79,7 +79,7 @@ export function HomeSidePanel({
             interface actually drives, so the loop ("Noma builds your
             interface" -> "it shows up here too") is visible rather than
             asserted. */}
-        <div className="mx-auto mt-5 w-32 rounded-2xl border border-base-700 bg-gradient-to-b from-base-800 to-base-900 p-3">
+        <div className="mx-auto mt-5 w-32 rounded-2xl border border-base-700 bg-base-850 p-3">
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((slot) => {
               const filled = Boolean(profile?.controls.find((control) => control.slot === slot))
@@ -87,7 +87,7 @@ export function HomeSidePanel({
                 <div
                   key={slot}
                   className={`aspect-square rounded-md border ${
-                    filled ? 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)]' : 'border-base-700 bg-base-900'
+                    filled ? 'border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)]' : 'border-base-700 bg-base-900'
                   }`}
                 />
               )

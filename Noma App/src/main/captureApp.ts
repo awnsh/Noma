@@ -66,6 +66,27 @@ export async function captureApp(options: {
     await open('Home')
     await sleep(1500)
     await save('home-suggestion.png')
+    // NOMA_CAPTURE_HOLD: keep Home on screen, on top, so the real window
+    // (with its OS material, which capturePage can't see) can be
+    // photographed from the screen. Writes the window's bounds in physical
+    // pixels for that.
+    if (process.env.NOMA_CAPTURE_HOLD) {
+      const { screen } = await import('electron')
+      window.setSize(1280, 800)
+      window.center()
+      await sleep(600)
+      const bounds = window.getBounds()
+      const scale = screen.getDisplayMatching(bounds).scaleFactor
+      writeFileSync(join(options.folder, 'bounds.json'), JSON.stringify({ ...bounds, scale }))
+      window.setAlwaysOnTop(true)
+      window.focus()
+      await sleep(Number(process.env.NOMA_CAPTURE_HOLD) / 2)
+      // The second half unfocused, still on top: Windows draws the
+      // material differently for an inactive window.
+      window.blur()
+      await sleep(Number(process.env.NOMA_CAPTURE_HOLD) / 2)
+      window.setAlwaysOnTop(false)
+    }
     await open('Workflows')
     await sleep(1200)
     await save('workflows.png')

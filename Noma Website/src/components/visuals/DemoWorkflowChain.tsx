@@ -67,7 +67,7 @@ const SIZES = {
 /** Each app step sits on that app's own colour, as in the app since
  *  2026-10-14: the chain shows where each step happens. */
 const ICON_BOX =
-  'flex shrink-0 items-center justify-center rounded-[14px] bg-space-deep shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_6px_14px_-8px_rgba(0,0,0,0.7)]'
+  'flex shrink-0 items-center justify-center rounded-[12px] bg-space-deep'
 
 export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoChainStep[]; size?: 'md' | 'lg' }) {
   const reduceMotion = useReducedMotion()
@@ -115,7 +115,7 @@ export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoC
                     edges, silently dropping the string's own first letter
                     with no ellipsis marking it. */}
                 <p
-                  className={`mt-2 truncate text-left font-medium text-space-ink ${dim.name}`}
+                  className={`mt-2 truncate text-left font-medium text-base-100 ${dim.name}`}
                   style={{ maxWidth: dim.box + 28, ...spaceStyle(node.appId) }}
                 >
                   {node.label}

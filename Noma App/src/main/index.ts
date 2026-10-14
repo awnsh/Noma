@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Tray, Menu, nativeImage, Notification, systemPreferences } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Tray, Menu, nativeImage, nativeTheme, Notification, systemPreferences } from 'electron'
 import { dirname, join } from 'path'
 import { existsSync, readFileSync, unlinkSync } from 'fs'
 import { optimizer, is } from '@electron-toolkit/utils'
@@ -302,6 +302,10 @@ function notifyActionFailed(controlLabel: string, reason: string | undefined): v
 }
 
 function createMainWindow(): void {
+  // Noma is dark-only. Without this, Windows draws the window material (and
+  // the title bar) light on a light system theme or whenever the window
+  // isn't focused, and the sidebar text over it becomes unreadable.
+  nativeTheme.themeSource = 'dark'
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -309,7 +313,15 @@ function createMainWindow(): void {
     minHeight: 640,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#08080a',
+    // A real window material behind the app (acrylic on Windows 11, vibrancy
+    // on macOS): the user's wallpaper shows through, softly, under the
+    // sidebar. The renderer tints it dark (AppShell), so this is texture,
+    // not decoration. Elsewhere, plain near-black as before.
+    ...(isWindows
+      ? { backgroundMaterial: 'acrylic' as const, backgroundColor: '#00000000' }
+      : isMac
+        ? { vibrancy: 'under-window' as const, visualEffectState: 'active' as const, backgroundColor: '#00000000' }
+        : { backgroundColor: '#08080a' }),
     title: TEST_USER_DATA_DIR ? `${APP_DISPLAY_NAME}. TEST PROFILE` : APP_DISPLAY_NAME,
     // Windows/Linux taskbar + window icon. macOS instead uses the app
     // bundle's icon (set at packaging time), which doesn't exist yet: see

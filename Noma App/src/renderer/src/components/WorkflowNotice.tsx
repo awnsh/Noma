@@ -168,7 +168,7 @@ export function WorkflowNotice({
               <button
                 type="button"
                 onClick={onAccept}
-                className="noma-press rounded-[8px] bg-accent px-2.5 py-1 text-[11px] font-medium text-base-950 shadow-[0_1px_0_0_rgba(255,255,255,0.4)_inset] transition-colors duration-150 hover:bg-neutral-50"
+                className="noma-press rounded-[8px] bg-accent px-2.5 py-1 text-[11px] font-medium text-base-950 transition-colors duration-150 hover:bg-neutral-50"
               >
                 Review steps in Noma
               </button>

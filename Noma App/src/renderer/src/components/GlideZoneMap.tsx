@@ -62,7 +62,8 @@ export function GlideZoneMap({
   onEditZone,
   centerLabel,
   centerAppId,
-  compact = false
+  compact = false,
+  sweep = false
 }: {
   zoneCount: HoloTrackpadZoneCount
   controls: Control[]
@@ -74,16 +75,18 @@ export function GlideZoneMap({
   centerAppId?: string | null
   /** Smaller, zone names only: for onboarding, where it shares the screen. */
   compact?: boolean
+  /** Light each zone once, in order, when the trackpad first appears. */
+  sweep?: boolean
 }) {
   const style = (centerAppId !== undefined ? spaceStyle(centerAppId) : {}) as CSSProperties
   return (
     <div
       style={style}
-      className={`space-transition relative mx-auto aspect-[3/2] w-full ${compact ? 'max-w-[360px]' : 'max-w-[600px]'} rounded-[22px] bg-gradient-to-b from-[#1e1d20] to-[#18171a] p-[3px] shadow-[0_1px_0_0_rgba(255,250,240,0.07)_inset,0_-1px_0_0_rgba(0,0,0,0.5)_inset,0_22px_48px_-24px_rgba(0,0,0,0.9)]`}
+      className={`space-transition relative mx-auto aspect-[3/2] w-full ${compact ? 'max-w-[360px]' : 'max-w-[600px]'} glass rounded-[22px] p-[5px]`}
     >
       {/* The glass of the pad: a recessed face inside the bezel. */}
-      <div className="absolute inset-[3px] overflow-hidden rounded-[19px] bg-[#141315] shadow-[0_2px_6px_0_rgba(0,0,0,0.55)_inset]">
-        {glideZonesFor(zoneCount).map((zone) => {
+      <div className="absolute inset-[5px] overflow-hidden rounded-[17px] bg-[rgba(8,7,6,0.55)]">
+        {glideZonesFor(zoneCount).map((zone, zoneIndex) => {
           const slot = GLIDE_ZONE_SLOTS[zone]
           const control = controls.find((item) => item.slot === slot)
           const empty = isEmptyControl(control)
@@ -112,25 +115,26 @@ export function GlideZoneMap({
               </span>
             </>
           )
-          const className = `group absolute flex w-[31%] flex-col justify-between overflow-hidden p-3.5 transition-[background-color] duration-200 ${
+          const className = `group absolute flex w-[31%] flex-col justify-between overflow-hidden p-3.5 transition-[background-color] duration-700 ${
+            sweep && !lit ? 'noma-zone-sweep' : ''
+          } ${
             left ? 'items-start text-left' : 'items-end text-right'
           } ${PLACEMENT[zoneCount === 4 ? 'half' : 'full'][zone]} ${
-            left
-              ? 'bg-gradient-to-r from-space/[0.24] via-space/[0.07] to-transparent'
-              : 'bg-gradient-to-l from-space/[0.24] via-space/[0.07] to-transparent'
-          } ${lit ? '!bg-space/30' : ''}`
+            lit ? 'bg-space/25 [transition-duration:80ms]' : ''
+          }`
           return onEditZone ? (
             <button
               key={zone}
               type="button"
               onClick={() => onEditZone(slot)}
               aria-label={`${GLIDE_ZONE_LABELS[zoneCount][zone]} zone: ${empty ? 'nothing yet' : control?.label}. Change action`}
-              className={`${className} hover:!bg-space/[0.14]`}
+              style={{ animationDelay: `${300 + zoneIndex * 140}ms` }}
+              className={`${className} hover:bg-white/[0.03]`}
             >
               {content}
             </button>
           ) : (
-            <div key={zone} className={className}>
+            <div key={zone} className={className} style={{ animationDelay: `${300 + zoneIndex * 140}ms` }}>
               {content}
             </div>
           )
@@ -147,7 +151,7 @@ export function GlideZoneMap({
         {centerLabel && (
           <div className="pointer-events-none absolute inset-x-[33%] top-1/2 flex -translate-y-1/2 flex-col items-center gap-2.5 text-center">
             {centerAppId !== undefined && (
-              <span className={`flex items-center justify-center rounded-[12px] bg-space-deep/80 shadow-[0_1px_0_0_rgba(255,250,240,0.06)_inset] ${compact ? 'h-10 w-10' : 'h-14 w-14'}`}>
+              <span className={`glass flex items-center justify-center rounded-[14px] bg-space-deep ${compact ? 'h-10 w-10' : 'h-14 w-14'}`}>
                 <AppIcon applicationId={centerAppId} name={centerLabel} size={compact ? 24 : 32} fill />
               </span>
             )}

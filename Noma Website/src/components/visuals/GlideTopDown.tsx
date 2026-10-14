@@ -208,11 +208,11 @@ export function ControlPanel({
   return (
     <div style={spaceStyle(GLIDE_APP_ID)}>
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-space-deep shadow-[inset_0_1px_0_0_rgba(255,250,240,0.07)]">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-space-deep">
           <AppIcon id={GLIDE_APP_ID} color={app.color} className="h-4 w-4" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium tracking-tight text-space-ink">{app.shortName}</p>
+          <p className="truncate text-sm font-medium tracking-tight text-base-50">{app.shortName}</p>
           <p className="truncate text-xs text-base-500">Tap a control to see its swipe</p>
         </div>
       </div>
@@ -233,7 +233,7 @@ export function ControlPanel({
               } ${
                 isFired
                   ? 'border-space/60 bg-space/15 text-base-50'
-                  : 'border-white/[0.09] bg-gradient-to-b from-white/[0.06] to-white/[0.015] text-base-100 hover:border-white/20'
+                  : 'border-white/[0.09] bg-white/[0.04] text-base-100 hover:border-white/20'
               }`}
             >
               <span className="block w-full truncate text-xs font-medium tracking-tight">{control}</span>

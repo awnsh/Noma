@@ -150,7 +150,11 @@ components:
 
 **Creative North Star: "App Spaces"**
 
-Noma wears the colour of the app you're in. The window frame, the wash at the top of every page, the app's own name and the trackpad's zones all take the current app's hue, the way an Arc space or a Things area has its own colour. Switch from VS Code to Spotify and the colour slides across the window over 700ms. You know whose four actions you're looking at before you read a word.
+Noma marks the app you're in with that app's own colour, the way macOS System Settings gives each pane a solid coloured icon tile: a small, solid accent, never a wash. It appears on the app's icon tile (sidebar plate, trackpad centre, workflow steps, Glide toast), the trackpad's swipe chevrons and a lit zone. Switch from VS Code to Spotify and the colour slides over 700ms. Everything else is flat, solid graphite.
+
+**2026-10-14 revision (user feedback: gradients read as "AI slop"):** the coloured window frame, the top-of-page wash, every gradient and every glossy inset top-light were removed. Surfaces are flat solid fills with a hairline border and a soft drop shadow.
+
+**2026-10-14 second revision (user: flat was "too boring"; wants Apple Liquid Glass + Raycast, motion and material):** the window now has a real OS material (`backgroundMaterial: 'acrylic'` on Windows 11, `vibrancy: 'under-window'` on macOS; `nativeTheme.themeSource = 'dark'` so it never renders light, even unfocused). `.noma-window` tints it (rgba(20,18,16,0.55)); the sidebar sits directly on the material. Surfaces are dark liquid glass (`.glass` in globals.css: translucent warm fill, hairline, `backdrop-filter: blur(24px) saturate(150%)`, and a 1px specular rim brightest at the top-left, drawn as a masked border, never a fill). Flow's note is `.glass-violet`. Motion: one glass pill glides to the active nav item (spring easing); pages come into focus with a 220ms blur-to-sharp fade and no travel (pages must not slide or ripple, v0.1.21); cards lift 2px on hover (`.glass-lift`); the Home trackpad sweeps each zone once in the app's colour on arrival (`sweep` prop); the app hue still slides 700ms on app switch. Still no gradient fills or washes.
 
 Everything else stays out of the way: a warm graphite ground (brown-black, never blue-black), off-white ink for the one thing you press, Sora for titles, Inter for reading, JetBrains Mono only for keys and shortcuts. Surfaces are solid materials with real offset shadows: no glass, no glow, no colour on cards. Flow, the part of Noma that notices repeated work, speaks on its own violet paper, so a suggestion never reads as part of the interface. Gold appears only when real hardware is in contact.
 
@@ -160,7 +164,7 @@ The system replaces the earlier one-accent (blue `#4c7eff`) "frosted metal and g
 - One colour per app (OKLCH hue + chroma, fixed lightness), meaning only "where you are".
 - Off-white ink is the only "press me" colour; one primary per view.
 - Warm graphite ground in six steps; warm neutral text in seven.
-- Real offset shadows plus a hairline inset top-light on every raised surface.
+- Flat solid surfaces: a hairline border and a soft offset shadow. No gradients, no inset top-lights.
 - Sora sentence-case titles; no kickers; mono only for keys.
 - The trackpad is the signature object, drawn at one scale everywhere.
 
@@ -174,8 +178,8 @@ A warm graphite ground with one moving hue that belongs to the app, not to Noma.
 ### Secondary
 - **App Space** (`space`, `oklch(0.76 c h)`): the current app's hue at fixed lightness 0.76, so every app sits at the same brightness on graphite. Hue and chroma come from `lib/appSpace.ts` (e.g. VS Code 248/0.13, Chrome 82/0.13, Spotify 150/0.14, Claude 42/0.11); unknown apps hash to one of eight evenly spread fallback hues at chroma 0.11; no app is warm graphite (70/0.012). Used for swipe chevrons and zone light on the trackpad, and text selection (at 32%).
 - **Space Ink** (`space-ink`, L 0.86, 70% chroma): the app's name wherever it's named: the sidebar "In <app>" plate, the trackpad centre, workflow step names, the Glide toast.
-- **Space Deep** (`space-deep`, L 0.27, 45% chroma): the plate behind the app's icon and name (sidebar plate at 70%, trackpad centre tile at 80%, workflow app tiles, Glide toast badge) and the top-of-page wash (460px gradient from 90% to transparent).
-- **Space Wash** (`space-wash`, L 0.215, 32% chroma): the window frame itself; the sidebar sits directly on it and the page is a graphite sheet laid on top.
+- **Space Deep** (`space-deep`, L 0.27, 45% chroma): the solid tile behind the app's icon (sidebar plate, trackpad centre, workflow app tiles, Glide toast badge).
+- **Space Wash** (`space-wash`): defined but unused since the frame went neutral; don't reintroduce a coloured frame.
 
 ### Tertiary
 - **Flow Violet** (`#b09ae6`): Flow's voice only: the dot beside "Flow noticed", the dot in the Noma Notice. Its paper is **Violet Note** (`#221d2b` grading to `#1d1a22`) with a **Violet Edge** border (22% violet).
@@ -191,7 +195,7 @@ A warm graphite ground with one moving hue that belongs to the app, not to Noma.
 - **Text**: `neutral-50` headings, `neutral-100` reading text, `neutral-200` body default, `neutral-300` secondary, `neutral-400/500` quiet, `neutral-600` the faintest that still reads on `base-950`.
 
 ### Named Rules
-**The Where-You-Are Rule.** The app's colour means only "where you are": the frame, the page wash, the app's name, its zones and its icon plate. Never a button, a chart series, a status, or decoration. If removing the hue would lose information about which app this is, it belongs; otherwise it doesn't.
+**The Where-You-Are Rule.** The app's colour means only "where you are", and appears only as a small solid accent: the app's icon tile, the swipe chevrons, a lit zone, the app name in the trackpad centre. Never a button, a chart series, a status, or decoration. If removing the hue would lose information about which app this is, it belongs; otherwise it doesn't.
 
 **The Ink Rule.** Off-white ink is the only "press me" colour, and a view has at most one ink button. Everything else is a raised graphite key or a quiet text action.
 
@@ -222,29 +226,28 @@ A warm graphite ground with one moving hue that belongs to the app, not to Noma.
 
 ## Layout
 
-Two-part window: a fixed 224px (`w-56`) sidebar sitting directly on the space-washed frame, and a graphite page sheet inset 8px from the top, right and bottom with a 16px radius. Pages are a single centred column (Home `max-w-[760px]`, 48px side padding, 56px top), sections separated by 56px (`mb-14`), with hairline rules (`white/[0.06]`) instead of nested containers inside a section.
+Two-part window: a fixed 224px (`w-56`) sidebar on the neutral `base-900` window, and a `base-950` page sheet inset 8px with a 12px radius and a hairline border. Pages are a single centred column (Home `max-w-[760px]`, 48px side padding, 56px top), sections separated by 56px (`mb-14`), with hairline rules (`white/[0.06]`) instead of nested containers inside a section.
 
-The first viewport on Home is fixed in order: the app name at 34px with a status line, then the trackpad at 600px, then Flow's note. Onboarding centres a single column: logo, a 360px trackpad, the 44px headline, one ink button.
+Home is fixed in order (user's choice, 2026-10-14): the app name at 34px with a status line, then **Workflows** (Flow's note, or an empty line, then saved workflows), then **Glide in <app>** with the trackpad at 600px. Onboarding centres a single column: logo, a 360px trackpad, the 44px headline, one ink button.
 
 Spacing works on a 4px rhythm: 4/8/16/24 inside components, 56px between sections. The sidebar groups (primary, "More", "Developer") are separated by 12px-margin hairlines; Settings pins to the bottom.
 
 ## Elevation & Depth
 
-Layered with real shadows. Every raised surface has two parts: a 1px inset top-light in warm white (`rgba(255,250,240,0.04–0.07)`) and a soft offset drop shadow below (negative spread, black at 70–90%). Depth increases from card to modal to the floating notice. Recessed things (fields, the trackpad face, an off toggle) use an inner shadow instead. No glow, no coloured shadow, no backdrop blur.
+Flat. A raised surface is a solid fill, a 1px hairline border (`white/[0.07–0.08]`) and one soft offset drop shadow (negative spread). No inset top-lights, no gradients. Depth increases from card to modal to the floating notice. Recessed things (fields, the trackpad face, an off toggle) use an inner shadow instead. No glow, no coloured shadow, no backdrop blur.
 
 ### Shadow Vocabulary
-- **Card** (`0 1px 0 0 rgba(255,250,240,0.04) inset, 0 12px 32px -18px rgba(0,0,0,0.75)`): the resting surface.
-- **Modal** (`0 1px 0 0 rgba(255,250,240,0.05) inset, 0 28px 70px -24px rgba(0,0,0,0.8)`): lifted panels.
-- **Page sheet** (`0 0 0 1px rgba(255,250,240,0.05), 0 18px 50px -20px rgba(0,0,0,0.8)`): the sheet over the frame.
-- **Keycap** (`0 1px 0 0 rgba(255,250,240,0.07) inset, 0 -1px 0 0 rgba(0,0,0,0.35) inset, 0 8px 18px -10px rgba(0,0,0,0.75)` over a top-lit gradient): anything shaped like a key you could press.
-- **Primary button** (`0 1px 0 0 rgba(255,255,255,0.4) inset, 0 6px 14px -8px rgba(0,0,0,0.8)`).
-- **Notice** (`0 1px 0 0 rgba(255,250,240,0.05) inset, 0 24px 60px -20px rgba(0,0,0,0.85)`): the floating Noma Notice over the user's own work.
-- **Recess** (`0 1px 2px 0 rgba(0,0,0,0.4) inset`): fields; the trackpad face uses `0 2px 6px 0 rgba(0,0,0,0.55) inset`.
+- **Card** (`0 8px 24px -16px rgba(0,0,0,0.7)`): the resting surface.
+- **Modal** (`0 24px 60px -24px rgba(0,0,0,0.8)`): lifted panels.
+- **Trackpad** (`0 12px 32px -20px rgba(0,0,0,0.8)`).
+- **Notice** (`0 20px 50px -20px rgba(0,0,0,0.85)`): the floating Noma Notice over the user's own work.
+- **Buttons and keys**: no shadow beyond a hairline; flat fills.
+- **Recess** (`0 1px 2px 0 rgba(0,0,0,0.4) inset`): fields.
 
 ### Named Rules
 **The No-Nest Rule.** A card never sits inside a card. Inside a surface, group with spacing and hairline rules.
 
-**The Solid Material Rule.** Surfaces are opaque graphite. No glass, no blur, no colour on cards; the app's colour lives only in the frame, the wash and the app's own name and zones.
+**The Solid Material Rule.** Surfaces are flat, opaque graphite. No glass, no blur, no gradient, no colour on cards; the app's colour is only ever a small solid accent.
 
 ## Shapes
 
@@ -284,16 +287,16 @@ Tactile keys with a press: every button scales to 0.98 on `:active` (150ms, ease
 - **Focus:** the global ink outline.
 
 ### Navigation
-Sidebar on the space-washed frame: logo + wordmark + Beta badge, then the **"In <app>" plate** (`space-deep` at 70%, 12px radius, the app icon in a `black/25` 28px tile, "In" at 11px `space-ink/60` over the app name 13px medium `space-ink`). Nav rows are 13px with a 16px icon from `icons.tsx`, 10px radius; inactive `neutral-300/80`, hover `white/[0.035]`; active `white/[0.075]` fill, medium `neutral-50`, a small inset top-light and shadow. Groups: Home, Glide, Workflows; "More"; "Developer" (only with developer tools on); Settings pinned at the bottom.
+Sidebar on the neutral window: logo + wordmark + Beta badge, then the **"In <app>" plate** (`base-850` with a hairline, the app icon on a solid `space-deep` 28px tile, "In" at 11px `neutral-500` over the app name 13px medium `neutral-100`). Nav rows are 13px with a 16px icon from `icons.tsx`, 10px radius; inactive `neutral-300/80`, hover `white/[0.035]`; active `white/[0.07]` fill, medium `neutral-50`. Groups: Home, Glide, Workflows; "More"; "Developer" (only with developer tools on); Settings pinned at the bottom.
 
 ### The trackpad (signature component)
-`GlideZoneMap`, the one object every Glide surface draws (Home, Glide, onboarding). A 3:2 bezel (22px radius, graphite gradient, inset top-light and deep drop shadow) around a recessed face (`#141315`). Mirrored around its centre line: a 31%-wide strip down each side, split into halves with four zones; each zone lit from the edge you swipe in from by a `space` gradient (24% to 7% to transparent), with an inward chevron in `space`. Zone name 11px `neutral-400`; action 15px semibold `neutral-50` (sentence-cased); shortcut caption 11px mono; "Change"/"Set action" as an underlined link. An empty zone reads "Nothing yet" in `neutral-500`. A just-recognised swipe lights the zone at `space/30`. The centre shows the app's icon on a `space-deep` tile and its name in Sora `space-ink`. Each map can carry another app's space via `spaceStyle()`.
+`GlideZoneMap`, the one object every Glide surface draws (Home, Glide, onboarding). A 3:2 frame (16px radius, solid `base-850`, hairline, soft shadow) around a flat `base-950` face. Mirrored around its centre line: a 31%-wide strip down each side, split into halves with four zones; zones are unfilled, separated by hairlines, with an inward chevron in `space` at the edge you swipe in from. Zone name 11px `neutral-400`; action 15px semibold `neutral-50` (sentence-cased); shortcut caption 11px mono; "Change"/"Set action" as an underlined link. An empty zone reads "Nothing yet" in `neutral-500`. A just-recognised swipe lights the zone at `space/30`. The centre shows the app's icon on a `space-deep` tile and its name in Sora `space-ink`. Each map can carry another app's space via `spaceStyle()`.
 
 ### Flow's note
-`HERO_CARD`: a suggestion written on violet paper (`violet-note` gradient, `violet-edge` border, 18px radius, 28-32px padding). The app's tile icon, a 22px Sora headline, a meta line led by a violet dot, the workflow chain, then a hairline-separated action row with one ink primary and quiet secondaries.
+`HERO_CARD`: a suggestion written on violet paper (solid `violet-note`, `violet-edge` border, 14px radius, 28px padding). The app's tile icon, a 22px Sora headline, a meta line led by a violet dot, the workflow chain, then a hairline-separated action row with one ink primary and quiet secondaries.
 
 ### Workflow chain
-Steps left to right. An app step is a 14px-radius tile on that app's own `space-deep`, its name in `space-ink`. A keystroke step is a keycap tile (top-lit gradient, hairline, keycap shadow) with the keyboard icon, its keys beneath in mono `neutral-500`. Nodes reveal in order (`noma-node-in`, staggered).
+Steps left to right. An app step is a 14px-radius tile on that app's own `space-deep`, its name in `space-ink`. A keystroke step is a flat `base-800` tile with a hairline with the keyboard icon, its keys beneath in mono `neutral-500`. Nodes reveal in order (`noma-node-in`, staggered).
 
 ### Noma Notice and Glide toast
 The Notice floats bottom-right in its own transparent window: max 300px, 18px radius, near-opaque violet-tinted graphite with a violet edge, logo + wordmark, a violet dot beside what Flow noticed, a small ink "save" button. Enters with `noma-notice-in` (12px rise), exits shorter and quieter. The Glide toast is a bottom-left pill naming what a swipe ran: round logo badge on `space-deep`, action name 13px medium, the app name in `space-ink/70`; rises, holds, fades in one animation.
@@ -309,11 +312,11 @@ Hand-drawn stroke icons from `components/icons.tsx` (nav set, app-category glyph
 ## Do's and Don'ts
 
 ### Do:
-- **Do** put the app's colour only on the frame (`space-wash`), the page wash (`space-deep`), the app's name (`space-ink`), its icon plate and its trackpad zones.
+- **Do** use the app's colour only as a small solid accent: its icon tile (`space-deep`), the swipe chevrons and a lit zone (`space`), the app name in the trackpad centre (`space-ink`).
 - **Do** use ink (`#ece8e1`) for the one primary action in a view; everything else is a graphite key or a quiet text action.
 - **Do** write section titles in Sora, sentence case, and field labels as plain 12px text.
 - **Do** draw the trackpad with `GlideZoneMap` at 600px (360px compact), mirrored left/right, lit from the swipe edge.
-- **Do** give every raised surface the inset top-light plus an offset drop shadow from the Shadow Vocabulary.
+- **Do** give a raised surface a solid fill, a hairline and one soft drop shadow; nothing more.
 - **Do** reuse the recipes in `lib/surfaces.ts` (CARD, GLASS_PANEL, KEYCAP_SHADOW, HERO_CARD, NOTICE_GLASS, BUTTON_*, FIELD_*) rather than hand-rolling a surface.
 - **Do** draw icons from `icons.tsx`.
 - **Do** keep the logo mark at 1.56:1 with `object-contain`.
@@ -325,6 +328,6 @@ Hand-drawn stroke icons from `components/icons.tsx` (nav set, app-category glyph
 - **Don't** nest a card inside a card.
 - **Don't** use unicode glyphs as icons (arrows, checks, crosses, plus signs); use `icons.tsx`.
 - **Don't** scale the trackpad to fit its container or draw it at a third size.
-- **Don't** use glass, backdrop blur, glow, AI gradients or coloured shadows.
+- **Don't** use gradients of any kind (washes, sheens, top-lit keys), glossy inset highlights, glass, backdrop blur, glow or coloured shadows. The user rejected them as "AI slop" (2026-10-14).
 - **Don't** fake 3D hardware or imply a connected device that doesn't exist.
 - **Don't** square-crop or circle-crop the logo mark.

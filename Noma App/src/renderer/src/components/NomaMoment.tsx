@@ -332,7 +332,7 @@ export function NomaMoment({
                       key={slot}
                       type="button"
                       onClick={() => void handleAssign(slot)}
-                      className="noma-press rounded-[10px] border border-white/[0.07] bg-base-800 px-2 py-2.5 text-center text-xs text-neutral-400 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset] transition-colors hover:border-violet/50 hover:text-neutral-100"
+                      className="noma-press rounded-[10px] border border-white/[0.07] bg-base-800 px-2 py-2.5 text-center text-xs text-neutral-400 transition-colors hover:border-violet/50 hover:text-neutral-100"
                     >
                       <div className="text-[10px] text-neutral-500">{zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : `Control ${slot}`}</div>
                       <div className="mt-0.5 truncate text-neutral-100">{control?.label || '–'}</div>

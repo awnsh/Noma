@@ -19,7 +19,7 @@ export function ToggleSwitch({ checked, onChange, label }: ToggleSwitchProps) {
       onClick={() => onChange(!checked)}
       className={`flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition-colors duration-200 ${
         checked
-          ? 'justify-start border-transparent bg-accent shadow-[0_1px_0_0_rgba(255,255,255,0.35)_inset]'
+          ? 'justify-start border-transparent bg-accent'
           : 'justify-start border-white/[0.08] bg-base-950 shadow-[0_1px_2px_0_rgba(0,0,0,0.5)_inset]'
       }`}
     >

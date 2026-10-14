@@ -90,7 +90,55 @@ export function Home() {
 
       <GettingStartedCard flowEnabled={monitoringEnabled} savedWorkflows={learnedActions?.length ?? 0} />
 
-      <section aria-label="Glide zones" className="mb-14">
+
+      <section aria-labelledby="home-workflows" className="mb-14">
+        <div className="mb-4 flex items-baseline justify-between">
+          <h2 id="home-workflows" className="font-display text-lg font-semibold text-neutral-100">Workflows</h2>
+          <button
+            type="button"
+            onClick={() => setActivePage('workflows')}
+            className="shrink-0 text-[13px] text-neutral-400 hover:text-neutral-100"
+          >
+            All workflows
+          </button>
+        </div>
+        {!monitoringEnabled ? (
+          <EmptyState
+            title="Flow is off."
+            hint="Turn on Flow (Workflows page) and Noma starts noticing the shortcut sequences you repeat, so you can save them to a Glide zone."
+          />
+        ) : topSuggestion ? (
+          <NomaMoment
+            suggestion={topSuggestion}
+            variant="hero"
+            onReject={(id) => resolve(id, 'rejected')}
+            onDismiss={(id) => resolve(id, 'dismissed')}
+          />
+        ) : learnedActionsPreview.length === 0 ? (
+          <EmptyState hint="Nothing repeated yet. When you do the same shortcut sequence about three times, Flow shows it here and asks before saving anything." />
+        ) : null}
+
+        {learnedActionsPreview.length > 0 && (
+          <div className={topSuggestion || !monitoringEnabled ? 'mt-6' : ''}>
+            <h3 className="mb-1 text-[13px] font-medium text-neutral-400">Saved</h3>
+            {learnedActionsPreview.map(({ macro, chain, usageCount, applicationId, applicationName }) => (
+              <LearnedActionCard
+                key={macro.id}
+                name={macro.name}
+                chain={chain}
+                usageCount={usageCount}
+                applicationId={applicationId}
+                applicationName={applicationName}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="home-glide" className="mb-14">
+        <h2 id="home-glide" className="mb-4 font-display text-lg font-semibold text-neutral-100">
+          Glide{application ? ` in ${application.name}` : ''}
+        </h2>
         {isCreatingProfile && application && (
           <CreateProfileModal
             application={application}
@@ -110,6 +158,7 @@ export function Home() {
               centerLabel={application.name}
               centerAppId={application.id}
               onEditZone={() => setActivePage('holo')}
+              sweep
             />
             <div className="mx-auto mt-4 flex max-w-[600px] items-center justify-between text-[13px] text-neutral-500">
               <span>Slide a finger in from the palm rest. The side and half you land in picks the action.</span>
@@ -132,57 +181,6 @@ export function Home() {
           <EmptyState hint="Open an app, and its four Glide actions appear here." />
         )}
       </section>
-
-      {/* No pattern yet means nothing to show: the section only appears
-          when Flow is off (with how to turn it on) or Noma has a suggestion. */}
-      {(!monitoringEnabled || topSuggestion) && (
-        <section className="mb-14">
-          {!monitoringEnabled ? (
-            <EmptyState
-              title="Flow is off."
-              hint="Turn on Flow (Workflows page) and Noma starts noticing the shortcut sequences you repeat, so you can save them to a Glide zone."
-            />
-          ) : (
-            topSuggestion && (
-              <NomaMoment
-                suggestion={topSuggestion}
-                variant="hero"
-                onReject={(id) => resolve(id, 'rejected')}
-                onDismiss={(id) => resolve(id, 'dismissed')}
-              />
-            )
-          )}
-        </section>
-      )}
-
-      {learnedActionsPreview.length > 0 && (
-        <section className="mb-14">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-semibold text-neutral-100">Saved workflows</h2>
-            {(learnedActions?.length ?? 0) > HOME_LEARNED_ACTIONS_PREVIEW_COUNT && (
-              <button
-                type="button"
-                onClick={() => setActivePage('workflows')}
-                className="shrink-0 text-[13px] text-neutral-400 hover:text-neutral-100"
-              >
-                All workflows
-              </button>
-            )}
-          </div>
-          <div>
-            {learnedActionsPreview.map(({ macro, chain, usageCount, applicationId, applicationName }) => (
-              <LearnedActionCard
-                key={macro.id}
-                name={macro.name}
-                chain={chain}
-                usageCount={usageCount}
-                applicationId={applicationId}
-                applicationName={applicationName}
-              />
-            ))}
-          </div>
-        </section>
-      )}
 
       {developerTools && (
         <div className="mt-6 border-t border-white/[0.06] pt-8">

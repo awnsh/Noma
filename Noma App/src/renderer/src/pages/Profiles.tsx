@@ -167,7 +167,7 @@ export function Profiles() {
                         <button
                           type="button"
                           onClick={() => void handleRename()}
-                          className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-2 py-1 text-xs text-accent"
+                          className="rounded-md border border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)] px-2 py-1 text-xs text-accent"
                         >
                           Save
                         </button>

@@ -47,7 +47,7 @@ export function DataManagementPanel() {
       </p>
 
       {lastAction && (
-        <div className="mt-3 flex items-center justify-between rounded-md border border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-2 text-xs text-accent">
+        <div className="mt-3 flex items-center justify-between rounded-md border border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)] px-3 py-2 text-xs text-accent">
           <span>
             {lastAction === 'clearedLearningData'
               ? 'Learning data cleared.'
@@ -147,7 +147,7 @@ function ConfirmRow({
   return (
     <div
       className={`flex items-center gap-3 rounded-md border px-3 py-1.5 text-xs ${
-        danger ? 'border-red-900/60 bg-red-950/20' : 'border-white/[0.07] bg-base-800 shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset,0_4px_10px_-6px_rgba(0,0,0,0.7)]'
+        danger ? 'border-red-900/60 bg-red-950/20' : 'border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)]'
       }`}
     >
       <span className={danger ? 'text-red-300' : 'text-accent'}>{prompt}</span>
