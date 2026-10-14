@@ -7,6 +7,12 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.26': [
+    'A new look. Noma takes on the colour of the app you are in, so you can see at a glance whose four Glide actions you are looking at, and the colour slides across when you switch apps.',
+    'Home opens on the app you are in: its name, then its trackpad with each zone lit from the side you swipe in from.',
+    'Flow suggestions sit on their own violet card, and each step of a workflow shows the colour of the app it happens in.',
+    'Warmer, quieter surfaces, clearer buttons and switches, and no more shouting capital labels.'
+  ],
   '0.1.25': [
     'Flow notices when you highlight something (drag across text or clips, double-click a word, Shift+click, pick a file). Noma keeps only that you highlighted, never what. A saved workflow copies or deletes whatever you have highlighted when you run it.',
     'Delete or Backspace right after a highlight can now be part of a workflow, so "select the clips, then delete" is learned. Ordinary typing is still never recorded.',
