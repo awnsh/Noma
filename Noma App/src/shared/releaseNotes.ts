@@ -7,9 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
-  '0.1.27': [
+  '0.1.28': [
     'Noma is made of glass now: the window lets your wallpaper show through, softly frosted, and cards have a fine light edge.',
-    'Things move: the highlight glides to the page you open, cards lift under your pointer, and Glide's zones light up in turn when you open Home.',
+    "Things move: the highlight glides to the page you open, cards lift under your pointer, and Glide's zones light up in turn when you open Home.",
     'Home puts your workflows first, with Glide underneath.'
   ],
   '0.1.26': [
