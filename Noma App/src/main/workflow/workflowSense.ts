@@ -1,6 +1,7 @@
 import type { WorkflowStep } from '@shared/types'
 import { isAmbientApp, isSystemSurface, matchRealisticWorkflow } from './appKnowledge'
 import { isMac } from '../platform'
+import { isSelectTarget, tabFromTarget } from './clickTarget'
 
 /**
  * Does a repeated chain actually make sense as a workflow? Repetition alone
@@ -33,6 +34,9 @@ export type ShortcutRole =
   | 'paste'
   | 'screenshot'
   | 'selectAll'
+  /** Delete or Backspace on its own. Only ever recorded straight after a
+   *  highlight (workflow/selection.ts), so it deletes the highlight. */
+  | 'delete'
   | 'action'
 
 const MODIFIERS = new Set(['Control', 'Alt', 'Meta', 'Shift'])
@@ -59,6 +63,7 @@ export function shortcutRole(comboKeys: string[], mac: boolean = isMac): Shortcu
   const keys = comboKeys.filter((key) => !MODIFIERS.has(key))
   if (keys.length !== 1) return 'action'
   const key = keys[0]
+  if (modifiers.size === 0 && (key === 'Delete' || key === 'Backspace')) return 'delete'
   const command = modifiers.has('Control') || modifiers.has('Meta')
   const only = (...names: string[]): boolean =>
     modifiers.size === names.length && names.every((name) => modifiers.has(name))
@@ -79,6 +84,25 @@ export function shortcutRole(comboKeys: string[], mac: boolean = isMac): Shortcu
     if (key === 'A' && modifiers.size === 1) return 'selectAll'
   }
   return 'action'
+}
+
+/**
+ * A browser's own keys for moving to another tab: Ctrl+Tab and Ctrl+Page
+ * keys, Ctrl+1..9 (Command+1..9 and Command+Option+arrows on a Mac). In a
+ * browser the tab you land on is recorded as its own step (`tab:` click
+ * target, see clickTarget.ts), so the key that got there is dropped.
+ */
+export function isBrowserTabSwitchCombo(comboKeys: string[], mac: boolean = isMac): boolean {
+  const modifiers = new Set(comboKeys.filter((key) => MODIFIERS.has(key)))
+  const keys = comboKeys.filter((key) => !MODIFIERS.has(key))
+  if (keys.length !== 1) return false
+  const key = keys[0]
+  const command = mac ? 'Meta' : 'Control'
+  if (modifiers.has('Control') && !modifiers.has('Alt') && !modifiers.has('Meta')) {
+    if (key === 'Tab' || key === 'PageUp' || key === 'PageDown') return true
+  }
+  if (modifiers.size === 1 && modifiers.has(command) && /^[1-9]$/.test(key)) return true
+  return mac && modifiers.size === 2 && modifiers.has('Meta') && modifiers.has('Alt') && (key === 'ArrowLeft' || key === 'ArrowRight')
 }
 
 /** Shortcuts that never belong in a workflow (see the note at the top). */
@@ -112,11 +136,32 @@ function roleOf(step: WorkflowStep): ShortcutRole | null {
  *  alone: the same named button pressed twice is one round seen twice, even
  *  if focus was briefly reported elsewhere in between. */
 function actionKey(step: WorkflowStep): string {
+  if (step.type === 'click' && (isSelectTarget(step.target) || tabFromTarget(step.target))) {
+    // Highlighting in one app and again in another (copy from here, replace
+    // there) are two different steps.
+    return `click:${step.applicationId}:${step.target}`
+  }
   return step.type === 'shortcut'
     ? `key:${step.applicationId}:${step.comboKeys.join('+')}`
     : step.type === 'click'
       ? `click:${step.target}`
       : `app:${step.applicationId}`
+}
+
+function isHighlight(step: WorkflowStep | undefined): boolean {
+  return step?.type === 'click' && isSelectTarget(step.target)
+}
+
+function isTabStep(step: WorkflowStep | undefined): boolean {
+  return step?.type === 'click' && tabFromTarget(step.target) !== null
+}
+
+/** Something done to a highlight: a shortcut (Copy, Cut, Delete, Bold…) or
+ *  a named button, in the same app. */
+function actsOnHighlight(highlight: WorkflowStep, next: WorkflowStep | undefined): boolean {
+  if (!next || next.applicationId !== highlight.applicationId) return false
+  if (next.type === 'shortcut') return true
+  return next.type === 'click' && next.target.startsWith('label:')
 }
 
 /**
@@ -146,13 +191,32 @@ function actionKey(step: WorkflowStep): string {
  *   serve, since what was selected and where the cursor went aren't steps.
  * - It doesn't end on Select all: selecting with nothing done to the
  *   selection is the start of the next round ("Paste → Select all").
+ * - A highlight is followed straight away, in the same app, by something
+ *   done to it (a shortcut or a named button). Delete only appears right
+ *   after a highlight or Select all. Highlighting and deleting count as
+ *   clipboard-quick steps: "Highlight → Delete" alone saves no presses.
+ * - Going to a browser tab and highlighting are getting ready: a chain of
+ *   only those does nothing.
  */
 export function chainMakesSense(steps: WorkflowStep[]): boolean {
   if (steps.length < 2) return false
   if (steps.some((step) => isIgnoredApp(step.applicationId))) return false
   if (steps.some((step) => step.type === 'shortcut' && isNoiseShortcut(step.comboKeys))) return false
 
+  // Delete only ever counts as deleting a highlight, so it needs one.
+  for (let i = 0; i < steps.length; i++) {
+    if (roleOf(steps[i]) === 'delete' && !isHighlight(steps[i - 1]) && roleOf(steps[i - 1]) !== 'selectAll') return false
+  }
+  // A highlight is there to have something done to it, right away and in
+  // the same app; highlighting and then leaving is not a step.
+  for (let i = 0; i < steps.length; i++) {
+    if (isHighlight(steps[i]) && !actsOnHighlight(steps[i], steps[i + 1])) return false
+  }
+
   const actions = steps.filter((step) => step.type !== 'appSwitch')
+  // Moving between tabs and highlighting are getting ready; something has
+  // to actually be done.
+  if (actions.length > 0 && actions.every((step) => isTabStep(step) || isHighlight(step))) return false
   if (actions.length === 0) {
     return steps.length === 2 && matchRealisticWorkflow(steps.map((step) => step.applicationId)) !== null
   }
@@ -184,9 +248,19 @@ export function chainMakesSense(steps: WorkflowStep[]): boolean {
   const firstPaste = roles.indexOf('paste')
   if (firstSource !== -1 && firstPaste !== -1 && firstPaste < firstSource) return false
 
-  const onlyClipboard = roles.every(
-    (role) => role === 'copy' || role === 'paste' || role === 'selectAll' || role === 'screenshot'
-  )
+  // Highlighting and deleting are as quick as Copy and Paste: on their own
+  // ("Highlight → Delete", "Highlight → Copy") one press saves nothing.
+  const onlyClipboard = actions.every((step, index) => {
+    const role = roles[index]
+    return (
+      isHighlight(step) ||
+      role === 'copy' ||
+      role === 'paste' ||
+      role === 'selectAll' ||
+      role === 'screenshot' ||
+      role === 'delete'
+    )
+  })
   if (onlyClipboard) {
     if (firstSource === -1 || firstPaste === -1) return false
     if (actions[firstSource].applicationId === actions[firstPaste].applicationId) return false

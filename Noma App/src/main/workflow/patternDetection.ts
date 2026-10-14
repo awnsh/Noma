@@ -1,9 +1,16 @@
 import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types'
 import { usualRegion } from './screenshotRegions'
 import { isMac } from '../platform'
-import { inAppLabel } from './appKnowledge'
-import { describeClickTarget } from './clickTarget'
-import { chainMakesSense, isIgnoredApp, isNoiseShortcut, isTrivialShortcut, shortcutRole } from './workflowSense'
+import { categoryOf, inAppLabel } from './appKnowledge'
+import { describeClickStep, isSelectTarget, tabFromTarget } from './clickTarget'
+import {
+  chainMakesSense,
+  isBrowserTabSwitchCombo,
+  isIgnoredApp,
+  isNoiseShortcut,
+  isTrivialShortcut,
+  shortcutRole
+} from './workflowSense'
 
 /**
  * Deterministic/statistical pattern detection (brainstorm.md sections
@@ -158,6 +165,8 @@ function withoutNoise(events: WorkflowEvent[]): WorkflowEvent[] {
         continue
       }
       if (isNoiseShortcut(event.comboKeys)) continue
+      // The tab it lands on is its own step (a `tab:` click event).
+      if (categoryOf(event.applicationId) === 'browser' && isBrowserTabSwitchCombo(event.comboKeys)) continue
     }
     kept.push(event)
   }
@@ -397,7 +406,10 @@ const SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Control+V': 'Paste',
   'Control+C': 'Copy',
   'Control+X': 'Cut',
-  'Control+A': 'Select all'
+  'Control+A': 'Select all',
+  // Only ever recorded right after a highlight (workflow/selection.ts).
+  Delete: 'Delete',
+  Backspace: 'Delete'
 }
 
 /** The same, as a Mac spells them (Command, and its own screenshot keys). */
@@ -406,6 +418,8 @@ const MAC_SHORTCUT_DISPLAY_LABELS: Record<string, string> = {
   'Meta+C': 'Copy',
   'Meta+X': 'Cut',
   'Meta+A': 'Select all',
+  Delete: 'Delete',
+  Backspace: 'Delete',
   'Meta+Shift+3': 'Screenshot',
   'Meta+Shift+4': 'Screenshot',
   'Meta+Shift+5': 'Screenshot',
@@ -431,10 +445,17 @@ export function describeStep(step: WorkflowStep): string {
     case 'appSwitch':
       return step.applicationId ?? 'another app'
     case 'click':
-      return `Click ${describeClickTarget(step.target)}`
+      return describeClickStep(step.target)
     case 'shortcut':
       return shortcutDisplayLabel(step.comboKeys, step.applicationId)
   }
+}
+
+/** A press of the mouse on a control or spot, as opposed to a highlight or
+ *  a tab change, which can follow the step before it as fast as anyone
+ *  likes (double-click a word, then Ctrl+C). */
+function isPhysicalClick(step: WorkflowStep): boolean {
+  return step.type === 'click' && !isSelectTarget(step.target) && tabFromTarget(step.target) === null
 }
 
 /**
@@ -482,6 +503,17 @@ function buildWorkflowSteps(events: WorkflowEvent[]): WorkflowStepEvent[] {
       })
     } else if (event.eventType === 'click') {
       if (event.clickTarget) {
+        // Highlighting more (a drag, then Shift+clicking to extend it) is
+        // still one highlight; the last one stands.
+        const last = steps[steps.length - 1]
+        if (
+          isSelectTarget(event.clickTarget) &&
+          last?.step.type === 'click' &&
+          isSelectTarget(last.step.target) &&
+          last.step.applicationId === event.applicationId
+        ) {
+          steps.pop()
+        }
         steps.push({
           timestamp: event.timestamp,
           step: { type: 'click', applicationId: event.applicationId, target: event.clickTarget }
@@ -664,7 +696,12 @@ function detectInAppClickPairs(events: WorkflowEvent[]): DetectedPattern[] {
     // button-mashing, not a two-step workflow (the pair-completion spam guard
     // alone lets an alternating burst through, since its completions land
     // every other click).
-    if (second.timestamp - first.timestamp < MIN_REPEAT_GAP_MS) continue
+    if (
+      second.timestamp - first.timestamp < MIN_REPEAT_GAP_MS &&
+      (isPhysicalClick(first.step) || isPhysicalClick(second.step))
+    ) {
+      continue
+    }
 
     const firstSignature = stepSignature(first.step)
     const secondSignature = stepSignature(second.step)
@@ -773,7 +810,7 @@ function buildWorkflowWindows(steps: WorkflowStepEvent[]): WorkflowWindow[] {
         // involved, too close together to be two deliberate clicks (see
         // detectInAppClickPairs).
         const mashed =
-          gap < MIN_REPEAT_GAP_MS && (slice[i].step.type === 'click' || slice[i - 1].step.type === 'click')
+          gap < MIN_REPEAT_GAP_MS && (isPhysicalClick(slice[i].step) || isPhysicalClick(slice[i - 1].step))
         if (gap > WORKFLOW_STEP_WINDOW_MS || mashed) {
           continuous = false
           break

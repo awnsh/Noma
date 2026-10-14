@@ -56,10 +56,10 @@ const CATEGORY_RULES: CategoryRule[] = [
   { category: 'chat', ids: ['slack', 'discord', 'telegram', 'whatsapp', 'signal', 'teams', 'ms-teams'] },
   { category: 'meeting', ids: ['zoom', 'webex', 'webexmta'] },
   { category: 'notes', ids: ['notion', 'obsidian', 'onenote', 'evernote', 'logseq', 'notepad', 'notes', 'textedit'] },
-  { category: 'office', ids: ['winword', 'excel', 'powerpnt', 'outlook', 'acrobat', 'acrord32', 'soffice', 'pages', 'numbers', 'keynote', 'preview'] },
+  { category: 'office', ids: ['winword', 'excel', 'powerpnt', 'outlook', 'olk', 'acrobat', 'acrord32', 'soffice', 'pages', 'numbers', 'keynote', 'preview'] },
   {
     category: 'design',
-    ids: ['photoshop', 'illustrator', 'figma', 'xd', 'indesign', 'blender', 'canva'],
+    ids: ['photoshop', 'illustrator', 'figma', 'xd', 'indesign', 'blender', 'canva', 'mspaint'],
     contains: ['gimp', 'affinity']
   },
   {
@@ -81,10 +81,14 @@ export function categoryOf(applicationId: string | null): AppCategory | null {
   return null
 }
 
-/** Apps where on-screen controls routinely carry other people's names or page
- *  content (web pages, message lists, meeting rosters), so click capture is
- *  skipped there entirely rather than trusting a name filter to catch it. */
-const CLICK_CAPTURE_EXCLUDED: AppCategory[] = ['browser', 'chat', 'meeting', 'ai']
+/** Apps where on-screen controls routinely carry other people's names or
+ *  conversation content (message lists, meeting rosters, chat history), so
+ *  button clicks there are skipped entirely rather than trusting a name
+ *  filter to catch it. Highlights (which carry nothing) are still noticed.
+ *  Browsers used to be here too; since 2026-10-13 (the user's choice) their
+ *  clicks are recorded, but only as named buttons that pass the label filter
+ *  or as which tab (scrambled), never as positions: see clickTarget.ts. */
+const CLICK_CAPTURE_EXCLUDED: AppCategory[] = ['chat', 'meeting', 'ai']
 
 export function isClickCaptureExcluded(applicationId: string | null): boolean {
   const category = categoryOf(applicationId)

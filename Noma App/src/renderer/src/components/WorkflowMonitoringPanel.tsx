@@ -36,10 +36,12 @@ export function WorkflowMonitoringPanel() {
             </div>
             <p className="mt-2 max-w-md text-sm text-neutral-400">
               Off by default. Lets Flow notice workflows inside an app, like Cut then Delete, by
-              recording <span className="text-neutral-300">which button</span> you clicked. Only
-              short button and menu labels are kept, or a rough position in the window for apps
-              that don't expose their buttons. Never text fields, documents, file names, or what
-              you type.
+              recording <span className="text-neutral-300">which button</span> you clicked and
+              which browser tab you went to. Only short button and menu labels are kept, or a
+              rough position in the window for apps that don't expose their buttons. When you
+              highlight something, Flow notes only that you did, so a saved workflow copies or
+              deletes whatever you have highlighted when you run it. Never the highlighted text,
+              text fields, documents, file names, page titles, or what you type.
             </p>
           </div>
           <div className="flex items-center gap-2 pt-1">

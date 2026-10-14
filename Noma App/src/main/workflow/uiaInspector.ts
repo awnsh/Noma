@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from 'child_process'
 import { createInterface } from 'readline'
-import type { RawClickInspection } from './clickTarget'
+import type { ClickContext, RawClickInspection } from './clickTarget'
 import { elementAtPoint, windowOwnerAtPoint } from '../actions/macos'
 import { isMac } from '../platform'
 
@@ -65,7 +65,7 @@ while ($true) {
   $line = [Console]::In.ReadLine()
   if ($line -eq $null) { break }
   $parts = $line.Split(' ')
-  $out = @{ id = $parts[0]; controlType = $null; name = $null; pid = $null; l = $null; t = $null; r = $null; b = $null }
+  $out = @{ id = $parts[0]; controlType = $null; name = $null; pid = $null; context = $null; l = $null; t = $null; r = $null; b = $null }
   try {
     $pt = New-Object System.Windows.Point ([double]$parts[1]), ([double]$parts[2])
     $el = [System.Windows.Automation.AutomationElement]::FromPoint($pt)
@@ -100,6 +100,19 @@ while ($true) {
       if ($name -ne $null -and $name.Length -gt 80) { $name = $name.Substring(0, 80) }
       $out.name = $name
       $out.pid = $el.Current.ProcessId
+      # Where the control sits, when that makes it something other than a
+      # command: a scrollbar's arrows, a path's folder buttons, the signed-in
+      # account. Only this one word leaves the helper, never the class names.
+      $up = $el
+      for ($i = 0; $i -lt 4 -and $up -ne $null -and $out.context -eq $null; $i++) {
+        $c = $up.Current
+        $marks = "$($c.ClassName)|$($c.AutomationId)"
+        if ($c.ControlType.ProgrammaticName -eq 'ControlType.ScrollBar') { $out.context = 'scrollBar' }
+        elseif ($marks -match 'Breadcrumb|Crumb') { $out.context = 'path' }
+        elseif ($marks -match 'MeControl|AccountManager|ProfileButton|AvatarButton') { $out.context = 'account' }
+        elseif ($c.ClassName -match 'CaptionButton') { $out.context = 'windowFrame' }
+        $up = $walker.GetParent($up)
+      }
       $top = $el
       for ($i = 0; $i -lt 25; $i++) {
         $parent = $walker.GetParent($top)
@@ -121,6 +134,7 @@ interface HelperAnswer {
   controlType: string | null
   name: string | null
   pid: number | null
+  context?: ClickContext | null
   l: number | null
   t: number | null
   r: number | null
@@ -221,6 +235,7 @@ export class UiaClickInspector implements ClickInspector {
       controlType: answer.controlType,
       name: answer.name,
       processId: answer.pid,
+      context: answer.context ?? null,
       window: hasRect ? { left: answer.l!, top: answer.t!, right: answer.r!, bottom: answer.b! } : null
     })
   }

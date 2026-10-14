@@ -7,7 +7,7 @@ import {
   shortcutDisplayLabel
 } from '../workflow/patternDetection'
 import { inAppLabel, matchRealisticWorkflow } from '../workflow/appKnowledge'
-import { describeClickTarget } from '../workflow/clickTarget'
+import { describeClickStep } from '../workflow/clickTarget'
 import { buildWorkflowMacroSteps, hasRunnableSteps } from '../workflow/macroSteps'
 
 /**
@@ -195,7 +195,7 @@ export function suggestionForPattern(
  *  see shortcutDisplayLabel. */
 function describeWorkflowStep(step: WorkflowStep, names: Record<string, string | null>): string {
   if (step.type === 'shortcut') return shortcutDisplayLabel(step.comboKeys, step.applicationId)
-  if (step.type === 'click') return `Click ${describeClickTarget(step.target)}`
+  if (step.type === 'click') return describeClickStep(step.target)
   if (!step.applicationId) return 'another app'
   return names[step.applicationId] ?? step.applicationId
 }

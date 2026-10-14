@@ -107,11 +107,14 @@ function isOptional<T>(value: unknown, check: (candidate: unknown) => candidate 
 }
 
 const CLICK_ZONE_TARGET = /^zone:\d{1,3}x\d{1,3}$/
+/** A browser tab's scrambled fingerprint (workflow/tabFingerprint.ts). */
+const CLICK_TAB_TARGET = /^tab:[0-9a-f]{16}$/
 
 function isValidClickTarget(value: unknown): value is string {
   if (!isBoundedString(value, MAX_CLICK_TARGET_LENGTH)) return false
   if (value.startsWith('label:')) return value.length > 'label:'.length
-  return CLICK_ZONE_TARGET.test(value)
+  if (value === 'select') return true
+  return CLICK_ZONE_TARGET.test(value) || CLICK_TAB_TARGET.test(value)
 }
 
 function isValidShortcutKeys(value: unknown): value is string[] {

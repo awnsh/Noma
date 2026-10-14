@@ -645,6 +645,22 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     expect(uIOhook.keyTap).toHaveBeenNthCalledWith(2, UiohookKey.V, [UiohookKey.Ctrl])
   })
 
+  it('goes to the tab a learned tab step names, without clicking anything', async () => {
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint)
+      .mockReturnValueOnce('aaaaaaaaaaaaaaaa')
+      .mockReturnValueOnce('aaaaaaaaaaaaaaaa')
+      .mockReturnValue('bbbbbbbbbbbbbbbb')
+    vi.mocked(uIOhook.keyTap).mockClear()
+    vi.mocked(executeClick).mockClear()
+    const result = await executeMacroSteps([{ type: 'click', target: 'tab:bbbbbbbbbbbbbbbb', applicationId: 'chrome' }], null)
+    expect(result.ok).toBe(true)
+    expect(uIOhook.keyTap).toHaveBeenCalledWith(UiohookKey.Tab, [UiohookKey.Ctrl])
+    expect(executeClick).not.toHaveBeenCalled()
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint).mockReturnValue(null)
+  })
+
   it('stops instead of pasting when the tab is not open (a full lap of the tabs)', async () => {
     vi.mocked(currentTabFingerprint).mockReset()
     vi.mocked(currentTabFingerprint)

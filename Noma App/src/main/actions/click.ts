@@ -20,7 +20,7 @@ import {
   SM_XVIRTUALSCREEN,
   SM_YVIRTUALSCREEN
 } from './win32'
-import { ZONE_COLUMNS, ZONE_ROWS, MIN_WINDOW_SIZE, type ScreenRect } from '../workflow/clickTarget'
+import { ZONE_COLUMNS, ZONE_ROWS, MIN_WINDOW_SIZE, isSelectTarget, type ScreenRect } from '../workflow/clickTarget'
 import { markSelfInjectedClick } from '../workflow/selfInjectedClicks'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { processForWindow, sameProcess } from './windowProcess'
@@ -67,7 +67,11 @@ const OFFSCREEN_COORD_THRESHOLD = -30000
  *    covering the button can't receive the click instead. The wait (and a
  *    search in progress) checks for Stop every CANCEL_POLL_MS, so pressing
  *    Stop ends the step at once instead of after the whole wait.
- * 3. **`zone:<col>x<row>`: a position.** Only recorded where the app
+ * 3. **`select`: a highlight.** Nothing is clicked. The step stands for
+ *    "what you highlighted", so the run acts on what is highlighted when
+ *    it's pressed: highlight a sentence, press, and only that sentence is
+ *    copied or deleted.
+ * 4. **`zone:<col>x<row>`: a position.** Only recorded where the app
  *    exposes no named controls (custom-drawn UIs). Mapped onto the
  *    foreground window's *current* bounds, so a moved or resized window
  *    still gets the same relative spot. This one is approximate by design:
@@ -88,6 +92,11 @@ export async function executeClick(target: string, applicationId?: string): Prom
       }
     }
   }
+
+  // A highlight: whatever is highlighted in that app now is what the next
+  // step (Copy, Delete…) acts on. Clicking where the old highlight was
+  // would only throw the current one away.
+  if (isSelectTarget(target)) return { ok: true }
 
   if (target.startsWith('label:')) return clickNamedControl(target.slice('label:'.length), owner?.pid ?? null)
 
@@ -217,6 +226,13 @@ async function sendMacClick(x: number, y: number): Promise<ExecutionResult> {
   await sleep(PRESS_MS)
   const up = postMouseEvent(CG_LEFT_MOUSE_UP, x, y)
   return down && up ? { ok: true } : { ok: false, reason: 'macOS refused the synthetic click (is Accessibility allowed for Noma?)' }
+}
+
+/** Bounds of the window in front right now, or null (minimized, tiny, or
+ *  nothing in front). */
+export function foregroundWindowRect(): ScreenRect | null {
+  const hwnd = isMac ? (frontmostPid() ?? frontWindowOwnerPid() ?? 0) : GetForegroundWindow()
+  return hwnd ? windowRect(hwnd) : null
 }
 
 function windowRect(hwnd: number): ScreenRect | null {

@@ -16,6 +16,7 @@ import { uiaControlFinder } from './uiaControlFinder'
 import { runScreenshotStep } from './screenshot'
 import { isRegionScreenshotShortcut, usualRegion, withoutScreenshotOverlaySteps } from '../workflow/screenshotRegions'
 import { currentTabFingerprint } from '../workflow/tabFingerprint'
+import { tabFromTarget } from '../workflow/clickTarget'
 import { getScreenshotRegionsSince } from '../database/repositories/workflowEventsRepository'
 import { sleep } from '../util'
 
@@ -491,8 +492,10 @@ async function executeMacroStep(
       return switchToTab(step.tab)
     }
 
-    case 'click':
-      return executeClick(step.target, step.applicationId)
+    case 'click': {
+      const tab = tabFromTarget(step.target)
+      return tab ? switchToTab(tab) : executeClick(step.target, step.applicationId)
+    }
 
     case 'macro': {
       if (visitedMacroIds.has(step.macroId)) {
@@ -680,7 +683,9 @@ export async function executeControlAction(
     // shared/types for why the Control Mapping Editor never offers it
     // directly. Handled here too so `executeControlAction` stays
     // exhaustive rather than silently unreachable for a valid variant.
-    case 'click':
-      return executeClick(action.target, action.applicationId)
+    case 'click': {
+      const tab = tabFromTarget(action.target)
+      return tab ? switchToTab(tab) : executeClick(action.target, action.applicationId)
+    }
   }
 }

@@ -81,3 +81,33 @@ describe('clickTargetFor', () => {
     expect(describeClickTarget('zone:8x5')).toBe('a spot in the middle')
   })
 })
+
+describe('labels that are really content or window chrome (found by scripts/appSurvey.ts on real apps)', () => {
+  const NAMES = new Set(['ukani', 'awnsh'])
+  const label = (name: string): string | null => sanitizeControlLabel('ControlType.Button', name, NAMES)
+
+  it("drops the signed-in person's name and anything shaped like a name with an initial", () => {
+    expect(label('Ansh S Ukani')).toBeNull() // Office's account button
+    expect(label('Ukani')).toBeNull()
+    expect(label('Sam J Smith')).toBeNull()
+    expect(label('Save As')).toBe('Save As')
+  })
+
+  it('drops buttons that show a current value', () => {
+    expect(label('Current repository Noma')).toBeNull() // GitHub Desktop
+    expect(label('Current branch main')).toBeNull()
+  })
+
+  it('drops minimize/maximize/restore, which move windows rather than do something', () => {
+    for (const name of ['Minimize', 'Maximize', 'Restore', 'Restore Down', 'Minimize Settings']) expect(label(name)).toBeNull()
+    expect(label('Close Tab')).toBe('Close Tab')
+  })
+
+  it('records nothing for scrollbar arrows, path folders, account buttons or window frame buttons, not even a zone', () => {
+    for (const context of ['scrollBar', 'path', 'account', 'windowFrame'] as const) {
+      expect(
+        clickTargetFor(10, 10, { controlType: 'ControlType.Button', name: 'Users', window: WINDOW, context })
+      ).toBeNull()
+    }
+  })
+})

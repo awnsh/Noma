@@ -1,7 +1,7 @@
 import type { MacroStep, Suggestion, WorkflowPreview, WorkflowPreviewStep } from '@shared/types'
 import { getApplicationById } from '../database/repositories/applicationsRepository'
 import { isBlockedShortcut } from '../actions/actionExecutor'
-import { describeClickTarget } from '../workflow/clickTarget'
+import { describeClickTarget, isSelectTarget, tabFromTarget } from '../workflow/clickTarget'
 import { shortcutDisplayLabel } from '../workflow/patternDetection'
 import { isMac } from '../platform'
 import { buildWorkflowMacroSteps } from './suggestionResolution'
@@ -68,6 +68,12 @@ function describe(step: MacroStep, applicationId: string | null): WorkflowPrevie
           }
     }
     case 'click':
+      if (isSelectTarget(step.target)) {
+        return { kind: 'click', description: 'Use what you have highlighted right now (nothing is clicked)' }
+      }
+      if (tabFromTarget(step.target)) {
+        return { kind: 'click', description: 'Go to the same browser tab you used (it has to be open already)' }
+      }
       return step.target.startsWith('label:')
         ? { kind: 'click', description: `Click ${describeClickTarget(step.target)} (found again by name)` }
         : {

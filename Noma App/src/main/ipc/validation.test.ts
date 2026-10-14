@@ -86,6 +86,9 @@ describe('isValidControlAction', () => {
     expect(isValidControlAction({ type: 'click', target: 'Save' })).toBe(false)
     expect(isValidControlAction({ type: 'click', target: 'label:' })).toBe(false)
     expect(isValidControlAction({ type: 'click', target: 'zone:axb' })).toBe(false)
+    expect(isValidControlAction({ type: 'click', target: 'select' })).toBe(true)
+    expect(isValidControlAction({ type: 'click', target: 'tab:0123456789abcdef' })).toBe(true)
+    expect(isValidControlAction({ type: 'click', target: 'tab:Inbox - Gmail' })).toBe(false)
     expect(isValidControlAction({ type: 'click', target: 'zone:1x1', applicationId: null })).toBe(false)
   })
 

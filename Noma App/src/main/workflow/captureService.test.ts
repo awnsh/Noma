@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventType, UiohookKey, type UiohookKeyboardEvent } from 'uiohook-napi'
-import { CaptureService, comboFromKeydownEvent } from './captureService'
+import { CaptureService, classifyKeydown, comboFromKeydownEvent } from './captureService'
+import { __resetSelectionForTesting } from './selection'
+import { isMac } from '../platform'
 import { __resetSelfInjectedGuardForTesting, markSelfInjected } from './selfInjectedKeys'
 
 function keydown(
@@ -137,5 +139,80 @@ describe('CaptureService; ignores its own synthetic keystrokes', () => {
     fireKeydown(service, keydown(UiohookKey.F5, { ctrlKey: true })) // the user's own, real press
 
     expect(onCombo).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('CaptureService: highlights and Delete', () => {
+  function service() {
+    const combos: string[][] = []
+    const highlights: number[] = []
+    const capture = new CaptureService(
+      (event) => combos.push(event.comboKeys),
+      (event) => highlights.push(event.timestamp)
+    )
+    capture.setCurrentApplicationId('notepad')
+    return { capture, combos, highlights }
+  }
+
+  beforeEach(() => {
+    __resetSelfInjectedGuardForTesting()
+    __resetSelectionForTesting()
+  })
+
+  it('a run of Shift+arrows is one highlight, and records no key', () => {
+    const { capture, combos, highlights } = service()
+    capture.handleKey(keydown(UiohookKey.ArrowRight, { shiftKey: true }), 1000)
+    capture.handleKey(keydown(UiohookKey.ArrowRight, { shiftKey: true }), 1100)
+    // A word at a time: Ctrl+Shift on Windows, Option+Shift on a Mac.
+    capture.handleKey(keydown(UiohookKey.ArrowRight, { shiftKey: true, ...(isMac ? { altKey: true } : { ctrlKey: true }) }), 1200)
+    expect(highlights).toEqual([1000])
+    expect(combos).toEqual([])
+  })
+
+  it('records Delete or Backspace straight after a highlight, once', () => {
+    const { capture, combos } = service()
+    capture.handleKey(keydown(UiohookKey.ArrowLeft, { shiftKey: true }), 1000)
+    capture.handleKey(keydown(UiohookKey.Backspace), 1500)
+    capture.handleKey(keydown(UiohookKey.Backspace), 1700)
+    expect(combos).toEqual([['Backspace']])
+  })
+
+  it('never records Delete while typing, or after typing following a highlight', () => {
+    const { capture, combos } = service()
+    capture.handleKey(keydown(UiohookKey.Backspace), 500)
+    capture.handleKey(keydown(UiohookKey.ArrowLeft, { shiftKey: true }), 1000)
+    capture.handleKey(keydown(UiohookKey.A), 1100)
+    capture.handleKey(keydown(UiohookKey.Delete), 1200)
+    expect(combos).toEqual([])
+  })
+
+  it('Select all arms Delete too, and Delete long after a highlight is ignored', () => {
+    const { capture, combos } = service()
+    capture.handleKey(keydown(UiohookKey.A, { ctrlKey: true }), 1000)
+    capture.handleKey(keydown(UiohookKey.Delete), 1200)
+    capture.handleKey(keydown(UiohookKey.ArrowLeft, { shiftKey: true }), 2000)
+    capture.handleKey(keydown(UiohookKey.Delete), 60_000)
+    expect(combos).toEqual([['Control', 'A'], ['Delete']])
+  })
+
+  it('a Delete in another app than the highlight is ignored', () => {
+    const { capture, combos } = service()
+    capture.handleKey(keydown(UiohookKey.ArrowLeft, { shiftKey: true }), 1000)
+    capture.setCurrentApplicationId('code')
+    capture.handleKey(keydown(UiohookKey.Delete), 1200)
+    expect(combos).toEqual([])
+  })
+
+  it("Flow's own replayed Delete is not the user's", () => {
+    const { capture, combos } = service()
+    capture.handleKey(keydown(UiohookKey.ArrowLeft, { shiftKey: true }), Date.now())
+    markSelfInjected(['Delete'])
+    capture.handleKey(keydown(UiohookKey.Delete), Date.now())
+    expect(combos).toEqual([])
+  })
+
+  it('Alt+Shift+Arrow (copy line in editors) is a command, not a highlight', () => {
+    expect(classifyKeydown(keydown(UiohookKey.ArrowDown, { shiftKey: true, altKey: true }), false).kind).not.toBe('keyboardHighlight')
+    expect(classifyKeydown(keydown(UiohookKey.ArrowDown, { shiftKey: true, altKey: true }), true).kind).toBe('keyboardHighlight')
   })
 })

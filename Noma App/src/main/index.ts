@@ -75,6 +75,9 @@ import { currentTabFingerprint, isBrowserApp } from './workflow/tabFingerprint'
 import { watchForSnip } from './actions/screenshot'
 import { ClickCaptureService } from './workflow/clickCaptureService'
 import { createClickInspector } from './workflow/uiaInspector'
+import { SELECT_TARGET, TAB_TARGET_PREFIX } from './workflow/clickTarget'
+import { isBrowserTabSwitchCombo } from './workflow/workflowSense'
+import { foregroundWindowRect } from './actions/click'
 import { GlideController } from './holo/glideController'
 import { getMacEdgeSwipe, setMacEdgeSwipe } from './holo/macEdgeSwipe'
 import { latestTouchCheckAt, openRecordingsFolder } from './holo/recordingStore'
@@ -187,7 +190,25 @@ function browserTab(applicationId: string | null): { tab?: string } {
   return tab ? { tab } : {}
 }
 
+/** How long a tab switch gets to show in the browser's window title. */
+const TAB_SWITCH_SETTLE_MS = 250
+
+/** Records which tab a browser keyboard tab switch (Ctrl+Tab, Ctrl+1…)
+ *  landed on, as its scrambled fingerprint: the same step a click on the
+ *  tab makes (workflow/clickCaptureService.ts). */
+function recordBrowserTabSwitch(applicationId: string | null, timestamp: number): void {
+  setTimeout(() => {
+    const tab = currentTabFingerprint()
+    if (!tab) return
+    insertWorkflowEvent({ applicationId, eventType: 'click', clickTarget: `${TAB_TARGET_PREFIX}${tab}`, timestamp })
+    void refreshSuggestions()
+  }, TAB_SWITCH_SETTLE_MS)
+}
+
 const captureService = new CaptureService((event) => {
+  if (isBrowserApp(event.applicationId) && isBrowserTabSwitchCombo(event.comboKeys)) {
+    recordBrowserTabSwitch(event.applicationId, event.timestamp)
+  }
   const eventId = insertWorkflowEvent({
     applicationId: event.applicationId,
     eventType: 'shortcut',
@@ -208,6 +229,16 @@ const captureService = new CaptureService((event) => {
   // keys of this real captured combo. Nothing new is exposed here: this
   // is exactly the already-sanitized combo insertWorkflowEvent // persisted, not a raw keystroke.
   mainWindow?.webContents.send(IPC_CHANNELS.WORKFLOW_COMBO_CAPTURED, event.comboKeys)
+}, (highlight) => {
+  // Shift+arrows: "highlighted something", the same step a drag makes.
+  // Nothing about what was highlighted (workflow/selection.ts).
+  insertWorkflowEvent({
+    applicationId: highlight.applicationId,
+    eventType: 'click',
+    clickTarget: SELECT_TARGET,
+    timestamp: highlight.timestamp
+  })
+  void refreshSuggestions()
 })
 
 /** Opt-in (settingsRepository's clickCaptureEnabled, off by default) and only
@@ -222,7 +253,7 @@ const clickCaptureService = new ClickCaptureService((event) => {
     timestamp: event.timestamp
   })
   void refreshSuggestions()
-}, createClickInspector())
+}, createClickInspector(), { readTab: () => currentTabFingerprint(), readWindowRect: foregroundWindowRect })
 
 /**
  * A control usually fires while the user is in some other app (that's the

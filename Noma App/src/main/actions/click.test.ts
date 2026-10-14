@@ -81,6 +81,19 @@ describe('executeClick: the right app must be in front', () => {
   })
 })
 
+describe('executeClick: a highlight step', () => {
+  it('clicks nothing, so the next step acts on what is highlighted now', async () => {
+    expect(await executeClick('select', 'resolve')).toEqual({ ok: true })
+    expect(SendInput).not.toHaveBeenCalled()
+    expect(SetCursorPos).not.toHaveBeenCalled()
+  })
+
+  it('still needs the right app in front', async () => {
+    vi.mocked(processForWindow).mockReturnValue({ pid: 7, processName: 'chrome.exe' })
+    expect((await executeClick('select', 'resolve')).ok).toBe(false)
+  })
+})
+
 describe('executeClick: a named control is found again, not guessed', () => {
   it('clicks the control where it is now', async () => {
     vi.mocked(uiaControlFinder.find).mockResolvedValue({ status: 'found', x: 812, y: 44 })

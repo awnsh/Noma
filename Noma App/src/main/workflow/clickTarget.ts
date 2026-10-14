@@ -1,3 +1,5 @@
+import { userInfo } from 'os'
+
 /**
  * Turns "the user clicked here" into the only thing Noma is willing to
  * remember about it: the click-capture counterpart of captureFilter.ts, and
@@ -50,11 +52,33 @@ const CONTENT_CONTROL_TYPES = new Set([
   'ControlType.TitleBar'
 ])
 
+/** Window-frame buttons: moving windows around, not doing something in the
+ *  app (Chromium apps draw their own, so they aren't always in a title bar). */
+const WINDOW_FRAME_LABELS = new Set(['restore', 'restore down'])
+const WINDOW_FRAME_WORDS = new Set(['minimize', 'maximize', 'minimise', 'maximise'])
+
+/** Parts of the signed-in user's account name (lowercased), so a profile
+ *  button named after them ("Ansh S Ukani" in Office) is never kept. */
+function accountNameParts(): Set<string> {
+  let username = ''
+  try {
+    username = userInfo().username
+  } catch {
+    // No account info (a sandbox): nothing extra to filter.
+  }
+  return new Set(username.toLowerCase().split(/[^\p{L}]+/u).filter((part) => part.length >= 3))
+}
+const ACCOUNT_NAME_PARTS = accountNameParts()
+
 const MAX_LABEL_LENGTH = 28
 const MAX_LABEL_WORDS = 3
 
 /** The cleaned label for a control name, or null if it isn't safe/useful. */
-export function sanitizeControlLabel(controlType: string | null, name: string | null): string | null {
+export function sanitizeControlLabel(
+  controlType: string | null,
+  name: string | null,
+  accountNames: Set<string> = ACCOUNT_NAME_PARTS
+): string | null {
   if (!controlType || !COMMAND_CONTROL_TYPES.has(controlType) || !name) return null
 
   const cleaned = name
@@ -68,6 +92,16 @@ export function sanitizeControlLabel(controlType: string | null, name: string | 
   // Letters, spaces, hyphens and apostrophes only: no digits, and none of
   // the punctuation that paths, URLs, e-mail addresses and IDs are made of.
   if (!/^[\p{L}][\p{L} '-]*$/u.test(cleaned)) return null
+  const words = cleaned.split(' ')
+  // Also with the app's name after it: "Minimize Settings".
+  if (WINDOW_FRAME_LABELS.has(cleaned.toLowerCase()) || WINDOW_FRAME_WORDS.has(words[0].toLowerCase())) return null
+  // A button that shows a current value ("Current branch main", "Current
+  // repository Noma" in GitHub Desktop) carries that value in its name.
+  if (words[0].toLowerCase() === 'current') return null
+  // A person's name: a middle initial ("Ansh S Ukani"), or part of the
+  // signed-in account's own name.
+  if (words.length >= 3 && words.slice(1, -1).some((word) => /^\p{Lu}\.?$/u.test(word))) return null
+  if (words.some((word) => accountNames.has(word.toLowerCase()))) return null
   return cleaned
 }
 
@@ -99,18 +133,35 @@ export function zoneForClick(x: number, y: number, window: ScreenRect): string |
   return `zone:${col}x${row}`
 }
 
+/** Where a control sits, when that makes it something other than a
+ *  command (uiaInspector.ts): a scrollbar's arrow, a folder in a path bar,
+ *  the signed-in account's button, a window's minimize/restore button. Such
+ *  clicks are never recorded: scrolling and moving windows aren't steps, and
+ *  folder and account names are content. */
+export type ClickContext = 'scrollBar' | 'path' | 'account' | 'windowFrame'
+
 export interface RawClickInspection {
   controlType: string | null
   name: string | null
   window: ScreenRect | null
+  context?: ClickContext | null
 }
 
 /** The stored target for one click: a sanitized label when the control's
  *  name is safe, else the window grid zone; but only where the app exposes
  *  nothing meaningful at that point (an opaque pane/canvas/window, as in
  *  custom-drawn UIs). A content control, or a command control whose name
- *  failed sanitizing, records nothing. */
-export function clickTargetFor(x: number, y: number, inspection: RawClickInspection): string | null {
+ *  failed sanitizing, records nothing. In a browser (`allowZone` false)
+ *  only named buttons count: Chrome's own (Back, Reload, Bookmark) and a web
+ *  page's command buttons ("Compose", "Send") that pass the same label
+ *  filter; links and page text never do. */
+export function clickTargetFor(
+  x: number,
+  y: number,
+  inspection: RawClickInspection,
+  allowZone: boolean = true
+): string | null {
+  if (inspection.context) return null
   if (inspection.controlType && CONTENT_CONTROL_TYPES.has(inspection.controlType)) return null
   const label = sanitizeControlLabel(inspection.controlType, inspection.name)
   if (label) return `label:${label}`
@@ -118,7 +169,76 @@ export function clickTargetFor(x: number, y: number, inspection: RawClickInspect
   // *known* control, not an opaque surface: recording its position instead
   // would be a back door around the name filter.
   if (inspection.controlType && COMMAND_CONTROL_TYPES.has(inspection.controlType)) return null
-  return inspection.window ? zoneForClick(x, y, inspection.window) : null
+  // `allowZone` is false in browsers: every page is laid out differently,
+  // so a spot in the window means nothing from one page to the next.
+  return allowZone && inspection.window ? zoneForClick(x, y, inspection.window) : null
+}
+
+/**
+ * `select`: the user highlighted something (dragged across text or items,
+ * double-clicked a word, Shift/Ctrl+clicked to extend a selection, or picked
+ * an item in a list). WHAT was highlighted is never known: not the text, not
+ * the item, not where it was. A replayed workflow acts on whatever is
+ * highlighted when it runs, so "highlight → Copy" copies only the part the
+ * user has highlighted then (main/actions/click.ts).
+ */
+export const SELECT_TARGET = 'select'
+
+/** `tab:<fingerprint>`: went to a particular browser tab. The fingerprint is
+ *  the scrambled tab title tabFingerprint.ts already keeps for steps, never
+ *  the title. */
+export const TAB_TARGET_PREFIX = 'tab:'
+
+export function isSelectTarget(target: string): boolean {
+  return target === SELECT_TARGET
+}
+
+export function tabFromTarget(target: string): string | null {
+  return target.startsWith(TAB_TARGET_PREFIX) && target.length > TAB_TARGET_PREFIX.length
+    ? target.slice(TAB_TARGET_PREFIX.length)
+    : null
+}
+
+/** Controls a drag across selects what's in them (text, items, clips on a
+ *  canvas), as opposed to moving a scrollbar, a slider, a window or a tab. */
+const SELECTABLE_SURFACE_TYPES = new Set([
+  'ControlType.Edit',
+  'ControlType.Document',
+  'ControlType.Text',
+  'ControlType.List',
+  'ControlType.ListItem',
+  'ControlType.DataItem',
+  'ControlType.Table',
+  'ControlType.Tree',
+  'ControlType.TreeItem',
+  'ControlType.DataGrid',
+  'ControlType.Pane',
+  'ControlType.Custom',
+  'ControlType.Group'
+])
+
+/** Where a double-click selects a word. */
+const TEXT_TYPES = new Set(['ControlType.Edit', 'ControlType.Document', 'ControlType.Text'])
+
+/** Items a plain click selects (a file, a row, a node). */
+const ITEM_TYPES = new Set(['ControlType.ListItem', 'ControlType.DataItem', 'ControlType.TreeItem'])
+
+export interface PressShape {
+  /** The press was dragged before release (beyond a small jitter). */
+  dragged: boolean
+  /** Second (or third) press of a double/triple click. */
+  repeatPress: boolean
+  /** Shift or Ctrl/Cmd held: extending or adding to a selection. */
+  extending: boolean
+}
+
+/** Whether a press of this shape on this control highlighted something. */
+export function isHighlightPress(controlType: string | null, shape: PressShape): boolean {
+  if (!controlType) return false
+  if (shape.dragged) return SELECTABLE_SURFACE_TYPES.has(controlType)
+  if (shape.repeatPress) return TEXT_TYPES.has(controlType)
+  if (shape.extending) return SELECTABLE_SURFACE_TYPES.has(controlType)
+  return ITEM_TYPES.has(controlType)
 }
 
 const REGION_ROWS = ['top', 'middle', 'bottom'] as const
@@ -127,6 +247,8 @@ const REGION_COLUMNS = ['left', 'center', 'right'] as const
 /** Human wording for a stored click target: "Delete" (quoted) for a label,
  *  or "a spot in the top-left" for a zone. */
 export function describeClickTarget(target: string): string {
+  if (isSelectTarget(target)) return 'what you highlighted'
+  if (tabFromTarget(target)) return 'a tab'
   if (target.startsWith('label:')) return `“${target.slice('label:'.length)}”`
   const match = /^zone:(\d+)x(\d+)$/.exec(target)
   if (!match) return 'a control'
@@ -137,4 +259,11 @@ export function describeClickTarget(target: string): string {
   return vertical === 'middle' && horizontal === 'center'
     ? 'a spot in the middle'
     : `a spot in the ${vertical}-${horizontal}`
+}
+
+/** A whole click step in words: "Click “Delete”", "Highlight", "Go to a tab". */
+export function describeClickStep(target: string): string {
+  if (isSelectTarget(target)) return 'Highlight'
+  if (tabFromTarget(target)) return 'Go to a tab'
+  return `Click ${describeClickTarget(target)}`
 }

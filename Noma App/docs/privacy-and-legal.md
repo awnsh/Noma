@@ -19,7 +19,9 @@ Principle") is the constraint this document exists to satisfy.
 ## The core design decision: metadata-only, modifier-gated capture
 
 - A single key press is **never** captured. Individual characters are where
-  typed content lives.
+  typed content lives. One exception, chosen by the user on 2026-10-13 (see
+  "Highlights and deleting them" below): Delete or Backspace pressed straight
+  after a highlight, before any other key.
 - A **Shift-only** combination is never captured. Shift is how capital
   letters and symbols are typed — content, not commands.
 - A combination is captured **only** if it includes at least one of
@@ -206,9 +208,17 @@ are stated explicitly and enforced in one pure, unit-tested place
   exposes nothing meaningful at the click point (custom-drawn UIs). A known
   command control whose name failed the label filter records nothing, so the
   zone fallback is not a way around it.
-- **Excluded apps:** browsers, chat apps, meeting apps and AI chat apps are
-  skipped entirely — their buttons routinely carry people's names or page
-  content, which a name filter cannot reliably tell apart from a label.
+- **Excluded apps:** chat apps, meeting apps and AI chat apps are skipped
+  entirely — their buttons routinely carry people's names or message
+  content, which a name filter cannot reliably tell apart from a label. Only
+  highlights (below), which carry nothing, are noticed there.
+- **Browsers** (since 2026-10-13, the user's choice): only named buttons
+  that pass the same label filter (Chrome's own Back, Reload, Bookmark; a web
+  page's "Compose" or "Send"), and which tab was clicked, kept as the same
+  scrambled tab fingerprint described under "Browser tabs" below
+  (`tab:<16 hex>`). Never a zone (pages differ, so a position means nothing),
+  never a link, never page text, never a URL or a title. Switching tabs with
+  the keyboard (Ctrl+Tab, Ctrl+1..9) records the same fingerprint step.
 - **Flow's own window** is never recorded. Right/middle clicks are ignored.
 - A click is never recorded together with what was typed, and nothing leaves
   the device.
@@ -225,6 +235,30 @@ app the step was recorded in, at the moment the macro runs
 app's buttons and menu items to find the one that matches, in memory, and
 keeps nothing: no name it sees is stored, logged or sent anywhere, and it
 only runs when the user presses a control whose macro contains such a step.
+
+## Highlights and deleting them
+
+Added 2026-10-13 so Flow understands what someone does *to a selection*
+(copy only the highlighted sentence, delete only the selected clips) and
+replays it on whatever is highlighted when it runs.
+
+- **A highlight is stored as one word, `select`**, plus the app and a
+  timestamp: no text, no item, no position, no length. It is recognized from
+  the shape of a press (`isHighlightPress` in
+  `src/main/workflow/clickTarget.ts`): a drag across text, items or a
+  canvas; a double-click on text; a Shift or Ctrl/Command+click; picking an
+  item in a list. With click learning off, Shift+arrow keys (with Ctrl, or
+  Option/Command on a Mac) are recognized the same way, from the keyboard
+  hook; no key is stored for them.
+- **Delete / Backspace** with no modifier is captured only when it comes
+  straight after a highlight (or Select all) in the same app, within 10
+  seconds, with no other key pressed in between, and only the first one
+  (`src/main/workflow/selection.ts`). Any other key or any click in between
+  disarms it, so it can't record editing while typing. Nothing else about
+  the keystroke is kept.
+- **Replay** never recreates a highlight. The step clicks nothing; the next
+  step (Copy, Delete, a button) acts on what the user has highlighted at
+  that moment.
 
 ## Screenshot areas and browser tabs (for replaying screenshot workflows)
 
