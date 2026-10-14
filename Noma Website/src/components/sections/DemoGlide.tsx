@@ -26,7 +26,7 @@ import { journey } from '../../data/journey'
  *     swings from the screen down to straight above the trackpad. Its screen
  *     shows the demo's final moment, captured from (1), so the swap is exact.
  *  3. Glide: the last frame, with the zones and the finger drawn over it from
- *     the render's camera (journey.ts), and Claude's controls lighting.
+ *     the render's camera (journey.ts), and Chrome's controls lighting.
  *
  * Everything after this section follows below it as usual. Reduced motion:
  * nothing pinned; the demo's final moment on the laptop, then Glide's

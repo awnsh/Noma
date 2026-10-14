@@ -12,13 +12,15 @@ import { appProfiles } from '../../data/appProfiles'
  * trackpad at any size. Used by DemoGlide, the pinned demo -> Glide section.
  */
 
-export const GLIDE_APP_ID = 'claude'
+// Chrome: an app nearly everyone uses daily (2026-10-15, was Claude, which
+// made Noma read as an AI product).
+export const GLIDE_APP_ID = 'chrome'
 
 /** Glide's zones light in the app's own colour, as in the Noma app since
- *  2026-10-14 (App Spaces): Claude's hue from lib/appSpace.ts, at the
+ *  2026-10-14 (App Spaces): Chrome's hue from lib/appSpace.ts, at the
  *  lightness the app uses for `space` and `space-ink`. */
-const ZONE_GLOW = 'oklch(0.76 0.11 42)'
-const ZONE_LIT = 'oklch(0.86 0.077 42)'
+const ZONE_GLOW = 'oklch(0.76 0.13 82)'
+const ZONE_LIT = 'oklch(0.86 0.091 82)'
 
 /** Slot order: upper left 1, upper right 2, lower left 3, lower right 4. */
 export const GLIDE_ZONES = [
@@ -194,7 +196,7 @@ function Finger({ from, to, r }: { from: Point; to: Point; r: number }) {
   return <circle ref={ref} cx={from[0]} cy={from[1]} r={r} fill="url(#glide-finger)" opacity={0} />
 }
 
-/** Claude's four controls, lit as their swipe lands; picking one replays it. */
+/** Chrome's four controls, lit as their swipe lands; picking one replays it. */
 export function ControlPanel({
   fired,
   onPick,

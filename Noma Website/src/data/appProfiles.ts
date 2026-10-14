@@ -42,7 +42,9 @@ export const appProfiles: Record<string, AppProfile> = {
     id: 'chrome',
     name: 'Chrome',
     shortName: 'Chrome',
-    controls: ['Back', 'Forward', 'New Tab', 'Close'],
+    // The Noma app's own Chrome starter actions (seed.ts), so the site
+    // shows what someone actually gets on install.
+    controls: ['New Tab', 'Reopen Tab', 'Reload', 'Find'],
     color: '#4c8bf5',
   },
   figma: {
