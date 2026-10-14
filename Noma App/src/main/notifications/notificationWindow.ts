@@ -152,6 +152,7 @@ export function showWorkflowNotice(notice: WorkflowNotice): void {
   // showInactive, never show: showing normally would raise *and focus* the
   // window, which is the one thing this surface must never do.
   window.showInactive()
+  startPointerWatch(window)
 
   // The content, on the other hand, does have to wait; and if it misses the
   // push anyway (React still mounting), the surface asks for `currentNotice`
@@ -166,8 +167,37 @@ export function getPendingWorkflowNotice(): WorkflowNotice | null {
   return currentNotice
 }
 
+/**
+ * Clicks on the notice used to depend on the renderer seeing the pointer
+ * arrive (mouseenter through a click-through window), which on some setups
+ * never fired, so every press fell through to the app underneath (user,
+ * 2026-10-15). Main now checks the cursor itself while a notice is up and
+ * makes the window take clicks whenever the pointer is over it.
+ */
+let pointerTimer: ReturnType<typeof setInterval> | null = null
+let pointerInside = false
+function startPointerWatch(window: BrowserWindow): void {
+  stopPointerWatch()
+  pointerTimer = setInterval(() => {
+    if (window.isDestroyed() || !window.isVisible()) return stopPointerWatch()
+    const { x, y } = screen.getCursorScreenPoint()
+    const b = window.getBounds()
+    const inside = x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height
+    if (inside !== pointerInside) {
+      pointerInside = inside
+      window.setIgnoreMouseEvents(!inside, { forward: true })
+    }
+  }, 60)
+}
+function stopPointerWatch(): void {
+  if (pointerTimer) clearInterval(pointerTimer)
+  pointerTimer = null
+  pointerInside = false
+}
+
 export function hideWorkflowNotice(): void {
   currentNotice = null
+  stopPointerWatch()
   if (!noticeWindow) return
   noticeWindow.setIgnoreMouseEvents(true, { forward: true })
   noticeWindow.hide()
@@ -179,6 +209,8 @@ export function hideWorkflowNotice(): void {
  */
 export function setWorkflowNoticeInteractive(interactive: boolean): void {
   if (!noticeWindow || noticeWindow.isDestroyed()) return
+  // The pointer watch above is the authority while the pointer is inside.
+  if (!interactive && pointerInside) return
   noticeWindow.setIgnoreMouseEvents(!interactive, { forward: true })
 }
 
