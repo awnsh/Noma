@@ -1,105 +1,96 @@
-# Noma
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/readme/banner-dark.png">
+    <img src=".github/readme/banner-light.png" alt="Noma: your computer, adapting to you." width="720">
+  </picture>
+</p>
 
-Noma learns how you use your computer and turns repetitive workflows into
-one-press actions. The desktop app watches for patterns you opt into
-sharing (which shortcuts you use, how often, in what sequence — never what
-you type), explains what it noticed in plain language, and asks before it
-automates anything. A physical device is being built to make that
-intelligence tangible — not as a customizable control-center product in its
-own right (that space now has direct competition — Logitech's MX Keypad —
-see "Current stage" below), but as a physical readout of what the software
-already understands.
+<hr>
 
-This repo holds every piece of that: the working desktop prototype, the
-public site, and the hardware track (software simulator, a real serial
-transport, and starter firmware for a physical device).
+<p align="center">
+  <img src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078D4?style=flat-square" alt="Windows 10 and 11">
+  <img src="https://img.shields.io/badge/macOS-Apple%20silicon%20%C2%B7%20Intel-555?style=flat-square" alt="macOS on Apple silicon and Intel">
+  <img src="https://img.shields.io/badge/Electron-44-47848F?style=flat-square" alt="Electron 44">
+  <img src="https://img.shields.io/badge/status-beta-C8553D?style=flat-square" alt="Beta">
+</p>
 
-## Repo layout
+A desktop app that notices the sequences you repeat across apps, like
+screenshot, switch to Claude, paste, and offers to turn them into one action.
+You run that action with Glide: slide a finger from the palm rest onto your
+trackpad. Noma knows which app you're in, so each app gets its own four
+actions. It never records what you type.
 
-| Folder | What it is | Status |
-|---|---|---|
-| [`Noma App`](./Noma%20App) | The real product — Electron desktop app: application detection, workflow capture, pattern detection, the suggestion/learning loop, macros, profiles, a virtual hardware simulator, and the Dashboard/Virtual Keyboard/Macro Studio/Learning Center UI. | Working, tested (see below). Start here. |
-| [`Noma Website`](./Noma%20Website) | Public marketing site (React/Vite/Tailwind), independent codebase, no shared dependency on `Noma App`. | Live-buildable; copy still reflects the pre-competitive-pivot "adaptive keyboard" story — see its own README's "Before shipping" and the note under "Current stage" below. |
-| [`Noma Virtual Device`](./Noma%20Virtual%20Device) | A standalone always-on-top window that *is* the eventual physical module (OLED + 4 buttons) — a real, dumb terminal client of `Noma App`'s hardware transport, for testing Flow's behavior before any physical hardware exists. | Working. |
-| [`Noma Device Firmware`](./Noma%20Device%20Firmware) | An ESP32 sketch implementing the real HOST↔DEVICE serial protocol, plus a parts list and wiring guide, for the first actual physical prototype. | Written against the documented protocol; not yet flashed or verified against real hardware — no board has existed in this repo's history. |
-| [`Noma Software Prototype`](./Noma%20Software%20Prototype) | A separate, deliberately-fake pre-hardware pitch/user-testing build (no real execution) used to validate the concept with 20-30 outside people before investing in hardware. | Standalone; not connected to `Noma App`. |
+<table>
+  <tr>
+    <th width="50%">Main window</th>
+    <th width="50%">Workflow popup</th>
+  </tr>
+  <tr>
+    <td><img src=".github/readme/home.png" alt="Noma's Home page: a workflow Flow noticed, shown as step cards, above the four Glide actions for Visual Studio Code"></td>
+    <td><img src=".github/readme/notice.png" alt="The popup Noma shows when it notices a new workflow, with Review steps and Not now"></td>
+  </tr>
+  <tr>
+    <td>The app you're in and the workflows Flow has noticed there, step by step.</td>
+    <td>Appears in the corner when Flow spots a workflow you keep doing. Nothing is saved until you say so.</td>
+  </tr>
+</table>
 
-No package is shared between these projects — where something needs to
-match across two of them (a color token, a protocol constant, a port
-number, a logo asset), it's copied by hand and called out in a comment at
-the point of use. Grep for the specific constant if you're changing one of
-these and aren't sure what else depends on it.
+## Download
 
-## Current stage
+Get the latest beta from **[nomashift.com](https://nomashift.com)**: Windows,
+Mac with Apple silicon, or Intel Mac. On Windows it updates itself; on a Mac
+it tells you when a new version is ready.
 
-The software loop (application detection → workflow capture → pattern
-detection → suggestion → accept/reject → learning) is real and working end
-to end in `Noma App` — not mocked, not a placeholder. See its own
-`README.md` for a guided walkthrough and `docs/architecture.md` for how it
-fits together.
+The beta isn't code-signed yet. On Windows, choose **More info → Run anyway**.
+On a Mac, open it once, then **System Settings → Privacy & Security → Open
+Anyway**, and allow Accessibility when Noma asks.
 
-The project is now moving into a **physical prototype stage**, prompted by
-a competing product (Logitech's MX Keypad) that covers the same ground as
-Noma's original "keyboard with a screen" framing. The response isn't to
-compete feature-for-feature on physical controls — it's to prove the
-hardware is a readout of the software's own judgment (a display and
-buttons that change because Flow noticed something, not because a user
-configured a profile). See `Noma App/docs/product-audit.md`'s "Physical
-Prototype Stage" update and `Noma App/docs/hardware-protocol.md`'s status
-section for the technical detail behind where the hardware track stands
-today: a real serial transport (`SerialHardwareDevice`) and starter
-firmware exist and are written directly against the same protocol
-`VirtualHardwareDevice` already implements, but neither is flashed onto or
-wired up against real hardware yet — that's the next concrete step, not
-more code.
+## How it works
 
-`Noma Website`'s copy has not yet been updated for this — it still tells
-the original "adaptive keyboard" story. Sequencing that rewrite behind
-proving the physical prototype out is deliberate, not an oversight.
+**Flow** watches which app is in front, which modifier shortcuts you press,
+which named buttons you click, and in what order. When the same sequence
+comes up again and again, it shows you the steps and asks whether to save
+them as one action. Rules filter out the noise: switching windows, undoing,
+or clicking through a web form are not workflows.
 
-## Getting started
+**Glide** turns the edges of your trackpad into four buttons. Start on the
+palm rest and flick inward; the side and half you land in picks the action.
+It never clicks, and normal pointer use doesn't trigger it.
 
-```powershell
-# The main app
+<p align="center">
+  <img src=".github/readme/glide.png" alt="The Glide page: four zones around the trackpad, each with an action for Visual Studio Code" width="760">
+</p>
+
+## Privacy
+
+Everything stays on your computer. Flow keeps which app, which shortcut,
+which button and when. It never keeps what you type, your clipboard,
+screenshots, page titles or addresses. Browser tabs are stored only as a
+scrambled fingerprint. Settings → Your data clears or deletes all of it.
+Noma's only network request is checking for updates.
+
+## In this repo
+
+| Folder | What it is |
+|---|---|
+| [`Noma App`](./Noma%20App) | The product: an Electron, React, TypeScript and SQLite desktop app for Windows and macOS. Start here. |
+| [`Noma Website`](./Noma%20Website) | [nomashift.com](https://nomashift.com), a separate Vite and React site. |
+| [`Noma Virtual Device`](./Noma%20Virtual%20Device) | An on-screen stand-in for the Noma device (a small screen and four buttons) that talks to the app over a local connection. |
+| [`Noma Device Firmware`](./Noma%20Device%20Firmware) | ESP32 firmware for the first physical prototype. Written, not yet run on a board. |
+| [`Noma Software Prototype`](./Noma%20Software%20Prototype) | An early demo build used for user testing. It doesn't run real actions. |
+
+The projects share no packages. Anything that has to match across two of
+them is copied by hand and noted where it's used.
+
+## Build from source
+
+```bash
 cd "Noma App"
 npm install
-npm run dev      # opens the Electron dashboard
-npm test         # 283 tests as of this writing
+npm run dev          # run the app
+npm test             # tests (npm run test:mac checks the macOS paths too)
 npm run typecheck
-
-# The marketing site
-cd "Noma Website"
-npm install
-npm run dev
-
-# The hardware test rig (run Noma App first — it has nothing to talk to otherwise)
-cd "Noma Virtual Device"
-npm install
-npm start
-
-# The pre-hardware validation build (standalone, no dependency on the above)
-cd "Noma Software Prototype"
-npm install
-npm run dev
 ```
 
-`Noma Device Firmware` isn't an npm project — it's an Arduino sketch. See
-its own `README.md` for the parts list, wiring, and bring-up order.
-
-## Where to read next
-
-- `Noma App/brainstorm.md` — the original product vision and build order.
-- `Noma App/docs/architecture.md` — process layout, the learning loop, and
-  the "real execution" safety design (closed key vocabulary, refocus-then-
-  verify, the incident history behind it).
-- `Noma App/docs/privacy-and-legal.md` — exactly what Flow captures and why
-  it isn't a keylogger; the constraint any future capture broadening has to
-  keep satisfying.
-- `Noma App/docs/hardware-protocol.md` — the HOST↔DEVICE message protocol,
-  what's implemented today, and what's still just a design.
-- `Noma App/docs/product-audit.md` — the running ground-truth audit: what's
-  strong, what's missing, what's next, updated in place rather than
-  rewritten each pass.
-
-Assorted PNGs at the repo root are ad-hoc design-review screenshots from
-past sessions, not build artifacts — safe to ignore or clean up.
+Releases are built by GitHub Actions when a `v*` tag is pushed. See
+[`Noma App/RELEASING.md`](./Noma%20App/RELEASING.md).
