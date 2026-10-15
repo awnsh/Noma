@@ -7,6 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.32': [
+    "Flow stops suggesting things that aren't workflows: clicking through a web form or quiz, moving around a settings page, or hopping between browser tabs. Suggestions like these that were already waiting are cleared."
+  ],
   '0.1.31': [
     "Fixed: the close button and Review on the workflow popup didn't respond, except on the first popup after Noma started."
   ],
