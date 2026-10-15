@@ -12,11 +12,12 @@ import { focusWindowAndVerify } from './windowFocus'
 import { executeClick } from './click'
 import { executeSystemCommand } from './systemCommands'
 import { runScreenshotStep } from './screenshot'
-import { currentTabFingerprint } from '../workflow/tabFingerprint'
+import { browserInFront, currentTabFingerprint } from '../workflow/tabFingerprint'
 import { insertWorkflowEvent, setWorkflowEventScreenshotRegion } from '../database/repositories/workflowEventsRepository'
 import { clearExpectedAppSwitches, consumeExpectedAppSwitch } from '../workflow/selfInjectedSwitches'
 import {
   ACTION_BUSY_REASON,
+  BROWSER_NOT_IN_FRONT_REASON,
   TAB_NOT_FOUND_REASON,
   EMPTY_ZONE_REASON,
   NO_SHORTCUT_SET_REASON,
@@ -80,7 +81,7 @@ vi.mock('./uiaControlFinder', () => ({ uiaControlFinder: { warmUp: vi.fn(), find
 // by screenshotRegions.test.ts. Here: only that the step goes there.
 vi.mock('./screenshot', () => ({ runScreenshotStep: vi.fn(async () => ({ ok: true })) }))
 // Real window titles; here, a scripted sequence of "which tab is in front".
-vi.mock('../workflow/tabFingerprint', () => ({ currentTabFingerprint: vi.fn(() => null) }))
+vi.mock('../workflow/tabFingerprint', () => ({ currentTabFingerprint: vi.fn(() => null), browserInFront: vi.fn(() => true) }))
 /** This platform's region screenshot: Win+Shift+S, or Ctrl+Cmd+Shift+4 on a Mac. */
 const REGION_SCREENSHOT = isMac ? ['Control', 'Meta', 'Shift', '4'] : ['Meta', 'Shift', 'S']
 
@@ -633,46 +634,147 @@ describe('focusApplication (WORKFLOW LEARNING; switching to an already-running a
     expect(getMacroById(macro.id)?.actions[0]).toEqual({ type: 'shortcut', keys: REGION_SCREENSHOT, region: usual })
   })
 
+  /**
+   * A browser window with these tab fingerprints, `front` in front:
+   * Ctrl+Tab moves to the next one, and `onKeys` can rename the tab in
+   * front when a step's keys land (a chat titling itself, say).
+   */
+  function fakeTabStrip(tabs: Array<string | null>, front = 0, onKeys?: (key: number) => void): { tabs: Array<string | null>; front: () => number } {
+    let index = front
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint).mockImplementation(() => tabs[index])
+    vi.mocked(uIOhook.keyTap).mockReset()
+    vi.mocked(uIOhook.keyTap).mockImplementation((key) => {
+      if (key === UiohookKey.Tab) index = (index + 1) % tabs.length
+      else onKeys?.(key as number)
+    })
+    return { tabs, front: () => index }
+  }
+
+  function resetTabStrip(): void {
+    vi.mocked(currentTabFingerprint).mockReset()
+    vi.mocked(currentTabFingerprint).mockReturnValue(null)
+    vi.mocked(uIOhook.keyTap).mockReset()
+  }
+
+  const ctrlTabs = (): number => vi.mocked(uIOhook.keyTap).mock.calls.filter(([key]) => key === UiohookKey.Tab).length
+
   it('steps through browser tabs to the one a step happened in before pressing its keys', async () => {
-    vi.mocked(currentTabFingerprint)
-      .mockReturnValueOnce('page') // in front at the start
-      .mockReturnValueOnce('page') // still switching
-      .mockReturnValue('chat') // after one Ctrl+Tab
-    vi.mocked(uIOhook.keyTap).mockClear()
-    const result = await executeMacroSteps([{ type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }], null)
+    fakeTabStrip(['page', 'chat'])
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'C'], tab: 'page' },
+        { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }
+      ],
+      null
+    )
     expect(result.ok).toBe(true)
-    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(1, UiohookKey.Tab, [UiohookKey.Ctrl])
-    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(2, UiohookKey.V, [UiohookKey.Ctrl])
+    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(1, UiohookKey.C, [UiohookKey.Ctrl])
+    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(2, UiohookKey.Tab, [UiohookKey.Ctrl])
+    expect(uIOhook.keyTap).toHaveBeenNthCalledWith(3, UiohookKey.V, [UiohookKey.Ctrl])
+    resetTabStrip()
+  })
+
+  it('acts in the tab the run starts in, even when its title has changed since recording', async () => {
+    // Recorded on a tab titled one way; today the same page has another title.
+    const strip = fakeTabStrip(['renamed', 'other'])
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'A'], tab: 'recorded' },
+        { type: 'shortcut', keys: ['Control', 'C'], tab: 'recorded' }
+      ],
+      null
+    )
+    expect(result.ok).toBe(true)
+    expect(ctrlTabs()).toBe(0)
+    expect(strip.front()).toBe(0)
+    resetTabStrip()
+  })
+
+  it('stays in a tab that its own steps renamed', async () => {
+    // Pasting and pressing Enter in a new chat renames the tab.
+    const strip = fakeTabStrip(['page', 'chat'], 1, (key) => {
+      if (key === UiohookKey.Enter) strip.tabs[1] = 'chat titled'
+    })
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' },
+        { type: 'shortcut', keys: ['Enter'], tab: 'chat' },
+        { type: 'shortcut', keys: ['Control', 'A'], tab: 'chat' }
+      ],
+      null
+    )
+    expect(result.ok).toBe(true)
+    expect(ctrlTabs()).toBe(0)
+    resetTabStrip()
+  })
+
+  it('stops instead of sending keys when another app took the front from a tab the run was in', async () => {
+    fakeTabStrip(['page'])
+    vi.mocked(browserInFront).mockReturnValueOnce(false)
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'C'], tab: 'page' },
+        { type: 'shortcut', keys: ['Control', 'V'], tab: 'page' }
+      ],
+      null
+    )
+    expect(result).toEqual({ ok: false, reason: `Stopped at step 2 of 2: ${BROWSER_NOT_IN_FRONT_REASON}` })
+    expect(uIOhook.keyTap).not.toHaveBeenCalledWith(UiohookKey.V, [UiohookKey.Ctrl])
+    resetTabStrip()
+  })
+
+  it('goes back to a tab it started in by the title that tab has now', async () => {
+    const strip = fakeTabStrip(['page today', 'chat'])
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'C'], tab: 'page' },
+        { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' },
+        { type: 'click', target: 'tab:page', applicationId: 'chrome' }
+      ],
+      null
+    )
+    expect(result.ok).toBe(true)
+    expect(strip.front()).toBe(0)
+    resetTabStrip()
   })
 
   it('goes to the tab a learned tab step names, without clicking anything', async () => {
-    vi.mocked(currentTabFingerprint).mockReset()
-    vi.mocked(currentTabFingerprint)
-      .mockReturnValueOnce('aaaaaaaaaaaaaaaa')
-      .mockReturnValueOnce('aaaaaaaaaaaaaaaa')
-      .mockReturnValue('bbbbbbbbbbbbbbbb')
-    vi.mocked(uIOhook.keyTap).mockClear()
+    fakeTabStrip(['aaaaaaaaaaaaaaaa', 'bbbbbbbbbbbbbbbb'])
     vi.mocked(executeClick).mockClear()
     const result = await executeMacroSteps([{ type: 'click', target: 'tab:bbbbbbbbbbbbbbbb', applicationId: 'chrome' }], null)
     expect(result.ok).toBe(true)
     expect(uIOhook.keyTap).toHaveBeenCalledWith(UiohookKey.Tab, [UiohookKey.Ctrl])
     expect(executeClick).not.toHaveBeenCalled()
-    vi.mocked(currentTabFingerprint).mockReset()
-    vi.mocked(currentTabFingerprint).mockReturnValue(null)
+    resetTabStrip()
   })
 
-  it('stops instead of pasting when the tab is not open (a full lap of the tabs)', async () => {
-    vi.mocked(currentTabFingerprint).mockReset()
-    vi.mocked(currentTabFingerprint)
-      .mockReturnValueOnce('page')
-      .mockReturnValueOnce('other')
-      .mockReturnValue('page')
-    vi.mocked(uIOhook.keyTap).mockClear()
-    const result = await executeMacroSteps([{ type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }], null)
-    expect(result).toEqual({ ok: false, reason: TAB_NOT_FOUND_REASON })
+  it('stops instead of pasting when the tab it goes to is not open (a full lap of the tabs)', async () => {
+    fakeTabStrip(['page', 'other'])
+    const result = await executeMacroSteps(
+      [
+        { type: 'shortcut', keys: ['Control', 'C'], tab: 'page' },
+        { type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }
+      ],
+      null
+    )
+    expect(result).toEqual({ ok: false, reason: `Stopped at step 2 of 2: ${TAB_NOT_FOUND_REASON}` })
     expect(uIOhook.keyTap).not.toHaveBeenCalledWith(UiohookKey.V, [UiohookKey.Ctrl])
-    vi.mocked(currentTabFingerprint).mockReset()
-    vi.mocked(currentTabFingerprint).mockReturnValue(null)
+    resetTabStrip()
+  })
+
+  it('never takes a tab it was sent to for the one it wanted, even at the start of a run', async () => {
+    fakeTabStrip(['page', 'other'])
+    const result = await executeMacroSteps([{ type: 'click', target: 'tab:chat', applicationId: 'chrome' }], null)
+    expect(result).toEqual({ ok: false, reason: TAB_NOT_FOUND_REASON })
+    resetTabStrip()
+  })
+
+  it('says no browser was in front when a tab step comes up in another app', async () => {
+    resetTabStrip()
+    const result = await executeMacroSteps([{ type: 'shortcut', keys: ['Control', 'V'], tab: 'chat' }], null)
+    expect(result).toEqual({ ok: false, reason: BROWSER_NOT_IN_FRONT_REASON })
+    expect(uIOhook.keyTap).not.toHaveBeenCalled()
   })
 
   it('stops at the screenshot when it was never taken, and skips the drag pause after one that was', async () => {

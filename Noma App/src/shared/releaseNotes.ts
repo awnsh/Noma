@@ -7,6 +7,10 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.30': [
+    "Fixed: saved workflows with a browser step often stopped at it, because the tab's title had changed since the workflow was saved (a chat renaming itself, an inbox count going up). Noma now keeps using the tab you're in.",
+    'Beta testers: Settings > Report a problem > Show technical details now includes a few counts (days used, suggestions saved or skipped, workflows finished or stopped) for your weekly check-in. Nothing is sent unless you paste it.'
+  ],
   '0.1.29': [
     "A calmer, more familiar look: Noma now uses your computer's own fonts, plain buttons and simple panels, so it sits in naturally next to your other apps.",
     "Workflow suggestions show each step as its own card, in the colour of the app it happens in, with the keys you press drawn as real keys.",

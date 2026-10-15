@@ -59,6 +59,18 @@ export function isBrowserApp(applicationId: string | null): boolean {
   return categoryOf(applicationId) === 'browser'
 }
 
+/** Whether a browser window (or one of its own popups) is in front. */
+export function browserInFront(): boolean {
+  if (!isWindows) return false
+  try {
+    const window = GetForegroundWindow() as number
+    const process = window ? processForWindow(window) : null
+    return !!process && isBrowserApp(process.processName.replace(/\.exe$/i, '').toLowerCase())
+  } catch {
+    return false
+  }
+}
+
 /**
  * The fingerprint of the tab in front, when a browser is in front, else
  * null. `hwnd` defaults to the foreground window.

@@ -15,7 +15,7 @@ import { executeClick } from './click'
 import { uiaControlFinder } from './uiaControlFinder'
 import { runScreenshotStep } from './screenshot'
 import { isRegionScreenshotShortcut, usualRegion, withoutScreenshotOverlaySteps } from '../workflow/screenshotRegions'
-import { currentTabFingerprint } from '../workflow/tabFingerprint'
+import { browserInFront, currentTabFingerprint } from '../workflow/tabFingerprint'
 import { tabFromTarget } from '../workflow/clickTarget'
 import { getScreenshotRegionsSince } from '../database/repositories/workflowEventsRepository'
 import { sleep } from '../util'
@@ -317,7 +317,7 @@ export async function executeMacroSteps(
   targetHwnd: number | null,
   visitedMacroIds: Set<string> = new Set()
 ): Promise<ExecutionResult> {
-  return runMacroSteps(steps, targetHwnd, visitedMacroIds, 1)
+  return runMacroSteps(steps, targetHwnd, visitedMacroIds, 1, newTabRun())
 }
 
 /** executeMacroSteps at a known nesting depth (1 = the top-level run). */
@@ -325,7 +325,8 @@ async function runMacroSteps(
   recordedSteps: MacroStep[],
   targetHwnd: number | null,
   visitedMacroIds: Set<string>,
-  depth: number
+  depth: number,
+  tabs: TabRun
 ): Promise<ExecutionResult> {
   const steps = withoutScreenshotOverlaySteps(recordedSteps)
   // The saved macro these steps belong to (the most recent one entered), or
@@ -344,7 +345,7 @@ async function runMacroSteps(
     // undone. The message says exactly where it stopped.
     const result = cancelRequested
       ? { ok: false, reason: ACTION_CANCELLED_REASON }
-      : await executeMacroStep(step, targetHwnd, visitedMacroIds, depth, saveRegion)
+      : await executeMacroStep(step, targetHwnd, visitedMacroIds, depth, tabs, saveRegion)
     if (!result.ok) {
       // Say where it stopped, so a half-run workflow is never a mystery:
       // "Stopped at step 3 of 5: ..." tells the user exactly what did and
@@ -377,8 +378,12 @@ function usualRecordedScreenshotRegion(): ScreenRegion | undefined {
   return usualRegion(getScreenshotRegionsSince(Date.now() - RECORDED_REGION_WINDOW_MS)) ?? undefined
 }
 
-/** Shown when a browser step's tab can't be found among the open tabs. */
-export const TAB_NOT_FOUND_REASON = "The browser tab this step used isn't open"
+/** Shown when a browser step's tab can't be found among the open tabs. A
+ *  tab is known only by its title, so a renamed tab counts as gone too. */
+export const TAB_NOT_FOUND_REASON =
+  "Couldn't find the browser tab this step uses. It may be closed, or its title changed since the workflow was saved"
+/** Shown when a browser step comes up while no browser is in front. */
+export const BROWSER_NOT_IN_FRONT_REASON = 'This step happens in a browser tab, but no browser was in front'
 /** Enough for anyone's tab strip; a full lap ends the search sooner. */
 const MAX_TAB_HOPS = 60
 /** How long a tab switch gets to show in the window title. */
@@ -394,7 +399,7 @@ const TAB_SWITCH_WAIT_MS = 500
 async function switchToTab(tab: string): Promise<ExecutionResult> {
   const start = currentTabFingerprint()
   if (start === tab) return { ok: true }
-  if (start === null) return { ok: false, reason: TAB_NOT_FOUND_REASON }
+  if (start === null) return { ok: false, reason: BROWSER_NOT_IN_FRONT_REASON }
   let current: string | null = start
   for (let hop = 0; hop < MAX_TAB_HOPS; hop++) {
     if (cancelRequested) return { ok: false, reason: ACTION_CANCELLED_REASON }
@@ -417,6 +422,60 @@ async function switchToTab(tab: string): Promise<ExecutionResult> {
 }
 
 /**
+ * Which tabs one run has been in. A recorded tab is only the fingerprint of
+ * a page title, and titles change all the time: a chat renames itself after
+ * the first message, an inbox count ticks up, a doc is renamed. On a real
+ * machine 205 different fingerprints were seen in a week, most of them for
+ * minutes, and every saved workflow with a tab step stopped at it. So:
+ *  - the tab a run starts in is the tab its first browser steps mean, the
+ *    same "whatever is in front" every step got before tabs were recorded;
+ *  - a tab the run is already in stays found, even once the workflow's own
+ *    steps have renamed it or opened one of the browser's popups;
+ *  - only going to a different tab looks for its fingerprint, and still
+ *    stops when no open tab has it: pasting and pressing Enter in the wrong
+ *    tab is worse than stopping.
+ */
+interface TabRun {
+  /** Recorded fingerprint → the fingerprint that tab had in this run. */
+  seen: Map<string, string>
+  /** The recorded tab the run is in, until it goes somewhere else. */
+  here: string | null
+  /** Once true, nothing is where the run started any more. */
+  moved: boolean
+}
+
+function newTabRun(): TabRun {
+  return { seen: new Map(), here: null, moved: false }
+}
+
+/** `kind`: 'keys' for a step that acts in its tab, 'go' for one that goes there. */
+async function enterTab(run: TabRun, tab: string, kind: 'keys' | 'go'): Promise<ExecutionResult> {
+  const current = currentTabFingerprint()
+  if (run.here === tab) {
+    // Its title may be new, or one of the browser's popups may be in front
+    // of it: either way, still the same browser.
+    if (!browserInFront()) return { ok: false, reason: BROWSER_NOT_IN_FRONT_REASON }
+    if (current !== null) run.seen.set(tab, current)
+    return { ok: true }
+  }
+  const wanted = run.seen.get(tab) ?? tab
+  let result: ExecutionResult
+  if (current !== null && current === wanted) {
+    result = { ok: true }
+  } else if (kind === 'keys' && !run.moved && current !== null) {
+    // The first step the run takes in a browser, where the user is.
+    result = { ok: true }
+  } else {
+    result = await switchToTab(wanted)
+  }
+  if (!result.ok) return result
+  run.seen.set(tab, currentTabFingerprint() ?? wanted)
+  run.here = tab
+  run.moved = true
+  return result
+}
+
+/**
  * Keeps the area the person just picked on that macro's screenshot step, so
  * the next run takes it without the overlay. Re-read and checked first: the
  * macro may have been edited while the overlay was open.
@@ -433,6 +492,7 @@ async function executeMacroStep(
   targetHwnd: number | null,
   visitedMacroIds: Set<string>,
   depth: number,
+  tabs: TabRun,
   saveRegion?: (region: ScreenRegion) => void
 ): Promise<ExecutionResult> {
   switch (step.type) {
@@ -446,7 +506,7 @@ async function executeMacroStep(
 
     case 'shortcut': {
       if (step.tab) {
-        const onTab = await switchToTab(step.tab)
+        const onTab = await enterTab(tabs, step.tab, 'keys')
         if (!onTab.ok) return onTab
       }
       // Sending Win+Shift+S alone opens the snipping overlay and leaves it
@@ -484,17 +544,21 @@ async function executeMacroStep(
       return { ok: true }
 
     case 'launchApplication':
+      tabs.here = null
+      tabs.moved = true
       return launchApplicationById(step.applicationId)
 
     case 'focusApplication': {
+      tabs.here = null
+      tabs.moved = true
       const focused = await focusApplicationById(step.applicationId)
       if (!focused.ok || !step.tab) return focused
-      return switchToTab(step.tab)
+      return enterTab(tabs, step.tab, 'go')
     }
 
     case 'click': {
       const tab = tabFromTarget(step.target)
-      return tab ? switchToTab(tab) : executeClick(step.target, step.applicationId)
+      return tab ? enterTab(tabs, tab, 'go') : executeClick(step.target, step.applicationId)
     }
 
     case 'macro': {
@@ -509,7 +573,7 @@ async function executeMacroStep(
       if (!nested) return { ok: false, reason: 'Macro not found' }
       if (!nested.enabled) return { ok: false, reason: MACRO_PAUSED_REASON }
 
-      return runMacroSteps(nested.actions, targetHwnd, new Set([...visitedMacroIds, step.macroId]), depth + 1)
+      return runMacroSteps(nested.actions, targetHwnd, new Set([...visitedMacroIds, step.macroId]), depth + 1, tabs)
     }
   }
 }
