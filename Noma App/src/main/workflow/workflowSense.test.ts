@@ -58,7 +58,12 @@ describe('chainMakesSense; workflows the user accepted still pass', () => {
     ['GitHub Desktop → Push', [app('githubdesktop'), click('githubdesktop', 'label:Push origin')]],
     ['Copy in Chrome → Edge → Paste as plain text', [key('chrome', 'Control', 'C'), app('msedge'), key('msedge', 'Control', 'Shift', 'V')]],
     ['Copy → Edge → Select all → Paste (replace)', [key('chrome', 'Control', 'C'), app('msedge'), key('msedge', 'Control', 'A'), key('msedge', 'Control', 'V')]],
-    ['Save → check the browser', [key('code', 'Control', 'S'), app('chrome')]]
+    ['Save → check the browser', [key('code', 'Control', 'S'), app('chrome')]],
+    [
+      'Highlight → Copy → other tab → Paste',
+      [click('chrome', 'select'), key('chrome', 'Control', 'C'), click('chrome', 'tab:d34dabfe19a423a0'), key('chrome', 'Control', 'V')]
+    ],
+    ['Copy → Paste → Close tab', [key('chrome', 'Control', 'C'), key('chrome', 'Control', 'V'), key('chrome', 'Control', 'W')]]
   ])('%s', (_, steps) => {
     expect(chainMakesSense(steps)).toBe(true)
   })
@@ -88,7 +93,22 @@ describe('chainMakesSense: the junk from real data is refused', () => {
     ['Select all then Paste in one app', [key('excel', 'Control', 'A'), key('excel', 'Control', 'V')]],
     ['ending on Select all', [key('excel', 'Control', 'V'), key('excel', 'Control', 'A')]],
     ['the same button twice', [click('code', 'label:Run Python File'), app('explorer'), click('explorer', 'label:Run Python File')]],
-    ['leaving for an app with nothing done there', [app('windowsterminal'), key('windowsterminal', 'Control', 'K'), app('python3.13')]]
+    ['leaving for an app with nothing done there', [app('windowsterminal'), key('windowsterminal', 'Control', 'K'), app('python3.13')]],
+    // 2026-10-15, real data: clicking through web pages and settings.
+    ['answering a quiz', [click('chrome', 'label:Next'), click('chrome', 'label:Strikethrough option A'), click('chrome', 'label:Submit')]],
+    ['filling in a form', [click('chrome', 'label:Generate token'), click('chrome', 'label:Next')]],
+    ['switching to Chrome to press a page button', [app('chrome'), click('chrome', 'label:Generate token')]],
+    ['highlighting then pressing a page button', [click('chrome', 'select'), click('chrome', 'label:Check answer')]],
+    ['moving through settings', [click('applicationframehost', 'label:Breathing'), click('applicationframehost', 'label:Color Cycle')]],
+    ['Chrome settings pages', [click('chrome', 'label:Chrome'), click('chrome', 'label:Settings'), click('chrome', 'label:Appearance')]],
+    ['going to a tab and pasting', [click('chrome', 'tab:7661bd9f80e7bb32'), key('chrome', 'Control', 'V')]],
+    ['ending on going to a tab', [key('chrome', 'Control', 'C'), click('chrome', 'tab:26df9716656bc54d'), key('chrome', 'Control', 'V'), click('chrome', 'tab:d523ab68411831f5')]],
+    ['Copy with nothing highlighted', [click('chrome', 'label:New Tab'), key('chrome', 'Control', 'C'), click('chrome', 'tab:f66da1c8b60be2e4'), key('chrome', 'Control', 'V')]],
+    ['Submit, then copy the next answer', [click('chrome', 'label:Submit'), click('chrome', 'select'), key('chrome', 'Control', 'C')]],
+    [
+      'two tabs in a row',
+      [click('chrome', 'label:New Tab'), key('chrome', 'Control', 'W'), click('chrome', 'tab:26df9716656bc54d'), click('chrome', 'tab:d523ab68411831f5'), click('chrome', 'label:Submit')]
+    ]
   ])('%s', (_, steps) => {
     expect(chainMakesSense(steps)).toBe(false)
   })

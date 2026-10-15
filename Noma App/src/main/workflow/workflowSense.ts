@@ -1,5 +1,5 @@
 import type { WorkflowStep } from '@shared/types'
-import { isAmbientApp, isSystemSurface, matchRealisticWorkflow } from './appKnowledge'
+import { categoryOf, isAmbientApp, isSystemSurface, matchRealisticWorkflow } from './appKnowledge'
 import { isMac } from '../platform'
 import { isSelectTarget, tabFromTarget } from './clickTarget'
 
@@ -157,6 +157,20 @@ function isTabStep(step: WorkflowStep | undefined): boolean {
   return step?.type === 'click' && tabFromTarget(step.target) !== null
 }
 
+/** Apps whose buttons belong to the page on screen rather than the app:
+ *  browsers, and Windows' Settings-style apps (every UWP app reports as
+ *  applicationframehost, so their buttons are anyone's). */
+function isPageLikeApp(applicationId: string | null): boolean {
+  return categoryOf(applicationId) === 'browser' || applicationId === 'applicationframehost'
+}
+
+/** Getting a selection ready: highlighting, Select all, or the menu clicks
+ *  that do it (Edit → Select all). */
+function isSelecting(step: WorkflowStep, role: ShortcutRole | null): boolean {
+  if (isHighlight(step) || role === 'selectAll') return true
+  return step.type === 'click' && /^label:(edit|select all)$/i.test(step.target)
+}
+
 /** Something done to a highlight: a shortcut (Copy, Cut, Delete, Bold…) or
  *  a named button, in the same app. */
 function actsOnHighlight(highlight: WorkflowStep, next: WorkflowStep | undefined): boolean {
@@ -224,6 +238,22 @@ export function chainMakesSense(steps: WorkflowStep[]): boolean {
 
   if (isZoneClick(steps[0]) || isZoneClick(steps[steps.length - 1])) return false
 
+  // Clicking around a web page or a settings app is using it, not a
+  // workflow: answering a quiz (Next → option → Submit), a form (Generate
+  // token → Next), a settings page (Breathing → Color Cycle). Those buttons
+  // belong to whatever page is open. A desktop app's own buttons are another
+  // matter: Cut → Delete in Resolve, or switching to GitHub Desktop to Push.
+  const apps = new Set(steps.map((step) => step.applicationId))
+  if (actions.every((step) => step.type === 'click') && apps.size === 1 && isPageLikeApp(steps[0].applicationId)) {
+    return false
+  }
+  // Going to a tab is getting ready for what comes next: a chain doesn't end
+  // on one, and two in a row is passing through.
+  if (isTabStep(steps[steps.length - 1])) return false
+  for (let i = 1; i < steps.length; i++) {
+    if (isTabStep(steps[i]) && isTabStep(steps[i - 1])) return false
+  }
+
   const hops = new Set<string>()
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i]
@@ -249,12 +279,33 @@ export function chainMakesSense(steps: WorkflowStep[]): boolean {
   const firstPaste = roles.indexOf('paste')
   if (firstSource !== -1 && firstPaste !== -1 && firstPaste < firstSource) return false
 
+  // In a browser, Copy copies the highlight, so one partway through a chain
+  // comes straight after highlighting (or Select all), or after arriving in
+  // the browser or a tab where something was already highlighted. "New Tab →
+  // Copy" and "Submit → Copy" copy whatever was selected before the chain
+  // began.
+  for (let i = 1; i < steps.length; i++) {
+    const step = steps[i]
+    if (step.type !== 'shortcut' || shortcutRole(step.comboKeys) !== 'copy') continue
+    if (categoryOf(step.applicationId) !== 'browser' || steps.slice(0, i).every((s) => s.type === 'appSwitch')) continue
+    const before = steps[i - 1]
+    if (!isHighlight(before) && !isTabStep(before) && before.type !== 'appSwitch' && roleOf(before) !== 'selectAll') return false
+  }
+  // A chain that ends on Copy is one round of copying: everything before it
+  // is getting the selection. "Submit → Highlight → Copy" is the end of one
+  // task joined to the start of the next.
+  if (roles[roles.length - 1] === 'copy' && !actions.slice(0, -1).every((step, index) => isSelecting(step, roles[index]))) {
+    return false
+  }
+
   // Highlighting and deleting are as quick as Copy and Paste: on their own
   // ("Highlight → Delete", "Highlight → Copy") one press saves nothing.
+  // Going to a tab is getting around, like the arrow keys.
   const onlyClipboard = actions.every((step, index) => {
     const role = roles[index]
     return (
       isHighlight(step) ||
+      isTabStep(step) ||
       role === 'copy' ||
       role === 'paste' ||
       role === 'selectAll' ||
@@ -264,7 +315,11 @@ export function chainMakesSense(steps: WorkflowStep[]): boolean {
   })
   if (onlyClipboard) {
     if (firstSource === -1 || firstPaste === -1) return false
-    if (actions[firstSource].applicationId === actions[firstPaste].applicationId) return false
+    // Somewhere else: another app, or another tab of the same browser.
+    const elsewhere =
+      actions[firstSource].applicationId !== actions[firstPaste].applicationId ||
+      actions.slice(firstSource + 1, firstPaste).some(isTabStep)
+    if (!elsewhere) return false
   }
 
   if (roles[roles.length - 1] === 'selectAll') return false
