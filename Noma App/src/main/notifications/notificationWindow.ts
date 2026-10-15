@@ -150,8 +150,11 @@ export function showWorkflowNotice(notice: WorkflowNotice): void {
   // can't be skipped by a slow or failed load.
   positionInCorner(window)
   // showInactive, never show: showing normally would raise *and focus* the
-  // window, which is the one thing this surface must never do.
-  window.showInactive()
+  // window, which is the one thing this surface must never do. Only the
+  // first notice actually shows it; after that it is never hidden, only
+  // faded out (see hideWorkflowNotice), so later notices just fade it back.
+  if (!window.isVisible()) window.showInactive()
+  window.setOpacity(1)
   startPointerWatch(window)
 
   // The content, on the other hand, does have to wait; and if it misses the
@@ -162,7 +165,7 @@ export function showWorkflowNotice(notice: WorkflowNotice): void {
   else send()
 }
 
-/** Hides the notice and returns the window to click-through. */
+/** The notice the surface should be showing, if any. */
 export function getPendingWorkflowNotice(): WorkflowNotice | null {
   return currentNotice
 }
@@ -179,7 +182,7 @@ let pointerInside = false
 function startPointerWatch(window: BrowserWindow): void {
   stopPointerWatch()
   pointerTimer = setInterval(() => {
-    if (window.isDestroyed() || !window.isVisible()) return stopPointerWatch()
+    if (window.isDestroyed() || !currentNotice) return stopPointerWatch()
     const { x, y } = screen.getCursorScreenPoint()
     const b = window.getBounds()
     const inside = x >= b.x && x < b.x + b.width && y >= b.y && y < b.y + b.height
@@ -195,12 +198,21 @@ function stopPointerWatch(): void {
   pointerInside = false
 }
 
+/**
+ * Fades the notice out and returns the window to click-through, without
+ * hiding it. On Windows, a non-focusable transparent window that has been
+ * hidden and shown again (hide() then showInactive()) still gets mouse moves
+ * but never another mouse-down, so every notice after the first could not
+ * be closed or reviewed (user, 2026-10-15; reproduced with a bare Electron
+ * window and real OS clicks: hide/showInactive loses clicks, setOpacity
+ * keeps them). An invisible, click-through window costs nothing.
+ */
 export function hideWorkflowNotice(): void {
   currentNotice = null
   stopPointerWatch()
-  if (!noticeWindow) return
+  if (!noticeWindow || noticeWindow.isDestroyed()) return
   noticeWindow.setIgnoreMouseEvents(true, { forward: true })
-  noticeWindow.hide()
+  noticeWindow.setOpacity(0)
 }
 
 /**
@@ -223,5 +235,5 @@ export function closeWorkflowNoticeWindow(): void {
 /** Testing seam only; lets a test observe what the window layer was asked
  *  to do without an Electron display. */
 export function isWorkflowNoticeOpen(): boolean {
-  return noticeWindow !== null && !noticeWindow.isDestroyed() && noticeWindow.isVisible()
+  return noticeWindow !== null && !noticeWindow.isDestroyed() && currentNotice !== null
 }
