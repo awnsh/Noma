@@ -146,6 +146,17 @@ components:
 
 # Design System: Noma
 
+> **v6, "native" (2026-10-14), overrides anything below that disagrees.** Someone recognised the
+> glass/pill version as AI-made on sight, so Noma now looks like the apps around it:
+> - **Type:** the OS's own fonts (Segoe UI Variable on Windows, SF on macOS, Cascadia Mono / SF Mono for keys). No Sora, Inter or JetBrains Mono in the app UI.
+> - **Shapes:** 6px buttons (`rounded-md`, 32px tall), 8px cards (`rounded-lg`). No pill buttons.
+> - **Surfaces:** `.glass` is now a plain faint fill + hairline: no blur, no specular rim, no lift, no shadow (modals keep one shadow).
+> - **Sidebar:** Windows 11 / macOS style: a filled row plus a 3px selection bar; no gliding pill, no "In <app>" card.
+> - **Layout:** pages are left-aligned (`max-w-[860px] px-10`), titles 26px semibold, section titles 15px.
+> - **Colour:** violet is retired (tokens resolve to neutral). App colour only on Glide chevrons and lit zones.
+> - **Motion:** no press-scale, no spring, page-in is a 120ms fade.
+> - **Copy:** no marketing taglines inside the app ("Welcome to Noma", not "Your next action, one swipe away.").
+
 ## Overview
 
 **Creative North Star: "App Spaces"**

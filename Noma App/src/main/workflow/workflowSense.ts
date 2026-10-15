@@ -128,8 +128,9 @@ function isZoneClick(step: WorkflowStep): boolean {
   return step.type === 'click' && step.target.startsWith('zone:')
 }
 
-function roleOf(step: WorkflowStep): ShortcutRole | null {
-  return step.type === 'shortcut' ? shortcutRole(step.comboKeys) : null
+/** Undefined (the step before the first, or after the last) has no role. */
+function roleOf(step: WorkflowStep | undefined): ShortcutRole | null {
+  return step?.type === 'shortcut' ? shortcutRole(step.comboKeys) : null
 }
 
 /** Identity of an action within one chain. A click is keyed by its target

@@ -24,7 +24,7 @@ interface OnboardingFlowScreenProps {
 export function OnboardingFlowScreen({ onEnable, onSkip }: OnboardingFlowScreenProps) {
   return (
     <div className="flex flex-col items-center text-center">
-      <h1 className="font-display text-3xl font-semibold text-neutral-50">Let Noma notice your repeats</h1>
+      <h1 className="font-display text-[28px] font-semibold leading-tight text-neutral-50">Let Noma notice your repeats</h1>
       <p className="mt-3 max-w-md text-sm text-neutral-400">
         When you do the same shortcut sequence a few times, like bookmark then close tab, Flow offers to turn it into a
         Glide action. You see every step before anything is saved, and it never runs on its own.

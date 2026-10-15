@@ -71,7 +71,7 @@ export function OnboardingFirstActionScreen({ onFinish }: OnboardingFirstActionS
 
   return (
     <div className="flex flex-col items-center text-center">
-      <h1 className="font-display text-3xl font-semibold text-neutral-50">
+      <h1 className="font-display text-[28px] font-semibold leading-tight text-neutral-50">
         {success ? 'It worked.' : 'Your first action'}
       </h1>
 
@@ -102,7 +102,7 @@ export function OnboardingFirstActionScreen({ onFinish }: OnboardingFirstActionS
                   type="button"
                   onClick={() => setChosenAppId(entry.application.id)}
                   aria-pressed={entry.application.id === appId}
-                  className={`rounded-full border px-3 py-1 text-xs ${
+                  className={`rounded-md border px-3 py-1 text-xs ${
                     entry.application.id === appId
                       ? 'border-accent/50 bg-accent/10 text-accent'
                       : 'border-base-700 text-neutral-400 hover:text-neutral-100'

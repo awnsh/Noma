@@ -101,10 +101,10 @@ export function Glide() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <header className="mb-6 flex items-start justify-between gap-6">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-neutral-100">Glide</h1>
+          <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Glide</h1>
           <p className="mt-2 max-w-xl text-sm text-neutral-400">
             Slide a finger from the palm rest onto your trackpad to run an action in the app you&apos;re using. Four
             actions per app, no extra hardware.
@@ -156,7 +156,7 @@ export function Glide() {
       <section className="mb-10">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-lg font-semibold text-neutral-100">What each zone does</h2>
+            <h2 className="text-[15px] font-semibold text-neutral-100">What each zone does</h2>
                       </div>
           <label className="flex items-center gap-2 text-sm text-neutral-400">
             {app && <AppIcon applicationId={app.id} name={app.name} size={24} fill />}
@@ -207,7 +207,7 @@ export function Glide() {
             </div>
           )}
 
-          <div className="mx-auto mt-5 flex max-w-[600px] flex-wrap items-center gap-2 text-xs text-holo-muted">
+          <div className="mt-4 flex max-w-[600px] flex-wrap items-center gap-2 text-xs text-holo-muted">
             {ZONE_COUNT_OPTIONS.map((option) => (
               <button
                 key={option.value}
@@ -215,7 +215,7 @@ export function Glide() {
                 onClick={() => void setZoneCount(option.value)}
                 title={option.hint}
                 aria-pressed={zoneCount === option.value}
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] ${
+                className={`rounded-md border px-2.5 py-0.5 text-[11px] ${
                   zoneCount === option.value
                     ? 'border-accent/50 bg-accent/10 text-accent'
                     : 'border-holo-border hover:border-holo-text/30 hover:text-holo-text'
@@ -227,7 +227,7 @@ export function Glide() {
             {zoneCount === 2 && <span>The lower two actions aren&apos;t reachable with two zones.</span>}
           </div>
 
-          <p className="mx-auto mt-3 min-h-[1.25rem] max-w-[600px] text-xs text-holo-muted" aria-live="polite">
+          <p className="mt-3 min-h-[1.25rem] max-w-[600px] text-xs text-holo-muted" aria-live="polite">
             {state?.enabled && lastActivity ? (
               <span className={lastActivity.type === 'fire' && lastActivity.outcome === 'pressed' ? 'text-accent' : ''}>
                 {glideActivityMessage(lastActivity, zoneCount)}

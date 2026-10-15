@@ -42,14 +42,14 @@ export function OnboardingWelcomeScreen({ onContinue }: OnboardingWelcomeScreenP
       <div className="mb-10 w-[360px]" aria-hidden>
         <GlideZoneMap compact zoneCount={4} controls={[]} centerLabel={app.name} centerAppId={app.id} />
       </div>
-      <h1 className="font-display text-[44px] font-semibold leading-[1.05] tracking-[-0.025em] text-neutral-50 text-balance">
-        Your next action, one swipe away.
+      <h1 className="font-display text-[28px] font-semibold leading-tight text-neutral-50">
+        Welcome to Noma
       </h1>
-      <p className="mt-6 max-w-md text-base text-neutral-400">
+      <p className="mt-3 max-w-md text-[14px] leading-relaxed text-neutral-300">
         Noma gives every app four actions you run by sliding a finger onto your trackpad. As you work, it notices the
         shortcut sequences you repeat and offers to turn them into one of those actions.
       </p>
-      <div className="mt-10">
+      <div className="mt-8">
         <OnboardingButton onClick={onContinue}>Get started</OnboardingButton>
       </div>
       <p className="mt-5 text-xs text-neutral-500">About a minute. No account, no extra hardware.</p>

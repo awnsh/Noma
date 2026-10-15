@@ -51,9 +51,9 @@ export function UsageStats() {
   const isLoading = stats === null || activity === null
 
   return (
-    <div className="mx-auto max-w-3xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-8">
-        <h1 className="font-display text-xl font-semibold text-neutral-100">Usage Stats</h1>
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Usage Stats</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Every keyboard shortcut Flow has recorded: how often you reach for it and when you used
           it last, across all of your captured activity, not just today.

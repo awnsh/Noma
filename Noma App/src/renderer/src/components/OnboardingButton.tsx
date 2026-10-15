@@ -29,7 +29,7 @@ export function OnboardingButton({
         type="button"
         onClick={onClick}
         disabled={disabled}
-        className={`rounded-full px-4 py-2 text-sm text-neutral-500 transition-colors duration-150 hover:text-neutral-300 disabled:cursor-not-allowed disabled:opacity-40 ${ONBOARDING_FOCUS_RING}`}
+        className={`rounded-md px-4 py-2 text-sm text-neutral-500 transition-colors duration-150 hover:text-neutral-300 disabled:cursor-not-allowed disabled:opacity-40 ${ONBOARDING_FOCUS_RING}`}
       >
         {children}
       </button>
@@ -41,7 +41,7 @@ export function OnboardingButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full bg-accent px-7 py-3 text-sm font-medium text-base-950 transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${ONBOARDING_FOCUS_RING}`}
+      className={`rounded-md bg-accent px-6 py-2 text-sm font-semibold text-base-950 transition-colors duration-150 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 ${ONBOARDING_FOCUS_RING}`}
     >
       {children}
     </button>

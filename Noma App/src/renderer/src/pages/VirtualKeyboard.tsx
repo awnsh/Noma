@@ -75,10 +75,10 @@ export function VirtualKeyboard() {
   const application = context.application
 
   return (
-    <div className="mx-auto max-w-3xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="font-display text-xl font-semibold text-neutral-100">Virtual Keyboard</h1>
+          <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Virtual Keyboard</h1>
           <p className="mt-1 text-sm text-neutral-500">
             A digital twin of the eventual physical device. Every control here really executes:
             shortcuts are sent for real, MUTE really changes volume, CLOSE WINDOW posts the same
@@ -110,7 +110,7 @@ export function VirtualKeyboard() {
           <button
             type="button"
             onClick={() => setIsEditMode((prev) => !prev)}
-            className={`rounded-full border px-3 py-1 text-[11px] ${
+            className={`rounded-md border px-3 py-1 text-[11px] ${
               isEditMode
                 ? 'border-white/[0.07] bg-base-800 shadow-[0_4px_10px_-6px_rgba(0,0,0,0.7)] text-accent'
                 : 'border-white/10 text-neutral-400 hover:border-white/30 hover:text-neutral-200'

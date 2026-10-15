@@ -158,10 +158,10 @@ export function Demo() {
   const currentStepIndex = STEPS.findIndex((s) => s.phase === phase)
 
   return (
-    <div className="mx-auto max-w-3xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="font-display text-xl font-semibold text-neutral-100">Demo</h1>
+          <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Demo</h1>
           <p className="mt-1 text-sm text-neutral-500">
             The Noma Moment: a deterministic, repeatable walkthrough of the core idea. Your
             computer changes. Your interface should too.
@@ -171,7 +171,7 @@ export function Demo() {
           <button
             type="button"
             onClick={() => void handleExit()}
-            className="shrink-0 rounded-full border border-base-700 px-3 py-1.5 text-xs text-neutral-500 hover:border-neutral-400 hover:text-neutral-100"
+            className="shrink-0 rounded-md border border-base-700 px-3 py-1.5 text-xs text-neutral-500 hover:border-neutral-400 hover:text-neutral-100"
           >
             Exit Demo
           </button>

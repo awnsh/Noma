@@ -42,6 +42,8 @@ interface WorkflowNode {
    *  `lib/workflowChain.ts`, see that file's `workflowStep`) is, in
    *  practice, always the app that was just switched into. */
   action?: string
+  /** The keys of that folded shortcut, when it has any. */
+  actionKeys?: string
 }
 
 /** Turns the flat, alternating step list into the nodes this component
@@ -56,7 +58,7 @@ function groupIntoNodes(steps: WorkflowChainStep[]): WorkflowNode[] {
     if (step.kind === 'app') {
       const next = steps[i + 1]
       if (next && next.kind === 'shortcut') {
-        nodes.push({ key: `${i}`, kind: 'app', label: step.label, applicationId: step.applicationId, action: next.label })
+        nodes.push({ key: `${i}`, kind: 'app', label: step.label, applicationId: step.applicationId, action: next.label, actionKeys: next.keys })
         i++
         continue
       }
@@ -151,7 +153,7 @@ export function WorkflowChain({
               // Each app step sits on that app's own colour: the chain shows
               // where each step happens (lib/appSpace.ts).
               <div
-                className={`${ICON_BOX} rounded-[12px] bg-space-deep`}
+                className={`${ICON_BOX} rounded-md`}
                 style={{ width: dim.box, height: dim.box, ...(spaceStyle(node.applicationId) as CSSProperties) }}
               >
                 <AppIcon applicationId={node.applicationId} name={node.label} size={Math.round(dim.icon * 0.72)} variant="bare" fill />
@@ -160,7 +162,7 @@ export function WorkflowChain({
               // A keystroke: a key tile at the same size as the app tiles,
               // its name underneath like theirs, so every step lines up.
               <div
-                className={`${ICON_BOX} rounded-[12px] border border-white/[0.08] bg-base-800 text-neutral-200`}
+                className={`${ICON_BOX} rounded-md border border-white/[0.08] bg-white/[0.04] text-neutral-300`}
                 style={{ width: dim.box, height: dim.box }}
               >
                 <KeyboardIcon className={size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'} />
@@ -224,5 +226,78 @@ export function WorkflowChain({
         </Fragment>
       ))}
     </div>
+  )
+}
+
+/** A shortcut drawn as the keys you press ("Win+Shift+S" → three keys). */
+export function Keys({ keys }: { keys: string }) {
+  const parts = keys.split(/\+(?=.)/)
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {parts.map((part, index) => (
+        <kbd
+          key={index}
+          className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-[4px] border border-white/[0.12] border-b-[2px] border-b-white/[0.2] bg-white/[0.06] px-1.5 font-sans text-[11px] font-medium leading-none text-neutral-100"
+        >
+          {part}
+        </kbd>
+      ))}
+    </span>
+  )
+}
+
+/**
+ * The workflow as numbered steps, the way an automation editor lays them
+ * out: one card per step, edged in the colour of the app it happens in,
+ * with the app's real icon and the keys pressed there. For the suggestion
+ * on Home and Workflows, where the steps are the whole point.
+ */
+export function WorkflowSteps({ steps, fallbackAppId }: { steps: WorkflowChainStep[]; fallbackAppId?: string | null }) {
+  const reduceMotion = usePrefersReducedMotion()
+  const nodes = groupIntoNodes(steps)
+  return (
+    <ol className="flex items-stretch overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {nodes.map((node, index) => {
+        const appId = node.kind === 'app' ? node.applicationId : fallbackAppId
+        const detail = node.kind === 'app' ? node.action ?? 'Switch to this app' : undefined
+        const keys = node.kind === 'app' ? node.actionKeys : node.keys
+        return (
+          <Fragment key={node.key}>
+            <li
+              style={{
+                ...(spaceStyle(appId) as CSSProperties),
+                animation: reduceMotion ? undefined : `noma-node-in 200ms ease-out ${index * 70}ms both`
+              }}
+              className="flex w-[176px] shrink-0 flex-col rounded-md border border-white/[0.07] border-t-space bg-space/[0.06] px-3 pb-3 pt-2.5 [border-top-width:2px]"
+            >
+              <div className="flex items-center gap-2">
+                {node.kind === 'app' ? (
+                  <AppIcon applicationId={node.applicationId} name={node.label} size={22} fill />
+                ) : (
+                  <span className="flex h-[22px] w-[22px] items-center justify-center text-neutral-300">
+                    <KeyboardIcon className="h-4 w-4" />
+                  </span>
+                )}
+                <span className="ml-auto text-[11px] tabular-nums text-neutral-500">{index + 1}</span>
+              </div>
+              <p className="mt-2 break-words text-[13px] font-semibold leading-snug text-neutral-50">{node.label}</p>
+              {detail && <p className="mt-0.5 text-[12px] text-neutral-300">{detail}</p>}
+              {keys && (
+                <div className="mt-auto pt-2">
+                  <Keys keys={keys} />
+                </div>
+              )}
+            </li>
+            {index < nodes.length - 1 && (
+              <li aria-hidden className="flex w-6 shrink-0 items-center justify-center text-neutral-500">
+                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" />
+                </svg>
+              </li>
+            )}
+          </Fragment>
+        )
+      })}
+    </ol>
   )
 }

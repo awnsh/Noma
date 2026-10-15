@@ -8,7 +8,7 @@ import { explainConfidence } from '../lib/explainConfidence'
 import { confidenceLabel } from '../lib/confidenceLabel'
 import { workflowChainSteps } from '../lib/workflowChain'
 import { formatAbsoluteTime, formatRelativeTime } from '../lib/formatRelativeTime'
-import { WorkflowChain } from './WorkflowChain'
+import { WorkflowChain, WorkflowSteps } from './WorkflowChain'
 import { AppIcon } from './AppIcon'
 import { BUTTON_PRIMARY, BUTTON_QUIET, HERO_CARD } from '../lib/surfaces'
 
@@ -139,9 +139,9 @@ export function NomaMoment({
     const zoneName = zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : null
     const appName = suggestion.applicationName ?? 'that app'
     return (
-      <div className={isHero ? `${HERO_CARD} p-8` : ''} style={{ animation: 'noma-settle 350ms ease-out' }}>
+      <div className={isHero ? `${HERO_CARD} p-5` : ''} style={{ animation: 'noma-settle 350ms ease-out' }}>
         <p className="text-xs text-neutral-500">{createdLabel === 'Noted' ? 'Accepted' : 'Saved'}</p>
-        <p className={`mt-1.5 font-display font-semibold text-neutral-100 ${isHero ? 'text-2xl' : 'text-lg'}`}>
+        <p className={`mt-1.5 font-semibold text-neutral-100 ${isHero ? 'text-[16px]' : 'text-[15px]'}`}>
           {createdLabel === 'Noted' ? 'Noted' : createdLabel}
         </p>
         <p className="mt-1.5 max-w-md text-sm text-neutral-400">
@@ -179,20 +179,19 @@ export function NomaMoment({
   }
 
   return (
-    <div className={isHero ? `${HERO_CARD} p-7` : ''}>
+    <div className={isHero ? `${HERO_CARD} p-5` : ''}>
       <div className={`flex items-start gap-3 text-neutral-100`}>
         {isHero && (!chain || chain.length <= 1) && suggestion.applicationId && (
           <AppIcon applicationId={suggestion.applicationId} name={suggestion.applicationName ?? ''} size={28} variant="tile" className="mt-0.5" />
         )}
         <div className="min-w-0">
-          <p className={isHero ? 'font-display text-[22px] font-semibold leading-snug tracking-[-0.01em] text-balance' : 'font-display text-base font-semibold text-neutral-100'}>
+          <p className={isHero ? 'text-[16px] font-semibold leading-snug' : 'font-display text-base font-semibold text-neutral-100'}>
             {isHero ? occurrenceSentence(suggestion) : suggestion.isDemo ? 'Demo workflow' : 'Noma noticed'}
           </p>
           <p className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${isHero ? 'mt-2 text-[13px]' : 'mt-1 text-sm'} text-neutral-400`}>
             {isHero ? (
               <>
-                <span className="inline-flex items-center gap-1.5 text-violet">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-violet" />
+                <span>
                   {suggestion.isDemo ? 'Demo workflow' : 'Flow noticed this'}
                 </span>
                 <span aria-hidden className="text-neutral-600">·</span>
@@ -211,15 +210,15 @@ export function NomaMoment({
       </div>
 
       {chain && chain.length > 1 && (
-        <div className={isHero ? 'mt-6' : 'mt-3'}>
-          <WorkflowChain steps={chain} size={isHero ? 'lg' : 'md'} centered />
+        <div className={isHero ? 'mt-4' : 'mt-3'}>
+          {isHero ? <WorkflowSteps steps={chain} fallbackAppId={suggestion.applicationId} /> : <WorkflowChain steps={chain} size="md" />}
         </div>
       )}
 
       {!isPicking ? (
         <>
-          <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 ${isHero ? 'mt-7 border-t border-white/[0.06] pt-5' : 'mt-3'}`}>
-            <p className={`text-neutral-100 ${isHero ? 'text-base' : 'text-sm'}`}>
+          <div className={`flex flex-wrap items-center justify-between gap-x-6 gap-y-3 ${isHero ? 'mt-5 border-t border-white/[0.06] pt-4' : 'mt-3'}`}>
+            <p className="text-sm text-neutral-200">
               {suggestion.action ? 'Turn this into one Glide action?' : 'Worth remembering for next time?'}
             </p>
             <div className="flex items-center gap-4">
@@ -332,7 +331,7 @@ export function NomaMoment({
                       key={slot}
                       type="button"
                       onClick={() => void handleAssign(slot)}
-                      className="noma-press rounded-[10px] border border-white/[0.07] bg-base-800 px-2 py-2.5 text-center text-xs text-neutral-400 transition-colors hover:border-violet/50 hover:text-neutral-100"
+                      className="noma-press rounded-[10px] border border-white/[0.07] bg-base-800 px-2 py-2.5 text-center text-xs text-neutral-400 transition-colors hover:border-white/20 hover:text-neutral-100"
                     >
                       <div className="text-[10px] text-neutral-500">{zone ? GLIDE_ZONE_LABELS[zoneCount][zone] : `Control ${slot}`}</div>
                       <div className="mt-0.5 truncate text-neutral-100">{control?.label || '–'}</div>

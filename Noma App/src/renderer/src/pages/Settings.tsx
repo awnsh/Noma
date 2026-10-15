@@ -40,9 +40,9 @@ export function Settings() {
   const glideStatus = glideStatusLine(glide)
 
   return (
-    <div className="mx-auto max-w-3xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-8">
-        <h1 className="font-display text-xl font-semibold text-neutral-100">Settings</h1>
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Settings</h1>
       </div>
 
       <section className={`mb-8 px-5 py-4 ${CARD}`}>

@@ -82,10 +82,10 @@ export function GlideZoneMap({
   return (
     <div
       style={style}
-      className={`space-transition relative mx-auto aspect-[3/2] w-full ${compact ? 'max-w-[360px]' : 'max-w-[600px]'} glass rounded-[22px] p-[5px]`}
+      className={`space-transition relative aspect-[3/2] w-full ${compact ? 'mx-auto max-w-[360px]' : 'max-w-[600px]'} rounded-xl border border-white/[0.1] bg-[#0f0e0d] p-[3px]`}
     >
       {/* The glass of the pad: a recessed face inside the bezel. */}
-      <div className="absolute inset-[5px] overflow-hidden rounded-[17px] bg-[rgba(8,7,6,0.55)]">
+      <div className="absolute inset-[3px] overflow-hidden rounded-[9px] bg-[#161412]">
         {glideZonesFor(zoneCount).map((zone, zoneIndex) => {
           const slot = GLIDE_ZONE_SLOTS[zone]
           const control = controls.find((item) => item.slot === slot)
@@ -151,13 +151,13 @@ export function GlideZoneMap({
         {centerLabel && (
           <div className="pointer-events-none absolute inset-x-[33%] top-1/2 flex -translate-y-1/2 flex-col items-center gap-2.5 text-center">
             {centerAppId !== undefined && (
-              <span className={`glass flex items-center justify-center rounded-[14px] bg-space-deep ${compact ? 'h-10 w-10' : 'h-14 w-14'}`}>
+              <span className={`flex items-center justify-center ${compact ? 'h-10 w-10' : 'h-12 w-12'}`}>
                 <AppIcon applicationId={centerAppId} name={centerLabel} size={compact ? 24 : 32} fill />
               </span>
             )}
             <span
               className={`max-w-full truncate leading-snug ${
-                centerAppId !== undefined ? 'font-display text-sm font-semibold text-space-ink' : 'text-xs text-neutral-400'
+                centerAppId !== undefined ? 'text-[13px] font-semibold text-neutral-200' : 'text-xs text-neutral-400'
               }`}
             >
               {centerLabel}

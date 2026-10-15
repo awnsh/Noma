@@ -60,11 +60,13 @@ module.exports = {
         // Flow's own voice: a suggestion, something Flow noticed. Never
         // general UI.
         violet: {
-          DEFAULT: '#b09ae6',
-          muted: 'rgba(176,154,230,0.14)',
+          // v6: retired. The names stay so old classes compile; they now
+          // resolve to the ordinary neutral surface and text.
+          DEFAULT: '#b7b1a9',
+          muted: 'rgba(255,250,240,0.06)',
           // Flow's note: the paper a suggestion is written on.
-          note: '#221d2b',
-          edge: 'rgba(176,154,230,0.22)'
+          note: '#1e1c19',
+          edge: 'rgba(255,250,240,0.08)'
         },
         success: {
           DEFAULT: '#7cc49a',
@@ -103,15 +105,14 @@ module.exports = {
         }
       },
       fontFamily: {
-        // Shared with the Noma Website (src/index.css's --font-display/
-        // --font-sans/--font-mono tokens there) — same three fonts, same
-        // roles: Sora for page/section titles (echoes the "noma" wordmark's
-        // rounded-geometric letterforms), Inter for body text, JetBrains
-        // Mono for technical/log labels. Fonts are loaded via @fontsource
-        // imports in styles/globals.css.
-        display: ['"Sora Variable"', 'Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"SFMono-Regular"', 'Consolas', '"Liberation Mono"', 'monospace']
+        // 2026-10-14 (v6, "native"): the operating system's own UI fonts,
+        // so Noma reads like the apps around it rather than like a web
+        // template. Sora and Inter were the strongest "made by AI" tell.
+        // `display` is kept as a name so existing classes still work; it
+        // is the platform's display cut, not a separate brand face.
+        display: ['"Segoe UI Variable Display"', '"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        sans: ['"Segoe UI Variable Text"', '"Segoe UI"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        mono: ['"Cascadia Mono"', 'Consolas', '"SF Mono"', 'Menlo', 'monospace']
       }
     }
   },

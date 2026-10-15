@@ -60,7 +60,7 @@ export function CreateProfileModal({ application, onClose, onCreated }: CreatePr
 
   return (
     <Modal onClose={onClose}>
-      <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">
+      <h2 className="mb-1 text-[15px] font-semibold text-neutral-100">
         {application ? `Create a profile for ${application.name}` : 'Create a new application profile'}
       </h2>
       <p className="mb-5 text-xs text-neutral-500">

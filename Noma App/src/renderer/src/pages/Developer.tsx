@@ -68,7 +68,7 @@ function DevToolButton({
 function StatusPill({ ok, onLabel, offLabel }: { ok: boolean; onLabel: string; offLabel: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${
+      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] ${
         ok ? 'border-accent-muted text-accent' : 'border-white/10 text-neutral-500'
       }`}
     >
@@ -174,9 +174,9 @@ export function Developer() {
   const encoderModule = status.modules.find((module) => module.capabilities.includes('rotate'))
 
   return (
-    <div className="mx-auto max-w-4xl px-10 py-10">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-8">
-        <h1 className="font-display text-xl font-semibold text-neutral-100">Developer</h1>
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Developer</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Hardware connection status, current mappings, and a live HOST↔DEVICE log using the exact
           message names the future STM32 protocol uses. See docs/hardware-protocol.md.
@@ -190,7 +190,7 @@ export function Developer() {
           </div>
           <div className="mt-2 flex flex-wrap gap-2">
             <HardwareStatusPill />
-            <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
+            <span className="rounded-md border border-white/10 px-2 py-0.5 text-[11px] text-neutral-500">
               {status.deviceType} · v{status.protocolVersion}
             </span>
           </div>
@@ -365,7 +365,7 @@ export function Developer() {
             {status.modules.map((module) => (
               <span
                 key={module.id}
-                className="rounded-full border border-white/10 bg-base-900 px-3 py-1 text-xs text-neutral-400"
+                className="rounded-md border border-white/10 bg-base-900 px-3 py-1 text-xs text-neutral-400"
               >
                 {module.name}
               </span>

@@ -53,7 +53,7 @@ export function GlideTouchCheck() {
         <button
           type="button"
           onClick={() => void startTouchCheck()}
-          className="rounded-full border border-holo-border px-3 py-1 text-[11px] text-holo-text hover:border-holo-text/30"
+          className="rounded-md border border-holo-border px-3 py-1 text-[11px] text-holo-text hover:border-holo-text/30"
         >
           {touchCheckDoneAt ? 'Run touch check again' : 'Run touch check'}
         </button>

@@ -242,7 +242,7 @@ export function MacroEditor({
               key={type}
               type="button"
               onClick={() => addStep(type)}
-              className="noma-press inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-base-800 px-3 py-1.5 text-xs text-neutral-300 hover:bg-base-700 hover:text-neutral-50"
+              className="noma-press inline-flex items-center gap-1 rounded-md border border-white/[0.08] bg-base-800 px-3 py-1.5 text-xs text-neutral-300 hover:bg-base-700 hover:text-neutral-50"
             >
               <PlusIcon className="h-3 w-3" />
               {NEW_STEP_LABELS[type]}

@@ -49,7 +49,7 @@ export function OnboardingGlideScreen({ onContinue }: OnboardingGlideScreenProps
 
   return (
     <div className="flex flex-col items-center text-center">
-      <h1 className="font-display text-3xl font-semibold text-neutral-50">Meet Glide</h1>
+      <h1 className="font-display text-[28px] font-semibold leading-tight text-neutral-50">Meet Glide</h1>
       <p className="mt-3 max-w-md text-sm text-neutral-400">
         Rest a fingertip on the palm rest beside your trackpad, then flick it onto the trackpad. The side and half you
         land in picks the action. It never clicks, and normal trackpad use doesn&apos;t count.

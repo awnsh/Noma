@@ -85,7 +85,7 @@ export function ModuleConfigModal({ module, functions, onClose, onSaved }: Modul
     <Modal onClose={onClose}>
       <div className="mb-5">
         <div className="text-xs font-medium text-neutral-400">{module.name}</div>
-        <h2 className="mt-1 font-display text-lg font-semibold text-neutral-100">Configure module</h2>
+        <h2 className="mt-1 text-[15px] font-semibold text-neutral-100">Configure module</h2>
       </div>
 
       <div className="space-y-5">

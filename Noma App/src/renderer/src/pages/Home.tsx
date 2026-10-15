@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState'
 import { CreateProfileModal } from '../components/CreateProfileModal'
 import { HomeSidePanel } from '../components/HomeSidePanel'
 import { GlideZoneMap } from '../components/GlideZoneMap'
+import { AppIcon } from '../components/AppIcon'
 import { BUTTON_PRIMARY } from '../lib/surfaces'
 import { LearnedActionCard } from '../components/LearnedActionCard'
 import { useLearnedActions } from '../lib/useLearnedActions'
@@ -60,12 +61,13 @@ export function Home() {
   const status = glide?.enabled ? 'Glide is ready' : monitoringEnabled ? 'Glide is off. Flow is learning.' : 'Glide is off'
 
   return (
-    <div className="mx-auto max-w-[760px] px-12 pb-24 pt-14">
-      <header className="mb-9">
-        <h1 className="font-display text-[34px] font-semibold leading-[1.1] tracking-[-0.02em] text-neutral-50">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
+      <header className="mb-8">
+        <h1 className="font-display flex items-center gap-3 text-[26px] font-semibold leading-tight text-neutral-50">
+          {application && <AppIcon applicationId={application.id} name={application.name} size={28} />}
           {isLoading ? 'Noma' : application ? application.name : 'Noma'}
         </h1>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-400">
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-400">
           <span className="inline-flex items-center gap-1.5">
             <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${glide?.enabled ? 'bg-success' : 'bg-neutral-600'}`} />
             {status}
@@ -93,7 +95,7 @@ export function Home() {
 
       <section aria-labelledby="home-workflows" className="mb-14">
         <div className="mb-4 flex items-baseline justify-between">
-          <h2 id="home-workflows" className="font-display text-lg font-semibold text-neutral-100">Workflows</h2>
+          <h2 id="home-workflows" className="text-[15px] font-semibold text-neutral-100">Workflows</h2>
           <button
             type="button"
             onClick={() => setActivePage('workflows')}
@@ -136,7 +138,7 @@ export function Home() {
       </section>
 
       <section aria-labelledby="home-glide" className="mb-14">
-        <h2 id="home-glide" className="mb-4 font-display text-lg font-semibold text-neutral-100">
+        <h2 id="home-glide" className="mb-4 text-[15px] font-semibold text-neutral-100">
           Glide{application ? ` in ${application.name}` : ''}
         </h2>
         {isCreatingProfile && application && (
@@ -160,7 +162,7 @@ export function Home() {
               onEditZone={() => setActivePage('holo')}
               sweep
             />
-            <div className="mx-auto mt-4 flex max-w-[600px] items-center justify-between text-[13px] text-neutral-500">
+            <div className="mt-3 flex max-w-[600px] items-center justify-between text-[13px] text-neutral-500">
               <span>Slide a finger in from the palm rest. The side and half you land in picks the action.</span>
               <button type="button" onClick={() => setActivePage('holo')} className="shrink-0 text-neutral-300 underline decoration-white/20 underline-offset-[3px] hover:text-neutral-50">
                 Change zones
@@ -170,7 +172,7 @@ export function Home() {
         ) : application ? (
           <>
             <GlideZoneMap zoneCount={zoneCount} controls={[]} centerLabel={application.name} centerAppId={application.id} />
-            <div className="mx-auto mt-4 flex max-w-[600px] items-center justify-between gap-6 text-[13px] text-neutral-400">
+            <div className="mt-3 flex max-w-[600px] items-center justify-between gap-6 text-[13px] text-neutral-400">
               <span>{application.name} has no Glide actions yet. Give it four, then swipe in to run them.</span>
               <button type="button" onClick={() => setIsCreatingProfile(true)} className={`shrink-0 ${BUTTON_PRIMARY}`}>
                 Set up {application.name}

@@ -42,7 +42,7 @@ export function UpdatePrompt() {
   return (
     <Modal onClose={later} titleId="update-prompt-title">
       <div className="font-display text-[15px] font-semibold text-neutral-100">Update</div>
-      <h2 id="update-prompt-title" className="mt-1 font-display text-lg font-semibold text-neutral-100">
+      <h2 id="update-prompt-title" className="mt-1 text-[15px] font-semibold text-neutral-100">
         Noma {offer.version} is {ready ? 'ready' : 'available'}
       </h2>
       <p className="mt-2 text-sm text-neutral-400">

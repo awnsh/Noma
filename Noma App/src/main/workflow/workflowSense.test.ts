@@ -65,6 +65,10 @@ describe('chainMakesSense; workflows the user accepted still pass', () => {
 })
 
 describe('chainMakesSense: the junk from real data is refused', () => {
+  it('refuses a chain that starts with Delete instead of crashing (real data, 2026-10-14)', () => {
+    expect(chainMakesSense([key('chrome', 'Delete'), click('chrome', 'label:Reload')])).toBe(false)
+  })
+
   it.each([
     ['only switching windows', [app('claude'), app('chrome'), app('msedge')]],
     ['an unrelated two-app hop', [app('ms-teams'), app('msedge')]],

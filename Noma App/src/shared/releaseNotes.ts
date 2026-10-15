@@ -7,6 +7,12 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.29': [
+    "A calmer, more familiar look: Noma now uses your computer's own fonts, plain buttons and simple panels, so it sits in naturally next to your other apps.",
+    "Workflow suggestions show each step as its own card, in the colour of the app it happens in, with the keys you press drawn as real keys.",
+    "Fixed: workflow suggestions could stop loading entirely when one of your recorded sequences started with Delete.",
+    "Fixed: the buttons on the workflow popup didn't respond to clicks."
+  ],
   '0.1.28': [
     'Noma is made of glass now: the window lets your wallpaper show through, softly frosted, and cards have a fine light edge.',
     "Things move: the highlight glides to the page you open, cards lift under your pointer, and Glide's zones light up in turn when you open Home.",

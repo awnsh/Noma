@@ -156,7 +156,7 @@ export function ControlEditorModal({
 
   return (
     <Modal onClose={onClose} titleId="control-editor-title">
-      <h2 id="control-editor-title" className="mb-5 font-display text-lg font-semibold text-neutral-100">
+      <h2 id="control-editor-title" className="mb-5 text-[15px] font-semibold text-neutral-100">
         {zoneLabel ?? `Control ${slot}`} action
       </h2>
 

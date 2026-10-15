@@ -51,9 +51,9 @@ export function Workflows() {
   const hasLearned = (learnedActions?.length ?? 0) > 0
 
   return (
-    <div className="mx-auto max-w-3xl px-12 py-16">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-14">
-        <h1 className="font-display text-2xl font-semibold text-neutral-100">Workflows</h1>
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">Workflows</h1>
         <p className="mt-2 max-w-xl text-sm text-neutral-500">
           Flow notices shortcut sequences you repeat. You review the exact steps, then save one to a Glide zone so a
           single swipe runs it. Nothing is saved or run without you.
@@ -91,7 +91,7 @@ export function Workflows() {
         <>
           {hasPending && (
             <section className="mb-14">
-              <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Suggestions</h2>
+              <h2 className="mb-1 text-[15px] font-semibold text-neutral-100">Suggestions</h2>
               <p className="mb-5 text-sm text-neutral-600">Patterns Noma has detected, waiting on you.</p>
               <div className="space-y-4 mc-stagger">
                 {suggestions.map((suggestion) => (
@@ -108,7 +108,7 @@ export function Workflows() {
           )}
 
           <section>
-            <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">Your workflows</h2>
+            <h2 className="mb-1 text-[15px] font-semibold text-neutral-100">Your workflows</h2>
             <p className="mb-5 text-sm text-neutral-600">
               {hasLearned
                 ? 'Click one to open it in Macro Studio.'

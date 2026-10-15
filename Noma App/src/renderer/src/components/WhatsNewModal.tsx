@@ -26,7 +26,7 @@ export function WhatsNewModal() {
   return (
     <Modal onClose={close} titleId="whats-new-title">
       <div className="font-display text-[15px] font-semibold text-neutral-100">Updated to {whatsNew.version}</div>
-      <h2 id="whats-new-title" className="mt-1 font-display text-lg font-semibold text-neutral-100">
+      <h2 id="whats-new-title" className="mt-1 text-[15px] font-semibold text-neutral-100">
         What&apos;s new
       </h2>
 

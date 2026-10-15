@@ -63,9 +63,9 @@ export function Learning() {
   )
 
   return (
-    <div className="mx-auto max-w-2xl px-12 py-16">
+    <div className="max-w-[860px] px-10 pb-16 pt-8">
       <div className="mb-12">
-        <h1 className="font-display text-2xl font-semibold text-neutral-100">What Noma is learning</h1>
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-neutral-50">What Noma is learning</h1>
               </div>
 
       <section className="mb-12">
@@ -105,7 +105,7 @@ export function Learning() {
       <div className="mb-12 h-px bg-base-700" />
 
       <section>
-        <h2 className="mb-1 font-display text-lg font-semibold text-neutral-100">How Noma decides</h2>
+        <h2 className="mb-1 text-[15px] font-semibold text-neutral-100">How Noma decides</h2>
         <p className="mb-5 text-sm text-neutral-600">
           Noma only suggests something once it's genuinely repeated. Never automatic.
         </p>

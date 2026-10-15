@@ -69,7 +69,7 @@ describe('Onboarding', () => {
   it('starts on Welcome, saying what Noma does in one breath', () => {
     window.flow = mockFlow()
     render(<Onboarding />)
-    expect(screen.getByText('Your next action, one swipe away.')).toBeInTheDocument()
+    expect(screen.getByText('Welcome to Noma')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Back' })).toBeDisabled()
   })
 
@@ -84,7 +84,7 @@ describe('Onboarding', () => {
     window.flow = mockFlow()
     seed({ ...DEFAULT_STATE, step: 'hardware' as OnboardingState['step'] })
     render(<Onboarding />)
-    expect(screen.getByText('Your next action, one swipe away.')).toBeInTheDocument()
+    expect(screen.getByText('Welcome to Noma')).toBeInTheDocument()
   })
 
   it('turns Glide on, then waits for one real (practice) swipe before moving on', async () => {
