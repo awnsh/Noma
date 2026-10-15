@@ -32,6 +32,30 @@
         "value": "instrument serif",
         "createdAt": "2026-10-07T18:42:25.545Z",
         "reason": "Noma brand serif; the user picked Instrument Serif for the website's italic accent (2026-10-06, see memory noma-website-type-hierarchy)"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "Marketing/motion/motion.template.html"
+        ],
+        "createdAt": "2026-10-14T00:09:58.659Z",
+        "reason": "Claude: shadows are offset navy elevation shadows on a light stage in a video template, not chromatic halos"
+      },
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "Marketing/motion/motion.template.html"
+        ],
+        "createdAt": "2026-10-14T00:13:30.423Z",
+        "reason": "Claude: .kcd/.kc bottom border is a keycap depth edge in a video template, not an accent stripe"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "15px",
+        "createdAt": "2026-10-15T03:48:44.789Z",
+        "reason": "Claude: DESIGN.md v6 block (2026-10-14) sets 15px as the section/card-title step; zone action names use it too"
       }
     ]
   }
