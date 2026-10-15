@@ -7,6 +7,9 @@
  * the next version's notes before releasing.
  */
 export const RELEASE_NOTES: Record<string, string[]> = {
+  '0.1.31': [
+    "Fixed: the close button and Review on the workflow popup didn't respond, except on the first popup after Noma started."
+  ],
   '0.1.30': [
     "Fixed: saved workflows with a browser step often stopped at it, because the tab's title had changed since the workflow was saved (a chat renaming itself, an inbox count going up). Noma now keeps using the tab you're in.",
     'Beta testers: Settings > Report a problem > Show technical details now includes a few counts (days used, suggestions saved or skipped, workflows finished or stopped) for your weekly check-in. Nothing is sent unless you paste it.'
