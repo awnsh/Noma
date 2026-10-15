@@ -34,6 +34,9 @@ export function ReportProblemPanel() {
       <p className="mt-2 max-w-md text-sm text-neutral-400">
         You can add a technical summary of this install. Read it first; it&apos;s never sent automatically.
       </p>
+      <p className="mt-2 max-w-md text-sm text-neutral-400">
+        Beta testers: once a week, copy it into the form as a weekly check-in. The beta numbers in it are counts only.
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"

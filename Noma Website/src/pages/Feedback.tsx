@@ -11,7 +11,7 @@ import { useLatestDownloads } from '../lib/downloads'
 // what the visitor types and picks is sent: no browser details, no
 // screenshots, nothing gathered behind their back. Privacy.tsx says so.
 
-const KINDS = ['Something broke', 'Idea', 'Something else'] as const
+const KINDS = ['Something broke', 'Idea', 'Weekly check-in', 'Something else'] as const
 const PLATFORMS = ['Windows', 'Mac (Apple silicon)', 'Mac (Intel)', 'Not using the app'] as const
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
@@ -53,7 +53,7 @@ export default function Feedback() {
         method: 'POST',
         headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          _subject: `Noma issue report: ${kind}${about ? ` (${about})` : ''}`,
+          _subject: `${kind === 'Weekly check-in' ? 'Noma weekly check-in' : `Noma issue report: ${kind}`}${about ? ` (${about})` : ''}`,
           type: kind,
           platform: platform ?? 'Not given',
           version: version.trim() || 'Not given',
@@ -175,7 +175,7 @@ export default function Feedback() {
 
                 <div>
                   <label htmlFor="feedback-details" className={LABEL}>
-                    What happened?
+                    {kind === 'Weekly check-in' ? 'How did this week go?' : 'What happened?'}
                   </label>
                   <textarea
                     id="feedback-details"
@@ -184,7 +184,9 @@ export default function Feedback() {
                     placeholder={
                       kind === 'Idea'
                         ? 'What would you like Noma to do?'
-                        : 'What were you doing, what did you expect, and what happened instead?'
+                        : kind === 'Weekly check-in'
+                          ? 'Paste the details from Settings > Report a problem, then tell us what helped and what got in the way this week.'
+                          : 'What were you doing, what did you expect, and what happened instead?'
                     }
                     value={details}
                     onChange={(e) => {

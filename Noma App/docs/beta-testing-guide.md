@@ -83,19 +83,38 @@ Thanks for trying Noma. This takes about five minutes to set up.
 Everything stays in `%APPDATA%\noma` on your laptop: settings, your zones,
 saved workflows, and (if Flow is on) which app was in front, which modifier
 shortcuts you pressed, and when. Never what you type, screenshots, or the
-clipboard. Settings > "Clear learning data" or "Delete all data" removes it.
+clipboard. Settings > "Clear Learning Data" or "Delete All Data" removes it.
 The only network request Noma makes is checking GitHub for updates.
+
+## Weekly check-in (about two minutes)
+
+This is the most useful thing you can do for the beta. Once a week:
+
+1. Settings > **Report a problem** > "Show technical details" > "Copy".
+2. "Open the report form", pick **Weekly check-in**, and paste.
+3. Add a sentence or two: what helped, what got in the way, and whether
+   you'd keep Noma running if the beta ended today.
+
+The details include a "Beta numbers" block: how many days you used Noma in
+the last two weeks, how many suggestions Flow made and what you did with
+them, and how many saved-workflow runs finished or stopped. Counts and
+dates only, never which apps, shortcuts or workflows. Read it before you
+send it.
+
+Please keep using Noma the way you normally work. A week where you ignored
+every suggestion is just as useful to us as one where you saved them all.
 
 ## Reporting a problem
 
 Settings > **Report a problem**:
 
-1. "Open the issue page" opens an empty GitHub issue in your browser.
-2. Describe what you did, what you expected, and what happened. Include your
-   laptop model.
+1. "Open the report form" opens nomashift.com/feedback in your browser.
+2. Pick **Something broke**, then describe what you did, what you expected,
+   and what happened. Include your laptop model.
 3. Optional: "Show technical details" shows a short summary (Noma version,
-   Windows version, Glide and Flow settings, touchpad count, recent success
-   or failure lines). Read it, then "Copy" and paste it if you're happy to.
+   OS version, Glide and Flow settings, touchpad count, the beta numbers
+   above, recent success or failure lines). Read it, then "Copy" and paste
+   it if you're happy to.
    It never contains what you typed, your shortcuts, app or workflow names,
    or screenshots, and Noma never sends it on its own.
 
