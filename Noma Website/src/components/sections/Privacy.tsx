@@ -13,14 +13,16 @@ import SiteLink from '../layout/SiteLink'
 const RECORDS = [
   'Which app is in front, and when you switch',
   'Shortcuts like Ctrl + S: which keys, in which app, in what order',
+  'That you highlighted something, and a Delete right after it, but never what',
+  'In a browser, which tab, as a scrambled code instead of its title',
   'Command buttons you click, like Export, if you turn that on',
 ]
 
 const NEVER = [
   'What you type',
   'Your screen or your clipboard',
-  'Window titles, web addresses or file names',
-  'Anything in browsers, chat apps or meeting apps',
+  'Page titles, web addresses or file names',
+  'Buttons in chat, meeting or AI apps',
 ]
 
 const FACTS = [

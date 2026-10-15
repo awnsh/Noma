@@ -8,7 +8,7 @@ import LegalSection from '../components/ui/LegalSection'
 // analytics; GitHub for downloads and the version label; Formspree for the
 // email form and the /feedback issue form; Cloudflare hosting). Not legal advice: worth a lawyer's
 // review before Noma leaves beta.
-const LAST_UPDATED = 'October 7, 2026'
+const LAST_UPDATED = 'October 15, 2026'
 
 const EMAIL = 'hello@nomashift.com'
 const LINK = 'text-accent-bright transition-colors hover:text-accent'
@@ -41,11 +41,27 @@ export default function Privacy() {
                 Shortcuts that use Ctrl, Alt, or the Windows or Command key, such as Ctrl + S: which keys, in
                 which app, and when.
               </li>
+              <li>
+                That you highlighted something (for example with Shift and the arrow keys), but never what you
+                highlighted.
+              </li>
+              <li>
+                A Delete or Backspace pressed straight after a highlight, in the same app, so &ldquo;highlight,
+                then delete&rdquo; can be learned. Only the first one counts; the ones after it are ignored.
+              </li>
+              <li>
+                In a web browser on Windows, which tab you were in. The tab&rsquo;s title is turned into a
+                scrambled code, mixed with a secret made on your computer, and the title itself is thrown away. The
+                code can only be compared with other tabs on the same computer; it can&rsquo;t be turned back into
+                the title.
+              </li>
             </ul>
             <p>It never records:</p>
             <ul className="list-disc space-y-2 pl-5">
-              <li>What you type. Single keys and Shift combinations are ignored before anything is saved.</li>
-              <li>Your screen, your clipboard, window titles, web addresses, or file names.</li>
+              <li>
+                What you type. Other single keys and Shift combinations are ignored before anything is saved.
+              </li>
+              <li>Your screen, your clipboard, page or window titles, web addresses, or file names.</li>
             </ul>
           </LegalSection>
 
@@ -53,9 +69,14 @@ export default function Privacy() {
             <p>
               A second setting, also off by default, lets Flow learn from buttons you click. It saves only the
               name of a command button (one to three plain words, like &ldquo;Cut&rdquo;) or a rough position in
-              the window. It never records clicks in text fields, documents, lists or links, and it skips
-              browsers, chat apps, meeting apps and AI chat apps entirely, because their buttons can contain
-              people&rsquo;s names or page content.
+              the window. It also notices when you highlight something with the mouse, by dragging or
+              double-clicking, but never what. It never records clicks in text fields, documents, lists or links.
+            </p>
+            <p>
+              In a web browser it records the same kind of button names, such as &ldquo;New Tab&rdquo; or a
+              page&rsquo;s &ldquo;Send&rdquo; button, and which tab you clicked, as the scrambled code described
+              above. It skips chat apps, meeting apps and AI chat apps entirely, because their buttons can contain
+              people&rsquo;s names or messages.
             </p>
           </LegalSection>
 
