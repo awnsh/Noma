@@ -47,12 +47,12 @@ export default function ControlBar({
     // app's when the app changes, as the Noma app does.
     <div
       style={spaceStyle(app.id)}
-      className={`space-transition app-glass flex flex-col gap-3 rounded-[22px] p-3 ${
-        compact ? '' : 'sm:flex-row sm:items-center sm:gap-4 sm:rounded-full sm:p-2.5 sm:pl-3'
+      className={`space-transition app-glass app-ui flex flex-col gap-3 rounded-lg p-3 ${
+        compact ? '' : 'sm:flex-row sm:items-center sm:gap-4 sm:p-2.5 sm:pl-3'
       } ${className}`}
     >
       <div className={`flex min-w-0 items-center gap-3 px-1 ${compact ? '' : 'sm:w-44 sm:shrink-0'}`}>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-space-deep">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center">
           <AnimatePresence mode="wait" initial={false}>
             <motion.span key={app.id} {...swap(0)} className="flex">
               <AppIcon id={app.id} color={app.color} className="h-5 w-5" />
@@ -60,7 +60,7 @@ export default function ControlBar({
           </AnimatePresence>
         </span>
         <AnimatePresence mode="wait" initial={false}>
-          <motion.span key={app.id} {...swap(0.03)} className="truncate font-display text-base font-semibold tracking-tight text-base-50">
+          <motion.span key={app.id} {...swap(0.03)} className="truncate text-[15px] font-semibold text-base-50">
             {app.shortName}
           </motion.span>
         </AnimatePresence>
@@ -70,7 +70,7 @@ export default function ControlBar({
         {(controls ?? app.controls).map((control, index) => (
           <div
             key={index}
-            className={`flex h-11 items-center justify-center rounded-full border px-2 transition-colors duration-500 ${
+            className={`flex h-11 items-center justify-center rounded-md border px-2 transition-colors duration-500 ${
               highlight === index ? 'border-ink/40 bg-ink/[0.1]' : 'border-white/[0.08] bg-white/[0.04]'
             }`}
           >
@@ -78,7 +78,7 @@ export default function ControlBar({
               <motion.span
                 key={`${app.id}-${control}`}
                 {...swap(0.05 + index * 0.05)}
-                className="block w-full truncate text-center text-xs font-medium tracking-tight text-base-100 sm:text-[13px]"
+                className="block w-full truncate text-center text-xs font-medium text-base-100 sm:text-[13px]"
               >
                 {control}
               </motion.span>

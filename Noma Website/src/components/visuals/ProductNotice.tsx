@@ -34,17 +34,16 @@ export default function ProductNotice({
     <div
       role="img"
       aria-label={`Noma notice: new workflow detected, ${steps.map((step) => step.label).join(', then ')}`}
-      className={`app-glass app-glass-violet w-[300px] rounded-[16px] bg-[rgba(34,29,43,0.92)] px-3 py-2.5 ${className}`}
+      className={`app-glass app-ui w-[300px] rounded-lg bg-[rgba(34,32,29,0.95)] px-3 py-2.5 ${className}`}
     >
       <div className="flex items-center gap-1.5">
         <img src={nomaMark} alt="" className="h-[18px] w-[26px] object-contain opacity-90" />
         <img src={nomaWordmark} alt="" className="h-[9px] w-auto opacity-75" />
-        <span className="ml-auto font-mono text-[10px] text-[#7d7871]">{occurrences}×</span>
+        <span className="ml-auto text-[10px] text-[#7d7871]">{occurrences}×</span>
         <span className="-mr-0.5 flex h-4 w-4 items-center justify-center text-[13px] leading-none text-[#656970]">×</span>
       </div>
 
-      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#f1ede6]">
-        <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-note-violet" />
+      <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-[#f1ede6]">
         New workflow detected
       </p>
 
@@ -68,7 +67,7 @@ export default function ProductNotice({
                   </p>
                   {step.action && (
                     <p
-                      className="mt-0.5 truncate text-left font-mono text-[10px] text-[#75767e]"
+                      className="mt-0.5 truncate text-left text-[10px] text-[#75767e]"
                       style={{ maxWidth: BOX + 16 }}
                     >
                       {step.action}
@@ -77,7 +76,7 @@ export default function ProductNotice({
                 </>
               ) : (
                 <span
-                  className="flex items-center rounded-[8px] border border-white/[0.08] bg-app-800 px-1.5 py-0.5 font-mono text-[10px] text-[#d9d4cc]"
+                  className="flex items-center rounded-[4px] border border-white/[0.1] border-b-white/[0.2] bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-[#d9d4cc]"
                   style={{ height: BOX }}
                 >
                   {step.label}

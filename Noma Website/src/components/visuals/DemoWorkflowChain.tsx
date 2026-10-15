@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import DemoAppIcon from './appGlyphIcons'
 import { spaceStyle } from '../../lib/appSpace'
 
-export type DemoChainStep = { kind: 'app'; appId: string; label: string } | { kind: 'shortcut'; label: string }
+export type DemoChainStep = { kind: 'app'; appId: string; label: string } | { kind: 'shortcut'; label: string; keys?: string }
 
 /**
  * Ported from the real app's `components/WorkflowChain.tsx` — updated
@@ -27,6 +27,7 @@ interface WorkflowNode {
    *  same node as its "what happened here" line — same convention the real
    *  app's `WorkflowChain.tsx` uses. */
   action?: string
+  keys?: string
 }
 
 function groupIntoNodes(steps: DemoChainStep[]): WorkflowNode[] {
@@ -36,7 +37,7 @@ function groupIntoNodes(steps: DemoChainStep[]): WorkflowNode[] {
     if (step.kind === 'app') {
       const next = steps[i + 1]
       if (next && next.kind === 'shortcut') {
-        nodes.push({ key: `${i}`, kind: 'app', label: step.label, appId: step.appId, action: next.label })
+        nodes.push({ key: `${i}`, kind: 'app', label: step.label, appId: step.appId, action: next.label, keys: next.keys })
         i++
         continue
       }
@@ -67,7 +68,7 @@ const SIZES = {
 /** Each app step sits on that app's own colour, as in the app since
  *  2026-10-14: the chain shows where each step happens. */
 const ICON_BOX =
-  'flex shrink-0 items-center justify-center rounded-[12px] bg-space-deep'
+  'flex shrink-0 items-center justify-center rounded-md'
 
 export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoChainStep[]; size?: 'md' | 'lg' }) {
   const reduceMotion = useReducedMotion()
@@ -141,5 +142,70 @@ export default function DemoWorkflowChain({ steps, size = 'md' }: { steps: DemoC
         </Fragment>
       ))}
     </div>
+  )
+}
+
+/** A shortcut drawn as the keys you press, as the app does since v0.1.29. */
+export function DemoKeys({ keys }: { keys: string }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {keys.split(/\+(?=.)/).map((part, index) => (
+        <kbd
+          key={index}
+          className="inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-[4px] border border-white/[0.12] border-b-[2px] border-b-white/[0.2] bg-white/[0.06] px-1.5 font-[inherit] text-[11px] font-medium leading-none text-base-50"
+        >
+          {part}
+        </kbd>
+      ))}
+    </span>
+  )
+}
+
+/**
+ * The app's suggestion steps since v0.1.29 (Noma App WorkflowChain.tsx,
+ * WorkflowSteps): one numbered card per step, edged and faintly tinted in
+ * the colour of the app it happens in, with the keys drawn as keys.
+ * Side by side on wider screens, stacked on phones.
+ */
+export function DemoWorkflowSteps({ steps }: { steps: DemoChainStep[] }) {
+  const reduceMotion = useReducedMotion()
+  const nodes = groupIntoNodes(steps)
+  return (
+    <ol className="flex flex-col items-stretch sm:flex-row">
+      {nodes.map((node, index) => (
+        <Fragment key={node.key}>
+          <motion.li
+            style={spaceStyle(node.appId)}
+            initial={reduceMotion ? undefined : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
+            className="flex min-w-0 flex-1 flex-col rounded-md border border-white/[0.07] border-t-2 border-t-space bg-space/[0.06] px-3 pb-3 pt-2.5 sm:max-w-[176px]"
+          >
+            <div className="flex items-center gap-2">
+              {node.kind === 'app' ? (
+                <DemoAppIcon appId={node.appId} name={node.label} size={22} variant="bare" fill />
+              ) : (
+                <span className="h-[22px]" />
+              )}
+              <span className="ml-auto text-[11px] tabular-nums text-base-500">{index + 1}</span>
+            </div>
+            <p className="mt-2 text-[13px] font-semibold leading-snug text-base-50">{node.label}</p>
+            {node.kind === 'app' && <p className="mt-0.5 text-[12px] text-base-300">{node.action ?? 'Switch to this app'}</p>}
+            {node.keys && (
+              <div className="mt-auto pt-2">
+                <DemoKeys keys={node.keys} />
+              </div>
+            )}
+          </motion.li>
+          {index < nodes.length - 1 && (
+            <li aria-hidden className="flex h-5 shrink-0 items-center justify-center text-base-500 sm:h-auto sm:w-6">
+              <svg viewBox="0 0 16 16" className="h-3 w-3 rotate-90 sm:rotate-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" />
+              </svg>
+            </li>
+          )}
+        </Fragment>
+      ))}
+    </ol>
   )
 }

@@ -98,7 +98,7 @@ export default function AdaptiveSurface({ appId, size = 'lg', className = '', co
   return (
     <div
       style={spaceStyle(app.id)}
-      className={`space-transition app-glass overflow-hidden rounded-3xl ${dim.pad} ${className}`}
+      className={`space-transition app-glass app-ui overflow-hidden rounded-xl ${dim.pad} ${className}`}
     >
 
       <div className={`relative flex items-center ${dim.gap}`}>
@@ -115,7 +115,7 @@ export default function AdaptiveSurface({ appId, size = 'lg', className = '', co
         <div className="min-w-0 flex-1">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={app.id} {...swap(0.04)}>
-              <p className={`truncate font-display font-semibold tracking-tight text-base-50 ${dim.name}`}>
+              <p className={`truncate font-semibold text-base-50 ${dim.name}`}>
                 {app.shortName}
               </p>
               <p className={`mt-0.5 truncate text-base-400 ${dim.doing}`}>

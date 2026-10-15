@@ -208,9 +208,9 @@ export function ControlPanel({
 }) {
   const app = appProfiles[GLIDE_APP_ID]
   return (
-    <div style={spaceStyle(GLIDE_APP_ID)}>
+    <div style={spaceStyle(GLIDE_APP_ID)} className="app-ui">
       <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-space-deep">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
           <AppIcon id={GLIDE_APP_ID} color={app.color} className="h-4 w-4" />
         </span>
         <div className="min-w-0">
@@ -230,7 +230,7 @@ export function ControlPanel({
               aria-label={`${control}: swipe in from the ${zone.where} of the trackpad`}
               animate={{ scale: isFired ? 0.96 : 1 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-              className={`flex flex-col items-center justify-center rounded-xl border px-2 text-center transition-colors duration-200 ${
+              className={`flex flex-col items-center justify-center rounded-md border px-2 text-center transition-colors duration-200 ${
                 compact ? 'h-[46px]' : 'h-[60px]'
               } ${
                 isFired

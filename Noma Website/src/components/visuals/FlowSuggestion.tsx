@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import DemoWorkflowChain, { type DemoChainStep } from './DemoWorkflowChain'
+import { DemoWorkflowSteps, type DemoChainStep } from './DemoWorkflowChain'
 import { DEMO_BUTTON_PRIMARY, DEMO_BUTTON_QUIET, DEMO_HERO_CARD } from './demoSurfaces'
 import { appProfiles } from '../../data/appProfiles'
 import { SAVED_LABEL, ZONES } from '../../data/flowDemo'
@@ -20,11 +20,11 @@ const OCCURRENCES = 9
 
 const CHAIN: DemoChainStep[] = [
   { kind: 'app', appId: 'vscode', label: 'VS Code' },
-  { kind: 'shortcut', label: 'Screenshot' },
+  { kind: 'shortcut', label: 'Screenshot', keys: 'Win+Shift+S' },
   { kind: 'app', appId: 'claude', label: 'Claude' },
-  { kind: 'shortcut', label: 'Paste' },
+  { kind: 'shortcut', label: 'Paste', keys: 'Ctrl+V' },
   { kind: 'app', appId: 'github', label: 'GitHub' },
-  { kind: 'shortcut', label: 'Commit' },
+  { kind: 'shortcut', label: 'Commit', keys: 'Ctrl+Enter' },
 ]
 
 /** What the app's preview lists under "Exactly what this will do". */
@@ -62,12 +62,12 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
   }
 
   return (
-    <div className={`${DEMO_HERO_CARD} p-6 sm:p-8`}>
+    <div className={`${DEMO_HERO_CARD} p-5 sm:p-6`}>
       <AnimatePresence mode="wait" initial={false}>
         {stage === 'saved' && slot !== null ? (
           <motion.div key="saved" {...fade}>
             <p className="text-xs text-base-400">Saved</p>
-            <p className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-base-50">{SAVED_LABEL}</p>
+            <p className="mt-1.5 text-lg font-semibold text-base-50">{SAVED_LABEL}</p>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-base-300">
               Now on the {ZONES[slot].toLowerCase()} Glide zone in {APP}. To run it, switch to {APP} and swipe in
               from the {ZONES[slot].toLowerCase()}.
@@ -85,30 +85,22 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
           </motion.div>
         ) : (
           <motion.div key="ask" {...fade}>
-            <p className="font-display text-xl font-semibold leading-snug tracking-tight text-base-50 sm:text-[22px]">
+            <p className="text-base font-semibold leading-snug text-base-50 sm:text-[17px]">
               You&rsquo;ve repeated this workflow {OCCURRENCES} times across your apps.
             </p>
             <p className="mt-2 flex items-center gap-2 text-[13px] text-base-400">
-              <span className="inline-flex items-center gap-1.5 text-note-violet">
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-note-violet" />
-                Flow noticed this
-              </span>
+              <span>Flow noticed this</span>
               <span aria-hidden className="text-base-500">&middot;</span>
               Just now
             </p>
-            {/* The app's large chain on wider screens; its smaller one on
-                phones, where three large nodes don't fit. */}
-            <div className="mt-6 hidden sm:block">
-              <DemoWorkflowChain steps={CHAIN} size="lg" />
-            </div>
-            <div className="mt-5 sm:hidden">
-              <DemoWorkflowChain steps={CHAIN} size="md" />
+            <div className="mt-4">
+              <DemoWorkflowSteps steps={CHAIN} />
             </div>
 
             {stage === 'ask' ? (
               <>
-                <div className="mt-7 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/[0.06] pt-5">
-                  <p className="text-base text-base-100">Turn this into one Glide action?</p>
+                <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-white/[0.06] pt-4">
+                  <p className="text-sm text-base-100">Turn this into one Glide action?</p>
                   <div className="flex items-center gap-2">
                     <button type="button" onClick={() => setStage('review')} className={DEMO_BUTTON_PRIMARY}>
                       Review steps
@@ -125,7 +117,7 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
                 <ol className="space-y-1 text-sm">
                   {PREVIEW.map((step, index) => (
                     <li key={step} className="flex gap-2.5">
-                      <span className="w-4 shrink-0 text-right font-mono text-[11px] leading-5 text-base-500">{index + 1}</span>
+                      <span className="w-4 shrink-0 text-right text-[11px] leading-5 tabular-nums text-base-500">{index + 1}</span>
                       <span className="text-base-100">{step}</span>
                     </li>
                   ))}
@@ -142,7 +134,7 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
                       key={zone}
                       type="button"
                       onClick={() => save(index)}
-                      className="rounded-[10px] border border-white/[0.07] bg-app-800 px-2.5 py-2.5 text-left text-xs shadow-[0_1px_0_0_rgba(255,250,240,0.05)_inset] transition-colors hover:border-note-violet/50"
+                      className="rounded-md border border-white/[0.08] bg-white/[0.04] px-2.5 py-2.5 text-left text-xs transition-colors hover:border-white/25"
                     >
                       <span className="block text-[11px] text-base-400">{zone}</span>
                       <span className="mt-0.5 block truncate text-base-100">{controls[index]}</span>
