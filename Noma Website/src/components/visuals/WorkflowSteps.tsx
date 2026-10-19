@@ -8,7 +8,7 @@ import { appProfiles } from '../../data/appProfiles'
  * A sequence the person actually performed, drawn as objects rather than
  * written as a sentence.
  *
- * "Screenshot → Claude Code → Paste → Send" reads as prose you have to parse.
+ * "Screenshot → Discord → Paste → Notion" reads as prose you have to parse.
  * The same thing as icon-led nodes reads as a shape you recognise, which is
  * the entire reason Flow is worth showing: you are supposed to look at it and
  * think *I do that*.

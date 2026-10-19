@@ -8,16 +8,19 @@ import { journey } from '../../data/journey'
 
 /**
  * Flow, demonstrated on a real-looking desktop (2026-10-06 redesign; grew out
- * of the earlier NoticeDesktop). Someone fixes a bug the way they always do:
- * screenshot it in VS Code, paste it into Claude, commit in GitHub Desktop.
- * The window in front and the keys pressed are shown as they happen (a
- * keycast, the usual screen-recording convention, not Noma UI). On the third
- * run, Noma's notice arrives in the corner, drawn exactly as the app draws it
+ * of the earlier NoticeDesktop). Someone planning a trip with friends does
+ * what they always do when they find a place: screenshot it in Chrome, paste
+ * it into the group chat on Discord, paste it into the shared plan in Notion.
+ * An everyday sequence on purpose (2026-10-19): Noma is for anyone who's on
+ * their computer a lot, not mainly developers or Claude users. The window in
+ * front and the keys pressed are shown as they happen (a keycast, the usual
+ * screen-recording convention, not Noma UI). On the third run, Noma's notice
+ * arrives in the corner, drawn exactly as the app draws it
  * (ProductNotice.tsx) and at the app's own threshold of three.
  *
  * Every step is one Flow really records: a shortcut with Ctrl, Alt or the
  * Windows key, or an app switch. A bare Enter is never recorded, which is
- * why the commit is Ctrl+Enter (GitHub Desktop's own commit shortcut).
+ * why the scene stops at the paste rather than showing a send.
  *
  * Since 2026-10-11 this is the screen of a rendered MacBook, played by
  * scrolling (DemoGlide.tsx): the laptop image has its display cut out and
@@ -28,18 +31,18 @@ import { journey } from '../../data/journey'
 export const SCREEN_W = 960
 export const SCREEN_H = Math.round(SCREEN_W / journey.screenAspect)
 
-type WindowId = 'code' | 'terminal' | 'github'
+type WindowId = 'chrome' | 'discord' | 'notion'
 
 const STEPS: { window: WindowId; appId: string; menu: string; keys: string; label: string }[] = [
-  { window: 'code', appId: 'vscode', menu: 'Code', keys: 'Win + Shift + S', label: 'Screenshot' },
-  { window: 'terminal', appId: 'claude', menu: 'Terminal', keys: 'Ctrl + V', label: 'Paste' },
-  { window: 'github', appId: 'github', menu: 'GitHub Desktop', keys: 'Ctrl + Enter', label: 'Commit' },
+  { window: 'chrome', appId: 'chrome', menu: 'Google Chrome', keys: 'Win + Shift + S', label: 'Screenshot' },
+  { window: 'discord', appId: 'discord', menu: 'Discord', keys: 'Ctrl + V', label: 'Paste' },
+  { window: 'notion', appId: 'notion', menu: 'Notion', keys: 'Ctrl + V', label: 'Paste' },
 ]
 
 const NOTICE_STEPS: ProductNoticeStep[] = [
   { kind: 'action', label: 'Screenshot' },
-  { kind: 'app', label: 'Claude', appId: 'claude', color: '#d97757', action: 'Paste' },
-  { kind: 'app', label: 'GitHub', appId: 'github', color: '#f0f0f0', action: 'Commit' },
+  { kind: 'app', label: 'Discord', appId: 'discord', color: '#5865f2', action: 'Paste' },
+  { kind: 'app', label: 'Notion', appId: 'notion', color: '#f0f0f0', action: 'Paste' },
 ]
 
 /** The app's own WORKFLOW_NOTIFICATION_THRESHOLD. */
@@ -88,158 +91,126 @@ function Win({ focused, z, className, children }: { focused: boolean; z: number;
   )
 }
 
-/** One line of syntax-coloured code. Each part is [text, colour]. */
-type Token = [string, string]
-const K = '#c586c0'
-const F = '#dcdcaa'
-const S = '#ce9178'
-const V = '#9cdcfe'
-const T = '#4ec9b0'
-const P = '#d4d4d4'
-const C = '#6a9955'
-const CODE: Token[][] = [
-  [['import', K], [' { ', P], ['useState', V], [' } ', P], ['from', K], [" 'react'", S]],
-  [['import', K], [' { ', P], ['Toolbar', T], [' } ', P], ['from', K], [" './Toolbar'", S]],
-  [],
-  [['// Overflow on narrow windows, see screenshot', C]],
-  [['export', K], [' ', P], ['function', K], [' ', P], ['Header', F], ['() {', P]],
-  [['  ', P], ['const', K], [' [', P], ['open', V], [', ', P], ['setOpen', F], ['] = ', P], ['useState', F], ['(', P], ['false', K], [')', P]],
-  [],
-  [['  ', P], ['return', K], [' (', P]],
-  [['    <', P], ['header', K], [' ', P], ['className', V], ['=', P], ['"flex items-center gap-4 px-6"', S], ['>', P]],
-  [['      <', P], ['Toolbar', T], [' ', P], ['compact', V], ['={', P], ['open', V], ['} />', P]],
-  [['      <', P], ['nav', K], [' ', P], ['className', V], ['=', P], ['"min-w-0 overflow-x-auto"', S], ['>', P]],
-  [['        {', P], ['links', V], ['.', P], ['map', F], ['(', P], ['renderLink', F], [')}', P]],
-  [['      </', P], ['nav', K], ['>', P]],
-  [['    </', P], ['header', K], ['>', P]],
-  [['  )', P]],
-  [['}', P]],
+/** The listing's photo: a lake at dusk, drawn rather than a stock image. */
+const PHOTO =
+  'linear-gradient(180deg, #f3b37a 0%, #e98b6d 34%, #7b6f9c 58%, #2f4f6b 59%, #375d78 74%, #1f3a2c 75%, #16291f 100%)'
+
+function ChromeWindow({ focused }: { focused: boolean }) {
+  return (
+    <Win focused={focused} z={10} className="left-[34px] top-[52px] h-[430px] w-[650px] bg-[#f6f7f9] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.75)]">
+      <div className="flex h-[34px] shrink-0 items-end gap-2 bg-[#202124] px-3">
+        <div className="mb-[11px]">
+          <TrafficLights />
+        </div>
+        <span className="ml-2 flex h-[26px] w-[190px] items-center gap-2 rounded-t-[8px] bg-[#35363a] px-3 text-[11px] text-[#e8eaed]">
+          <span className="h-[10px] w-[10px] shrink-0 rounded-full bg-[#5aa469]" />
+          <span className="truncate">Lakeside cabin · Brown County</span>
+        </span>
+        <span className="flex h-[26px] items-center px-3 text-[11px] text-[#9aa0a6]">Bus tickets</span>
+      </div>
+      <div className="flex h-[30px] shrink-0 items-center gap-3 bg-[#35363a] px-3">
+        <span className="text-[12px] text-[#9aa0a6]">←  →  ↻</span>
+        <span className="flex-1 rounded-full bg-[#202124] px-3 py-[3px] text-[11px] text-[#bdc1c6]">pinehollowstays.com/cabins/lakeside</span>
+      </div>
+      <div className="flex min-h-0 flex-1 gap-5 p-5 text-[#1f2328]">
+        <div className="h-[250px] w-[330px] shrink-0 rounded-[10px]" style={{ background: PHOTO }} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[18px] font-semibold leading-tight">Lakeside cabin with a dock</p>
+          <p className="mt-1 text-[12px] text-[#59636e]">Brown County, Indiana · sleeps 6</p>
+          <p className="mt-3 text-[12px]">
+            <span className="font-semibold">★ 4.9</span> <span className="text-[#59636e]">· 212 reviews</span>
+          </p>
+          <div className="mt-4 space-y-1.5 text-[12px] text-[#3d444d]">
+            <p>3 bedrooms · 2 baths</p>
+            <p>Hot tub, fire pit, kayaks</p>
+            <p>45 min from Bloomington</p>
+          </div>
+          <p className="mt-5 text-[20px] font-semibold">
+            $142 <span className="text-[12px] font-normal text-[#59636e]">night</span>
+          </p>
+          <div className="mt-3 rounded-[8px] bg-[#d9534f] py-2 text-center text-[12px] font-semibold text-white">Check availability</div>
+        </div>
+      </div>
+    </Win>
+  )
+}
+
+const CHAT: { who: string; color: string; text: string }[] = [
+  { who: 'maya', color: '#f0b232', text: 'ok we need a place by friday' },
+  { who: 'jordan', color: '#57f287', text: 'under $150 a night or i’m out' },
+  { who: 'you', color: '#ffffff', text: 'found one ↓' },
 ]
 
-function VSCodeWindow({ focused }: { focused: boolean }) {
+function DiscordWindow({ focused }: { focused: boolean }) {
   return (
-    <Win focused={focused} z={10} className="left-[34px] top-[52px] h-[430px] w-[650px] bg-[#1e1e1e] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.75)]">
-      <div className="relative flex h-[30px] shrink-0 items-center border-b border-black/40 bg-[#2b2b2b] px-3">
+    <Win focused={focused} z={12} className="left-[430px] top-[226px] h-[300px] w-[470px] bg-[#313338] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.85)]">
+      <div className="relative flex h-[28px] shrink-0 items-center border-b border-black/40 bg-[#1e1f22] px-3">
         <TrafficLights />
-        <span className="absolute inset-x-0 text-center text-[11px] text-[#cccccc]">Header.tsx · web-app</span>
+        <span className="absolute inset-x-0 text-center text-[11px] text-[#b5bac1]">Discord</span>
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="flex w-[40px] shrink-0 flex-col items-center gap-[14px] bg-[#2c2c2c] pt-3">
-          {[0, 1, 2, 3].map((i) => (
-            <span key={i} className={`h-[18px] w-[18px] rounded-[3px] border-[1.5px] ${i === 0 ? 'border-[#d7d7d7]' : 'border-[#858585]'}`} />
+        <div className="flex w-[46px] shrink-0 flex-col items-center gap-2 bg-[#1e1f22] pt-2">
+          {['#5865f2', '#3ba55d', '#eb459e'].map((color) => (
+            <span key={color} className="h-[30px] w-[30px] rounded-[10px]" style={{ background: color }} />
           ))}
         </div>
-        <div className="w-[160px] shrink-0 bg-[#252526] px-2 py-2 text-[11px] text-[#cccccc]">
-          <p className="mb-1.5 px-1 text-[10px] font-semibold tracking-wide text-[#bbbbbb]">EXPLORER</p>
-          {(
-            [
-              ['▾ src', 0],
-              ['▾ components', 1],
-              ['Header.tsx', 2, true],
-              ['Toolbar.tsx', 2],
-              ['Sidebar.tsx', 2],
-              ['▸ pages', 1],
-              ['App.tsx', 1],
-              ['main.tsx', 1],
-              ['package.json', 0],
-            ] as [string, number, boolean?][]
-          ).map(([name, depth, active]) => (
-            <p key={name} className={`truncate rounded-sm py-[2px] ${active ? 'bg-[#37373d] text-white' : ''}`} style={{ paddingLeft: 4 + depth * 10 }}>
-              {name}
+        <div className="w-[110px] shrink-0 bg-[#2b2d31] px-2 py-2 text-[11px] text-[#949ba4]">
+          <p className="mb-2 px-1 text-[11px] font-semibold text-[#f2f3f5]">spring break</p>
+          {['general', 'trip-planning', 'carpool'].map((channel) => (
+            <p key={channel} className={`truncate rounded-[4px] px-1.5 py-[3px] ${channel === 'trip-planning' ? 'bg-[#404249] text-white' : ''}`}>
+              # {channel}
             </p>
           ))}
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-[28px] shrink-0 bg-[#252526] text-[11px]">
-            <span className="flex items-center border-t border-[#0078d4] bg-[#1e1e1e] px-3 text-white">Header.tsx</span>
-            <span className="flex items-center px-3 text-[#969696]">Toolbar.tsx</span>
-          </div>
-          <div className="flex-1 overflow-hidden py-2 font-mono text-[11px] leading-[19px]">
-            {CODE.map((line, index) => (
-              <div key={index} className={`flex ${index === 10 ? 'bg-white/[0.04]' : ''}`}>
-                <span className="w-[38px] shrink-0 pr-3 text-right text-[#6e7681]">{index + 1}</span>
-                <span className="whitespace-pre">
-                  {line.map(([text, color], part) => (
-                    <span key={part} style={{ color }}>
-                      {text}
-                    </span>
-                  ))}
-                </span>
-              </div>
+          <div className="flex h-[26px] shrink-0 items-center border-b border-black/30 px-3 text-[11px] font-semibold text-[#f2f3f5]"># trip-planning</div>
+          <div className="flex-1 space-y-2 overflow-hidden px-3 py-2 text-[11px] leading-[15px]">
+            {CHAT.map((line) => (
+              <p key={line.who} className="text-[#dbdee1]">
+                <span className="font-semibold" style={{ color: line.color }}>
+                  {line.who}
+                </span>{' '}
+                {line.text}
+              </p>
             ))}
           </div>
+          <div className="m-2 flex items-center gap-2 rounded-[8px] bg-[#383a40] px-2 py-1.5">
+            <span className="h-[34px] w-[48px] shrink-0 rounded-[4px]" style={{ background: PHOTO }} />
+            <span className="text-[10px] text-[#949ba4]">image.png</span>
+          </div>
         </div>
-      </div>
-      <div className="flex h-[20px] shrink-0 items-center gap-4 bg-[#007acc] px-3 text-[10px] text-white">
-        <span>main</span>
-        <span>0 problems</span>
-        <span className="ml-auto">TypeScript JSX</span>
       </div>
     </Win>
   )
 }
 
-function TerminalWindow({ focused }: { focused: boolean }) {
+const TASKS: [string, boolean][] = [
+  ['Pick a place', true],
+  ['Book the bus', false],
+  ['Split costs', false],
+]
+
+function NotionWindow({ focused }: { focused: boolean }) {
   return (
-    <Win focused={focused} z={12} className="left-[430px] top-[226px] h-[300px] w-[470px] bg-[#141414] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.85)]">
-      <div className="relative flex h-[28px] shrink-0 items-center border-b border-black/50 bg-[#262626] px-3">
+    <Win focused={focused} z={11} className="left-[560px] top-[70px] h-[270px] w-[370px] bg-[#191919] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.8)]">
+      <div className="relative flex h-[28px] shrink-0 items-center border-b border-black/50 bg-[#202020] px-3">
         <TrafficLights />
-        <span className="absolute inset-x-0 text-center text-[11px] text-[#bdbdbd]">web-app · claude · 80×24</span>
+        <span className="absolute inset-x-0 text-center text-[11px] text-[#9b9b9b]">Notion</span>
       </div>
-      <div className="flex-1 px-4 py-3 font-mono text-[11px] leading-[18px] text-[#d6d6d6]">
-        <div className="rounded-md border border-[#d97757]/70 px-3 py-2">
-          <p>
-            <span className="text-[#d97757]">✻</span> Welcome to <span className="font-semibold text-white">Claude Code</span>
+      <div className="flex-1 px-6 py-4 text-[11px] text-[#d4d4d4]">
+        <p className="text-[17px] font-semibold text-white">Spring break plan</p>
+        <p className="mt-3 text-[12px] font-semibold text-white">Places to stay</p>
+        <div className="mt-2 flex gap-2">
+          <span className="h-[54px] w-[84px] rounded-[4px]" style={{ background: PHOTO }} />
+          <span className="h-[54px] w-[84px] rounded-[4px] bg-[linear-gradient(160deg,#c9d6df,#7d8f9c)]" />
+        </div>
+        <p className="mt-3 text-[12px] font-semibold text-white">To do</p>
+        {TASKS.map(([task, done]) => (
+          <p key={task} className="mt-1 flex items-center gap-2">
+            <span className={`h-[11px] w-[11px] rounded-[2px] border ${done ? 'border-[#2383e2] bg-[#2383e2]' : 'border-[#6b6b6b]'}`} />
+            <span className={done ? 'text-[#7f7f7f] line-through' : ''}>{task}</span>
           </p>
-          <p className="text-[#8a8a8a]">  cwd: ~/projects/web-app</p>
-        </div>
-        <p className="mt-3">
-          <span className="text-[#8a8a8a]">&gt;</span> [Image #1] the nav overflows on narrow windows, fix it
-        </p>
-        <p className="mt-2">
-          <span className="text-[#d97757]">⏺</span> Reading <span className="text-white">src/components/Header.tsx</span>
-        </p>
-        <p>
-          <span className="text-[#d97757]">⏺</span> The nav needs <span className="text-[#9cdcfe]">min-w-0</span> so it can shrink
-        </p>
-        <p className="text-[#8a8a8a]">  inside the flex row. Updated Header.tsx.</p>
-        <div className="mt-3 rounded-md border border-[#3a3a3a] px-2 py-1">
-          <span className="text-[#8a8a8a]">&gt;</span> <span className="inline-block h-[13px] w-[7px] translate-y-[2px] bg-[#d6d6d6]" />
-        </div>
-      </div>
-    </Win>
-  )
-}
-
-function GitHubWindow({ focused }: { focused: boolean }) {
-  return (
-    <Win focused={focused} z={11} className="left-[560px] top-[70px] h-[270px] w-[370px] bg-[#24292f] shadow-[0_30px_70px_-20px_rgba(0,0,0,0.8)]">
-      <div className="relative flex h-[28px] shrink-0 items-center border-b border-black/50 bg-[#1f2328] px-3">
-        <TrafficLights />
-        <span className="absolute inset-x-0 text-center text-[11px] text-[#c9d1d9]">GitHub Desktop</span>
-      </div>
-      <div className="flex h-[34px] shrink-0 items-center gap-4 border-b border-black/40 bg-[#24292f] px-3 text-[10px] text-[#8b949e]">
-        <span>
-          Current repository <span className="ml-1 font-semibold text-[#f0f6fc]">web-app</span>
-        </span>
-        <span>
-          Branch <span className="ml-1 font-semibold text-[#f0f6fc]">main</span>
-        </span>
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col bg-[#0d1117] text-[11px] text-[#c9d1d9]">
-        <div className="flex border-b border-[#30363d] text-[10px]">
-          <span className="border-b-2 border-[#f78166] px-3 py-1.5 font-semibold text-[#f0f6fc]">Changes 1</span>
-          <span className="px-3 py-1.5 text-[#8b949e]">History</span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-2">
-          <span className="flex h-[12px] w-[12px] items-center justify-center rounded-[3px] bg-[#2f81f7] text-[8px] text-white">✓</span>
-          <span className="truncate">src/components/Header.tsx</span>
-          <span className="ml-auto h-[10px] w-[10px] rounded-[2px] border border-[#d29922]" />
-        </div>
-        <div className="mt-auto border-t border-[#30363d] p-3">
-          <div className="rounded-md border border-[#30363d] bg-[#010409] px-2 py-1.5 text-[#f0f6fc]">Fix nav overflow on narrow windows</div>
-          <div className="mt-2 rounded-md bg-[#2f81f7] py-1.5 text-center text-[11px] font-semibold text-white">Commit to main</div>
-        </div>
+        ))}
       </div>
     </Win>
   )
@@ -281,9 +252,9 @@ export function Keycast({ frame }: { frame: Frame }) {
  *  window the step happens in, then over the notice's button. */
 const POINTER: Record<WindowId | 'rest' | 'notice', [number, number]> = {
   rest: [480, 330],
-  code: [300, 262],
-  terminal: [585, 512],
-  github: [742, 318],
+  chrome: [300, 262],
+  discord: [610, 500],
+  notion: [742, 250],
   notice: [688, SCREEN_H - 36],
 }
 
@@ -365,8 +336,8 @@ export function DemoNotice({ show, compact, animate }: { show: boolean; compact:
  *  compact layouts the keycast and notice are drawn outside it instead. */
 export function DemoScreen({ moment, compact = false, animate = true }: { moment: Moment; compact?: boolean; animate?: boolean }) {
   const { frame } = moment
-  const focusedWindow: WindowId = frame.step === null ? (frame.run === 0 ? 'code' : 'github') : STEPS[frame.step].window
-  const menu = STEPS.find((step) => step.window === focusedWindow)?.menu ?? 'Code'
+  const focusedWindow: WindowId = frame.step === null ? (frame.run === 0 ? 'chrome' : 'notion') : STEPS[frame.step].window
+  const menu = STEPS.find((step) => step.window === focusedWindow)?.menu ?? 'Google Chrome'
   return (
     <div
       className="relative overflow-hidden"
@@ -388,9 +359,9 @@ export function DemoScreen({ moment, compact = false, animate = true }: { moment
         <span className="ml-auto text-white/85">Mon 9:21 AM</span>
       </div>
 
-      <VSCodeWindow focused={focusedWindow === 'code'} />
-      <GitHubWindow focused={focusedWindow === 'github'} />
-      <TerminalWindow focused={focusedWindow === 'terminal'} />
+      <ChromeWindow focused={focusedWindow === 'chrome'} />
+      <NotionWindow focused={focusedWindow === 'notion'} />
+      <DiscordWindow focused={focusedWindow === 'discord'} />
 
       {!compact && (
         <div className="absolute bottom-[20px] left-[20px] z-40">

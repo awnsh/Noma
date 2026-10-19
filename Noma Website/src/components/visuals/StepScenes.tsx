@@ -10,9 +10,9 @@ import { SAVED_LABEL, ZONES } from '../../data/flowDemo'
  * The four "How it works" steps, each a small looping scene inside a Noma
  * window (2026-10-06, after raisedhand.ai's scroll-played product windows).
  * They tell the same story as the rest of the page, with the same workflow:
- * screenshot in VS Code, paste into Claude, commit in GitHub Desktop; Noma's
+ * screenshot in Chrome, paste it into Discord, paste it into Notion; Noma's
  * notice at the app's threshold of three; saving it to a Glide zone; the
- * controls following you, with the saved workflow on VS Code's upper left.
+ * controls following you, with the saved workflow on Chrome's upper left.
  * Each loops only while mounted; reduced motion shows its finished state.
  */
 
@@ -45,9 +45,9 @@ export function StepWindow({ title, children }: { title: string; children: React
 }
 
 const WORK = [
-  { appId: 'vscode', keys: 'Win + Shift + S', label: 'Screenshot' },
-  { appId: 'claude', keys: 'Ctrl + V', label: 'Paste' },
-  { appId: 'github', keys: 'Ctrl + Enter', label: 'Commit' },
+  { appId: 'chrome', keys: 'Win + Shift + S', label: 'Screenshot' },
+  { appId: 'discord', keys: 'Ctrl + V', label: 'Paste' },
+  { appId: 'notion', keys: 'Ctrl + V', label: 'Paste' },
 ]
 
 /** 01: the app in front changes as you work; the keys you press show up. */
@@ -90,8 +90,8 @@ export function WorkScene() {
 
 const NOTICE_STEPS: ProductNoticeStep[] = [
   { kind: 'action', label: 'Screenshot' },
-  { kind: 'app', label: 'Claude', appId: 'claude', color: '#d97757', action: 'Paste' },
-  { kind: 'app', label: 'GitHub', appId: 'github', color: '#f0f0f0', action: 'Commit' },
+  { kind: 'app', label: 'Discord', appId: 'discord', color: '#5865f2', action: 'Paste' },
+  { kind: 'app', label: 'Notion', appId: 'notion', color: '#f0f0f0', action: 'Paste' },
 ]
 
 /** 02: the same three steps, again and again; on the third, the notice. */
@@ -132,10 +132,10 @@ export function NoticeScene() {
 export function ZoneScene() {
   // 0 = asking, 1 = hovering upper left, 2 = saved.
   const i = useTicker(3, 1100, 2600)
-  const controls = appProfiles.vscode.controls
+  const controls = appProfiles.chrome.controls
   return (
     <div className="w-full max-w-md">
-      <p className="text-sm text-base-300">Which Glide zone in Visual Studio Code should run it?</p>
+      <p className="text-sm text-base-300">Which Glide zone in Chrome should run it?</p>
       <div className="mt-4 grid grid-cols-2 gap-2">
         {ZONES.map((zone, index) => {
           const chosen = index === 0 && i >= 1
@@ -177,18 +177,18 @@ export function ZoneScene() {
   )
 }
 
-const MOVE = ['vscode', 'chrome', 'claude']
+const MOVE = ['chrome', 'spotify', 'discord']
 
-/** 04: switch apps and the controls follow; your workflow is still there in VS Code. */
+/** 04: switch apps and the controls follow; your workflow is still there in Chrome. */
 export function MoveScene() {
   const i = useTicker(MOVE.length, 1800)
   const appId = MOVE[i]
-  const controls = appId === 'vscode' ? [SAVED_LABEL, ...appProfiles.vscode.controls.slice(1)] : undefined
+  const controls = appId === 'chrome' ? [SAVED_LABEL, ...appProfiles.chrome.controls.slice(1)] : undefined
   return (
     <div className="w-full">
-      <ControlBar compact appId={appId} controls={controls} highlight={appId === 'vscode' ? 0 : null} />
+      <ControlBar compact appId={appId} controls={controls} highlight={appId === 'chrome' ? 0 : null} />
       <p className="mt-6 text-center text-sm text-base-400">
-        {appId === 'vscode' ? 'Back in VS Code, your workflow is one swipe away.' : `In ${appProfiles[appId]?.shortName}, its own four.`}
+        {appId === 'chrome' ? 'Back in Chrome, your workflow is one swipe away.' : `In ${appProfiles[appId]?.shortName}, its own four.`}
       </p>
     </div>
   )

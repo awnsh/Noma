@@ -16,7 +16,7 @@ import { appProfiles } from '../data/appProfiles'
  * display visibly follows the software rather than demonstrating itself.
  */
 
-const CYCLE = ['vscode', 'claude', 'premiere']
+const CYCLE = ['chrome', 'spotify', 'discord']
 const DWELL_MS = 3000
 
 const POINTS = [

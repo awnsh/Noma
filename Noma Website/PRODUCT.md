@@ -39,10 +39,18 @@ Noma is one product with three parts. The website must carry all three.
 
 ## Audience and job
 
-Someone who lives in a handful of applications and switches between them all
-day: developers, editors, designers, people running Claude Code beside an
-editor beside a browser. They should finish the page thinking *"wait — my
-computer could actually do that?"*, then ask for the beta.
+Anyone who's on their computer a lot and bounces between the same handful of
+apps all day: students, people at work, people planning things with friends.
+Browser, chat, notes, music, email, documents. Not a developer tool and not a
+companion to any one AI app; developers and creative tools can appear on the
+page, but never as the lead example. Every example should be something a
+person who has never written code does every day. They should finish the page
+thinking *"wait — my computer could actually do that?"*, then ask for the
+beta.
+
+The page's one workflow (2026-10-19): screenshot a place you found in Chrome,
+paste it to your friends in Discord, paste it into your plan in Notion. The
+saved workflow lives on Chrome's upper left Glide zone.
 
 ## The one story the whole site tells
 

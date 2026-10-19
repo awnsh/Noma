@@ -316,7 +316,7 @@ The Notice floats bottom-right in its own transparent window: max 300px, 18px ra
 Hand-drawn stroke icons from `components/icons.tsx` (nav set, app-category glyphs, and Plus, Check, Cross, ArrowRight for actions). Real application icons come from the OS via `AppIcon`.
 
 ### Motion
-- **Signature:** `--space-h` and `--space-c` are registered `@property` numbers, so a change of app transitions the hue across the whole window over 700ms on `cubic-bezier(0.16, 1, 0.3, 1)`. The onboarding welcome trackpad cycles four apps' colours (VS Code, Chrome, Spotify, Claude) every 2.6s.
+- **Signature:** `--space-h` and `--space-c` are registered `@property` numbers, so a change of app transitions the hue across the whole window over 700ms on `cubic-bezier(0.16, 1, 0.3, 1)`. The onboarding welcome trackpad cycles four everyday apps' colours (Chrome, Spotify, Discord, Excel) every 2.6s.
 - **Primitives:** fade 180ms, rise 220ms (6px), scale-in 240ms (0.97) on ease-out-expo; pages fade only (160ms) without sliding; exits are shorter and ease-in. Transform and opacity only, no looping except the Glide gesture demo.
 - **Reduced motion:** animations removed, transitions near-instant; the toast keeps only its fade.
 

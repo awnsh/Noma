@@ -14,10 +14,10 @@ interface OnboardingWelcomeScreenProps {
 /** A few apps the trackpad steps through, each in its own colour: every
  *  app has its own four zones. An illustration, zone names only. */
 const SHOWCASE_APPS = [
-  { id: 'code', name: 'VS Code' },
   { id: 'chrome', name: 'Chrome' },
   { id: 'spotify', name: 'Spotify' },
-  { id: 'claude', name: 'Claude' }
+  { id: 'discord', name: 'Discord' },
+  { id: 'excel', name: 'Excel' }
 ]
 const SHOWCASE_STEP_MS = 2600
 

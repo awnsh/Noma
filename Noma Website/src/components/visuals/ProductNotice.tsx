@@ -11,7 +11,7 @@ import AppIcon from './AppIcon'
  * meant to be the product, not an illustration of it.
  *
  * App names in the chain are clipped at the app's own width (box + 16px),
- * so the scene uses names that really fit, like the Claude app's "Claude".
+ * so the scene uses names that really fit, like "Discord" and "Notion".
  */
 
 export type ProductNoticeStep =

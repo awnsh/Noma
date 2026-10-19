@@ -15,25 +15,25 @@ import { SAVED_LABEL, ZONES } from '../../data/flowDemo'
  * story: noticed while you work, decided here.
  */
 
-const APP = 'Visual Studio Code'
+const APP = 'Chrome'
 const OCCURRENCES = 9
 
 const CHAIN: DemoChainStep[] = [
-  { kind: 'app', appId: 'vscode', label: 'VS Code' },
+  { kind: 'app', appId: 'chrome', label: 'Chrome' },
   { kind: 'shortcut', label: 'Screenshot', keys: 'Win+Shift+S' },
-  { kind: 'app', appId: 'claude', label: 'Claude' },
+  { kind: 'app', appId: 'discord', label: 'Discord' },
   { kind: 'shortcut', label: 'Paste', keys: 'Ctrl+V' },
-  { kind: 'app', appId: 'github', label: 'GitHub' },
-  { kind: 'shortcut', label: 'Commit', keys: 'Ctrl+Enter' },
+  { kind: 'app', appId: 'notion', label: 'Notion' },
+  { kind: 'shortcut', label: 'Paste', keys: 'Ctrl+V' },
 ]
 
 /** What the app's preview lists under "Exactly what this will do". */
 const PREVIEW = [
-  'Press Win + Shift + S in VS Code',
-  'Switch to Claude',
+  'Press Win + Shift + S in Chrome',
+  'Switch to Discord',
   'Press Ctrl + V',
-  'Switch to GitHub Desktop',
-  'Press Ctrl + Enter',
+  'Switch to Notion',
+  'Press Ctrl + V',
 ]
 
 type Stage = 'ask' | 'review' | 'saved' | 'dismissed'
@@ -41,7 +41,7 @@ type Stage = 'ask' | 'review' | 'saved' | 'dismissed'
 export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | null) => void }) {
   const [stage, setStage] = useState<Stage>('ask')
   const [slot, setSlot] = useState<number | null>(null)
-  const controls = appProfiles.vscode.controls
+  const controls = appProfiles.chrome.controls
 
   const save = (index: number) => {
     setSlot(index)
@@ -116,7 +116,7 @@ export default function FlowSuggestion({ onSaved }: { onSaved: (slot: number | n
                 <p className="mb-2 text-xs text-base-400">Exactly what this will do, in order:</p>
                 <ol className="space-y-1 text-sm">
                   {PREVIEW.map((step, index) => (
-                    <li key={step} className="flex gap-2.5">
+                    <li key={index} className="flex gap-2.5">
                       <span className="w-4 shrink-0 text-right text-[11px] leading-5 tabular-nums text-base-500">{index + 1}</span>
                       <span className="text-base-100">{step}</span>
                     </li>

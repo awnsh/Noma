@@ -8,10 +8,10 @@ import Reveal from '../ui/Reveal'
  * read as invented, even labelled as an example.
  */
 const REPEATS = [
-  { what: 'Opened the command palette', detail: 'Ctrl + Shift + P' },
-  { what: 'Clicked Export and picked the same settings', detail: 'Premiere' },
-  { what: 'Switched between your editor and Claude', detail: 'VS Code, Claude' },
-  { what: 'Screenshot, paste, fix, commit', detail: 'Four apps' },
+  { what: 'Reopened the tab you just closed', detail: 'Ctrl + Shift + T' },
+  { what: 'Switched to Spotify to skip a song, then back', detail: 'Spotify' },
+  { what: 'Copied something from a page into your notes', detail: 'Chrome, Notion' },
+  { what: 'Screenshot, paste it to a friend, save it', detail: 'Three apps' },
 ]
 
 export default function Problem() {

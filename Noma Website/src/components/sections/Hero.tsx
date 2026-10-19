@@ -19,7 +19,7 @@ import { appProfiles } from '../../data/appProfiles'
  */
 
 /** The apps the control bar cycles through. */
-const CYCLE = ['vscode', 'chrome', 'claude', 'premiere']
+const CYCLE = ['chrome', 'spotify', 'discord', 'notion']
 
 /**
  * One timeline for the headline and the control bar (2026-10-06): the end of
@@ -32,10 +32,10 @@ const CYCLE = ['vscode', 'chrome', 'claude', 'premiere']
  */
 const STATES: { app: number; end: string; ms: number }[] = [
   { app: 0, end: 'you', ms: 1800 },
-  { app: 0, end: 'your code', ms: 2400 },
-  { app: 1, end: 'your browsing', ms: 2400 },
-  { app: 2, end: 'your prompts', ms: 2400 },
-  { app: 3, end: 'your edits', ms: 2400 },
+  { app: 0, end: 'your browsing', ms: 2400 },
+  { app: 1, end: 'your music', ms: 2400 },
+  { app: 2, end: 'your chats', ms: 2400 },
+  { app: 3, end: 'your notes', ms: 2400 },
 ]
 
 /** Each distinct ending, measured once so the slot can glide between widths. */
@@ -67,8 +67,8 @@ export default function Hero() {
   }, [reduceMotion])
 
   useEffect(() => {
-    // Reduced motion gets a single, static state ("adapting to you", VS
-    // Code's controls) rather than a slower loop.
+    // Reduced motion gets a single, static state ("adapting to you",
+    // Chrome's controls) rather than a slower loop.
     if (reduceMotion) return
     const timer = setTimeout(() => setState((s) => (s + 1) % STATES.length), STATES[state].ms)
     return () => clearTimeout(timer)

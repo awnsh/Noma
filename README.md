@@ -14,8 +14,10 @@
   <img src="https://img.shields.io/badge/status-beta-C8553D?style=flat-square" alt="Beta">
 </p>
 
-A desktop app that notices the sequences you repeat across apps, like
-screenshot, switch to Claude, paste, and offers to turn them into one action.
+A desktop app for anyone who's on their computer a lot. It notices the
+sequences you repeat across apps, like screenshot something in Chrome, paste
+it into a chat, paste it into your notes, and offers to turn them into one
+action.
 You run that action with Glide: slide a finger from the palm rest onto your
 trackpad. Noma knows which app you're in, so each app gets its own four
 actions. It never records what you type.

@@ -62,15 +62,17 @@ const SIZES = {
 const DOING: Record<string, string> = {
   vscode: 'Writing code',
   chrome: 'Browsing',
-  claude: 'Building with Claude Code',
+  claude: 'Asking Claude',
   figma: 'Designing',
   premiere: 'Editing video',
   github: 'Reviewing changes',
   blender: 'Modelling',
   spotify: 'Listening',
-  discord: 'Talking',
+  discord: 'Chatting with friends',
   terminal: 'In the shell',
-  notion: 'Writing',
+  notion: 'Taking notes',
+  slack: 'Messaging the team',
+  youtube: 'Watching',
   photoshop: 'Retouching',
 }
 

@@ -12,7 +12,7 @@ import nomaMark from '../../assets/noma-mark.png'
  * the step is about: the app you're in, Noma, the four zones, switching.
  */
 function StepGlyph({ step }: { step: number }) {
-  if (step === 0) return <AppIcon id="vscode" color="#3b8eea" className="h-4 w-4 text-[11px]" />
+  if (step === 0) return <AppIcon id="chrome" color="#4c8bf5" className="h-4 w-4 text-[11px]" />
   if (step === 1) return <img src={nomaMark} alt="" className="h-3.5 w-auto" />
   if (step === 2)
     return (

@@ -18,7 +18,7 @@ import { appProfiles } from '../../data/appProfiles'
  * The picker advances on its own until the first click, then stops for good.
  */
 
-const APPS = ['vscode', 'chrome', 'claude', 'figma', 'premiere', 'spotify']
+const APPS = ['chrome', 'spotify', 'discord', 'notion', 'premiere', 'vscode']
 const DWELL_MS = 3200
 
 const SIGNALS = [
@@ -30,7 +30,7 @@ const SIGNALS = [
 
 export default function Adaptive() {
   const reduceMotion = useReducedMotion()
-  const [active, setActive] = useState('vscode')
+  const [active, setActive] = useState('chrome')
   const [taken, setTaken] = useState(false)
 
   useEffect(() => {

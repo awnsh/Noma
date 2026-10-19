@@ -42,7 +42,7 @@
       { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Press feedback (scale 0.98, 150ms) and fades (180ms)." },
       { "name": "page-in", "value": "fade 160ms ease-out", "purpose": "Pages fade without sliding." },
       { "name": "exit", "value": "120-160ms ease-in", "purpose": "Exits are shorter and quieter than entrances." },
-      { "name": "onboarding-cycle", "value": "2600ms per app", "purpose": "Welcome trackpad cycles VS Code, Chrome, Spotify, Claude colours." }
+      { "name": "onboarding-cycle", "value": "2600ms per app", "purpose": "Welcome trackpad cycles Chrome, Spotify, Discord, Excel colours." }
     ],
     "breakpoints": []
   },

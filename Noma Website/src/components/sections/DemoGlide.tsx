@@ -236,7 +236,7 @@ export default function DemoGlide() {
                 title="Here’s Noma catching a workflow."
                 // Wide screens: the heading alone, so the screen can be big
                 // enough to show the notice on it (user, 2026-10-11).
-                line={wide ? undefined : 'Screenshot the bug, paste it into Claude, commit the fix. The third time, Noma recognizes the sequence and offers to save it.'}
+                line={wide ? undefined : 'Screenshot a place you found, paste it to your friends, paste it into your plan. The third time, Noma recognizes the sequence and offers to save it.'}
               />
             </motion.div>
 

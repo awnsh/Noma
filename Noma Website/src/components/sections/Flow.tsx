@@ -9,13 +9,13 @@ import { appProfiles } from '../../data/appProfiles'
 
 /**
  * Flow, the main feature: the suggestion as Noma shows it (clickable), and
- * VS Code's controls beside it, which change when the visitor saves the
+ * Chrome's controls beside it, which change when the visitor saves the
  * workflow to a zone. That one change is the whole idea: many steps, one
  * press.
  */
 export default function Flow() {
   const [slot, setSlot] = useState<number | null>(null)
-  const controls = appProfiles.vscode.controls.map((control, index) => (index === slot ? SAVED_LABEL : control))
+  const controls = appProfiles.chrome.controls.map((control, index) => (index === slot ? SAVED_LABEL : control))
 
   return (
     <Section id="flow">
@@ -30,8 +30,8 @@ export default function Flow() {
         </Reveal>
 
         <Reveal delay={0.08}>
-          <p className="mb-3 text-sm text-base-400">Your controls in VS Code</p>
-          <AdaptiveSurface appId="vscode" size="md" controls={controls} highlight={slot} />
+          <p className="mb-3 text-sm text-base-400">Your controls in Chrome</p>
+          <AdaptiveSurface appId="chrome" size="md" controls={controls} highlight={slot} />
           <p className="mt-4 text-sm leading-relaxed text-base-400">
             {slot === null
               ? 'Save the workflow to a zone and it lands here.'
