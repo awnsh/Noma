@@ -37,7 +37,7 @@ export function SuggestionsPanel() {
             <div key={suggestion.id} className="py-4 first:pt-0 last:pb-0">
               <NomaMoment
                 suggestion={suggestion}
-                onReject={(id) => resolve(id, 'rejected')}
+                onReject={(id, reason) => resolve(id, 'rejected', reason)}
                 onDismiss={(id) => resolve(id, 'dismissed')}
               />
             </div>

@@ -4,6 +4,7 @@ import {
   deletePendingSuggestion,
   getStoredFingerprints,
   insertSuggestionIfNew,
+  refreshPendingSuggestionText,
   setSuggestionPatternMeta
 } from '../database/repositories/suggestionsRepository'
 import { loadQualityModel } from '../database/repositories/qualityModelRepository'
@@ -12,15 +13,17 @@ import { storedSuggestionMakesSense } from '../workflow/workflowSense'
 import { refreshLearnedMacros } from '../workflow/learnedMacroRefresh'
 import {
   extractFeatures,
+  isChainSuggestionId,
   isWorkflowKind,
   judgeDuplicate,
   patternFingerprint,
   relateFingerprints,
   shouldSuggest,
+  withVisitedApps,
   type KnownSuggestion
 } from './workflowQuality'
 import type { AIProvider } from './types'
-import type { DetectedPattern } from '@shared/types'
+import type { DetectedPattern, WorkflowEvent } from '@shared/types'
 
 /**
  * Orchestrates the OBSERVE -> IDENTIFY PATTERN -> GENERATE SUGGESTION half
@@ -40,14 +43,27 @@ import type { DetectedPattern } from '@shared/types'
  * resurrects a decision the user already made.
  */
 export class SuggestionEngine {
-  constructor(private readonly provider: AIProvider) {}
+  /** The pass in progress: passes run one after another, never interleaved,
+   *  now that detection is awaited (it may run in a worker). */
+  private running: Promise<unknown> = Promise.resolve()
+
+  constructor(
+    private readonly provider: AIProvider,
+    private readonly detect: (events: WorkflowEvent[]) => DetectedPattern[] | Promise<DetectedPattern[]> = detectPatterns
+  ) {}
 
   /** Returns the patterns this pass detected, so a caller that needs them
    *  (Noma Notice's occurrence counts and threshold) doesn't have to run
    *  detection a second time over the same events. */
-  async refresh(): Promise<DetectedPattern[]> {
+  refresh(): Promise<DetectedPattern[]> {
+    const pass = this.running.then(() => this.runPass())
+    this.running = pass.catch(() => undefined)
+    return pass
+  }
+
+  private async runPass(): Promise<DetectedPattern[]> {
     const events = getWorkflowEventsSince(startOfTodayMs())
-    const patterns = detectPatterns(events)
+    const patterns = await this.detect(events)
     const patternsById = new Map(patterns.map((pattern) => [`suggestion:${pattern.id}`, pattern]))
     const suggestions = await this.provider.generateSuggestions(patterns)
 
@@ -71,6 +87,7 @@ export class SuggestionEngine {
         fingerprint = patternFingerprint(pattern)
         setSuggestionPatternMeta(stored.id, { fingerprint, features: extractFeatures(pattern) })
       }
+      if (isChainSuggestionId(stored.id)) fingerprint = withVisitedApps(fingerprint)
       known.push({ id: stored.id, status: stored.status, fingerprint })
       confidenceById.set(stored.id, stored.confidence)
     }
@@ -93,9 +110,13 @@ export class SuggestionEngine {
         continue
       }
 
+      const existing = known.find((entry) => entry.id === suggestion.id)
+      if (existing) {
+        if (existing.status === 'pending') refreshPendingSuggestionText(suggestion)
+        continue
+      }
       const fingerprint = patternFingerprint(pattern)
       const features = extractFeatures(pattern)
-      if (known.some((entry) => entry.id === suggestion.id)) continue
       if (!shouldSuggest(model, features)) continue
 
       if (isWorkflowKind(pattern.kind)) {

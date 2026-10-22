@@ -1,4 +1,11 @@
-import type { ConfidenceBreakdown, PatternKind, Suggestion, SuggestionAction, SuggestionStatus } from '@shared/types'
+import type {
+  ConfidenceBreakdown,
+  PatternKind,
+  RejectionReason,
+  Suggestion,
+  SuggestionAction,
+  SuggestionStatus
+} from '@shared/types'
 import { getDatabase } from '../db'
 import { trainModel, type PatternFeatures } from '../../ai/workflowQuality'
 import { loadQualityModel, saveQualityModel } from './qualityModelRepository'
@@ -32,6 +39,22 @@ const SUGGESTION_SELECT = `
   LEFT JOIN applications a ON a.id = s.application_id
 `
 
+/**
+ * A chain's app names as they are now, not as they were when it was
+ * suggested: an app first stored under its process name ("claude") gets its
+ * real one ("Claude") later (applicationsRepository.upsertApplication).
+ */
+function withCurrentNames(names: Record<string, string | null>): Record<string, string | null> {
+  const ids = Object.keys(names)
+  if (ids.length === 0) return names
+  const rows = getDatabase()
+    .prepare(`SELECT id, name FROM applications WHERE id IN (${ids.map(() => '?').join(', ')})`)
+    .all(...ids) as Array<{ id: string; name: string }>
+  const current = { ...names }
+  for (const row of rows) current[row.id] = row.name
+  return current
+}
+
 function rowToSuggestion(row: SuggestionRow): Suggestion {
   return {
     id: row.id,
@@ -54,7 +77,7 @@ function rowToSuggestion(row: SuggestionRow): Suggestion {
       ? (JSON.parse(row.confidence_breakdown) as ConfidenceBreakdown)
       : undefined,
     chainApplicationNames: row.chain_application_names
-      ? (JSON.parse(row.chain_application_names) as Record<string, string | null>)
+      ? withCurrentNames(JSON.parse(row.chain_application_names) as Record<string, string | null>)
       : undefined,
     occurrenceCount: row.occurrence_count ?? undefined,
     notifiedAt: row.notified_at ?? undefined,
@@ -173,16 +196,17 @@ export function deletePendingSuggestion(id: string): void {
 
 export function resolveSuggestion(
   id: string,
-  status: 'accepted' | 'rejected' | 'dismissed'
+  status: 'accepted' | 'rejected' | 'dismissed',
+  reason: RejectionReason | null = null
 ): Suggestion | null {
   const db = getDatabase()
   const previous = db
     .prepare('SELECT status, pattern_features FROM suggestions WHERE id = ?')
     .get(id) as { status: SuggestionStatus; pattern_features: string | null } | undefined
 
-  db.prepare(`UPDATE suggestions SET status = @status, resolved_at = @resolvedAt WHERE id = @id`).run(
-    { id, status, resolvedAt: Date.now() }
-  )
+  db.prepare(
+    `UPDATE suggestions SET status = @status, resolved_at = @resolvedAt, rejection_reason = @reason WHERE id = @id`
+  ).run({ id, status, resolvedAt: Date.now(), reason: status === 'rejected' ? reason : null })
 
   // The user's verdict is the training signal for the workflow-quality
   // model. Only the first resolution of a pending suggestion counts, so a
@@ -277,6 +301,29 @@ export function recordSuggestionOccurrences(id: string, occurrenceCount: number)
   getDatabase()
     .prepare(`UPDATE suggestions SET occurrence_count = @count WHERE id = @id AND status = 'pending'`)
     .run({ id, count: occurrenceCount })
+}
+
+/**
+ * Rewrites a pending suggestion's wording from this pass: the same reason as
+ * recordSuggestionOccurrences. Its explanation names the count and the apps,
+ * and both go stale ("3 times today" once it's been 20, "claude" once the
+ * app's real name is known). Demo suggestions keep their scripted text.
+ */
+export function refreshPendingSuggestionText(
+  suggestion: Pick<Suggestion, 'id' | 'title' | 'explanation' | 'chainApplicationNames'>
+): void {
+  getDatabase()
+    .prepare(
+      `UPDATE suggestions SET title = @title, explanation = @explanation,
+         chain_application_names = COALESCE(@names, chain_application_names)
+       WHERE id = @id AND status = 'pending' AND COALESCE(is_demo, 0) = 0`
+    )
+    .run({
+      id: suggestion.id,
+      title: suggestion.title,
+      explanation: suggestion.explanation,
+      names: suggestion.chainApplicationNames ? JSON.stringify(suggestion.chainApplicationNames) : null
+    })
 }
 
 /** Marks a workflow as announced on screen, so it is never announced twice. */

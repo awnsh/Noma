@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ApplicationProfile, Suggestion, WorkflowPreview } from '@shared/types'
+import type { ApplicationProfile, RejectionReason, Suggestion, WorkflowPreview } from '@shared/types'
 import { GLIDE_ZONE_LABELS, glideZoneForSlot } from '@shared/constants'
 import { useGlideStore } from '../stores/glideStore'
 import { useUiStore } from '../stores/uiStore'
@@ -46,7 +46,8 @@ import { BUTTON_PRIMARY, BUTTON_QUIET, HERO_CARD } from '../lib/surfaces'
 interface NomaMomentProps {
   suggestion: Suggestion
   variant?: 'hero' | 'compact'
-  onReject: (id: string) => void
+  /** "Not useful", with why when the person picks a reason. */
+  onReject: (id: string, reason?: RejectionReason) => void
   onDismiss: (id: string) => void
   /** Fires once an action was actually created (or, for an informational
    *  suggestion, actually acknowledged). After the real IPC call
@@ -55,8 +56,16 @@ interface NomaMomentProps {
   onCreated?: (label: string) => void
 }
 
+/** The answers to "Not useful": one tap each, counted in the beta's numbers. */
+const REJECTION_REASONS: Array<{ reason: RejectionReason; label: string }> = [
+  { reason: 'wrongSteps', label: 'The steps are wrong' },
+  { reason: 'notRepeated', label: 'I don’t do this often' },
+  { reason: 'noTimeSaved', label: 'Wouldn’t save me time' }
+]
+
 function occurrenceSentence(suggestion: Suggestion): string {
-  const count = suggestion.confidenceBreakdown?.occurrenceCount
+  // The live count; the breakdown's is what it was when first suggested.
+  const count = suggestion.occurrenceCount ?? suggestion.confidenceBreakdown?.occurrenceCount
   if (count === undefined) return suggestion.explanation
   const where = suggestion.applicationName ? ` in ${suggestion.applicationName}` : ''
   if (suggestion.isDemo) return `Demo Mode acted out this workflow ${count} time${count === 1 ? '' : 's'}${where}.`
@@ -74,6 +83,7 @@ export function NomaMoment({
   const [profile, setProfile] = useState<ApplicationProfile | null | undefined>(undefined)
   const [showMore, setShowMore] = useState(false)
   const [showWhy, setShowWhy] = useState(false)
+  const [askingWhyNot, setAskingWhyNot] = useState(false)
   const [createdLabel, setCreatedLabel] = useState<string | null>(null)
   const [preview, setPreview] = useState<WorkflowPreview | null | undefined>(undefined)
   const [savedSlot, setSavedSlot] = useState<number | null>(null)
@@ -254,9 +264,34 @@ export function NomaMoment({
                   {showWhy ? 'Hide why' : 'Why Noma suggested this'}
                 </button>
               )}
-              <button type="button" onClick={() => onReject(suggestion.id)} className="hover:text-neutral-100">
+              <button
+                type="button"
+                onClick={() => setAskingWhyNot((prev) => !prev)}
+                aria-expanded={askingWhyNot}
+                className="hover:text-neutral-100"
+              >
                 Not useful
               </button>
+            </div>
+          )}
+          {showMore && askingWhyNot && (
+            <div className="mt-2.5">
+              <p className="text-xs text-neutral-500">What’s off about it?</p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                {REJECTION_REASONS.map(({ reason, label }) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => onReject(suggestion.id, reason)}
+                    className="rounded-md border border-white/[0.08] px-2 py-1 text-xs text-neutral-300 transition-colors hover:border-white/20 hover:text-neutral-100"
+                  >
+                    {label}
+                  </button>
+                ))}
+                <button type="button" onClick={() => onReject(suggestion.id)} className="text-xs text-neutral-500 hover:text-neutral-100">
+                  Skip
+                </button>
+              </div>
             </div>
           )}
           {showMore && showWhy && suggestion.confidenceBreakdown && (

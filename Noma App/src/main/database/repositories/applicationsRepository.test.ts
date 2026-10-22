@@ -29,6 +29,15 @@ describe('upsertApplication', () => {
     expect(getApplicationById('chrome')?.name).toBe('Google Chrome')
   })
 
+  it('replaces a name that was only ever the process name once the real one is known', () => {
+    upsertApplication({ id: 'windowsterminal', name: 'WindowsTerminal', processName: 'WindowsTerminal.exe' })
+    upsertApplication({ id: 'windowsterminal', name: 'Terminal', processName: 'WindowsTerminal.exe' })
+    expect(getApplicationById('windowsterminal')?.name).toBe('Terminal')
+    // From then on it's a real name and stays.
+    upsertApplication({ id: 'windowsterminal', name: 'WindowsTerminal', processName: 'WindowsTerminal.exe' })
+    expect(getApplicationById('windowsterminal')?.name).toBe('Terminal')
+  })
+
   it('backfills a missing executable path on conflict, without touching the name', () => {
     // Mirrors seed.ts's SEED_APPLICATIONS: a pre-seeded row with no real
     // path, then the real process is detected running for the first time.

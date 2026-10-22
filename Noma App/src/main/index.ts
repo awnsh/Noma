@@ -88,6 +88,7 @@ import { markDemoSuggestions, simulateDemoMultiStepWorkflow } from './demo/demoS
 import { getApplicationById } from './database/repositories/applicationsRepository'
 import { LocalRuleBasedProvider } from './ai/localProvider'
 import { SuggestionEngine } from './ai/suggestionEngine'
+import { WorkerDetector } from './workflow/detectInWorker'
 import {
   cancelRunningAction,
   executeControlActionExclusively,
@@ -163,7 +164,9 @@ const aiProvider = new LocalRuleBasedProvider(
   getSuggestionHistoryForKind,
   (applicationId) => getApplicationById(applicationId)?.name ?? null
 )
-const suggestionEngine = new SuggestionEngine(aiProvider)
+/** Detection runs in a worker thread so it never holds up Glide. */
+const workerDetector = new WorkerDetector()
+const suggestionEngine = new SuggestionEngine(aiProvider, workerDetector.detect)
 
 /**
  * Noma Notice. Nothing about detection changed to add this: the notifier
@@ -187,6 +190,28 @@ async function refreshSuggestions(): Promise<void> {
   workflowNotifier.review(patterns)
 }
 
+/** How long capture waits after an event before re-running detection, and
+ *  the longest a steady stream of events can put it off. */
+const CAPTURE_REFRESH_DELAY_MS = 750
+const CAPTURE_REFRESH_MAX_WAIT_MS = 5_000
+let captureRefreshTimer: ReturnType<typeof setTimeout> | null = null
+let captureRefreshFirstAskedAt: number | null = null
+
+/** Capture's way to refresh: one pass after a short lull, not one per
+ *  event, since a pass reads the whole day. A user action (accepting,
+ *  resetting) still calls refreshSuggestions directly and sees it at once. */
+function scheduleSuggestionRefresh(): void {
+  const now = Date.now()
+  captureRefreshFirstAskedAt ??= now
+  if (captureRefreshTimer) clearTimeout(captureRefreshTimer)
+  const delay = Math.min(CAPTURE_REFRESH_DELAY_MS, Math.max(0, captureRefreshFirstAskedAt + CAPTURE_REFRESH_MAX_WAIT_MS - now))
+  captureRefreshTimer = setTimeout(() => {
+    captureRefreshTimer = null
+    captureRefreshFirstAskedAt = null
+    void refreshSuggestions()
+  }, delay)
+}
+
 /** In a browser, which tab: a scrambled fingerprint of its title, never the
  *  title (workflow/tabFingerprint.ts). Nothing for any other app. */
 function browserTab(applicationId: string | null): { tab?: string } {
@@ -206,7 +231,7 @@ function recordBrowserTabSwitch(applicationId: string | null, timestamp: number)
     const tab = currentTabFingerprint()
     if (!tab) return
     insertWorkflowEvent({ applicationId, eventType: 'click', clickTarget: `${TAB_TARGET_PREFIX}${tab}`, timestamp })
-    void refreshSuggestions()
+    scheduleSuggestionRefresh()
   }, TAB_SWITCH_SETTLE_MS)
 }
 
@@ -229,7 +254,7 @@ const captureService = new CaptureService((event) => {
       if (outcome === 'taken' && region) setWorkflowEventScreenshotRegion(eventId, region)
     })
   }
-  void refreshSuggestions()
+  scheduleSuggestionRefresh()
   // Improved Virtual Keyboard: let the decorative layout flash the real
   // keys of this real captured combo. Nothing new is exposed here: this
   // is exactly the already-sanitized combo insertWorkflowEvent // persisted, not a raw keystroke.
@@ -243,7 +268,7 @@ const captureService = new CaptureService((event) => {
     clickTarget: SELECT_TARGET,
     timestamp: highlight.timestamp
   })
-  void refreshSuggestions()
+  scheduleSuggestionRefresh()
 })
 
 /** Opt-in (settingsRepository's clickCaptureEnabled, off by default) and only
@@ -257,7 +282,7 @@ const clickCaptureService = new ClickCaptureService((event) => {
     clickTarget: event.clickTarget,
     timestamp: event.timestamp
   })
-  void refreshSuggestions()
+  scheduleSuggestionRefresh()
 }, createClickInspector(), { readTab: () => currentTabFingerprint(), readWindowRect: foregroundWindowRect })
 
 /**
@@ -782,7 +807,7 @@ app.whenReady().then(() => {
           timestamp: Date.now(),
           ...browserTab(newApplicationId)
         })
-        void refreshSuggestions()
+        scheduleSuggestionRefresh()
       }
     }
     lastRecordedApplicationId = newApplicationId
@@ -811,7 +836,7 @@ app.whenReady().then(() => {
           controlId: event.controlId,
           timestamp: Date.now()
         })
-        void refreshSuggestions()
+        scheduleSuggestionRefresh()
       }
 
       // This is the "not a pretty animation" step: actually run
@@ -939,6 +964,7 @@ app.on('will-quit', () => {
 
 app.on('window-all-closed', () => {
   glide.shutDown()
+  workerDetector.stop()
   captureService.stop()
   clickCaptureService.stop()
   contextService.stop()

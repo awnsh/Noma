@@ -12,7 +12,7 @@ weekly check-in (Settings > Report a problem > Show technical details).
 | Question | Number | Good sign (starting guess) |
 | --- | --- | --- |
 | Do they keep using it? | Days used in the last 14 | 5+ days in week two |
-| Are Flow's suggestions right? | saved / (saved + not now + dismissed) | 30% or more saved |
+| Are Flow's suggestions right? | saved / (saved + not useful + not now) | 30% or more saved |
 | Does a saved workflow work? | finished / (finished + stopped at a step) | 80% or more finish |
 | Do suggestions show up at all? | Suggestions made, last 7 days | at least 2 a week |
 
@@ -21,7 +21,10 @@ beta ended today?* That answer matters more than any of the numbers.
 
 Read them together. Lots of suggestions but few saved means Flow notices
 the wrong things. Few suggestions at all means the thresholds are too
-strict for real work. Saved workflows that stop at a step are replay bugs:
+strict for real work. The "not useful because" line says which: "wrong
+steps" is detection getting the workflow wrong, "don't repeat it" is the
+threshold firing too early, "wouldn't save time" is a real workflow that
+isn't worth a zone. Saved workflows that stop at a step are replay bugs:
 ask that tester for a "Something broke" report.
 
 ## Schedule

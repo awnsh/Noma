@@ -99,7 +99,7 @@ export function Workflows() {
                     key={suggestion.id}
                     suggestion={suggestion}
                     variant="hero"
-                    onReject={(id) => resolve(id, 'rejected')}
+                    onReject={(id, reason) => resolve(id, 'rejected', reason)}
                     onDismiss={(id) => resolve(id, 'dismissed')}
                   />
                 ))}

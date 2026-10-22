@@ -411,6 +411,33 @@ describe('detectPatterns; multi-step workflow learning', () => {
     expect(patterns.filter((p) => p.kind === 'multiStepWorkflow')).toHaveLength(1)
   })
 
+  it('drops the bare app hop when a chain does something in the first app and then makes the same hop', () => {
+    // Real data: "VS Code → Claude" was shown next to "Copy → Claude →
+    // Paste" started in VS Code. The chain has no `app:code` step (it
+    // starts there), so plain signature containment missed it. The hop
+    // itself comes from other rounds that go straight across and type.
+    const events: WorkflowEvent[] = []
+    for (let i = 0; i < 4; i++) {
+      const base = i * 60_000
+      // Back in VS Code a while before copying, as when reading code first.
+      events.push(appSwitchEvent('code', base))
+      events.push(shortcutEvent(['Control', 'C'], base + 25_000, 'code'))
+      events.push(appSwitchEvent('claude', base + 27_000))
+      events.push(shortcutEvent(['Control', 'V'], base + 29_000, 'claude'))
+    }
+    for (let i = 0; i < 4; i++) {
+      const base = 600_000 + i * 60_000
+      events.push(appSwitchEvent('code', base))
+      events.push(appSwitchEvent('claude', base + 3_000))
+    }
+    const patterns = detectPatterns(events)
+    expect(patterns.filter((p) => p.kind === 'multiStepWorkflow')).toHaveLength(1)
+    const hops = patterns.filter(
+      (p) => p.kind === 'crossAppWorkflow' && p.steps.every((step) => step.type === 'appSwitch')
+    )
+    expect(hops).toEqual([])
+  })
+
   it('does not report a multi-step workflow below the threshold', () => {
     const patterns = detectPatterns(flagshipWorkflowEvents(2))
     expect(patterns.some((p) => p.kind === 'multiStepWorkflow')).toBe(false)

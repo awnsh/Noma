@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { __setDatabaseForTesting, runMigrations } from '../db'
+import { __setDatabaseForTesting, getDatabase, runMigrations } from '../db'
 import {
   getAllSuggestions,
   getSuggestionHistoryForKind,
@@ -31,6 +31,15 @@ beforeEach(() => {
   runMigrations(db)
   __setDatabaseForTesting(db)
 })
+
+/** id -> rejection_reason, straight from the table. */
+function getDatabaseForReasons(): Record<string, string | null> {
+  const rows = getDatabase().prepare('SELECT id, rejection_reason AS reason FROM suggestions').all() as Array<{
+    id: string
+    reason: string | null
+  }>
+  return Object.fromEntries(rows.map((row) => [row.id, row.reason]))
+}
 
 describe('insertSuggestionIfNew / getPendingSuggestions', () => {
   it('inserts a new suggestion and returns it as pending', () => {
@@ -66,6 +75,25 @@ describe('insertSuggestionIfNew / getPendingSuggestions', () => {
       code: 'Visual Studio Code',
       claude: 'Claude Code'
     })
+  })
+
+  it("shows a chain's apps by their current names, not the ones stored with it", () => {
+    upsertApplication({ id: 'claude', name: 'claude', processName: 'claude.exe' })
+    insertSuggestionIfNew(
+      makeSuggestion({ id: 'suggestion:multistep:y', chainApplicationNames: { code: 'Visual Studio Code', claude: 'claude' } })
+    )
+    upsertApplication({ id: 'claude', name: 'Claude', processName: 'claude.exe' })
+    const [pending] = getPendingSuggestions()
+    expect(pending.chainApplicationNames).toEqual({ code: 'Visual Studio Code', claude: 'Claude' })
+  })
+
+  it('records why a suggestion was rejected, and only for a rejection', () => {
+    insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:a' }))
+    insertSuggestionIfNew(makeSuggestion({ id: 'suggestion:shortcut:b' }))
+    resolveSuggestion('suggestion:shortcut:a', 'rejected', 'wrongSteps')
+    resolveSuggestion('suggestion:shortcut:b', 'dismissed', 'wrongSteps')
+    const reasons = getDatabaseForReasons()
+    expect(reasons).toEqual({ 'suggestion:shortcut:a': 'wrongSteps', 'suggestion:shortcut:b': null })
   })
 
   it('leaves chainApplicationNames undefined when the suggestion never had one', () => {

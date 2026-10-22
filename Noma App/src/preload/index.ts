@@ -66,7 +66,7 @@ const flowApi: FlowApi = {
   getDetectedPatterns: () => ipcRenderer.invoke(IPC_CHANNELS.GET_DETECTED_PATTERNS),
 
   getSuggestions: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SUGGESTIONS),
-  resolveSuggestion: (id, status) => ipcRenderer.invoke(IPC_CHANNELS.RESOLVE_SUGGESTION, id, status),
+  resolveSuggestion: (id, status, reason) => ipcRenderer.invoke(IPC_CHANNELS.RESOLVE_SUGGESTION, id, status, reason),
   onSuggestionsChanged: (callback) => {
     const listener = (_event: IpcRendererEvent, suggestions: Suggestion[]): void =>
       callback(suggestions)

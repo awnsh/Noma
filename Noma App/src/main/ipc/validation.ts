@@ -274,6 +274,12 @@ export function isValidOnboardingUpdate(value: unknown): value is Partial<Onboar
 
 export const SUGGESTION_RESOLUTIONS = ['accepted', 'rejected', 'dismissed'] as const
 
+export const REJECTION_REASONS = ['wrongSteps', 'notRepeated', 'noTimeSaved'] as const
+
+export function isValidRejectionReason(value: unknown): value is (typeof REJECTION_REASONS)[number] {
+  return typeof value === 'string' && (REJECTION_REASONS as readonly string[]).includes(value)
+}
+
 export function isValidSuggestionResolution(value: unknown): value is (typeof SUGGESTION_RESOLUTIONS)[number] {
   return typeof value === 'string' && (SUGGESTION_RESOLUTIONS as readonly string[]).includes(value)
 }

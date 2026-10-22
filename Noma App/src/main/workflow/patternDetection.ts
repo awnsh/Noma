@@ -1,5 +1,5 @@
 import type { DetectedPattern, WorkflowEvent, WorkflowStep } from '@shared/types'
-import { usualRegion } from './screenshotRegions'
+import { usualRegion } from './screenshotArea'
 import { isMac } from '../platform'
 import { categoryOf, inAppLabel } from './appKnowledge'
 import { describeClickStep, isSelectTarget, tabFromTarget } from './clickTarget'
@@ -175,14 +175,16 @@ function withoutNoise(events: WorkflowEvent[]): WorkflowEvent[] {
 
 export function detectPatterns(rawEvents: WorkflowEvent[]): DetectedPattern[] {
   const events = withoutNoise(rawEvents)
-  const longMultiStepWorkflows = detectMultiStepWorkflows(events)
+  // Built once and shared: it's the same step stream for all three.
+  const steps = buildWorkflowSteps(events)
+  const longMultiStepWorkflows = multiStepWorkflowsFromSteps(steps)
   // An in-app click pair (Cut -> Delete) is the 2-step case of the same
   // shape; it's dropped in favor of any longer chain that already contains it.
-  const clickPairs = detectInAppClickPairs(events).filter(
+  const clickPairs = detectInAppClickPairs(steps).filter(
     (pair) => !isSubsumedByMultiStepWorkflow(pair, longMultiStepWorkflows)
   )
   const multiStepWorkflows = [...longMultiStepWorkflows, ...clickPairs]
-  const crossAppWorkflows = detectCrossAppWorkflows(events).filter(
+  const crossAppWorkflows = detectCrossAppWorkflows(steps).filter(
     (pattern) => !isSubsumedByMultiStepWorkflow(pattern, multiStepWorkflows)
   )
 
@@ -217,9 +219,25 @@ function isSubsumedByMultiStepWorkflow(pair: DetectedPattern, multiStepWorkflows
     // workflow.
     return (
       isContiguousSubarray(pairSignature, workflowSignatures) ||
-      pairSignature.every((signature) => workflowSignatures.includes(signature))
+      pairSignature.every((signature) => workflowSignatures.includes(signature)) ||
+      // A bare hop (VS Code → Claude) inside a chain that does something in
+      // VS Code and then goes to Claude (Copy → Claude → Paste): the chain
+      // starts in VS Code without a step saying so, but it's the same hop.
+      (pair.steps.every((step) => step.type === 'appSwitch') &&
+        isContiguousSubarray(pairSignature, appPath(workflow.steps).map((app) => `app:${app}`)))
     )
   })
+}
+
+/** The apps a chain is in, in order, each run of steps in one app counted
+ *  once: Copy (VS Code) → Claude → Paste (Claude) is [VS Code, Claude]. */
+function appPath(steps: WorkflowStep[]): string[] {
+  const path: string[] = []
+  for (const step of steps) {
+    const app = step.applicationId ?? 'unknown'
+    if (path[path.length - 1] !== app) path.push(app)
+  }
+  return path
 }
 
 /** Whether every element of `needle`, in order, appears as a contiguous run
@@ -561,8 +579,7 @@ interface WorkflowOccurrence {
  * purpose); so suggestionRules.ts treats this as informational: naming the
  * real workflow Flow noticed, not offering to automate half of it.
  */
-function detectCrossAppWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
-  const steps = buildWorkflowSteps(events)
+function detectCrossAppWorkflows(steps: WorkflowStepEvent[]): DetectedPattern[] {
 
   const groups = new Map<
     string,
@@ -677,8 +694,7 @@ export const IN_APP_CLICK_THRESHOLD = 3
  * time and a zone click is mapped onto the window's current bounds (see
  * main/actions/click.ts).
  */
-function detectInAppClickPairs(events: WorkflowEvent[]): DetectedPattern[] {
-  const steps = buildWorkflowSteps(events)
+function detectInAppClickPairs(steps: WorkflowStepEvent[]): DetectedPattern[] {
 
   const groups = new Map<
     string,
@@ -888,14 +904,25 @@ interface WorkflowCluster {
  */
 function clusterWorkflowWindows(windows: WorkflowWindow[]): WorkflowCluster[] {
   const clusters: WorkflowCluster[] = []
+  // workflowSimilarity is 0 unless both chains start and end on the same
+  // step, so a window is only ever compared with clusters anchored the same
+  // way. Same result as comparing with every cluster, without it growing
+  // with the square of a day's events.
+  const byAnchors = new Map<string, WorkflowCluster[]>()
   const sorted = [...windows].sort(
     (a, b) => b.signatures.length - a.signatures.length || a.completedAt - b.completedAt
   )
 
   for (const window of sorted) {
+    const anchors = `${window.signatures[0]}|${window.signatures[window.signatures.length - 1]}`
+    let candidates = byAnchors.get(anchors)
+    if (!candidates) {
+      candidates = []
+      byAnchors.set(anchors, candidates)
+    }
     let best: WorkflowCluster | undefined
     let bestScore = 0
-    for (const cluster of clusters) {
+    for (const cluster of candidates) {
       const score = workflowSimilarity(cluster.representative.signatures, window.signatures)
       if (score > bestScore) {
         bestScore = score
@@ -906,7 +933,9 @@ function clusterWorkflowWindows(windows: WorkflowWindow[]): WorkflowCluster[] {
     if (best && bestScore >= WORKFLOW_SIMILARITY_THRESHOLD) {
       best.occurrences.push(window)
     } else {
-      clusters.push({ representative: window, occurrences: [window] })
+      const cluster = { representative: window, occurrences: [window] }
+      clusters.push(cluster)
+      candidates.push(cluster)
     }
   }
 
@@ -988,7 +1017,10 @@ export function withAgreedDetails(steps: WorkflowStep[], occurrences: Array<{ st
  * describe the same underlying repetition.
  */
 export function detectMultiStepWorkflows(events: WorkflowEvent[]): DetectedPattern[] {
-  const steps = buildWorkflowSteps(events)
+  return multiStepWorkflowsFromSteps(buildWorkflowSteps(events))
+}
+
+function multiStepWorkflowsFromSteps(steps: WorkflowStepEvent[]): DetectedPattern[] {
   const windows = buildWorkflowWindows(steps)
   const clusters = clusterWorkflowWindows(windows)
 

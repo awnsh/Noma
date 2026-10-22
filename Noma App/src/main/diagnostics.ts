@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { arch, release } from 'os'
-import type { GlideState, SuggestionStatus } from '@shared/types'
+import type { GlideState, RejectionReason, SuggestionStatus } from '@shared/types'
 import { getDatabase } from './database/db'
 import { getClickCaptureEnabled, getWorkflowMonitoringEnabled } from './database/repositories/settingsRepository'
 import { APP_DISPLAY_NAME } from '@shared/constants'
@@ -56,8 +56,8 @@ function betaNumbers(log: ActionLogLine[] | null): string[] {
       at: number | null
     }
     const suggestions = db
-      .prepare('SELECT status, created_at AS createdAt FROM suggestions WHERE is_demo = 0')
-      .all() as Array<{ status: SuggestionStatus; createdAt: number }>
+      .prepare('SELECT status, created_at AS createdAt, rejection_reason AS reason FROM suggestions WHERE is_demo = 0')
+      .all() as Array<{ status: SuggestionStatus; createdAt: number; reason: RejectionReason | null }>
     return summarizeBetaNumbers({
       now,
       eventTimestamps: events.map((row) => row.timestamp),

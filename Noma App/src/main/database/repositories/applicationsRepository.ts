@@ -62,6 +62,10 @@ export function getApplicationById(id: string): Application | null {
  * the user, and the running executable is the truth that focus and click
  * replay compare against. This matters on macOS, where one id covers an
  * executable whose name a seed can only guess (VS Code's is "Electron").
+ *
+ * `name` is replaced only while it is still the bare process name ("claude",
+ * "WindowsTerminal") apps were stored under before their product name was
+ * read; never a seeded name.
  */
 export function upsertApplication(application: Application): void {
   getDatabase()
@@ -69,6 +73,7 @@ export function upsertApplication(application: Application): void {
       `INSERT INTO applications (id, name, process_name, icon, executable_path)
        VALUES (@id, @name, @processName, @icon, @executablePath)
        ON CONFLICT(id) DO UPDATE SET
+         name = CASE WHEN lower(applications.name) = lower(@baseName) THEN excluded.name ELSE applications.name END,
          process_name = excluded.process_name,
          executable_path = COALESCE(excluded.executable_path, applications.executable_path)`
     )
@@ -77,6 +82,7 @@ export function upsertApplication(application: Application): void {
       name: application.name,
       processName: application.processName,
       icon: application.icon ?? null,
-      executablePath: application.executablePath ?? null
+      executablePath: application.executablePath ?? null,
+      baseName: application.processName.replace(/\.(exe|app)$/i, '')
     })
 }

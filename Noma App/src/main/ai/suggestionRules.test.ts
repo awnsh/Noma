@@ -49,7 +49,7 @@ describe('suggestionForPattern', () => {
     }
     const suggestion = suggestionForPattern(pattern)
     expect(suggestion).not.toBeNull()
-    expect(suggestion?.title.toLowerCase()).toContain('macro')
+    expect(suggestion?.title.toLowerCase()).toContain('sequence')
     expect(suggestion?.explanation).toContain('Control+C → Control+V')
     expect(suggestion?.applicationId).toBe('code')
     expect(suggestion?.action).toEqual({
@@ -294,7 +294,7 @@ describe('suggestionForPattern', () => {
       expect(suggestion).not.toBeNull()
       expect(suggestion?.status).toBe('pending')
       // code <-> claude is a recognized real-world workflow, so it's named.
-      expect(suggestion?.title).toMatch(/^Noma noticed a workflow: /)
+      expect(suggestion?.title).toMatch(/^Flow noticed a workflow: /)
       expect(suggestion?.explanation).toContain('Screenshot')
       expect(suggestion?.explanation).toContain('Claude Code')
       expect(suggestion?.explanation).toContain('Paste')

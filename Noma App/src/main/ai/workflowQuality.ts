@@ -1,6 +1,7 @@
-import type { DetectedPattern, SuggestionStatus } from '@shared/types'
+import type { DetectedPattern, SuggestionStatus, WorkflowStep } from '@shared/types'
 import { stepSignature } from '../workflow/patternDetection'
 import { chainPlausibility, inAppCoherence, matchRealisticWorkflow } from '../workflow/appKnowledge'
+import { shortcutRole } from '../workflow/workflowSense'
 
 /**
  * Workflow quality: decides which detected patterns are worth *showing*, and
@@ -34,8 +35,39 @@ export function isWorkflowKind(kind: DetectedPattern['kind']): boolean {
 }
 
 /** Order-insensitive, rotation-proof identity of a pattern: its distinct
- *  step signatures, sorted. */
+ *  step signatures, sorted. A chain across apps also carries every app it
+ *  does something in (see withVisitedApps). */
 export function patternFingerprint(pattern: DetectedPattern): string[] {
+  const signatures = patternSignatures(pattern)
+  return pattern.kind === 'crossAppWorkflow' || pattern.kind === 'multiStepWorkflow'
+    ? withVisitedApps(signatures)
+    : signatures
+}
+
+/**
+ * Adds `app:<id>` for every app a step happens in. "Copy (VS Code) → Claude
+ * → Paste" starts in VS Code without an `app:code` step, so without this
+ * it shares nothing but Claude with the bare hop "VS Code → Claude" and both
+ * would be shown. Idempotent, so it also brings fingerprints stored before
+ * it existed up to date.
+ */
+export function withVisitedApps(fingerprint: string[]): string[] {
+  const all = new Set(fingerprint)
+  for (const signature of fingerprint) {
+    const app = signature.split(':')[1]
+    if (app) all.add(`app:${app}`)
+  }
+  return [...all].sort()
+}
+
+/** A stored suggestion id for a chain across apps (see withVisitedApps). */
+export function isChainSuggestionId(id: string): boolean {
+  return /^suggestion:(workflow|multistep):/.test(id)
+}
+
+/** The pattern's distinct step signatures, sorted: what the learned model's
+ *  per-step features are keyed on. */
+function patternSignatures(pattern: DetectedPattern): string[] {
   let signatures: string[]
   switch (pattern.kind) {
     case 'repeatedShortcut':
@@ -115,7 +147,7 @@ export function judgeDuplicate(fresh: string[], known: KnownSuggestion[]): Dupli
 export type PatternFeatures = Record<string, number>
 
 export function extractFeatures(pattern: DetectedPattern): PatternFeatures {
-  const fingerprint = patternFingerprint(pattern)
+  const fingerprint = patternSignatures(pattern)
   const features: PatternFeatures = {
     bias: 1,
     [`kind:${pattern.kind}`]: 1,
@@ -146,7 +178,10 @@ export function extractFeatures(pattern: DetectedPattern): PatternFeatures {
   if (pattern.kind === 'crossAppWorkflow' || pattern.kind === 'multiStepWorkflow') {
     const appChain = pattern.steps.map((step) => step.applicationId)
     const plausibility = chainPlausibility(appChain)
-    if (plausibility !== null) {
+    // Copying in one app and pasting in another is the user saying why the
+    // two go together, so an unfamiliar pairing (Notepad → Paint) isn't held
+    // against it; the pair table only knows the common ones.
+    if (plausibility !== null && !(movesClipboardBetweenApps(pattern.steps) && plausibility < 0.5)) {
       features.plausibility = plausibility - 0.5
       if (plausibility < IMPLAUSIBLE_BELOW) features.implausible = 1
     }
@@ -170,6 +205,22 @@ export function extractFeatures(pattern: DetectedPattern): PatternFeatures {
   if (pattern.kind === 'crossAppWorkflow' && pattern.closingStep) features.closingStep = 1
 
   return features
+}
+
+/** A Copy or Screenshot in one app, then a Paste in another. */
+function movesClipboardBetweenApps(steps: WorkflowStep[]): boolean {
+  const source = steps.findIndex(
+    (step) => step.type === 'shortcut' && ['copy', 'screenshot'].includes(shortcutRole(step.comboKeys))
+  )
+  if (source === -1) return false
+  return steps
+    .slice(source + 1)
+    .some(
+      (step) =>
+        step.type === 'shortcut' &&
+        shortcutRole(step.comboKeys) === 'paste' &&
+        step.applicationId !== steps[source].applicationId
+    )
 }
 
 /** A chain scoring under this is flagged outright as implausible. */

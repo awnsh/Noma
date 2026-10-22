@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { WindowsOSAdapter } from './windowsAdapter'
+import { WindowsOSAdapter, appDisplayName } from './windowsAdapter'
 
 const chromeWindow = (hwnd: number) => ({
   processId: 100,
@@ -15,6 +15,29 @@ function listen(adapter: WindowsOSAdapter) {
   ;(adapter as unknown as { listeners: Set<typeof listener> }).listeners.add(listener)
   return listener
 }
+
+describe('appDisplayName', () => {
+  it("uses the executable's own product name over its process name", () => {
+    expect(appDisplayName('Claude', 'claude')).toBe('Claude')
+    expect(appDisplayName('Windows Explorer', 'explorer')).toBe('Windows Explorer')
+  })
+
+  it('falls back to the process name when the description adds nothing', () => {
+    expect(appDisplayName(null, 'WindowsTerminal')).toBe('WindowsTerminal')
+    expect(appDisplayName('   ', 'tool')).toBe('tool')
+    expect(appDisplayName('x'.repeat(61), 'tool')).toBe('tool')
+    // Windows 11's Notepad and Paint, seen in a real run.
+    expect(appDisplayName('Notepad.exe', 'Notepad')).toBe('Notepad')
+    expect(appDisplayName('mspaint.exe', 'mspaint')).toBe('mspaint')
+  })
+
+  it('names a new app by its product name', () => {
+    const adapter = new WindowsOSAdapter()
+    const listener = listen(adapter)
+    adapter.handleForegroundEvent({ ...chromeWindow(1), processName: 'claude', path: 'C:/Claude/claude.exe', description: 'Claude' })
+    expect(listener.mock.calls[0][0]).toMatchObject({ id: 'claude', name: 'Claude', processName: 'claude.exe' })
+  })
+})
 
 describe('WindowsOSAdapter.handleForegroundEvent', () => {
   it('targets the second Chrome window once it comes to the front, without calling it an app switch', () => {

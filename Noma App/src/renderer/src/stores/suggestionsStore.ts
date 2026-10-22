@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Suggestion, SuggestionStatus } from '@shared/types'
+import type { RejectionReason, Suggestion, SuggestionStatus } from '@shared/types'
 
 interface SuggestionsStoreState {
   /** Pending suggestions, plus any just saved and not yet dismissed (so the
@@ -12,7 +12,7 @@ interface SuggestionsStoreState {
   refresh: () => Promise<void>
   /** Subscribes to live suggestion-list changes. Returns an unsubscribe function. */
   subscribe: () => () => void
-  resolve: (id: string, status: Exclude<SuggestionStatus, 'pending'>) => Promise<void>
+  resolve: (id: string, status: Exclude<SuggestionStatus, 'pending'>, reason?: RejectionReason) => Promise<void>
   /** Accepts a suggestion by assigning its action to the given control slot. Returns whether it succeeded. */
   assignToControl: (id: string, slot: number) => Promise<boolean>
   /** Lets go of a saved suggestion's confirmation card. */
@@ -44,8 +44,8 @@ export const useSuggestionsStore = create<SuggestionsStoreState>((set, get) => (
       set({ suggestions: withPinned(suggestions), isLoading: false })
     })
   },
-  resolve: async (id, status) => {
-    await window.flow.resolveSuggestion(id, status)
+  resolve: async (id, status, reason) => {
+    await window.flow.resolveSuggestion(id, status, reason)
     // Optimistically drop it from the pending list locally — a resolved
     // suggestion is no longer pending, and the next SUGGESTIONS_CHANGED
     // push (if any) will reconcile fully.

@@ -149,6 +149,11 @@ export interface WorkflowEvent {
 
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'dismissed'
 
+/** Why someone said a suggestion wasn't useful, when they say: counted in
+ *  the beta's numbers so "Flow notices the wrong things" can be told apart
+ *  from "Flow is right but it isn't worth a zone". */
+export type RejectionReason = 'wrongSteps' | 'notRepeated' | 'noTimeSaved'
+
 /**
  * What accepting a suggestion actually does — assign a shortcut directly
  * to one of the (existing, user-chosen) 4 control slots, or create a
@@ -898,7 +903,11 @@ export interface FlowApi {
    * accept only as a fallback when there's no profile to assign a slot in
    * (assignSuggestionToControl is the normal accept path).
    */
-  resolveSuggestion(id: string, status: 'accepted' | 'rejected' | 'dismissed'): Promise<Suggestion | null>
+  resolveSuggestion(
+    id: string,
+    status: 'accepted' | 'rejected' | 'dismissed',
+    reason?: RejectionReason
+  ): Promise<Suggestion | null>
   /** Subscribes to live suggestion-list changes. Returns an unsubscribe function. */
   onSuggestionsChanged(callback: (suggestions: Suggestion[]) => void): () => void
   /** The profile for a specific application, regardless of which app is currently focused. */

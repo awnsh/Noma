@@ -57,8 +57,8 @@ export function suggestionForPattern(
       const base = baseConfidence(pattern.count, threshold)
       return {
         id: `suggestion:${pattern.id}`,
-        title: `Assign ${combo} to a Flow control?`,
-        explanation: `You've used ${combo} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. Assigning it to one of your 4 controls means one press instead of the full shortcut.`,
+        title: `Put ${combo} on a Glide zone?`,
+        explanation: `You've used ${combo} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. On a Glide zone it's one swipe instead of the full shortcut.`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,
@@ -84,8 +84,8 @@ export function suggestionForPattern(
       const base = baseConfidence(pattern.count, threshold)
       return {
         id: `suggestion:${pattern.id}`,
-        title: 'Create a macro for this sequence?',
-        explanation: `You've repeated ${first} → ${second} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. Flow could turn this into a one-press macro on one of your 4 controls.`,
+        title: 'Flow noticed a sequence',
+        explanation: `You've done ${first} → ${second} ${pattern.count} times${appSuffix(pattern.applicationId, applicationName)} today. Turn it into one Glide action?`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,
@@ -121,7 +121,7 @@ export function suggestionForPattern(
         title: knownChain
           ? `Flow noticed a workflow across apps: ${knownChain.name}`
           : 'Flow noticed a workflow across apps',
-        explanation: `You've repeated ${chain} ${pattern.count} times today. Turn it into one action?`,
+        explanation: `You've done ${chain} ${pattern.count} times today. Turn it into one Glide action?`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,
@@ -155,8 +155,8 @@ export function suggestionForPattern(
 
       return {
         id: `suggestion:${pattern.id}`,
-        title: known ? `Noma noticed a workflow: ${known.name}` : 'Noma noticed a workflow',
-        explanation: `You frequently do this: ${chain}. Detected ${pattern.count} times recently. Turn it into one action?`,
+        title: known ? `Flow noticed a workflow: ${known.name}` : 'Flow noticed a workflow',
+        explanation: `You've done ${chain} ${pattern.count} times today. Turn it into one Glide action?`,
         confidence: clampConfidence(base + confidenceBias),
         status: 'pending',
         createdAt: now,

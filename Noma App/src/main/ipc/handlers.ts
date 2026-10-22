@@ -84,6 +84,7 @@ import {
   isValidModuleConfiguration,
   isValidOnboardingUpdate,
   isValidSlot,
+  isValidRejectionReason,
   isValidSuggestionResolution,
   normalizeMacroName,
   normalizeProfileName,
@@ -203,8 +204,10 @@ export function registerIpcHandlers(
 
   ipcMain.handle(
     IPC_CHANNELS.RESOLVE_SUGGESTION,
-    (_event, id: string, status: 'accepted' | 'rejected' | 'dismissed') =>
-      isValidId(id) && isValidSuggestionResolution(status) ? resolveSuggestion(id, status) : null
+    (_event, id: string, status: 'accepted' | 'rejected' | 'dismissed', reason?: unknown) =>
+      isValidId(id) && isValidSuggestionResolution(status)
+        ? resolveSuggestion(id, status, isValidRejectionReason(reason) ? reason : null)
+        : null
   )
 
   ipcMain.handle(IPC_CHANNELS.GET_PROFILE_FOR_APPLICATION, (_event, applicationId: string) =>

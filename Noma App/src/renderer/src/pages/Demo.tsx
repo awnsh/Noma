@@ -281,7 +281,7 @@ export function Demo() {
               <NomaMoment
                 suggestion={demoSuggestion}
                 variant="hero"
-                onReject={(id) => resolve(id, 'rejected')}
+                onReject={(id, reason) => resolve(id, 'rejected', reason)}
                 onDismiss={(id) => resolve(id, 'dismissed')}
                 onCreated={() => setPhase('accepted')}
               />
@@ -352,7 +352,7 @@ export function Demo() {
               <NomaMoment
                 suggestion={multiStepSuggestion}
                 variant="hero"
-                onReject={(id) => resolve(id, 'rejected')}
+                onReject={(id, reason) => resolve(id, 'rejected', reason)}
                 onDismiss={(id) => resolve(id, 'dismissed')}
                 onCreated={() => setPhase('multiStepAccepted')}
               />

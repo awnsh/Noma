@@ -24,7 +24,8 @@ describe('summarizeBetaNumbers', () => {
       '  Days used in the last 14: 0',
       '  Oldest learning data: none',
       '  Suggestions made: 0 (last 7 days: 0)',
-      '    saved: 0, not now: 0, dismissed: 0, waiting: 0',
+      '    saved: 0, not useful: 0, not now: 0, waiting: 0',
+      "    not useful because: wrong steps: 0, don't repeat it: 0, wouldn't save time: 0, no reason: 0",
       '  Saved workflow runs: 0',
       '    finished: 0, stopped at a step: 0, stopped by you: 0',
       '  Other control presses: 0 (worked: 0)'
@@ -43,21 +44,31 @@ describe('summarizeBetaNumbers', () => {
     expect(lines[2]).toBe('  Oldest learning data: 2026-09-25')
   })
 
-  it('splits suggestions by outcome and counts the recent ones', () => {
-    const seconds = (date: Date): number => Math.floor(date.getTime() / 1000)
+  it('splits suggestions by outcome, in the words the card uses, and counts the recent ones', () => {
+    // Milliseconds, as the engine writes created_at.
+    const ms = (date: Date): number => date.getTime()
     const lines = summarizeBetaNumbers(
       input({
         suggestions: [
-          { status: 'accepted', createdAt: seconds(day(-1)) },
-          { status: 'rejected', createdAt: seconds(day(-2)) },
-          { status: 'rejected', createdAt: seconds(day(-10)) },
-          { status: 'dismissed', createdAt: seconds(day(-10)) },
-          { status: 'pending', createdAt: seconds(day(0)) }
+          { status: 'accepted', createdAt: ms(day(-1)) },
+          { status: 'rejected', createdAt: ms(day(-2)), reason: 'wrongSteps' },
+          { status: 'rejected', createdAt: ms(day(-10)) },
+          { status: 'dismissed', createdAt: ms(day(-10)) },
+          { status: 'pending', createdAt: ms(day(0)) }
         ]
       })
     )
     expect(lines[3]).toBe('  Suggestions made: 5 (last 7 days: 3)')
-    expect(lines[4]).toBe('    saved: 1, not now: 2, dismissed: 1, waiting: 1')
+    expect(lines[4]).toBe('    saved: 1, not useful: 2, not now: 1, waiting: 1')
+    expect(lines[5]).toBe("    not useful because: wrong steps: 1, don't repeat it: 0, wouldn't save time: 0, no reason: 1")
+  })
+
+  it('still reads a created_at in seconds (the column default)', () => {
+    const seconds = (date: Date): number => Math.floor(date.getTime() / 1000)
+    const lines = summarizeBetaNumbers(
+      input({ suggestions: [{ status: 'pending', createdAt: seconds(day(-1)) }, { status: 'pending', createdAt: seconds(day(-10)) }] })
+    )
+    expect(lines[3]).toBe('  Suggestions made: 2 (last 7 days: 1)')
   })
 
   it('separates finished, failed and cancelled runs and ignores empty-zone presses', () => {
@@ -75,8 +86,8 @@ describe('summarizeBetaNumbers', () => {
         ]
       })
     )
-    expect(lines[5]).toBe('  Saved workflow runs since 2026-10-14: 4')
-    expect(lines[6]).toBe('    finished: 2, stopped at a step: 1, stopped by you: 1')
-    expect(lines[7]).toBe('  Other control presses: 2 (worked: 1)')
+    expect(lines[6]).toBe('  Saved workflow runs since 2026-10-14: 4')
+    expect(lines[7]).toBe('    finished: 2, stopped at a step: 1, stopped by you: 1')
+    expect(lines[8]).toBe('  Other control presses: 2 (worked: 1)')
   })
 })

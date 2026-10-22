@@ -189,6 +189,20 @@ describe('NomaMoment', () => {
 
     fireEvent.click(screen.getByText('More'))
     fireEvent.click(screen.getByText('Not useful'))
+    // Asks why first; nothing is resolved until an answer (or Skip).
+    expect(onReject).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByText('Skip'))
     expect(onReject).toHaveBeenCalledWith(WORKFLOW_SUGGESTION.id)
+  })
+
+  it('passes the reason picked for "Not useful"', () => {
+    window.flow = mockFlow()
+    const onReject = vi.fn()
+    render(<NomaMoment suggestion={WORKFLOW_SUGGESTION} onReject={onReject} onDismiss={vi.fn()} />)
+
+    fireEvent.click(screen.getByText('More'))
+    fireEvent.click(screen.getByText('Not useful'))
+    fireEvent.click(screen.getByText('The steps are wrong'))
+    expect(onReject).toHaveBeenCalledWith(WORKFLOW_SUGGESTION.id, 'wrongSteps')
   })
 })

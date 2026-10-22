@@ -8,7 +8,8 @@ import {
   relateFingerprints,
   scorePattern,
   shouldSuggest,
-  trainModel
+  trainModel,
+  withVisitedApps
 } from './workflowQuality'
 
 function multiStep(apps: string[], overrides: Partial<DetectedPattern> = {}): DetectedPattern {
@@ -40,6 +41,40 @@ describe('fingerprints', () => {
     const chain = patternFingerprint(multiStep(['x', 'y', 'z', 'w']))
     expect(relateFingerprints(pair, chain)).toBe('newInsideExisting')
     expect(relateFingerprints(chain, pair)).toBe('newContainsExisting')
+  })
+
+  it('treats a bare app hop as inside a chain that starts with an action in the first app', () => {
+    const hop = patternFingerprint(multiStep(['code', 'claude']))
+    const chain = patternFingerprint(
+      multiStep(['code', 'claude', 'claude'], {
+        steps: [
+          { type: 'shortcut', applicationId: 'code', comboKeys: ['Control', 'C'] },
+          { type: 'appSwitch', applicationId: 'claude' },
+          { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'] }
+        ]
+      })
+    )
+    expect(relateFingerprints(hop, chain)).toBe('newInsideExisting')
+    // The same chain copied from somewhere else is a different workflow.
+    const fromChrome = patternFingerprint(
+      multiStep(['chrome', 'claude', 'claude'], {
+        steps: [
+          { type: 'shortcut', applicationId: 'chrome', comboKeys: ['Control', 'C'] },
+          { type: 'appSwitch', applicationId: 'claude' },
+          { type: 'shortcut', applicationId: 'claude', comboKeys: ['Control', 'V'] }
+        ]
+      })
+    )
+    expect(relateFingerprints(fromChrome, chain)).toBe('unrelated')
+  })
+
+  it('brings a stored fingerprint without visited apps up to date', () => {
+    expect(withVisitedApps(['app:claude', 'key:claude:Control+V', 'key:code:Control+C'])).toEqual([
+      'app:claude',
+      'app:code',
+      'key:claude:Control+V',
+      'key:code:Control+C'
+    ])
   })
 
   it('keeps unrelated workflows unrelated', () => {
@@ -117,6 +152,21 @@ describe('logical plausibility', () => {
     expect(shouldSuggest(model, extractFeatures(unusual))).toBe(false)
     for (let i = 0; i < 4; i++) model = trainModel(model, extractFeatures(unusual), 'accepted')
     expect(shouldSuggest(model, extractFeatures(unusual))).toBe(true)
+  })
+
+  it('does not hold an unfamiliar pairing against a chain that copies in one app and pastes in the other', () => {
+    // A real run: Copy in Notepad → Paint → Paste, three times in one sitting.
+    const steps = [
+      { type: 'appSwitch' as const, applicationId: 'notepad' },
+      { type: 'shortcut' as const, applicationId: 'notepad', comboKeys: ['Control', 'C'] },
+      { type: 'appSwitch' as const, applicationId: 'mspaint' },
+      { type: 'shortcut' as const, applicationId: 'mspaint', comboKeys: ['Control', 'V'] }
+    ]
+    const copied = multiStep(['notepad', 'mspaint'], { steps, count: 3, sessionCount: 1, consistency: 1 })
+    expect(shouldSuggest(emptyModel(), extractFeatures(copied))).toBe(true)
+    // The same hop without moving anything is still judged on the pairing.
+    const switched = multiStep(['notepad', 'mspaint'], { count: 3, sessionCount: 1, consistency: 1 })
+    expect(shouldSuggest(emptyModel(), extractFeatures(switched))).toBe(false)
   })
 
   it('does not penalize chains through apps it does not recognize', () => {

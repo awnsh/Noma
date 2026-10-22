@@ -9,6 +9,9 @@ interface RawForegroundWindowEvent {
   windowTitle: string
   path: string | null
   hwnd: number
+  /** The executable's own product name ("Claude", "Windows Explorer"),
+   *  when it has one. */
+  description?: string | null
 }
 
 /**
@@ -81,6 +84,18 @@ function Get-ExecutablePathFallback([uint32]$procId) {
   }
 }
 
+# The name an app gives itself ("Claude", not "claude"), read once per
+# executable from its version info: plain .NET file metadata, no native call.
+$descriptions = @{}
+function Get-AppDescription([string]$exePath) {
+  if (-not $exePath) { return $null }
+  if ($descriptions.ContainsKey($exePath)) { return $descriptions[$exePath] }
+  $desc = $null
+  try { $desc = (Get-Item -LiteralPath $exePath -ErrorAction Stop).VersionInfo.FileDescription } catch {}
+  $descriptions[$exePath] = $desc
+  return $desc
+}
+
 $flowProcessId = ${process.pid}
 $lastProcessId = -1
 $lastHwnd = [IntPtr]::Zero
@@ -105,6 +120,7 @@ while ($true) {
             windowTitle = $sb.ToString()
             path = $path
             hwnd = [int64]$hwnd
+            description = (Get-AppDescription $path)
           }
           Write-Output ($result | ConvertTo-Json -Compress)
           $lastProcessId = $procId
@@ -122,6 +138,17 @@ while ($true) {
 }
 `
 
+/**
+ * What to call an app: the product name its executable gives itself, else
+ * the process name. An empty or overly long description isn't a name, and
+ * neither is a file name: Windows 11's Notepad and Paint describe themselves
+ * as "Notepad.exe" and "mspaint.exe".
+ */
+export function appDisplayName(description: string | null | undefined, processName: string): string {
+  const name = description?.trim()
+  return name && name.length <= 60 && !/\.exe$/i.test(name) ? name : processName
+}
+
 function toApplication(raw: RawForegroundWindowEvent): Application {
   const fileName = raw.path
     ? (raw.path.split(/[\\/]/).pop() ?? `${raw.processName}.exe`)
@@ -130,7 +157,7 @@ function toApplication(raw: RawForegroundWindowEvent): Application {
 
   return {
     id,
-    name: raw.processName,
+    name: appDisplayName(raw.description, raw.processName),
     processName: fileName,
     // The full path, when PowerShell actually resolved one (see the poll
     // script's own comment on $proc.Path coming back empty for some
