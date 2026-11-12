@@ -1,148 +1,95 @@
 @import "tailwindcss";
 
-@import "@fontsource-variable/sora/wght.css";
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
-@import "@fontsource/instrument-serif/latin-400-italic.css";
+/* Mona Sans (variable weight), the user's pick for the keyboard site
+   (2026-11-12). Self-hosted from npm, SIL Open Font License. */
+@import "@fontsource-variable/mona-sans/wdth.css";
 
+/*
+ * Keyboard-era palette (2026-11-12): warm paper and ink, one accent.
+ * The accent is a signal orange used only for the things that mean
+ * "this is the key depth / your setting / the one action". No gradients.
+ *
+ * Light is the default; dark follows the system (see the media query
+ * below). Every colour utility reads a variable, so flipping the variables
+ * flips the whole page, legacy pages included.
+ */
 @theme {
-  --color-base-950: #050506;
-  --color-base-900: #09090b;
-  --color-base-850: #0e0e11;
-  --color-base-800: #131317;
-  --color-base-700: #1c1c21;
-  --color-base-600: #28282f;
-  /* Text grays, in three clearly separate steps so the page has a
-     hierarchy rather than one flat gray (2026-10-06): 300 body (9.9:1),
-     400 secondary (6.1:1), 500 captions (5.1:1 on the page, 4.6:1 on
-     cards). All meet WCAG AA for small text. 600 and darker are border and
-     surface tones, never text. */
-  --color-base-500: #7e7e87;
-  --color-base-400: #8c8c95;
-  --color-base-300: #b4b4bb;
+  --color-paper: #f3f2ee;
+  --color-surface: #e9e7e1;
+  --color-raised: #fbfaf8;
+  --color-line: #d8d5cd;
+  --color-ink: #151514;
+  --color-muted: #57554f;
+  --color-faint: #7c7973;
+  --color-accent: #e5540f;
+  --color-accent-ink: #ffffff;
 
-  --color-base-200: #c2c2c8;
-  --color-base-100: #eaeaec;
-  --color-base-50: #f7f7f8;
+  /* Legacy tokens, still used by Privacy / Terms / Contact / Feedback /
+     Uninstall. Mapped onto the new palette so those pages follow it. */
+  --color-base-950: var(--color-paper);
+  --color-base-900: var(--color-paper);
+  --color-base-850: var(--color-surface);
+  --color-base-800: var(--color-line);
+  --color-base-700: var(--color-line);
+  --color-base-600: var(--color-line);
+  --color-base-500: var(--color-faint);
+  --color-base-400: var(--color-muted);
+  --color-base-300: var(--color-muted);
+  --color-base-200: var(--color-ink);
+  --color-base-100: var(--color-ink);
+  --color-base-50: var(--color-ink);
+  --color-accent-bright: var(--color-accent);
+  --color-accent-dim: var(--color-accent);
+  --color-accent-950: var(--color-surface);
 
-  /* Signature brand blue ("Noma Blue") — deliberately not the generic muted
-     periwinkle every SaaS dark-mode site reaches for, and deliberately
-     nowhere near a blue this product already sits beside: VS Code's own
-     brand blue shows up on this very page (appProfiles.vscode's identity
-     dot, hue ~206°) and Discord/Stripe's blurple-indigo sits at hue
-     ~235-248° — this is pushed to hue ~228° at a brighter, more vivid
-     saturation/lightness than either, so it reads as its own thing rather
-     than "generic SaaS blue" or "someone else's blue." Every button and
-     every other blue on the site should point at this token, not a raw hex. */
-  --color-accent: #4c7eff;
-  --color-accent-bright: #8babff;
-  --color-accent-dim: #3150a4;
-  --color-accent-950: #0a0f1f;
+  --color-error: #c2410c;
+  --color-error-bright: #c2410c;
+  --color-error-dim: #c2410c;
+  --color-error-950: var(--color-surface);
 
-  /* Semantic error — same 4-step structure as accent (base / bright / dim for
-     borders / near-black wash), a warm coral rather than an alarmist pure red
-     so it sits in this cool, near-black world instead of fighting it. */
-  --color-error: #e2685f;
-  --color-error-bright: #f0968f;
-  --color-error-dim: #7a3a36;
-  --color-error-950: #1e0e0d;
+  --font-display: "Mona Sans Variable", ui-sans-serif, sans-serif;
+  --font-sans: "Mona Sans Variable", ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, monospace;
 
-  /* Gold — reserved specifically for the physical dock: pins that carry a real
-     magnetic/electrical connection between the keyboard and a module. Blue
-     stays the color of the adaptive software/UI; gold marks "this is hardware,
-     and it just made contact," so the two are never confused for each other. */
-  --color-gold: #cda15a;
-  --color-gold-bright: #e8c383;
-  --color-gold-dim: #6b5730;
-  --color-gold-950: #1a1409;
-
-  /* Flow violet — Flow noticing a pattern and proposing something, wherever
-     that moment shows up (Flow's own section, a module suggestion, a
-     Dashboard suggestion card). Deliberately its own hue, not gold or blue:
-     gold stays reserved for real hardware contact and blue for the
-     interface's current state, so "Flow thinks you should..." never reads as
-     either of those. */
-  --color-flow: #a78bd1;
-  --color-flow-bright: #c4aee0;
-  --color-flow-dim: #5c4a78;
-  --color-flow-950: #150f1e;
-
-  /* The app as it looks since 2026-10-14 (App Spaces): every piece of this
-     page that SHOWS the Noma app uses these, so it matches what people
-     install. `space` is the colour of the app being shown (lib/appSpace.ts
-     sets --space-h/--space-c on the element); `ink` is the app's off-white
-     for anything you press; `note` is Flow's violet paper; `app-*` are the
-     app's warm graphite surfaces. The site's own chrome (backdrop, nav,
-     hero type, beta buttons) keeps its navy and Noma Blue. */
-  --color-ink: #ece8e1;
-  --color-note: #221d2b;
-  --color-note-edge: rgba(176, 154, 230, 0.22);
-  --color-note-violet: #d9d4cc; /* retired in v0.1.29: now the app's ink */
-  --color-app-950: #141210;
-  --color-app-850: #1e1c19;
-  --color-app-800: #26231f;
-
-  /* Geometric rounded sans, matching the "noma" wordmark's own letterforms
-     rather than contrasting against them the way a serif would. */
-  --font-display: "Sora Variable", "Inter", sans-serif;
-  --font-sans: "Inter", -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "SFMono-Regular", monospace;
-  /* The second line of a two-line headline only (lib/type.ts): Instrument
-     Serif italic against Sora, so headlines get their contrast from two
-     typefaces rather than a dimmed colour (2026-10-06, the user's pick). */
-  --font-serif: "Instrument Serif", Georgia, serif;
-
-  --animate-marquee: marquee 32s linear infinite;
-  --animate-marquee-reverse: marquee-reverse 32s linear infinite;
-
-  @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-  @keyframes marquee-reverse {
-    from { transform: translateX(-50%); }
-    to { transform: translateX(0); }
-  }
-
-  /* The Problem section's AppOrbit — plain CSS (not framer-motion) on
-     purpose: `animation-play-state: paused` freezes and resumes a CSS
-     animation from its exact current frame with zero jump, which is what
-     lets hovering the orbit pause it cleanly. Two directions so the ring
-     spins one way while each card counter-spins the other, canceling out
-     to stay upright — see AppOrbit.tsx. */
-  --animate-orbit-spin: orbit-spin 42s linear infinite;
-  --animate-orbit-counter-spin: orbit-counter-spin 42s linear infinite;
-
-  @keyframes orbit-spin {
-    to { transform: rotate(360deg); }
-  }
-  @keyframes orbit-counter-spin {
-    to { transform: rotate(-360deg); }
-  }
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --color-paper: #11110f;
+      --color-surface: #1a1a17;
+      --color-raised: #20201d;
+      --color-line: #2e2d29;
+      --color-ink: #eeece6;
+      --color-muted: #a8a59d;
+      --color-faint: #85827b;
+      --color-accent: #ff6a21;
+      --color-accent-ink: #11110f;
+      --color-error: #ff8a5c;
+      --color-error-bright: #ff8a5c;
+      --color-error-dim: #ff8a5c;
+    }
+  }
+
   * {
-    border-color: var(--color-base-700);
+    border-color: var(--color-line);
   }
 
   html {
-    /* No CSS scroll-behavior here — Lenis (see App.tsx) owns smooth scrolling
-       when motion is allowed, and fighting it with the browser's own smooth
-       scroll produces a stutter. Reduced-motion users get instant native
-       jumps, which is the correct behavior for them anyway. */
-    background: var(--color-base-950);
-    /* clip, not hidden: hidden turns html/body into scroll containers,
-       which silently breaks position: sticky (How it works pins with it). */
+    background: var(--color-paper);
     overflow-x: clip;
+    scroll-behavior: smooth;
   }
 
   body {
-    background: var(--color-base-950);
-    color: var(--color-base-100);
+    background: var(--color-paper);
+    color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
@@ -151,7 +98,12 @@
 
   ::selection {
     background: var(--color-accent);
-    color: var(--color-base-950);
+    color: var(--color-accent-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -171,152 +123,175 @@
   .text-balance {
     text-wrap: balance;
   }
-
-  .noise {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Grid confined to a panel, fading out at its own edges rather than
-     tiling flatly across an entire section — sits behind the hardware
-     illustration specifically, reading as a schematic backdrop for the
-     keyboard concept, not decorative texture on ordinary content. */
-  .bg-grid-fade {
-    background-image:
-      linear-gradient(to right, color-mix(in oklab, var(--color-base-100) 5%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--color-base-100) 5%, transparent) 1px, transparent 1px);
-    background-size: 44px 44px;
-    mask-image: radial-gradient(ellipse 70% 65% at 50% 40%, black 40%, transparent 90%);
+  /* The N mark, drawn in the current text colour (the PNG is only used as
+     a mask, so it works on paper and on ink). */
+  .noma-mark {
+    background-color: currentColor;
+    -webkit-mask: var(--mark) center / contain no-repeat;
+    mask: var(--mark) center / contain no-repeat;
   }
 
-  /* Faint directional wash used behind the hero — a vignette, not a colorful blob. */
-  /* The page's base: near-black with a
-     little navy in it, deepest at the top, so the page has some depth
-     instead of a flat black. Fixed, so it doesn't scroll away. */
-  /* Drawn on a fixed layer rather than with background-attachment: fixed,
-     which makes Chrome repaint the page background on every scroll frame. */
-  .page-backdrop {
-    background: #04050a;
+  /* Text caret in the hero's typing readout. */
+  .caret {
+    animation: caret-blink 1.05s steps(1) infinite;
   }
-  .page-backdrop::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 80% 55% at 50% -8%, #0c1330 0%, transparent 62%),
-      radial-gradient(ellipse 55% 45% at 100% 75%, #0a0f24 0%, transparent 65%),
-      radial-gradient(ellipse 50% 40% at 0% 40%, #090d1f 0%, transparent 65%);
-  }
-
-  /* Each homepage section's panel (Section.tsx): Apple-style liquid glass,
-     kept quiet. A dark translucent fill with a faint top-lit gradient, a
-     strong blur so anything behind turns into soft texture rather than
-     detail under the text, a hairline border and one inset top highlight.
-     No colour tint, no outer glow, no sheen (the user's standing rule). */
-  .glass-panel {
-    background:
-      linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.012) 40%, rgb(255 255 255 / 0.008)),
-      rgb(7 9 16 / 0.6);
-    border: 1px solid rgb(255 255 255 / 0.075);
-    box-shadow:
-      inset 0 1px 0 0 rgb(255 255 255 / 0.09),
-      0 40px 90px -50px rgb(0 0 0 / 0.85);
-    /* No backdrop blur: with only the smooth navy base behind the panels
-       (the stardust and dots are gone), a blur changed nothing visible but
-       cost scroll smoothness, since it's redone as the panels move. */
-  }
-
-  /* Try the beta's panel (2026-10-07, the user's pick "A: light panel"):
-     the one section meant to stand out, so it's off-white on the dark page.
-     It flips the gray scale inside itself by redefining the theme's color
-     variables, so every text-base-* / border-base-* utility in the section
-     turns dark-on-light without per-element overrides. 50-500 are text
-     (500 is 5:1 on the panel), 600-800 are borders. No glow. */
-  .feature-panel {
-    --color-base-50: #0b0b0e;
-    --color-base-100: #16161b;
-    --color-base-200: #26262d;
-    --color-base-300: #3a3a42;
-    --color-base-400: #52525b;
-    --color-base-500: #62626b;
-    --color-base-600: #c4c4cc;
-    --color-base-700: #d0d0d7;
-    --color-base-800: #d6d6dc;
-    color-scheme: light;
-    background: #ececef;
-    border: 1px solid rgb(255 255 255 / 0.9);
-    box-shadow: 0 40px 90px -50px rgb(0 0 0 / 0.85);
-  }
-
-  /* Browsers without graphics acceleration (html.no-gpu, lib/gpu.ts): no
-     backdrop blur anywhere (it would be redone on the CPU every frame) and a
-     slightly more solid fill instead. On this
-     dark page the panels look almost the same. */
-  .no-gpu .glass-panel {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background:
-      linear-gradient(180deg, rgb(255 255 255 / 0.045), rgb(255 255 255 / 0.012) 40%, rgb(255 255 255 / 0.008)),
-      rgb(8 10 18 / 0.86);
-  }
-  .no-gpu [class*='backdrop-blur'] {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-
-
-
-  .hero-glow {
-    background-image: radial-gradient(ellipse 50% 42% at 50% 0%, color-mix(in oklab, var(--color-accent) 4%, transparent), transparent 70%);
+  @keyframes caret-blink {
+    50% { opacity: 0; }
   }
 }
 
-/* The app colours are `inline` so each utility carries the formula itself
-   and reads --space-h/--space-c from the element it's on. Defined in the
-   plain @theme above they'd be resolved once on :root, and an app's hue set
-   on a component would never reach them. */
-@theme inline {
-  --color-space: oklch(0.76 var(--space-c) var(--space-h));
-  --color-space-ink: oklch(0.86 calc(var(--space-c) * 0.7) var(--space-h));
-  --color-space-deep: oklch(0.27 calc(var(--space-c) * 0.45) var(--space-h));
+/* Headlines use Mona Sans's width axis, a little expanded, which is most
+   of what makes the type feel like this brand rather than a default. */
+@layer utilities {
+  .font-wide {
+    font-stretch: 112%;
+  }
 }
 
-/* App Spaces: the app colour slides when the app shown changes, the way it
-   does in the app. Registered so the transition interpolates. */
-@property --space-h {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 70;
-}
-@property --space-c {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0.012;
-}
-.space-transition {
-  transition:
-    --space-h 700ms cubic-bezier(0.16, 1, 0.3, 1),
-    --space-c 700ms cubic-bezier(0.16, 1, 0.3, 1);
+/*
+ * Instrument panels (2026-11-12, visual pass): the product visuals sit on
+ * a dark "screen" in both themes, like a device display on a page. Fine
+ * hairlines, one accent, and an accent edge only where a magnet is
+ * actually doing something (a pressed key).
+ */
+@theme {
+  --color-panel: #0c0c0b;
+  --color-panel-2: #151513;
+  --color-panel-line: #2a2926;
+  --color-panel-ink: #eceae4;
+  --color-panel-muted: #8c8982;
 }
 
-/* The app's liquid glass (Noma App globals.css `.glass`, since v0.1.27),
-   for the pieces of this page that show the app: a translucent warm fill, a
-   hairline, a blur, and a 1px specular rim brightest at the top-left (a
-   masked border, not a fill). */
 @layer components {
-  /* The Noma app's own surface since v0.1.29 ("native"): a faint fill and
-     a hairline, no blur, no light rim. Mirrors Noma App's .glass. */
-  .app-glass {
-    position: relative;
-    background: rgba(255, 250, 240, 0.045);
-    border: 1px solid rgba(255, 250, 240, 0.08);
-    box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.7);
+  /* 2026-11-12, render-style pass: visuals no longer sit in boxed panels.
+     A .panel is just a region on the dark band; only its internal hairlines
+     remain. */
+  .panel {
+    background: transparent;
+    color: var(--color-panel-ink);
+    border: 0;
+    --key-h: clamp(20px, 5.2vw, 50px);
   }
-  .app-glass-violet { }
-  /* Anything drawn as the Noma app uses the OS's own fonts, as the app does. */
-  .app-ui {
-    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  /* The keyboard drawn to match the concept renders: a graphite aluminium
+     case with a lit top edge, a recessed plate, and sculpted legend-free
+     charcoal keycaps. The top-left key is orange, as on the product; a
+     pressed key sinks and turns orange too. Shading only, no glow. */
+  .kb-case {
+    position: relative;
+    border-radius: clamp(10px, 1.6vw, 22px);
+    padding: clamp(6px, 1.1vw, 16px);
+    background: linear-gradient(180deg, #2b2b29 0%, #1c1c1b 18%, #151514 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      inset 0 -2px 0 rgb(0 0 0 / 0.6),
+      0 40px 70px -30px rgb(0 0 0 / 0.9),
+      0 2px 0 #0b0b0a;
+  }
+  .kb-plate {
+    border-radius: clamp(6px, 1vw, 12px);
+    padding: clamp(3px, 0.5vw, 7px);
+    background: #090908;
+    box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.9);
+  }
+  .key {
+    height: var(--key-h);
+    border-radius: clamp(3px, 0.45vw, 7px);
+    background: linear-gradient(180deg, #262624 0%, #1d1d1c 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.07),
+      inset 0 -0.25em 0 rgb(0 0 0 / 0.35),
+      0 1px 0 #050505,
+      0 3px 5px rgb(0 0 0 / 0.55);
+    transition: transform 80ms ease-out, background 120ms ease-out, box-shadow 80ms ease-out;
+  }
+  /* the sculpted top face */
+  .key::before {
+    content: '';
+    position: absolute;
+    inset: 9% 11% 24% 11%;
+    border-radius: inherit;
+    background: linear-gradient(180deg, #2f2f2d 0%, #252523 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    pointer-events: none;
+  }
+  .key[data-accent] {
+    background: linear-gradient(180deg, #e9631c 0%, #c94c0c 100%);
+  }
+  .key[data-accent]::before {
+    background: linear-gradient(180deg, #ff7a33 0%, #ee6216 100%);
+  }
+  .key[data-down] {
+    background: linear-gradient(180deg, #e9631c 0%, #c94c0c 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 1px rgb(0 0 0 / 0.6);
+  }
+  .key[data-down]::before {
+    background: linear-gradient(180deg, #ff7a33 0%, #ee6216 100%);
+  }
+  .key > span {
+    z-index: 1;
+  }
+  .label-xs {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 }
-.no-gpu .app-glass { background: rgba(28, 26, 30, 0.9); }
+
+/* The learning keyboard keeps readable keys on phones by scrolling
+   sideways inside its panel instead of shrinking to 20px keys. */
+.learn-kb {
+  --key-h: 38px;
+}
+@media (min-width: 640px) {
+  .learn-kb {
+    --key-h: clamp(20px, 5.4vw, 52px);
+  }
+}
+
+/*
+ * Dark product bands (2026-11-12, render pass). The concept renders are
+ * shot on #060606, so these bands use exactly that colour and the renders
+ * dissolve into them at the edges (.render-fade) instead of sitting in a
+ * framed card. Inside a band the theme tokens are redefined, so every
+ * text-ink / bg-paper / border-line utility flips to the dark set without
+ * per-element overrides, in light and dark mode alike.
+ */
+.band-dark {
+  --band: #050505;
+  --color-paper: var(--band);
+  --color-surface: #121211;
+  --color-raised: #141413;
+  --color-line: #262523;
+  --color-ink: #eeece6;
+  --color-muted: #a8a59d;
+  --color-faint: #85827b;
+  --color-accent: #ff6a21;
+  --color-accent-ink: #050505;
+  color-scheme: dark;
+  background: var(--band);
+  color: var(--color-ink);
+}
+.render-fade {
+  -webkit-mask-image: radial-gradient(ellipse 70% 72% at 50% 50%, #000 40%, rgb(0 0 0 / 0.5) 70%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 72% at 50% 50%, #000 40%, rgb(0 0 0 / 0.5) 70%, transparent 100%);
+}
+
+/* Single-key crops in the closing visual: dissolve the sides and the base
+   into the band, like the other renders. */
+.key-fade {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent),
+    linear-gradient(to bottom, transparent 4%, #000 30%);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent),
+    linear-gradient(to bottom, transparent 4%, #000 30%);
+  mask-composite: intersect;
+}

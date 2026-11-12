@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "@fontsource-variable/mona-sans": "^5.3.0",
     "@fontsource-variable/sora": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
     "@fontsource/inter": "^5.3.0",

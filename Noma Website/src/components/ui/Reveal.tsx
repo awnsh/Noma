@@ -6,7 +6,7 @@ interface RevealProps {
   className?: string
   delay?: number
   y?: number
-  as?: 'div' | 'span'
+  as?: 'div' | 'span' | 'li'
 }
 
 /**

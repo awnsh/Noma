@@ -1,6 +1,4 @@
 import { Route, Routes } from 'react-router-dom'
-import { ReactLenis } from 'lenis/react'
-import { useReducedMotion } from 'framer-motion'
 import Navigation from './components/layout/Navigation'
 import Footer from './components/layout/Footer'
 import ScrollToHash from './components/layout/ScrollToHash'
@@ -8,55 +6,31 @@ import Home from './pages/Home'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
-import Device from './pages/Device'
 import Uninstall from './pages/Uninstall'
 import Feedback from './pages/Feedback'
 
 /**
- * The router/layout shell: `Navigation` and `Footer` are shared chrome
- * across every route, `Routes` swaps only the page content between them.
- * The single-page marketing scroll (`Home`, formerly this file's own
- * inline JSX) got its own page component when routing was added for
- * `/contact`, `/privacy`, and `/terms` — see that file's own doc comment.
- * `ScrollToHash` (not React Router's default, which doesn't jump on route
- * change on its own) resets scroll position on every navigation, and
- * finishes the job for a `/#hash` link from `SiteLink.tsx`.
+ * Router/layout shell. 2026-11-12 keyboard redesign: plain native scrolling
+ * (Lenis removed), and /device dropped, since it described the old desktop
+ * hardware concept. /uninstall and /feedback stay reachable for existing
+ * app beta users but are no longer linked from the site.
  */
 export default function App() {
-  // Reduced-motion users get plain native scroll rather than Lenis's eased
-  // momentum — smooth scrolling is a nicety, not something to force on people
-  // who've asked their system to minimize motion.
-  const reduceMotion = useReducedMotion()
-
-  const page = (
-    <div className="page-backdrop min-h-screen">
+  return (
+    <div className="min-h-screen bg-paper">
       <ScrollToHash />
       <Navigation />
-      <main className="relative z-10">
+      <main>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/device" element={<Device />} />
           <Route path="/uninstall" element={<Uninstall />} />
           <Route path="/feedback" element={<Feedback />} />
         </Routes>
       </main>
-      <div className="relative z-10">
-        <Footer />
-      </div>
+      <Footer />
     </div>
-  )
-
-  if (reduceMotion) return page
-
-  return (
-    // In-page `#` links are smoothed by SiteLink itself (see its comment for
-    // why Lenis's own `anchors` option wasn't enough: the router snapped the
-    // page back with an instant jump).
-    <ReactLenis root options={{ lerp: 0.11, duration: 1.1, wheelMultiplier: 1 }}>
-      {page}
-    </ReactLenis>
   )
 }

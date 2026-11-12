@@ -22,5 +22,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  // Only what the site actually imports, starting from its two entry points.
+  // src/ also holds retired app-era components and "-awnsh" sync-conflict
+  // copies that no longer type-check; they are not part of the build.
+  "files": ["src/main.tsx", "src/entry-server.tsx", "src/build-flags.d.ts"]
 }

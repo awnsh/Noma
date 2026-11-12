@@ -13,3 +13,12 @@ export const WAITLIST_ENDPOINT = 'https://formspree.io/f/xljedono'
 // apart. To keep them separate, add a second form in Formspree and paste its
 // endpoint here instead.
 export const FEEDBACK_ENDPOINT = WAITLIST_ENDPOINT
+
+// Where to follow the build (2026-11-12, keyboard site). Placeholders until
+// the channels exist: an entry with an empty href renders as "soon" rather
+// than a dead link. Paste the real URL in to make it live.
+export const BUILD_LINKS: { label: string; href: string }[] = [
+  { label: 'Build log', href: '' },
+  { label: 'YouTube', href: '' },
+  { label: 'X', href: '' },
+]
