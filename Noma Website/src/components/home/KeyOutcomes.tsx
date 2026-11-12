@@ -61,11 +61,11 @@ function Panel({ c, i }: { c: Case; i: number }) {
 
   return (
     <figure ref={ref} className="min-w-0">
-      <div className="relative mx-auto aspect-[340/350] w-full max-w-[460px]">
+      <div className="relative mx-auto aspect-[340/350] w-full max-w-[240px] sm:max-w-[460px]">
         <img
           src={`/media/noma-${c.name}.webp`}
           srcSet={`/media/noma-${c.name}-sm.webp 400w, /media/noma-${c.name}.webp 680w`}
-          sizes="(min-width: 768px) 460px, 90vw"
+          sizes="(min-width: 768px) 460px, 240px"
           alt=""
           width={680}
           height={700}
@@ -96,10 +96,10 @@ function Panel({ c, i }: { c: Case; i: number }) {
         </motion.div>
       </div>
 
-      <p className="tnum mx-auto mt-4 max-w-[460px] text-[13px] text-muted">
+      <p className="tnum mx-auto mt-4 max-w-[340px] text-[13px] sm:max-w-[460px] text-muted">
         This press stopped at <span className="text-ink">{c.peak.toFixed(1)} mm</span>, where the key sits.
       </p>
-      <div className="mx-auto mt-3 grid max-w-[460px] grid-cols-2 border-y border-line text-[13px]">
+      <div className="mx-auto mt-3 grid max-w-[340px] grid-cols-2 sm:max-w-[460px] border-y border-line text-[13px]">
         <p className="flex items-center gap-2 border-r border-line py-3">
           <span aria-hidden className="w-4 border-t border-dashed border-faint" />
           <span className="text-faint">Default:</span>
@@ -119,9 +119,9 @@ function Panel({ c, i }: { c: Case; i: number }) {
         </p>
       </div>
 
-      <figcaption className="mx-auto mt-5 max-w-[460px]">
-        <h3 className="font-wide text-[20px] font-semibold tracking-[-0.02em] text-ink">{c.title}</h3>
-        <p className="mt-2 text-pretty text-[15px] leading-relaxed text-muted">{c.body}</p>
+      <figcaption className="mx-auto mt-4 max-w-[340px] sm:mt-5 sm:max-w-[460px]">
+        <h3 className="font-wide text-[18px] font-semibold sm:text-[20px] tracking-[-0.02em] text-ink">{c.title}</h3>
+        <p className="mt-2 text-pretty text-[14px] leading-relaxed text-muted sm:text-[15px]">{c.body}</p>
       </figcaption>
     </figure>
   )
@@ -156,7 +156,7 @@ function Line({
 
 export default function KeyOutcomes() {
   return (
-    <div className="grid gap-14 md:grid-cols-2 md:gap-10">
+    <div className="grid gap-12 md:grid-cols-2 md:gap-10">
       {CASES.map((c, i) => (
         <Panel key={c.name} c={c} i={i} />
       ))}

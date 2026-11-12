@@ -76,7 +76,6 @@ export default function Home() {
           <motion.div className="overflow-hidden" style={{ scale, opacity: fade }}>
             <Stage
               name="profile"
-              className="-ml-[22%] w-[175%] sm:ml-0 sm:w-full"
               priority
               alt="Concept render, side view of the Noma keyboard with keys pressed to different depths, each labelled with how far it travelled."
               depths={[

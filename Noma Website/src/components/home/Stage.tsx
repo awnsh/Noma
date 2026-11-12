@@ -119,7 +119,7 @@ function DepthLabel({ d, i, play }: { d: Depth; i: number; play?: boolean }) {
     >
       {d.caption && <span className="label-xs mb-1.5 text-faint">{d.caption}</span>}
       <motion.span
-        className={`tnum rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:text-[12px] ${
+        className={`tnum whitespace-nowrap rounded-full border px-1.5 py-px text-[9px] font-semibold sm:px-2.5 sm:py-0.5 sm:text-[12px] ${
           d.accent ? 'border-accent text-accent' : 'border-line text-ink'
         }`}
       >
