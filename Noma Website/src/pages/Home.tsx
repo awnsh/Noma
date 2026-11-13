@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Explainer from '../components/home/Explainer'
 import Overview from '../components/home/Overview'
+import WhyItTunes from '../components/home/WhyItTunes'
 import Stage from '../components/home/Stage'
 import TypeWord from '../components/home/TypeWord'
 import Reveal from '../components/ui/Reveal'
@@ -19,6 +20,8 @@ import { BUILD_LINKS } from '../data/config'
  *   Overview   the payoff on the renders (a missed key caught, a brushed key
  *              ignored), the product in four lines,
  *              and the one-line teaser
+ *   WhyItTunes why self-tuning beats setting it by hand, who it's for, and
+ *              the note that the fix rate is being measured before it's claimed
  *   Waitlist   signup + built in public
  *
  * Kept off the page: how mistake-fixing works, specs, prices, dates,
@@ -97,6 +100,9 @@ export default function Home() {
 
       {/* IN ONE LOOK: the closing summary of what it is */}
       <Overview />
+
+      {/* WHY IT TUNES ITSELF: what self-adjusting actuation is for, and who */}
+      <WhyItTunes />
 
       {/* WAITLIST + BUILD */}
       <section id="waitlist" className="scroll-mt-20 border-t border-line">
