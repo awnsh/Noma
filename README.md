@@ -1,98 +1,68 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/readme/banner-dark.png">
-    <img src=".github/readme/banner-light.png" alt="Noma: your computer, adapting to you." width="720">
-  </picture>
-</p>
+# Noma
 
-<hr>
+**A keyboard that learns how you type.**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Windows-10%20%C2%B7%2011-0078D4?style=flat-square" alt="Windows 10 and 11">
-  <img src="https://img.shields.io/badge/macOS-Apple%20silicon%20%C2%B7%20Intel-555?style=flat-square" alt="macOS on Apple silicon and Intel">
-  <img src="https://img.shields.io/badge/Electron-44-47848F?style=flat-square" alt="Electron 44">
-  <img src="https://img.shields.io/badge/status-beta-C8553D?style=flat-square" alt="Beta">
+  <img src="Noma%20Website/public/media/noma-layers.webp" alt="Concept render, exploded view of the Noma keyboard: keycaps, a plate of magnetic switches, a circuit board with a sensor under every switch, and the aluminium case." width="760">
 </p>
 
-A desktop app for anyone who's on their computer a lot. It notices the
-sequences you repeat across apps, like screenshot something in Chrome, paste
-it into a chat, paste it into your notes, and offers to turn them into one
-action.
-You run that action with Glide: slide a finger from the palm rest onto your
-trackpad. Noma knows which app you're in, so each app gets its own four
-actions. It never records what you type.
+<p align="center">
+  <img src="https://img.shields.io/badge/stage-prototype-E8590C?style=flat-square" alt="Prototype stage">
+  <img src="https://img.shields.io/badge/waitlist-open-555?style=flat-square" alt="Waitlist open">
+  <img src="https://img.shields.io/badge/built-in%20public-555?style=flat-square" alt="Built in public">
+</p>
 
-<table>
-  <tr>
-    <th width="50%">Main window</th>
-    <th width="50%">Workflow popup</th>
-  </tr>
-  <tr>
-    <td><img src=".github/readme/home.png" alt="Noma's Home page: a workflow Flow noticed, shown as step cards, above the four Glide actions for Visual Studio Code"></td>
-    <td><img src=".github/readme/notice.png" alt="The popup Noma shows when it notices a new workflow, with Review steps and Not now"></td>
-  </tr>
-  <tr>
-    <td>The app you're in and the workflows Flow has noticed there, step by step.</td>
-    <td>Appears in the corner when Flow spots a workflow you keep doing. Nothing is saved until you say so.</td>
-  </tr>
-</table>
+Every key knows how far you pressed it, and Noma tunes each one to the way you
+type. Fewer missed keys, fewer accidental ones, nothing to set up.
 
-## Download
-
-Get the latest beta from **[nomashift.com](https://nomashift.com)**: Windows,
-Mac with Apple silicon, or Intel Mac. On Windows it updates itself; on a Mac
-it tells you when a new version is ready.
-
-The beta isn't code-signed yet. On Windows, choose **More info → Run anyway**.
-On a Mac, open it once, then **System Settings → Privacy & Security → Open
-Anyway**, and allow Accessibility when Noma asks.
+**[Join the waitlist at nomashift.com →](https://nomashift.com)**
 
 ## How it works
 
-**Flow** watches which app is in front, which modifier shortcuts you press,
-which named buttons you click, and in what order. When the same sequence
-comes up again and again, it shows you the steps and asks whether to save
-them as one action. Rules filter out the noise: switching windows, undoing,
-or clicking through a web form are not workflows.
+**Every key, measured.** Ordinary keyboards only know whether a key is down.
+Every Noma key carries a small magnet, with a sensor underneath that reads it
+the whole way down, not just on or off.
 
-**Glide** turns the edges of your trackpad into four buttons. Start on the
-palm rest and flick inward; the side and half you land in picks the action.
-It never clicks, and normal pointer use doesn't trigger it.
+**Tuned to how you type.** Every key starts at the same actuation point. Each
+one then settles where you actually press it: a light pinky press on A or P
+still counts, and keys you brush by accident get tuned out, key by key.
+
+**It keeps up with you.** You type differently when you're tired, at a new
+desk or on new keycaps. A setting you picked once goes stale; Noma keeps
+learning, so the tuning follows you.
+
+**Just a keyboard.** Plug it in and type on any computer. It learns on the
+board itself. No app, no account, no subscription.
 
 <p align="center">
-  <img src=".github/readme/glide.png" alt="The Glide page: four zones around the trackpad, each with an action for Visual Studio Code" width="760">
+  <img src="Noma%20Website/public/media/noma-profile.webp" alt="Concept render, side view of the Noma keyboard with keys pressed to different depths." width="640">
 </p>
 
-## Privacy
+<p align="center"><sub>Images are concept renders, not the finished product. Nothing here is a specification yet.</sub></p>
 
-Everything stays on your computer. Flow keeps which app, which shortcut,
-which button and when. It never keeps what you type, your clipboard,
-screenshots, page titles or addresses. Browser tabs are stored only as a
-scrambled fingerprint. Settings → Your data clears or deletes all of it.
-Noma's only network request is checking for updates.
+## Where it stands
+
+Noma is designed by one person, in the open. Every test and every wrong turn
+gets shared as it happens. Next up is a working prototype: magnetic switches,
+per-key sensing and the self-tuning firmware on a real board.
 
 ## In this repo
 
 | Folder | What it is |
 |---|---|
-| [`Noma App`](./Noma%20App) | The product: an Electron, React, TypeScript and SQLite desktop app for Windows and macOS. Start here. |
-| [`Noma Website`](./Noma%20Website) | [nomashift.com](https://nomashift.com), a separate Vite and React site. |
-| [`Noma Virtual Device`](./Noma%20Virtual%20Device) | An on-screen stand-in for the Noma device (a small screen and four buttons) that talks to the app over a local connection. |
-| [`Noma Device Firmware`](./Noma%20Device%20Firmware) | ESP32 firmware for the first physical prototype. Written, not yet run on a board. |
-| [`Noma Software Prototype`](./Noma%20Software%20Prototype) | An early demo build used for user testing. It doesn't run real actions. |
+| [`Noma Website`](./Noma%20Website) | [nomashift.com](https://nomashift.com): the keyboard site and waitlist, built with Vite and React. |
+| [`Noma App`](./Noma%20App) | Where Noma started: a desktop app (Flow + Glide) that turned repeated workflows into one-press actions. Still works; no longer the focus. |
+| [`Noma Virtual Device`](./Noma%20Virtual%20Device) | An on-screen stand-in for the app's earlier hardware idea, a small screen with four buttons. |
+| [`Noma Device Firmware`](./Noma%20Device%20Firmware) | ESP32 firmware for that earlier module. Written, not yet run on a board. |
+| [`Noma Software Prototype`](./Noma%20Software%20Prototype) | An early demo of the app used for user testing. |
 
 The projects share no packages. Anything that has to match across two of
 them is copied by hand and noted where it's used.
 
-## Build from source
+## Run the site
 
 ```bash
-cd "Noma App"
+cd "Noma Website"
 npm install
-npm run dev          # run the app
-npm test             # tests (npm run test:mac checks the macOS paths too)
-npm run typecheck
+npm run dev
 ```
-
-Releases are built by GitHub Actions when a `v*` tag is pushed. See
-[`Noma App/RELEASING.md`](./Noma%20App/RELEASING.md).
